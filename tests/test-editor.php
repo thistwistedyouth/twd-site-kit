@@ -404,3 +404,10 @@ twd_sk_test( 'site: the media library script loads only for administrators, not 
 	twd_sk_true( twd_sk_ed_loaded() );
 	twd_sk_true( empty( $GLOBALS['twd_stub']['media_enqueued'] ), 'safe mode: no media scripts' );
 } );
+
+twd_sk_test( 'site js: setup lists what will happen and asks first, sends a confirmation, and can leave the front page alone', function () {
+	$js = twd_sk_ed_all_js()['site'];
+	foreach ( array( "api('GET', '/site/setup')", "api('POST', '/site/setup', { confirm: true", 'This is what will happen', 'Yes, set the site up', 'Do not change the front page setting', 'It never publishes anything and never overwrites site details that already have content', 'Set this site up from the starters' ) as $needle ) {
+		twd_sk_has( $needle, $js );
+	}
+} );

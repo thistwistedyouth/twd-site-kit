@@ -10,6 +10,7 @@
  *   wp twd-sk undo <page_id>            step back one change (recorded as a new version)
  *   wp twd-sk check <page_id>           list leftover example text still on the page
  *   wp twd-sk prompt <page_id>          print the client AI prompt (rules, style guide, this page's HTML)
+ *   wp twd-sk setup [--pack=<slug>] [--skip-front-page]  create Home, About and Contact as drafts, fill a blank profile
  *   wp twd-sk export-templates [--dir=<path>]  write the two Elementor Theme Builder templates (header, footer) as JSON
  *   wp twd-sk safe-mode [on|off|status]  switch the newest features off, or back on
  *   wp twd-sk pack [<slug>]             list style packs, or switch to one
@@ -301,6 +302,51 @@ class TWD_SK_CLI {
 			WP_CLI::success( 'Wrote ' . $dir . '/' . $name );
 		}
 		WP_CLI::log( 'In Elementor: Templates, Theme Builder, import each file, then set its display condition to Entire Site.' );
+	}
+
+	/**
+	 * Set a new site up from the starters: create Home, About and Contact as DRAFT pages ready
+	 * for the kit, fill an empty site profile with placeholders, optionally switch the style
+	 * pack, and make Home the front page. Safe to run twice. Nothing is published.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--pack=<slug>]
+	 * : Style pack to switch to (see wp twd-sk pack).
+	 *
+	 * [--skip-front-page]
+	 * : Do not change the front page setting.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk setup --pack=sage
+	 */
+	public function setup( $args, $assoc_args ) {
+		$options = array(
+			'pack'       => isset( $assoc_args['pack'] ) ? (string) $assoc_args['pack'] : '',
+			'front_page' => ! isset( $assoc_args['skip-front-page'] ),
+		);
+		$report = TWD_SK_Setup::run( $options );
+		if ( is_wp_error( $report ) ) {
+			WP_CLI::error( $report->get_error_message() );
+			return;
+		}
+		foreach ( $report['created'] as $p ) {
+			WP_CLI::success( 'Created draft page "' . $p['title'] . '" (ID ' . $p['id'] . ').' );
+		}
+		foreach ( $report['skipped'] as $p ) {
+			WP_CLI::log( 'Skipped "' . $p['title'] . '": it already exists (ID ' . $p['id'] . ').' );
+		}
+		if ( '' !== $report['pack'] ) {
+			WP_CLI::success( 'Style pack is now ' . $report['pack'] . '.' );
+		}
+		if ( 'filled' === $report['profile'] ) {
+			WP_CLI::success( 'Filled the empty site details with placeholders.' );
+		}
+		foreach ( $report['notes'] as $note ) {
+			WP_CLI::warning( $note );
+		}
+		WP_CLI::log( 'Next: replace every [PLACEHOLDER], then run wp twd-sk check PAGE_ID before publishing.' );
 	}
 
 	// -- Helpers ----------------------------------------------------------

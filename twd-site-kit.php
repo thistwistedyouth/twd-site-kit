@@ -34,6 +34,8 @@ require_once TWD_SK_PATH . 'includes/class-twd-sk-site.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-profile.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-chrome.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-elementor.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-starters.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-setup.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-assets.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-updater.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-report.php';

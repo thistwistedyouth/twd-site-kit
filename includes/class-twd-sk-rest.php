@@ -134,6 +134,18 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_site_chrome' ),
 			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 		) );
+		register_rest_route( self::ROUTE_NS, '/site/setup', array(
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'get_site_setup' ),
+				'permission_callback' => array( __CLASS__, 'can_read_site' ),
+			),
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_site_setup' ),
+				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+			),
+		) );
 		register_rest_route( self::ROUTE_NS, '/site/templates', array(
 			'methods'             => 'GET',
 			'callback'            => array( __CLASS__, 'get_site_templates' ),
@@ -431,6 +443,33 @@ class TWD_SK_REST {
 			return self::error( $saved->get_error_code(), $saved->get_error_message(), 400 );
 		}
 		return self::profile_payload();
+	}
+
+	/** What setup would do now, in plain sentences. Changes nothing. */
+	public static function get_site_setup( $request ) {
+		return array( 'plan' => TWD_SK_Setup::plan( array( 'front_page' => true ) ), 'packs' => array_keys( TWD_SK_Packs::packs() ) );
+	}
+
+	/** Create the starter pages (drafts), fill a blank profile, optionally set the pack and the front page. Needs a confirmation. */
+	public static function post_site_setup( $request ) {
+		if ( ! self::truthy( $request->get_param( 'confirm' ) ) ) {
+			return self::error( 'twd_sk_confirm_needed', 'Please confirm first.', 400 );
+		}
+		$pack = $request->get_param( 'pack' );
+		if ( null !== $pack && ! is_string( $pack ) ) {
+			return self::error( 'twd_sk_bad_input', 'Choose a style from the list.', 400 );
+		}
+		$front  = $request->get_param( 'front_page' );
+		$report = TWD_SK_Setup::run( array( 'pack' => is_string( $pack ) ? $pack : '', 'front_page' => null === $front ? true : self::truthy( $front ) ) );
+		if ( is_wp_error( $report ) ) {
+			return self::from_store_error( $report );
+		}
+		foreach ( array( 'created', 'skipped' ) as $list ) {
+			foreach ( $report[ $list ] as $i => $page ) {
+				$report[ $list ][ $i ]['url'] = get_permalink( $page['id'] );
+			}
+		}
+		return $report + array( 'profile_state' => self::profile_payload() );
 	}
 
 	/** The two Theme Builder templates as JSON text, for the base-site import. */

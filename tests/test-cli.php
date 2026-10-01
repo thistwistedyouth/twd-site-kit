@@ -165,13 +165,13 @@ twd_sk_test( 'cli: undo with nothing to undo fails cleanly', function () {
 	} ) );
 } );
 
-twd_sk_test( 'cli: exposes exactly these commands: save, get, versions, undo, pack, prompt, check, safe_mode, export_templates', function () {
+twd_sk_test( 'cli: exposes exactly these commands: save, get, versions, undo, pack, prompt, check, safe_mode, export_templates, setup', function () {
 	$methods = array();
 	foreach ( ( new ReflectionClass( 'TWD_SK_CLI' ) )->getMethods( ReflectionMethod::IS_PUBLIC ) as $m ) {
 		$methods[] = $m->getName();
 	}
 	sort( $methods );
-	twd_sk_eq( array( 'check', 'export_templates', 'get', 'pack', 'prompt', 'safe_mode', 'save', 'undo', 'versions' ), $methods );
+	twd_sk_eq( array( 'check', 'export_templates', 'get', 'pack', 'prompt', 'safe_mode', 'save', 'setup', 'undo', 'versions' ), $methods );
 } );
 
 twd_sk_test( 'cli: pack with no name lists the packs and marks the active one', function () {

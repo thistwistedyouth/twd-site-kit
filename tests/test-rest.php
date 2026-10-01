@@ -29,9 +29,9 @@ function twd_sk_status( $e ) {
 	return is_array( $d ) && isset( $d['status'] ) ? $d['status'] : 0;
 }
 
-twd_sk_test( 'rest: the eighteen routes exist under twd-site-kit/v1 and none is open to everyone', function () {
+twd_sk_test( 'rest: the twenty routes exist under twd-site-kit/v1 and none is open to everyone', function () {
 	$routes = twd_sk_rest_routes();
-	twd_sk_eq( 18, count( $routes ) );
+	twd_sk_eq( 20, count( $routes ) );
 	foreach ( $routes as $r ) {
 		twd_sk_eq( 'twd-site-kit/v1', $r['ns'] );
 		twd_sk_true( is_array( $r['args']['permission_callback'] ) && 'TWD_SK_REST' === $r['args']['permission_callback'][0], 'a real permission callback on ' . $r['route'] );
@@ -46,7 +46,7 @@ twd_sk_test( 'rest: the eighteen routes exist under twd-site-kit/v1 and none is 
 			$reads[] = $r['route'];
 		}
 	}
-	twd_sk_eq( 6, count( $reads ), 'only prompt, versions, info, the site state, the profile and the templates are GET' );
+	twd_sk_eq( 7, count( $reads ), 'only prompt, versions, info, the site state, the profile, the setup plan and the templates are GET' );
 } );
 
 twd_sk_test( 'rest security: a visitor, a missing nonce and a wrong nonce are refused on every route (401)', function () {
@@ -541,8 +541,8 @@ function twd_sk_site_routes() {
 twd_sk_test( 'rest site: three routes, each with a real permission callback, none registered in safe mode', function () {
 	twd_sk_site_caps();
 	$routes = twd_sk_site_routes();
-	twd_sk_eq( 7, count( $routes ) );
-	twd_sk_eq( array( '/site', '/site/style', '/site/style/reset', '/site/profile', '/site/profile', '/site/chrome', '/site/templates' ), array_map( function ( $r ) {
+	twd_sk_eq( 9, count( $routes ) );
+	twd_sk_eq( array( '/site', '/site/style', '/site/style/reset', '/site/profile', '/site/profile', '/site/chrome', '/site/setup', '/site/setup', '/site/templates' ), array_map( function ( $r ) {
 		return $r['route'];
 	}, $routes ) );
 	TWD_SK_Safe::set( true );

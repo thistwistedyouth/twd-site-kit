@@ -94,6 +94,20 @@ function get_post_meta( $id, $key, $single = false ) {
 	$value = unserialize( $GLOBALS['twd_stub']['meta'][ $id ][ $key ] );
 	return $single ? $value : array( $value );
 }
+/** Pages (or any post) with a given meta key and value. Only the arguments the plugin uses. */
+function get_posts( $args = array() ) {
+	$out = array();
+	foreach ( $GLOBALS['twd_stub']['posts'] as $id => $post ) {
+		if ( isset( $args['post_type'] ) && $post->post_type !== $args['post_type'] ) {
+			continue;
+		}
+		if ( isset( $args['meta_key'] ) && get_post_meta( $id, $args['meta_key'], true ) !== $args['meta_value'] ) {
+			continue;
+		}
+		$out[] = $id;
+	}
+	return array_slice( $out, 0, isset( $args['numberposts'] ) ? $args['numberposts'] : 100 );
+}
 function twd_stub_meta_keys( $id ) {
 	return isset( $GLOBALS['twd_stub']['meta'][ $id ] ) ? array_keys( $GLOBALS['twd_stub']['meta'][ $id ] ) : array();
 }
@@ -488,6 +502,8 @@ require_once ABSPATH . 'includes/class-twd-sk-site.php';
 require_once ABSPATH . 'includes/class-twd-sk-profile.php';
 require_once ABSPATH . 'includes/class-twd-sk-chrome.php';
 require_once ABSPATH . 'includes/class-twd-sk-elementor.php';
+require_once ABSPATH . 'includes/class-twd-sk-starters.php';
+require_once ABSPATH . 'includes/class-twd-sk-setup.php';
 require_once ABSPATH . 'includes/class-twd-sk-assets.php';
 require_once ABSPATH . 'includes/class-twd-sk-updater.php';
 require_once ABSPATH . 'includes/class-twd-sk-report.php';

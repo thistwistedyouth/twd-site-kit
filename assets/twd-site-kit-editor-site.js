@@ -748,10 +748,104 @@
 		});
 	}
 
+	/* ---- set up a new site from the starters ---- */
+
+	var sui = {};
+
+	function runSetup(pack, frontPage) {
+		message(sui.msg, 'Setting up...', true);
+		api('POST', '/site/setup', { confirm: true, pack: pack || undefined, front_page: frontPage }).then(function (data) {
+			clear(sui.result);
+			var lines = [];
+			data.created.forEach(function (p) {
+				lines.push('Created the draft page "' + p.title + '".');
+			});
+			data.skipped.forEach(function (p) {
+				lines.push('"' + p.title + '" already existed, so it was left alone.');
+			});
+			if (data.pack) {
+				lines.push('The style is now ' + data.pack + '.');
+			}
+			if (data.profile === 'filled') {
+				lines.push('The empty site details were filled with placeholders.');
+			}
+			(data.notes || []).forEach(function (n) {
+				lines.push(n);
+			});
+			listInto(sui.result, lines);
+			data.created.concat(data.skipped).forEach(function (p) {
+				if (typeof p.url === 'string' && (p.url.indexOf(window.location.origin + '/') === 0 || p.url.charAt(0) === '/')) {
+					sui.result.appendChild(el('p', {}, [el('a', { className: 'twd-sk-ed__link', href: p.url, text: 'Open ' + p.title })]));
+				}
+			});
+			show(sui.result, true);
+			message(sui.msg, 'Done. Nothing is published. Replace every [PLACEHOLDER], then publish each page from the Pages tab.', true);
+			if (data.profile_state) {
+				P.data = data.profile_state;
+				if (pui.name) {
+					fillProfile();
+				}
+			}
+		}, function (err) {
+			message(sui.msg, err.message, false);
+		});
+	}
+
+	function askSetup() {
+		message(sui.msg, '', true);
+		api('GET', '/site/setup').then(function (data) {
+			var front = !sui.skipFront.checked;
+			var box = el('div', { className: 'twd-sk-ed__card', role: 'group', 'aria-label': 'Please confirm' });
+			box.appendChild(el('p', { text: 'This is what will happen:' }));
+			listInto(box, data.plan.filter(function (line) {
+				return front || line.indexOf('front page') < 0;
+			}));
+			var yes = button('Yes, set the site up', 'primary', function () {
+				sui.confirmHost.removeChild(box);
+				runSetup(sui.pack.value, front);
+			});
+			var no = button('Cancel', 'secondary', function () {
+				sui.confirmHost.removeChild(box);
+			});
+			box.appendChild(el('div', { className: 'twd-sk-ed__actions' }, [yes, no]));
+			clear(sui.confirmHost);
+			sui.confirmHost.appendChild(box);
+			yes.focus();
+		}, function (err) {
+			message(sui.msg, err.message, false);
+		});
+	}
+
+	function buildSetupSection(panel) {
+		sui.pack = el('select', { id: 'twd-sk-su-pack', className: 'twd-sk-ed__select' });
+		sui.pack.appendChild(el('option', { value: '', text: 'Keep the current style' }));
+		sui.skipFront = el('input', { id: 'twd-sk-su-skipfront', type: 'checkbox' });
+		sui.msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		sui.result = el('div', { className: 'twd-sk-ed__banner', hidden: '' });
+		sui.confirmHost = el('div', {});
+		sui.btn = button('Set this site up from the starters', 'primary', askSetup);
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Set up a new site' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'For a brand new site. It makes Home, About and Contact as draft pages with placeholder text, fills empty site details with placeholders, and can make Home the front page. It never publishes anything and never overwrites site details that already have content. Safe to run twice.' }),
+			field('Style', sui.pack),
+			el('label', { className: 'twd-sk-ed__check', 'for': 'twd-sk-su-skipfront' }, [sui.skipFront, el('span', { text: 'Do not change the front page setting' })]),
+			el('div', { className: 'twd-sk-ed__actions' }, [sui.btn]),
+			sui.confirmHost,
+			sui.result,
+			sui.msg
+		]));
+		api('GET', '/site/setup').then(function (data) {
+			data.packs.forEach(function (slug) {
+				sui.pack.appendChild(el('option', { value: slug, text: slug }));
+			});
+		}, function () {});
+	}
+
 	function buildSite(panel) {
 		buildStyleSection(panel);
 		buildProfileSection(panel);
 		buildChromeSection(panel);
+		buildSetupSection(panel);
 	}
 
 	ED.addTab('site', 'Site', buildSite);
