@@ -37,7 +37,7 @@ function plugin_dir_path( $file ) {
 
 define( 'TWD_SK_PATH', ABSPATH );
 define( 'TWD_SK_URL', 'https://example.test/wp-content/plugins/twd-site-kit/' );
-define( 'TWD_SK_VERSION', 'test' );
+define( 'TWD_SK_VERSION', '1.0.0' );
 
 $GLOBALS['twd_stub'] = array();
 
@@ -53,7 +53,7 @@ function twd_stub_reset() {
 		'options'    => array(),
 		'hooks'      => array(),
 		'styles'     => array(),
-	);
+	) + twd_sk_stub_defaults();
 }
 twd_stub_reset();
 
@@ -152,12 +152,142 @@ function do_shortcode( $content ) {
 	);
 }
 
+
+// -- Updater stubs ------------------------------------------------------------
+
+define( 'DAY_IN_SECONDS', 86400 );
+define( 'HOUR_IN_SECONDS', 3600 );
+
+class TWD_SK_Stub_Redirect extends Exception {}
+class TWD_SK_Stub_Die extends Exception {}
+
+function twd_sk_stub_defaults() {
+	return array(
+		'admin'      => true,
+		'caps'       => true,
+		'referer_ok' => true,
+		'screen'     => 'plugins',
+		'http'       => array(),
+		'requests'   => array(),
+		'transients' => array(),
+		'site_transients_deleted' => array(),
+		'update_plugins_called'   => 0,
+		'deleted_files'           => array(),
+	);
+}
+
+function is_admin() {
+	return $GLOBALS['twd_stub']['admin'];
+}
+function plugin_basename( $file ) {
+	return 'twd-site-kit/' . basename( $file );
+}
+function plugin_dir_url( $file ) {
+	return 'https://example.test/wp-content/plugins/twd-site-kit/';
+}
+function get_transient( $key ) {
+	return array_key_exists( $key, $GLOBALS['twd_stub']['transients'] ) ? $GLOBALS['twd_stub']['transients'][ $key ]['value'] : false;
+}
+function set_transient( $key, $value, $seconds = 0 ) {
+	$GLOBALS['twd_stub']['transients'][ $key ] = array( 'value' => $value, 'seconds' => $seconds );
+	return true;
+}
+function delete_transient( $key ) {
+	unset( $GLOBALS['twd_stub']['transients'][ $key ] );
+	return true;
+}
+function delete_site_transient( $key ) {
+	$GLOBALS['twd_stub']['site_transients_deleted'][] = $key;
+	return true;
+}
+function wp_update_plugins() {
+	$GLOBALS['twd_stub']['update_plugins_called']++;
+}
+// A stand-in for WordPress HTTP: answers from a table of url => array( code, body ) or a WP_Error.
+function wp_safe_remote_get( $url, $args = array() ) {
+	$GLOBALS['twd_stub']['requests'][] = array( 'url' => $url, 'args' => $args );
+	if ( ! isset( $GLOBALS['twd_stub']['http'][ $url ] ) ) {
+		return new WP_Error( 'http_no_route', 'No route to ' . $url );
+	}
+	$answer = $GLOBALS['twd_stub']['http'][ $url ];
+	if ( $answer instanceof WP_Error ) {
+		return $answer;
+	}
+	if ( ! empty( $args['stream'] ) && ! empty( $args['filename'] ) ) {
+		file_put_contents( $args['filename'], $answer['body'] );
+	}
+	return $answer;
+}
+function wp_remote_get( $url, $args = array() ) {
+	return wp_safe_remote_get( $url, $args );
+}
+function wp_remote_retrieve_response_code( $response ) {
+	return $response['code'];
+}
+function wp_remote_retrieve_body( $response ) {
+	return $response['body'];
+}
+function wp_tempnam( $name = '' ) {
+	return tempnam( sys_get_temp_dir(), 'twdsk' );
+}
+function wp_delete_file( $path ) {
+	$GLOBALS['twd_stub']['deleted_files'][] = $path;
+	if ( is_file( $path ) ) {
+		unlink( $path );
+	}
+}
+function wp_nonce_url( $url, $action ) {
+	return $url . '&_wpnonce=NONCE_' . $action;
+}
+function admin_url( $path = '' ) {
+	return 'https://example.test/wp-admin/' . $path;
+}
+function add_query_arg( $args, $url ) {
+	return $url . ( false === strpos( $url, '?' ) ? '?' : '&' ) . http_build_query( $args );
+}
+function esc_url( $url ) {
+	return htmlspecialchars( $url, ENT_QUOTES );
+}
+function esc_html( $text ) {
+	return htmlspecialchars( $text, ENT_QUOTES );
+}
+function esc_html__( $text, $domain = '' ) {
+	return esc_html( $text );
+}
+function __( $text, $domain = '' ) {
+	return $text;
+}
+function sanitize_text_field( $text ) {
+	return trim( strip_tags( $text ) );
+}
+function current_user_can( $cap ) {
+	return $GLOBALS['twd_stub']['caps'];
+}
+function check_admin_referer( $action ) {
+	return $GLOBALS['twd_stub']['referer_ok'];
+}
+function wp_die( $message = '' ) {
+	throw new TWD_SK_Stub_Die( $message );
+}
+function wp_safe_redirect( $url ) {
+	throw new TWD_SK_Stub_Redirect( $url );
+}
+function get_current_screen() {
+	return (object) array( 'id' => $GLOBALS['twd_stub']['screen'] );
+}
+// Keeps only the allowed tags and removes every attribute, like the real wp_kses with bare tag rules.
+function wp_kses( $html, $allowed ) {
+	$html = strip_tags( $html, '<' . implode( '><', array_keys( $allowed ) ) . '>' );
+	return preg_replace( '/<([a-z0-9]+)\s[^>]*>/i', '<$1>', $html );
+}
+
 require_once ABSPATH . 'includes/class-twd-sk-registry.php';
 require_once ABSPATH . 'includes/class-twd-sk-sanitizer.php';
 require_once ABSPATH . 'includes/class-twd-sk-store.php';
 require_once ABSPATH . 'includes/class-twd-sk-page.php';
 require_once ABSPATH . 'includes/class-twd-sk-packs.php';
 require_once ABSPATH . 'includes/class-twd-sk-assets.php';
+require_once ABSPATH . 'includes/class-twd-sk-updater.php';
 
 // Tiny assertion helpers ---------------------------------------------------
 

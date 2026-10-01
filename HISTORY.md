@@ -17,6 +17,27 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## Slice 2c (v0.2.1)
+
+### The self-hosted updater, and how it differs from the articles plugin's
+It copies the pattern (a small JSON in the public repo, a 12 hour transient, a "Check for updates" link on the plugin row, the normal update row and details window) with these deliberate differences:
+- **Fixed addresses only.** The articles updater takes the package address from the JSON. This one ignores any address in the JSON, rejects a JSON that names another, uses two fixed https constants, and follows no redirects.
+- **A sha256 of the zip in the JSON, verified before install.** The updater downloads the zip itself, hashes it, and refuses unless it matches a freshly fetched JSON. Fail closed, with a plain message.
+- **No checksum, no offer.** An update file without a valid sha256 never produces an update row.
+- **No silent downgrade.** At install time the JSON version must still be newer than the installed one.
+- **Folder check.** After unpacking, the package must be the single folder `twd-site-kit` with the plugin file in it.
+- Static methods and `is_admin()` gating instead of a singleton created in the main file. The manual check needs the `update_plugins` permission rather than `manage_options`. The check link lives on the Plugins row only (there is no settings page). The cached value is the cleaned manifest, never the raw response, and the changelog is reduced to simple tags before it is shown.
+
+### What the checksum does and does not do
+It guards against a corrupted or partial download, a stale or mixed-up copy served from GitHub's cache, and a tampered zip. It is not a signature: the checksum lives in the same repo as the zip, so anyone able to push to the repo could change both. The protection for that is two-factor authentication on the GitHub account.
+
+### Release records without tags
+The cloud session's git proxy refuses tag pushes, so there are no tags. The update JSON is the release record. A test makes the JSON checksum, version, changelog entry and download address mismatch impossible to commit unnoticed.
+
+### Known limits
+- GitHub's raw address caches for a few minutes, so right after a release the JSON and zip can briefly disagree. The updater then refuses (safe). Wait and check again.
+- The updater has been tested here against a stand-in for WordPress, not a real WordPress install. The first real test is installing 0.2.1 by hand and releasing 0.2.2.
+
 ## Slice 2a (v0.2.0)
 
 ### One h1, in the hero only

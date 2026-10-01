@@ -8,6 +8,10 @@ WordPress plugin for Therapy Web Designs sites. Stores a page as sanitised HTML 
 
 Upload `dist/twd-site-kit-latest.zip` in WordPress (Plugins, Add New, Upload Plugin), then Activate.
 
+## Updates
+
+The plugin updates itself from this repository. On the Plugins screen the plugin's row has a "Check for updates" link, and a newer version shows the normal update row with a one-click update. Every update is checked against a sha256 checksum before it is installed. See CLAUDE.md for how a release is made.
+
 ## Use (WP-CLI)
 
 ```
