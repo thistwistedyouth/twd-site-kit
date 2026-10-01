@@ -147,14 +147,14 @@ twd_sk_test( 'release check: a copy of the real release passes', function () {
 
 twd_sk_test( 'release check: a plugin header that disagrees with TWD_SK_VERSION is caught', function () {
 	$root = twd_sk_release_fixture();
-	file_put_contents( $root . '/twd-site-kit.php', str_replace( "define( 'TWD_SK_VERSION', '0.2.3' )", "define( 'TWD_SK_VERSION', '0.2.9' )", file_get_contents( $root . '/twd-site-kit.php' ) ) );
+	file_put_contents( $root . '/twd-site-kit.php', str_replace( "define( 'TWD_SK_VERSION', '0.2.4' )", "define( 'TWD_SK_VERSION', '0.2.9' )", file_get_contents( $root . '/twd-site-kit.php' ) ) );
 	$p = twd_sk_problems( $root, 'skip' )['problems'];
 	twd_sk_true( 1 <= count( $p ) && false !== strpos( implode( ' ', $p ), 'Versions disagree' ), implode( ' | ', $p ) );
 } );
 
 twd_sk_test( 'release check: a readme.txt Stable tag that disagrees is caught', function () {
 	$root = twd_sk_release_fixture();
-	file_put_contents( $root . '/readme.txt', str_replace( 'Stable tag: 0.2.3', 'Stable tag: 0.2.0', file_get_contents( $root . '/readme.txt' ) ) );
+	file_put_contents( $root . '/readme.txt', str_replace( 'Stable tag: 0.2.4', 'Stable tag: 0.2.0', file_get_contents( $root . '/readme.txt' ) ) );
 	twd_sk_has( 'Versions disagree', implode( ' ', twd_sk_problems( $root, 'skip' )['problems'] ) );
 } );
 
@@ -217,8 +217,8 @@ twd_sk_test( 'release check: a zip built for another version is caught and the f
 		return;
 	}
 	$root = twd_sk_release_fixture();
-	file_put_contents( $root . '/twd-site-kit.php', str_replace( '0.2.3', '0.2.4', file_get_contents( $root . '/twd-site-kit.php' ) ) );
-	file_put_contents( $root . '/readme.txt', str_replace( '0.2.3', '0.2.4', file_get_contents( $root . '/readme.txt' ) ) );
+	file_put_contents( $root . '/twd-site-kit.php', str_replace( '0.2.4', '0.2.5', file_get_contents( $root . '/twd-site-kit.php' ) ) );
+	file_put_contents( $root . '/readme.txt', str_replace( '0.2.4', '0.2.5', file_get_contents( $root . '/readme.txt' ) ) );
 	$p = implode( ' ', twd_sk_problems( $root, 'skip' )['problems'] );
 	twd_sk_has( 'The zip holds', $p );
 	twd_sk_has( 'Rebuild the zip', $p );
@@ -239,7 +239,7 @@ twd_sk_test( 'release check: a zip whose top-level folder is not exactly twd-sit
 	}
 	$root = twd_sk_release_fixture();
 	$main = file_get_contents( ABSPATH . 'twd-site-kit.php' );
-	twd_sk_make_zip( $root . '/dist/twd-site-kit-latest.zip', array( 'twd-site-kit-0.2.3/twd-site-kit.php' => $main ) );
+	twd_sk_make_zip( $root . '/dist/twd-site-kit-latest.zip', array( 'twd-site-kit-0.2.4/twd-site-kit.php' => $main ) );
 	twd_sk_has( 'exactly one top-level folder', implode( ' ', twd_sk_problems( $root, 'skip' )['problems'] ) );
 	twd_sk_make_zip( $root . '/dist/twd-site-kit-latest.zip', array( 'twd-site-kit.php' => $main, 'readme.txt' => 'x' ) );
 	twd_sk_true( 0 < count( twd_sk_problems( $root, 'skip' )['problems'] ), 'a zip of the folder contents, with no folder at all' );
@@ -286,16 +286,16 @@ twd_sk_test( 'scripts: update-json.php refuses a new version with no changelog, 
 	twd_sk_eq( 1, $code, $out );
 	twd_sk_has( '--changelog', $out );
 
-	list( $code, $out ) = twd_sk_release_run( $root, 'update-json.php', array( '--changelog=<h4>0.2.3</h4><ul><li>A test entry.</li></ul>' ) );
+	list( $code, $out ) = twd_sk_release_run( $root, 'update-json.php', array( '--changelog=<h4>0.2.4</h4><ul><li>A test entry.</li></ul>' ) );
 	twd_sk_eq( 0, $code, $out );
 	$json = json_decode( file_get_contents( $root . '/dist/twd-site-kit-update.json' ), true );
-	twd_sk_eq( '0.2.3', $json['version'] );
+	twd_sk_eq( '0.2.4', $json['version'] );
 	twd_sk_eq( hash_file( 'sha256', $root . '/dist/twd-site-kit-latest.zip' ), $json['sha256'] );
 	twd_sk_eq( TWD_SK_RELEASE_ZIP_URL, $json['download_url'] );
 	twd_sk_eq( gmdate( 'Y-m-d' ), $json['last_updated'] );
-	twd_sk_true( 0 === strpos( $json['changelog'], '<h4>0.2.3</h4><ul><li>A test entry.</li></ul>' ), 'new entry first' );
+	twd_sk_true( 0 === strpos( $json['changelog'], '<h4>0.2.4</h4><ul><li>A test entry.</li></ul>' ), 'new entry first' );
 	twd_sk_has( '<h4>0.2.0</h4>', $json['changelog'], 'older entries kept' );
-	twd_sk_eq( 1, substr_count( $json['changelog'], '<h4>0.2.3</h4>' ), 'one entry per version' );
+	twd_sk_eq( 1, substr_count( $json['changelog'], '<h4>0.2.4</h4>' ), 'one entry per version' );
 } );
 
 twd_sk_test( 'scripts: running update-json.php again for the same version only refreshes the checksum and keeps the changelog', function () {

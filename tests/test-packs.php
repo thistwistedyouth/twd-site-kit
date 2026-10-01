@@ -386,6 +386,7 @@ twd_sk_test( 'contrast: text pairs on bands, buttons, headings and eyebrows reac
 		array( 'color-heading', 'color-bg' ),
 		array( 'color-heading', 'color-surface' ),
 		array( 'color-accent-text', 'color-bg' ),
+		array( 'color-accent-text', 'color-surface' ),
 		array( 'color-eyebrow', 'color-bg' ),
 		array( 'color-eyebrow', 'color-surface' ),
 		array( 'color-primary', 'color-bg' ),

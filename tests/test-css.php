@@ -110,7 +110,7 @@ twd_sk_test( 'css: every component class in a selector is doubled so a theme can
 				continue;
 			}
 			// Every .twd-sk-* class other than the wrapper must appear as .x.x
-			preg_match_all( '/\.(twd-sk-[A-Za-z0-9_-]+)/', $sel, $m );
+			preg_match_all( '/\.(twd-(?:sk|ap)-[A-Za-z0-9_-]+)/', $sel, $m );
 			$names = array_filter( $m[1], function ( $n ) {
 				return 'twd-sk-page' !== $n;
 			} );
@@ -368,5 +368,34 @@ twd_sk_test( 'css: no text rule uses a literal font size below 14px, and sizes c
 			}
 		}
 		twd_sk_true( ! preg_match( '/(?:^|[^\d.])(?:[0-9]|1[0-3])(?:\.\d+)?(?:px|rem|em)\b/', trim( $v ) ) || false !== strpos( $v, 'var(' ), 'small size ' . trim( $v ) );
+	}
+} );
+
+twd_sk_test( 'css: the articles grid rules are all scoped under .twd-sk-page, doubled, and take their values from tokens', function () {
+	$found = 0;
+	foreach ( twd_sk_css_rules() as $rule ) {
+		foreach ( $rule['selectors'] as $sel ) {
+			if ( false === strpos( $sel, '.twd-ap-' ) ) {
+				continue;
+			}
+			$found++;
+			twd_sk_true( 0 === strpos( $sel, '.twd-sk-page ' ), 'unscoped articles rule: ' . $sel );
+		}
+		foreach ( $rule['decls'] as $d ) {
+			if ( false !== strpos( $rule['selectors'][0], '.twd-ap-' ) ) {
+				twd_sk_true( false !== strpos( $d['value'], 'var(--twd-site-' ), 'literal in articles rule: ' . $d['prop'] . ': ' . $d['value'] );
+			}
+		}
+	}
+	twd_sk_true( $found >= 10, 'articles rules present (' . $found . ')' );
+	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	foreach ( array( 'twd-ap-article-title', 'twd-ap-article-readmore', 'twd-ap-article-excerpt', 'twd-ap-article-date' ) as $c ) {
+		twd_sk_true( 1 === preg_match( '/\.twd-sk-page \.' . $c . '\.' . $c . '\s*\{/', $raw ), 'rule for ' . $c );
+	}
+	twd_sk_true( 1 === preg_match( '/twd-ap-article-title\.twd-ap-article-title\s*\{[^}]*font-family:\s*var\(--twd-site-font-heading\)[^}]*color:\s*var\(--twd-site-color-title\)/', $raw ), 'title uses heading font and title colour' );
+	twd_sk_true( 1 === preg_match( '/twd-ap-article-readmore\.twd-ap-article-readmore\s*\{[^}]*color:\s*var\(--twd-site-color-accent-text\)/', $raw ), 'read more uses the accent' );
+	foreach ( array( 'twd-ap-article-date', 'twd-ap-article-excerpt', 'twd-ap-article-readmore' ) as $c ) {
+		preg_match( '/' . $c . '\.' . $c . '\s*\{([^}]*)\}/', $raw, $m );
+		twd_sk_true( false !== strpos( $m[1], 'font-size: var(--twd-site-size-small)' ), $c . ' uses the small size token (14px floor)' );
 	}
 } );

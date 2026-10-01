@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.2.3
+Stable tag: 0.2.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.2.4 =
+* New: the resources component styles the articles plugin's grid from the active pack (heading font and title colour on card titles, accent on Read more, body font at 14px or more). No effect when the articles plugin is absent.
 
 = 0.2.3 =
 * Fix: body copy at least 16px, eyebrows, small text and buttons at least 14px. Text on bands and buttons reaches 4.5:1 contrast in both packs.

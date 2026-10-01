@@ -773,6 +773,90 @@
 .twd-sk-page .twd-sk-cta--strip.twd-sk-cta--strip .twd-sk-cta__actions.twd-sk-cta__actions {
   justify-content: flex-end;
 }
+/* ---- articles grid (the articles plugin's [twd_articles] output) ----
+   Styled from the active pack through the plugin's documented classes. Every selector
+   sits under the page wrapper, so these rules do nothing when the plugin is absent or
+   its grid is outside a kit page. Colour, type and shape only; the plugin keeps its layout. */
+.twd-sk-page .twd-ap-articles.twd-ap-articles {
+  font-family: var(--twd-site-font-body) !important;
+  color: var(--twd-site-color-body) !important;
+}
+.twd-sk-page .twd-ap-articles-group-title.twd-ap-articles-group-title {
+  font-family: var(--twd-site-font-heading) !important;
+  font-size: var(--twd-site-size-title) !important;
+  font-weight: var(--twd-site-title-weight) !important;
+  font-style: var(--twd-site-title-style) !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-ap-articles-group-more.twd-ap-articles-group-more {
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  font-weight: var(--twd-site-btn-weight) !important;
+  color: var(--twd-site-color-accent-text) !important;
+}
+.twd-sk-page .twd-ap-article-card.twd-ap-article-card {
+  background-color: var(--twd-site-color-surface) !important;
+  border-color: var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-card) !important;
+  box-shadow: var(--twd-site-shadow-card) !important;
+}
+.twd-sk-page .twd-ap-article-body.twd-ap-article-body {
+  font-family: var(--twd-site-font-body) !important;
+}
+.twd-sk-page .twd-ap-article-date.twd-ap-article-date {
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  color: var(--twd-site-color-muted) !important;
+}
+.twd-sk-page .twd-ap-article-title.twd-ap-article-title {
+  font-family: var(--twd-site-font-heading) !important;
+  font-size: var(--twd-site-size-title) !important;
+  font-weight: var(--twd-site-title-weight) !important;
+  font-style: var(--twd-site-title-style) !important;
+  line-height: var(--twd-site-line-heading) !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-ap-article-excerpt.twd-ap-article-excerpt {
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  line-height: var(--twd-site-line-body) !important;
+  color: var(--twd-site-color-body) !important;
+}
+.twd-sk-page .twd-ap-article-readmore.twd-ap-article-readmore {
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  font-weight: var(--twd-site-btn-weight) !important;
+  color: var(--twd-site-color-accent-text) !important;
+}
+.twd-sk-page .twd-ap-articles-grid.twd-ap-articles-grid .twd-ap-muted.twd-ap-muted,
+.twd-sk-page .twd-ap-articles-empty.twd-ap-articles-empty {
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  color: var(--twd-site-color-muted) !important;
+}
+.twd-sk-page .twd-ap-articles-search.twd-ap-articles-search,
+.twd-sk-page .twd-ap-articles-category-select.twd-ap-articles-category-select {
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  color: var(--twd-site-color-body) !important;
+  border-color: var(--twd-site-color-border) !important;
+  background-color: var(--twd-site-color-surface) !important;
+}
+.twd-sk-page .twd-ap-articles-loadmore.twd-ap-articles-loadmore {
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  font-weight: var(--twd-site-btn-weight) !important;
+  color: var(--twd-site-color-title) !important;
+  border-color: var(--twd-site-color-border) !important;
+  background-color: var(--twd-site-color-surface) !important;
+  border-radius: var(--twd-site-radius-btn) !important;
+}
+.twd-sk-page .twd-ap-articles-loadmore.twd-ap-articles-loadmore:hover,
+.twd-sk-page .twd-ap-articles-loadmore.twd-ap-articles-loadmore:focus-visible {
+  background-color: var(--twd-site-color-primary-hover) !important;
+  border-color: var(--twd-site-color-primary-hover) !important;
+  color: var(--twd-site-color-on-primary) !important;
+}
 /* ---- contact ---- */
 .twd-sk-page .twd-sk-contact__grid.twd-sk-contact__grid {
   display: grid;
