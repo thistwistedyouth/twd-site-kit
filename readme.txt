@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.2.1
+Stable tag: 0.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.2.2 =
+* Fix: image and text, text with aside and split layouts now share the full container width with fractional columns; the narrow text layout is one centred column.
 
 = 0.2.1 =
 * New: self-hosted updater with a checksum check. A "Check for updates" link on the Plugins screen row.

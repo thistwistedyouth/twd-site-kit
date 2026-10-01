@@ -19,6 +19,9 @@
   display: block;
   width: 100%;
   max-width: none;
+  min-width: 0;
+  flex: 1 1 100%;
+  align-self: stretch;
   overflow-x: clip;
   font-family: var(--twd-site-font-body) !important;
   font-size: var(--twd-site-size-body) !important;
@@ -393,13 +396,28 @@
 }
 .twd-sk-page .twd-sk-text__grid.twd-sk-text__grid {
   display: grid;
-  grid-template-columns: 1.4fr 0.9fr;
+  width: 100%;
+  min-width: 0;
+  float: none;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  justify-content: stretch;
+  justify-items: stretch;
   gap: var(--twd-site-gap-lg);
-  align-items: start;
+  align-items: stretch;
+}
+.twd-sk-page .twd-sk-text__grid.twd-sk-text__grid > * {
+  min-width: 0;
 }
 .twd-sk-page .twd-sk-text__aside.twd-sk-text__aside {
   position: sticky;
   top: 96px;
+  align-self: start;
+}
+/* The default narrow text layout is one centred column. */
+.twd-sk-page .twd-sk-text.twd-sk-text:not(.twd-sk-text--aside.twd-sk-text--aside) .twd-sk-eyebrow.twd-sk-eyebrow,
+.twd-sk-page .twd-sk-text.twd-sk-text:not(.twd-sk-text--aside.twd-sk-text--aside) .twd-sk-title.twd-sk-title,
+.twd-sk-page .twd-sk-text.twd-sk-text:not(.twd-sk-text--aside.twd-sk-text--aside) .twd-sk-text__body.twd-sk-text__body {
+  text-align: center !important;
 }
 .twd-sk-page .twd-sk-text__aside.twd-sk-text__aside > * + * {
   margin-top: 20px !important;
@@ -416,9 +434,17 @@
 /* ---- image and text ---- */
 .twd-sk-page .twd-sk-image-text__grid.twd-sk-image-text__grid {
   display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
+  width: 100%;
+  min-width: 0;
+  float: none;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  justify-content: stretch;
+  justify-items: stretch;
   gap: var(--twd-site-gap-lg);
   align-items: stretch;
+}
+.twd-sk-page .twd-sk-image-text__grid.twd-sk-image-text__grid > * {
+  min-width: 0;
 }
 .twd-sk-page .twd-sk-image-text--narrow.twd-sk-image-text--narrow .twd-sk-image-text__grid.twd-sk-image-text__grid {
   grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
@@ -428,6 +454,8 @@
 }
 .twd-sk-page .twd-sk-image-text__media.twd-sk-image-text__media {
   display: grid;
+  width: 100%;
+  max-width: none;
   grid-template-rows: minmax(0, 1fr);
   gap: 20px;
   margin: 0 !important;

@@ -315,3 +315,44 @@ twd_sk_test( 'css: the file holds no em or en dashes', function () {
 	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
 	twd_sk_true( false === strpos( $raw, "\xE2\x80\x94" ) && false === strpos( $raw, "\xE2\x80\x93" ) );
 } );
+
+/**
+ * Pull the declaration block of the exact selector from the stylesheet.
+ */
+function twd_sk_css_decls( $raw, $selector ) {
+	$doubled = preg_replace( '/\.(twd-sk-[A-Za-z0-9_-]+)/', '.$1.$1', $selector );
+	$pattern = '/\.twd-sk-page ' . preg_quote( $doubled, '/' ) . '\s*\{([^}]*)\}/';
+	preg_match_all( $pattern, $raw, $m );
+	return implode( ' ', $m[1] );
+}
+
+twd_sk_test( 'css: two-column grids use fractional tracks that fill the container, never auto or content widths', function () {
+	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	foreach ( array( '.twd-sk-image-text__grid', '.twd-sk-text__grid', '.twd-sk-hero--split .twd-sk-hero__grid' ) as $sel ) {
+		$block = twd_sk_css_decls( $raw, $sel );
+		twd_sk_true( '' !== $block, 'no rule for ' . $sel );
+		preg_match( '/grid-template-columns:\s*([^;]+);/', $block, $m );
+		twd_sk_true( ! empty( $m[1] ), 'no columns for ' . $sel );
+		twd_sk_true( 1 === preg_match( '/\dfr/', $m[1] ), 'no fr unit for ' . $sel . ': ' . $m[1] );
+		twd_sk_true( ! preg_match( '/auto|content|px|%|em/', $m[1] ), 'content or fixed width for ' . $sel . ': ' . $m[1] );
+		if ( false === strpos( $sel, 'hero' ) ) {
+			twd_sk_has( 'width: 100%', $block );
+			twd_sk_has( 'align-items: stretch', $block );
+		}
+	}
+} );
+
+twd_sk_test( 'css: the image fills its column and the narrow variant keeps its one deliberate fixed image column', function () {
+	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	$img = twd_sk_css_decls( $raw, '.twd-sk-image-text__img' );
+	twd_sk_has( 'width: 100%', $img );
+	twd_sk_has( 'height: 100%', $img );
+	twd_sk_has( 'object-fit: cover', $img );
+	twd_sk_has( 'minmax(0, 320px)', twd_sk_css_decls( $raw, '.twd-sk-image-text--narrow .twd-sk-image-text__grid' ) );
+} );
+
+twd_sk_test( 'css: the narrow text layout is one centred column and the aside layout stays left aligned', function () {
+	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-text:not\(\.twd-sk-text--aside[^{]*\{[^}]*text-align:\s*center/', $raw ), 'no centred rule' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-text--aside\.twd-sk-text--aside \.twd-sk-title[^{]*\{[^}]*text-align:\s*left/', $raw ), 'aside title not left aligned' );
+} );

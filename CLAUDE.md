@@ -87,6 +87,7 @@ for f in twd-site-kit.php includes/*.php bin/*.php tests/*.php; do php -l "$f"; 
 #    cp -r, not rsync, builds fresh, unzips the result, diffs every file against
 #    the source, checks the file lists match, and runs the release check.
 bash bin/build-zip.sh
+# (tests/test-release.php holds the current version in a few fixtures; bump those too)
 
 # 4. Update the JSON: version, changelog entry, the fixed download address, the
 #    sha256 of the zip just built, and today's date. The changelog must start
