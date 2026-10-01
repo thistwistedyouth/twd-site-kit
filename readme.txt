@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.2.5
+Stable tag: 0.2.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,10 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.2.6 =
+* New: wp twd-sk check <page_id> lists leftover example text. Saving a page warns about it (nothing is removed).
+* Improved: the client AI prompt (image, alt text, heading order, link text, no outcome promises, helplines untouched; examples printed once).
 
 = 0.2.5 =
 * New: wp twd-sk prompt <page_id> prints the client AI prompt (rules, style guide, the page's HTML).

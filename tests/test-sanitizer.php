@@ -506,3 +506,33 @@ twd_sk_test( 'house rules: no em or en dash appears anywhere in the source files
 		twd_sk_true( false === strpos( $src, "\xE2\x80\x94" ) && false === strpos( $src, "\xE2\x80\x93" ), 'no em or en dash in ' . substr( $path, strlen( $root ) + 1 ) );
 	}
 } );
+
+twd_sk_test( 'leftovers: every example marker is found, case-insensitively, and counted', function () {
+	$html = '<p>Heading here</p><p>paragraph TEXT here</p><a href="mailto:you@example.com">x</a><a href="tel:PHONE_NUMBER">y</a><span>Short label here</span><img src="/wp-content/uploads/your-image.jpg" alt="Describe the image"><p>[PLACEHOLDER: fee]</p><p>[PLACEHOLDER]</p>';
+	$found = TWD_SK_Sanitizer::find_leftovers( $html );
+	foreach ( TWD_SK_Sanitizer::leftover_markers() as $marker ) {
+		twd_sk_true( isset( $found[ $marker ] ), 'marker not found: ' . $marker );
+	}
+	twd_sk_eq( 2, $found['[PLACEHOLDER'] );
+	foreach ( array( 'example.com', 'PHONE_NUMBER', 'Short label here', 'Heading here', 'Paragraph text here', 'Describe the image' ) as $must ) {
+		twd_sk_true( in_array( $must, TWD_SK_Sanitizer::leftover_markers(), true ), 'required marker: ' . $must );
+	}
+	twd_sk_eq( array(), TWD_SK_Sanitizer::find_leftovers( '<p>Real words about a real practice.</p>' ) );
+	twd_sk_eq( array(), TWD_SK_Sanitizer::find_leftovers( '' ) );
+} );
+
+twd_sk_test( 'leftovers: the cleaning report warns about them but keeps the text and does not count them as removals', function () {
+	$in  = '<p>Heading here and [PLACEHOLDER: fee]</p>';
+	$rep = twd_sk_rep( $in );
+	twd_sk_eq( $in, $rep['html'] );
+	twd_sk_eq( 0, $rep['report']['total'] );
+	twd_sk_eq( array( 'Heading here' => 1, '[PLACEHOLDER' => 1 ), $rep['report']['leftovers'] );
+	twd_sk_eq( array(), twd_sk_rep( '<p>All real words.</p>' )['report']['leftovers'] );
+} );
+
+twd_sk_test( 'leftovers: the whole gallery carries example text, so it warns, and every registry skeleton warns or is a notice', function () {
+	$gallery = file_get_contents( ABSPATH . 'starters/_gallery.html' );
+	$rep     = twd_sk_rep( $gallery );
+	twd_sk_eq( 0, $rep['report']['total'], 'nothing removed' );
+	twd_sk_true( count( $rep['report']['leftovers'] ) >= 5, 'gallery warns about its example text' );
+} );

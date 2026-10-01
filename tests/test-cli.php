@@ -165,13 +165,13 @@ twd_sk_test( 'cli: undo with nothing to undo fails cleanly', function () {
 	} ) );
 } );
 
-twd_sk_test( 'cli: exposes exactly the six commands: save, get, versions, undo, pack, prompt', function () {
+twd_sk_test( 'cli: exposes exactly the seven commands: save, get, versions, undo, pack, prompt, check', function () {
 	$methods = array();
 	foreach ( ( new ReflectionClass( 'TWD_SK_CLI' ) )->getMethods( ReflectionMethod::IS_PUBLIC ) as $m ) {
 		$methods[] = $m->getName();
 	}
 	sort( $methods );
-	twd_sk_eq( array( 'get', 'pack', 'prompt', 'save', 'undo', 'versions' ), $methods );
+	twd_sk_eq( array( 'check', 'get', 'pack', 'prompt', 'save', 'undo', 'versions' ), $methods );
 } );
 
 twd_sk_test( 'cli: pack with no name lists the packs and marks the active one', function () {
@@ -236,4 +236,45 @@ twd_sk_test( 'plugin: no PHP 8-only syntax or functions in the plugin code', fun
 		}
 		twd_sk_true( 0 === preg_match( '/(?<![A-Za-z_])match\s*\(/', $src ), basename( $file ) . ' uses a match expression' );
 	}
+} );
+
+twd_sk_test( 'cli: check lists leftover example text and changes nothing', function () {
+	WP_CLI::reset();
+	twd_stub_add_post( 12, 'page', '[twd_page]' );
+	TWD_SK_Store::save( 12, '<p>Heading here</p><a href="mailto:you@example.com">mail</a><p>[PLACEHOLDER: fee]</p>' );
+	$before = TWD_SK_Store::get_current( 12 );
+	( new TWD_SK_CLI() )->check( array( '12' ), array() );
+	$all = WP_CLI::all();
+	twd_sk_has( 'still has example text', $all );
+	twd_sk_has( 'Heading here (1)', $all );
+	twd_sk_has( 'example.com (1)', $all );
+	twd_sk_has( '[PLACEHOLDER (1)', $all );
+	twd_sk_eq( $before, TWD_SK_Store::get_current( 12 ) );
+	twd_sk_eq( 1, count( TWD_SK_Store::list_versions( 12 ) ) );
+} );
+
+twd_sk_test( 'cli: check says so when the page is clean, and needs content and a numeric id', function () {
+	WP_CLI::reset();
+	twd_stub_add_post( 12, 'page', '[twd_page]' );
+	TWD_SK_Store::save( 12, '<p>Real words only.</p>' );
+	( new TWD_SK_CLI() )->check( array( '12' ), array() );
+	twd_sk_has( 'no leftover example text', WP_CLI::all() );
+	twd_stub_add_post( 13, 'page', '[twd_page]' );
+	twd_sk_has( 'no stored content', twd_sk_cli_fails( function () {
+		( new TWD_SK_CLI() )->check( array( '13' ), array() );
+	} ) );
+	twd_sk_has( 'page ID must be a number', twd_sk_cli_fails( function () {
+		( new TWD_SK_CLI() )->check( array( 'x' ), array() );
+	} ) );
+} );
+
+twd_sk_test( 'cli: save warns about leftover example text without removing it', function () {
+	WP_CLI::reset();
+	twd_stub_add_post( 12, 'page', '[twd_page]' );
+	$file = twd_sk_tmp_file( '<p>Paragraph text here</p>' );
+	( new TWD_SK_CLI() )->save( array( '12', $file ), array() );
+	twd_sk_has( 'Example text is still on the page: Paragraph text here (1)', WP_CLI::all() );
+	twd_sk_has( 'wp twd-sk check 12', WP_CLI::all() );
+	twd_sk_eq( '<p>Paragraph text here</p>', TWD_SK_Store::get_current( 12 ) );
+	unlink( $file );
 } );

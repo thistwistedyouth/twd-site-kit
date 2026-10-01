@@ -8,6 +8,7 @@
  *   wp twd-sk get <page_id>             print the current HTML
  *   wp twd-sk versions <page_id>        list versions, newest first
  *   wp twd-sk undo <page_id>            step back one change (recorded as a new version)
+ *   wp twd-sk check <page_id>           list leftover example text still on the page
  *   wp twd-sk prompt <page_id>          print the client AI prompt (rules, style guide, this page's HTML)
  *   wp twd-sk pack [<slug>]             list style packs, or switch to one
  */
@@ -184,6 +185,33 @@ class TWD_SK_CLI {
 	}
 
 	/**
+	 * List example text still on a page (example.com, PHONE_NUMBER, "Heading here" and so
+	 * on, or any [PLACEHOLDER). Nothing is changed. Run it before a page goes live.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <page_id>
+	 * : ID of the WordPress page that holds the [twd_page] shortcode.
+	 */
+	public function check( $args, $assoc_args ) {
+		$page_id = self::page_id( isset( $args[0] ) ? $args[0] : '' );
+		$html    = TWD_SK_Store::get_current( $page_id );
+		if ( '' === $html ) {
+			WP_CLI::error( 'Page ' . $page_id . ' has no stored content.' );
+			return;
+		}
+		$found = TWD_SK_Store::get_leftovers( $page_id );
+		if ( ! $found ) {
+			WP_CLI::success( 'Page ' . $page_id . ' has no leftover example text.' );
+			return;
+		}
+		WP_CLI::warning( 'Page ' . $page_id . ' still has example text. Replace it before the page goes live:' );
+		foreach ( $found as $marker => $count ) {
+			WP_CLI::log( '  ' . $marker . ' (' . $count . ')' );
+		}
+	}
+
+	/**
 	 * Print the client AI prompt for a page: fixed rules, a style guide generated from
 	 * the registry, and the page's current stored HTML. Paste it into an AI chat.
 	 *
@@ -223,6 +251,13 @@ class TWD_SK_CLI {
 		}
 
 		$report = $result['report'];
+		if ( ! empty( $report['leftovers'] ) ) {
+			$parts = array();
+			foreach ( $report['leftovers'] as $marker => $count ) {
+				$parts[] = $marker . ' (' . $count . ')';
+			}
+			WP_CLI::warning( 'Example text is still on the page: ' . implode( ', ', $parts ) . '. Run wp twd-sk check ' . $page_id . ' before it goes live.' );
+		}
 		if ( ! empty( $report['total'] ) ) {
 			WP_CLI::warning( 'The cleaner removed or changed ' . $report['total'] . ' item(s):' );
 			foreach ( $report['removed'] as $kind => $list ) {

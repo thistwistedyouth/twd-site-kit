@@ -7,6 +7,9 @@ require_once dirname( __DIR__ ) . '/includes/class-twd-sk-cli.php';
 twd_sk_test( 'prompt: every registry class, component, variant and shared class appears in the style guide', function () {
 	$prompt = TWD_SK_Prompt::build( '' );
 	foreach ( array_keys( TWD_SK_Registry::allowed_classes() ) as $class ) {
+		if ( 'twd-sk-gallery-label' === $class ) {
+			continue; // gallery file only, deliberately left out of the prompt
+		}
 		twd_sk_true( false !== strpos( $prompt, $class ), 'class missing from the prompt: ' . $class );
 	}
 	foreach ( TWD_SK_Registry::all() as $id => $c ) {
@@ -32,21 +35,52 @@ twd_sk_test( 'prompt: an empty page says so and has no code block', function () 
 twd_sk_test( 'prompt: every fixed rule the owner asked for is present', function () {
 	$prompt = TWD_SK_Prompt::build( '' );
 	foreach ( array(
-		'Ask before changing anything',
+		'only if the request is unclear or would remove content',
+		'say in one line what changed',
 		'one change at a time',
 		'full page HTML in one code block',
 		'exactly one h1, in the first hero',
+		'headings stay in order',
 		'No scripts, no inline styles, no forms and no iframes',
+		'tell them to ask their web designer',
+		'keep every existing image address exactly as it is',
+		'[PLACEHOLDER: image needed]',
+		'Never invent a file name',
+		'descriptive alt text',
+		'empty alt text only for a purely decorative image',
+		'Link text must be meaningful',
 		'Never invent credentials, registration numbers, fees, testimonials or contact details',
 		'[PLACEHOLDER]',
+		'Never promise outcomes and never make health claims',
+		"advertising guidance of the therapist's professional body",
 		'client confidentiality',
 		'composites only',
 		'Keep any safety notice',
+		'Never change the helpline numbers or their wording',
 		"therapist's own voice",
 		'Do not use em dashes',
 	) as $needle ) {
 		twd_sk_has( $needle, $prompt );
 	}
+	twd_sk_hasnt( 'added separately in the page builder', $prompt );
+	twd_sk_hasnt( 'Ask before changing anything', $prompt );
+} );
+
+twd_sk_test( 'prompt: the gallery label class is not offered, and a variant identical to its default is not printed twice', function () {
+	$prompt = TWD_SK_Prompt::build( '' );
+	twd_sk_hasnt( 'twd-sk-gallery-label', $prompt );
+	$seen = 0;
+	foreach ( TWD_SK_Registry::all() as $c ) {
+		twd_sk_eq( 1, substr_count( $prompt, "Example:\n" . $c['skeleton'] . "\n" ), $c['id'] . ' default example printed once' );
+		foreach ( $c['variants'] as $class => $v ) {
+			if ( $v['skeleton'] === $c['skeleton'] ) {
+				$seen++;
+				twd_sk_has( 'Variant ' . $class . ' (' . $v['label'] . '): same as the example above.', $prompt );
+				twd_sk_eq( 1, substr_count( $prompt, $v['skeleton'] ), $class . ' skeleton appears once' );
+			}
+		}
+	}
+	twd_sk_true( $seen >= 1, 'the registry has variants that equal their default' );
 } );
 
 twd_sk_test( 'prompt: the text holds no em or en dashes, and its placeholder survives the sanitiser', function () {

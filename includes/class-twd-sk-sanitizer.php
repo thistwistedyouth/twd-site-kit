@@ -137,6 +137,42 @@ class TWD_SK_Sanitizer {
 	}
 
 	/**
+	 * Example text from the registry skeletons that should not go live. A leftover is a
+	 * warning only: the HTML is never changed because of it.
+	 */
+	public static function leftover_markers() {
+		return array(
+			'example.com',
+			'PHONE_NUMBER',
+			'Short label here',
+			'Heading here',
+			'Paragraph text here',
+			'Describe the image',
+			'your-image.jpg',
+			'[PLACEHOLDER',
+		);
+	}
+
+	/**
+	 * Find leftover example text in some HTML (case-insensitive).
+	 *
+	 * @return array marker => number of times it appears. Empty when there are none.
+	 */
+	public static function find_leftovers( $html ) {
+		$found = array();
+		if ( ! is_string( $html ) || '' === $html ) {
+			return $found;
+		}
+		foreach ( self::leftover_markers() as $marker ) {
+			$n = substr_count( strtolower( $html ), strtolower( $marker ) );
+			if ( $n > 0 ) {
+				$found[ $marker ] = $n;
+			}
+		}
+		return $found;
+	}
+
+	/**
 	 * Dash stripping. This is this plugin's own copy of the behaviour, on
 	 * purpose: no dependency on the articles plugin.
 	 *
@@ -230,6 +266,7 @@ class TWD_SK_Sanitizer {
 	// -- Internals --------------------------------------------------------
 
 	private static function result( $html, $removed ) {
+		$warnings = self::find_leftovers( $html );
 		$counts = array();
 		$total  = 0;
 		foreach ( $removed as $key => $list ) {
@@ -242,6 +279,8 @@ class TWD_SK_Sanitizer {
 				'total'   => $total,
 				'counts'  => $counts,
 				'removed' => $removed,
+				// Leftover example text, marker => count. Warnings only; nothing is removed.
+				'leftovers' => $warnings,
 			),
 		);
 	}

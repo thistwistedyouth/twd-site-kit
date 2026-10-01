@@ -42,6 +42,13 @@ class TWD_SK_Store {
 	}
 
 	/** Number of the newest version, or 0 if there are none. */
+	/**
+	 * Leftover example text in the page's current HTML: marker => count. Read only.
+	 */
+	public static function get_leftovers( $post_id ) {
+		return TWD_SK_Sanitizer::find_leftovers( self::get_current( $post_id ) );
+	}
+
 	public static function get_current_version_id( $post_id ) {
 		$items = self::read( (int) $post_id )['items'];
 		return $items ? (int) end( $items )['id'] : 0;

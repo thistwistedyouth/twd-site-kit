@@ -17,6 +17,12 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.2.6
+
+- Prompt rules tightened after a real run on a test page: ask only when unclear or removing content, images keep their addresses, new images are a visible placeholder (not an invented file name), alt text, heading order, meaningful link text, no outcome promises or health claims, helplines never altered, "ask their web designer" for anything needing the page builder.
+- **Image placeholder is text, not an address.** `[PLACEHOLDER: image needed]` cannot be an image `src` (the sanitiser refuses addresses with square brackets and drops an image with no valid address), so the prompt puts it where the picture goes as plain text. The leftover check flags it.
+- **Leftover example text is a warning only.** Added `your-image.jpg` to the owner's list, since it is the registry's example picture address.
+
 ## v0.2.5
 
 - **Prompt command.** `wp twd-sk prompt <page_id>` prints the client prompt from `TWD_SK_Prompt`. It carries the owner's rules verbatim in intent (ask first, one change at a time, full HTML in one code block, one h1, no scripts or inline styles or forms or iframes, never invent credentials or details, confidentiality, keep the safety notice, the therapist's voice, no em dashes). The prompt is long because it carries every skeleton; trim it if a chat window struggles.
