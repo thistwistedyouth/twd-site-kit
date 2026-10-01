@@ -16,6 +16,7 @@ class TWD_SK_Editor {
 
 	const HANDLE      = 'twd-site-kit-editor';
 	const HANDLE_SITE = 'twd-site-kit-editor-site';
+	const HANDLE_SEO  = 'twd-site-kit-editor-seo';
 
 	public static function init() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue' ), 20 );
@@ -83,6 +84,15 @@ class TWD_SK_Editor {
 			'safeMode'       => TWD_SK_Safe::on(),
 		) );
 		wp_enqueue_script( self::HANDLE );
+
+		// The Search tab: anyone who can edit this kit page, and not in safe mode.
+		if ( ! TWD_SK_Safe::on() && $context['is_kit_page'] ) {
+			wp_register_script( self::HANDLE_SEO, $base . 'assets/twd-site-kit-editor-seo.js', array( self::HANDLE ), $ver, true );
+			wp_enqueue_script( self::HANDLE_SEO );
+			if ( function_exists( 'wp_enqueue_media' ) && current_user_can( 'upload_files' ) ) {
+				wp_enqueue_media();
+			}
+		}
 
 		// The Site tab: administrators only, and not in safe mode. Its own script, so nobody else loads it.
 		if ( ! TWD_SK_Safe::on() && current_user_can( 'manage_options' ) ) {

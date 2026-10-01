@@ -14,5 +14,6 @@ class TWD_SK_Modules {
 
 	public static function init() {
 		TWD_SK_Mirror::init();
+		TWD_SK_Seo::init();
 	}
 }

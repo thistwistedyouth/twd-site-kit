@@ -53,6 +53,20 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'get_info' ),
 			'permission_callback' => array( __CLASS__, 'can_read_page' ),
 		) );
+		if ( ! TWD_SK_Safe::on() ) {
+			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/seo', array(
+				array(
+					'methods'             => 'GET',
+					'callback'            => array( __CLASS__, 'get_seo' ),
+					'permission_callback' => array( __CLASS__, 'can_read_page' ),
+				),
+				array(
+					'methods'             => 'POST',
+					'callback'            => array( __CLASS__, 'post_seo' ),
+					'permission_callback' => array( __CLASS__, 'can_write_page' ),
+				),
+			) );
+		}
 		register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/status', array(
 			'methods'             => 'POST',
 			'callback'            => array( __CLASS__, 'post_status' ),
@@ -364,6 +378,26 @@ class TWD_SK_REST {
 			return self::from_store_error( $result );
 		}
 		return self::info_payload( $id );
+	}
+
+	// -- Search details ---------------------------------------------------
+
+	public static function get_seo( $request ) {
+		return TWD_SK_Seo::read( (int) $request->get_param( 'id' ) );
+	}
+
+	public static function post_seo( $request ) {
+		$fields = $request->get_param( 'fields' );
+		if ( ! is_array( $fields ) ) {
+			return self::error( 'twd_sk_bad_input', 'Send the search details as a set of fields.', 400 );
+		}
+		$result = TWD_SK_Seo::write( (int) $request->get_param( 'id' ), $fields );
+		if ( is_wp_error( $result ) ) {
+			$map    = array( 'twd_sk_slug_confirm' => 409, 'twd_sk_seo_other_plugin' => 409, 'twd_sk_seo_front_page' => 409 );
+			$status = isset( $map[ $result->get_error_code() ] ) ? $map[ $result->get_error_code() ] : 400;
+			return self::error( $result->get_error_code(), $result->get_error_message(), $status );
+		}
+		return $result;
 	}
 
 	// -- The Site tab -----------------------------------------------------

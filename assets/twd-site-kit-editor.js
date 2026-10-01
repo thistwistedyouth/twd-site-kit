@@ -258,6 +258,10 @@
 		if (name === 'pages') {
 			loadInfo();
 		}
+		var hook = window.TWD_SK_ED && window.TWD_SK_ED.tabHooks && window.TWD_SK_ED.tabHooks[name];
+		if (typeof hook === 'function') {
+			hook();
+		}
 	}
 
 	function buildEditPanel(panel) {
@@ -907,6 +911,7 @@
 		listInto: listInto,
 		confirmInline: confirmInline,
 		extraTabs: [],
+		tabHooks: {},
 		addTab: function (name, label, build) {
 			this.extraTabs.push({ name: name, label: label, build: build });
 		}

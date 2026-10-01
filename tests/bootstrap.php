@@ -64,6 +64,7 @@ function twd_stub_add_post( $id, $type = 'page', $content = '' ) {
 		'post_content' => $content,
 		'post_status'  => 'publish',
 		'post_title'   => 'Page ' . $id,
+		'post_name'    => 'page-' . $id,
 	);
 }
 
@@ -419,6 +420,14 @@ function wp_get_attachment_image_src( $id, $size = 'thumbnail' ) {
 function wp_attachment_is_image( $id ) {
 	return ! empty( $GLOBALS['twd_stub']['attachments'][ (int) $id ]['is_image'] );
 }
+function wp_get_attachment_image_url( $id, $size = 'thumbnail' ) {
+	$a = isset( $GLOBALS['twd_stub']['attachments'][ (int) $id ] ) ? $GLOBALS['twd_stub']['attachments'][ (int) $id ] : null;
+	return ( $a && ! empty( $a['is_image'] ) ) ? $a['url'] : false;
+}
+function sanitize_title( $title ) {
+	$t = strtolower( trim( preg_replace( '/[^a-z0-9]+/i', '-', (string) $title ), '-' ) );
+	return $t;
+}
 function get_privacy_policy_url() {
 	return isset( $GLOBALS['twd_stub']['privacy_url'] ) ? $GLOBALS['twd_stub']['privacy_url'] : '';
 }
@@ -524,6 +533,8 @@ require_once ABSPATH . 'includes/class-twd-sk-starters.php';
 require_once ABSPATH . 'includes/class-twd-sk-setup.php';
 require_once ABSPATH . 'includes/class-twd-sk-mirror.php';
 require_once ABSPATH . 'includes/class-twd-sk-images.php';
+require_once ABSPATH . 'includes/class-twd-sk-quality.php';
+require_once ABSPATH . 'includes/class-twd-sk-seo.php';
 require_once ABSPATH . 'includes/class-twd-sk-assets.php';
 require_once ABSPATH . 'includes/class-twd-sk-updater.php';
 require_once ABSPATH . 'includes/class-twd-sk-report.php';
