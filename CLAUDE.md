@@ -45,6 +45,14 @@ All CSS under one wrapper class (`.twd-sk-page`). `!important` on visual propert
 
 `php tests/run.php` runs everything. Hand-rolled, zero dependency, one file per area (`tests/test-*.php`), WordPress stubbed in `tests/bootstrap.php`. Exit code is non-zero on any failure. Every sanitiser rule has at least one test. Also run `php -l` on every PHP file before pushing.
 
+## Releases
+
+```
+bash bin/build-zip.sh
+```
+
+Builds `dist/twd-site-kit-latest.zip` with `cp -r` (not rsync) and one top-level `twd-site-kit/` folder holding only `twd-site-kit.php` and `includes/`. No CLAUDE.md, HISTORY.md, README, tests, bin, dist or .git files go in. It then unzips the result and diffs every file against the source, and fails if the file lists differ or anything that must not ship is inside. Run the tests and `php -l` first, then commit the zip with the code. Download link: `https://raw.githubusercontent.com/thistwistedyouth/twd-site-kit/main/dist/twd-site-kit-latest.zip`. Bump the version in `twd-site-kit.php` (header and `TWD_SK_VERSION`) before building a new release.
+
 ## Repo rules
 
 - **This repo must stay public.** The self-hosted updater (later) reads releases and `dist/` anonymously. Never put credentials, keys, or client content in it.
