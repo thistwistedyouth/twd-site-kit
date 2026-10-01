@@ -22,6 +22,7 @@ define( 'TWD_SK_VERSION', '0.3.1' );
 define( 'TWD_SK_PATH', plugin_dir_path( __FILE__ ) );
 define( 'TWD_SK_URL', plugin_dir_url( __FILE__ ) );
 
+require_once TWD_SK_PATH . 'includes/class-twd-sk-safe.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-registry.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-sanitizer.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-store.php';
@@ -35,6 +36,7 @@ require_once TWD_SK_PATH . 'includes/class-twd-sk-template.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-preview.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-rest.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-editor.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-modules.php';
 
 add_action( 'init', array( 'TWD_SK_Page', 'init' ) );
 TWD_SK_Assets::init();
@@ -43,6 +45,12 @@ TWD_SK_Preview::init();
 TWD_SK_REST::init();
 TWD_SK_Editor::init();
 TWD_SK_Updater::init();
+TWD_SK_Safe::init();
+
+// The newest modules (0.4.0) start only outside safe mode.
+if ( ! TWD_SK_Safe::on() ) {
+	TWD_SK_Modules::init();
+}
 
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	require_once TWD_SK_PATH . 'includes/class-twd-sk-cli.php';

@@ -10,6 +10,7 @@
  *   wp twd-sk undo <page_id>            step back one change (recorded as a new version)
  *   wp twd-sk check <page_id>           list leftover example text still on the page
  *   wp twd-sk prompt <page_id>          print the client AI prompt (rules, style guide, this page's HTML)
+ *   wp twd-sk safe-mode [on|off|status]  switch the newest features off, or back on
  *   wp twd-sk pack [<slug>]             list style packs, or switch to one
  */
 
@@ -240,6 +241,38 @@ class TWD_SK_CLI {
 	public function prompt( $args, $assoc_args ) {
 		$page_id = self::page_id( isset( $args[0] ) ? $args[0] : '' );
 		WP_CLI::line( rtrim( TWD_SK_Prompt::build( TWD_SK_Store::get_current( $page_id ) ) ) );
+	}
+
+	/**
+	 * Safe mode turns off the newest features (the 0.4.0 modules) and keeps the rest working.
+	 * Use it if something breaks after an update. The constant TWD_SK_SAFE_MODE in wp-config.php
+	 * does the same and wins over this setting.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [<state>]
+	 * : on, off or status (default status).
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk safe-mode on
+	 *     wp twd-sk safe-mode status
+	 */
+	public function safe_mode( $args, $assoc_args ) {
+		$state = isset( $args[0] ) ? strtolower( (string) $args[0] ) : 'status';
+		if ( ! in_array( $state, array( 'on', 'off', 'status' ), true ) ) {
+			WP_CLI::error( 'Say on, off or status.' );
+			return;
+		}
+		if ( 'status' !== $state ) {
+			TWD_SK_Safe::set( 'on' === $state );
+		}
+		$source = TWD_SK_Safe::source();
+		if ( TWD_SK_Safe::on() ) {
+			WP_CLI::success( 'Safe mode is ON' . ( 'constant' === $source ? ' (set by TWD_SK_SAFE_MODE in wp-config.php; remove that line to turn it off).' : '.' ) );
+		} else {
+			WP_CLI::success( 'Safe mode is OFF.' );
+		}
 	}
 
 	// -- Helpers ----------------------------------------------------------

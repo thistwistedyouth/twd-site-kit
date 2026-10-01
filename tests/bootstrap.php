@@ -430,6 +430,7 @@ function wp_kses( $html, $allowed ) {
 	return preg_replace( '/<([a-z0-9]+)\s[^>]*>/i', '<$1>', $html );
 }
 
+require_once ABSPATH . 'includes/class-twd-sk-safe.php';
 require_once ABSPATH . 'includes/class-twd-sk-registry.php';
 require_once ABSPATH . 'includes/class-twd-sk-sanitizer.php';
 require_once ABSPATH . 'includes/class-twd-sk-store.php';
@@ -443,6 +444,7 @@ require_once ABSPATH . 'includes/class-twd-sk-template.php';
 require_once ABSPATH . 'includes/class-twd-sk-preview.php';
 require_once ABSPATH . 'includes/class-twd-sk-rest.php';
 require_once ABSPATH . 'includes/class-twd-sk-editor.php';
+require_once ABSPATH . 'includes/class-twd-sk-modules.php';
 
 // Tiny assertion helpers ---------------------------------------------------
 
