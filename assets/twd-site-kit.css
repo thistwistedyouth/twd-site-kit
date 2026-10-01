@@ -170,6 +170,26 @@
 .twd-sk-page .twd-sk-tone-tint.twd-sk-tone-tint .twd-sk-notice__inner.twd-sk-notice__inner > p {
   color: var(--twd-site-color-title) !important;
 }
+.twd-sk-page .twd-sk-tone-tint.twd-sk-tone-tint,
+.twd-sk-page .twd-sk-tone-tint.twd-sk-tone-tint .twd-sk-lead.twd-sk-lead,
+.twd-sk-page .twd-sk-tone-tint.twd-sk-tone-tint .twd-sk-text__body.twd-sk-text__body,
+.twd-sk-page .twd-sk-tone-tint.twd-sk-tone-tint p {
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-sk-tone-band.twd-sk-tone-band .twd-sk-btn--primary.twd-sk-btn--primary,
+.twd-sk-page .twd-sk-cta.twd-sk-cta .twd-sk-btn--primary.twd-sk-btn--primary {
+  background-color: var(--twd-site-color-surface) !important;
+  border-color: var(--twd-site-color-surface) !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-sk-tone-band.twd-sk-tone-band .twd-sk-btn--primary.twd-sk-btn--primary:hover,
+.twd-sk-page .twd-sk-tone-band.twd-sk-tone-band .twd-sk-btn--primary.twd-sk-btn--primary:focus-visible,
+.twd-sk-page .twd-sk-cta.twd-sk-cta .twd-sk-btn--primary.twd-sk-btn--primary:hover,
+.twd-sk-page .twd-sk-cta.twd-sk-cta .twd-sk-btn--primary.twd-sk-btn--primary:focus-visible {
+  background-color: var(--twd-site-color-primary-hover) !important;
+  border-color: var(--twd-site-color-primary-hover) !important;
+  color: var(--twd-site-color-on-primary) !important;
+}
 .twd-sk-page .twd-sk-tone-tint.twd-sk-tone-tint .twd-sk-btn--primary.twd-sk-btn--primary {
   background-color: var(--twd-site-color-title) !important;
   border-color: var(--twd-site-color-title) !important;
@@ -399,7 +419,7 @@
   width: 100%;
   min-width: 0;
   float: none;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  grid-template-columns: 1.3fr 1fr;
   justify-content: stretch;
   justify-items: stretch;
   gap: var(--twd-site-gap-lg);
@@ -437,7 +457,7 @@
   width: 100%;
   min-width: 0;
   float: none;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: 1fr 1fr;
   justify-content: stretch;
   justify-items: stretch;
   gap: var(--twd-site-gap-lg);

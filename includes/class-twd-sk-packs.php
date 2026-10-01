@@ -180,6 +180,24 @@ class TWD_SK_Packs {
 	}
 
 	/**
+	 * Text size floors at desktop: body copy and the lead 16px, small text, eyebrows
+	 * and buttons 14px. Only px values can be compared; other units pass.
+	 */
+	public static function meets_min_size( $name, $value ) {
+		$floors = array(
+			'size-body'    => 16,
+			'size-lead'    => 16,
+			'size-small'   => 14,
+			'eyebrow-size' => 14,
+			'btn-size'     => 14,
+		);
+		if ( ! isset( $floors[ $name ] ) || 1 !== preg_match( '/^(\d+(?:\.\d+)?)px$/', trim( $value ), $m ) ) {
+			return true;
+		}
+		return (float) $m[1] >= $floors[ $name ];
+	}
+
+	/**
 	 * Validate one token. Returns true or false.
 	 */
 	public static function valid_token( $name, $value ) {
@@ -197,7 +215,10 @@ class TWD_SK_Packs {
 			case 'color':
 				return self::valid_color( $value );
 			case 'length':
-				return self::valid_length( $value );
+				if ( ! self::valid_length( $value ) ) {
+					return false;
+				}
+				return self::meets_min_size( $name, $value );
 			case 'weight':
 				return 1 === preg_match( '/^[1-9]00$/', $value ) || '1000' === $value;
 			case 'line':

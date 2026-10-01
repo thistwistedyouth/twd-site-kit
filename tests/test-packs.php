@@ -55,7 +55,7 @@ twd_sk_test( 'packs: the two packs really differ in colours, fonts and shapes', 
 
 twd_sk_test( 'packs: sage matches the verified final look (palette, fonts, pill buttons, italic headings)', function () {
 	$t = twd_sk_pack( 'sage' )['tokens'];
-	twd_sk_eq( '#8A9A7E', $t['color-primary'] );
+	twd_sk_eq( '#5F6F54', $t['color-primary'] );
 	twd_sk_eq( '#B4C0A8', $t['color-tint'] );
 	twd_sk_eq( '#FAF7F2', $t['color-bg'] );
 	twd_sk_eq( '#C9A66B', $t['color-accent'] );
@@ -69,7 +69,7 @@ twd_sk_test( 'packs: sage matches the verified final look (palette, fonts, pill 
 twd_sk_test( 'packs: grove matches the verified final look (palette, fonts, small radii, centred headings)', function () {
 	$t = twd_sk_pack( 'grove' )['tokens'];
 	twd_sk_eq( '#2C3B35', $t['color-heading'] );
-	twd_sk_eq( '#7C9473', $t['color-primary'] );
+	twd_sk_eq( '#5A7352', $t['color-primary'] );
 	twd_sk_eq( '#C9A468', $t['color-accent'] );
 	twd_sk_eq( 'Lora', $t['font-heading'] );
 	twd_sk_eq( 'Nunito', $t['font-body'] );
@@ -374,31 +374,41 @@ twd_sk_test( 'contrast: grove headings meet AA on the page and card backgrounds'
 	twd_sk_true( twd_sk_contrast( $t['color-heading'], $t['color-surface'] ) >= 4.5 );
 } );
 
-twd_sk_test( 'contrast: the known weak pairs stay at or above their recorded levels (see HISTORY.md accessibility note)', function () {
-	// Pair => floor. These are faithful to the two reference looks and below AA
-	// (4.5 for normal text, 3 for large text). The floors stop them getting worse.
-	$floors = array(
-		'sage'  => array(
-			array( 'color-heading', 'color-bg', 2.75 ),
-			array( 'color-heading', 'color-surface', 2.95 ),
-			array( 'color-body', 'color-tint', 2.75 ),
-			array( 'color-on-primary', 'color-primary', 2.95 ),
-			array( 'color-eyebrow', 'color-bg', 2.1 ),
-			array( 'color-on-band', 'color-band', 2.95 ),
-		),
-		'grove' => array(
-			array( 'color-on-primary', 'color-primary', 3.25 ),
-			array( 'color-eyebrow', 'color-bg', 3.05 ),
-			array( 'color-on-band', 'color-band', 4.15 ),
-			array( 'color-primary', 'color-bg', 3.05 ),
-		),
+twd_sk_test( 'contrast: text pairs on bands, buttons, headings and eyebrows reach 4.5 in both packs', function () {
+	$pairs = array(
+		array( 'color-on-primary', 'color-primary' ),
+		array( 'color-on-primary', 'color-primary-hover' ),
+		array( 'color-on-band', 'color-band' ),
+		array( 'color-accent-on-dark', 'color-band' ),
+		array( 'color-title', 'color-surface' ),
+		array( 'color-title', 'color-tint' ),
+		array( 'color-title', 'color-bg' ),
+		array( 'color-heading', 'color-bg' ),
+		array( 'color-heading', 'color-surface' ),
+		array( 'color-accent-text', 'color-bg' ),
+		array( 'color-eyebrow', 'color-bg' ),
+		array( 'color-eyebrow', 'color-surface' ),
+		array( 'color-primary', 'color-bg' ),
 	);
-	foreach ( $floors as $slug => $pairs ) {
+	foreach ( array( 'sage', 'grove' ) as $slug ) {
 		$t = twd_sk_pack( $slug )['tokens'];
 		foreach ( $pairs as $p ) {
 			$ratio = twd_sk_contrast( $t[ $p[0] ], $t[ $p[1] ] );
-			twd_sk_true( $ratio >= $p[2], $slug . ' ' . $p[0] . ' on ' . $p[1] . ' is ' . round( $ratio, 2 ) . ', floor ' . $p[2] );
+			twd_sk_true( $ratio >= 4.5, $slug . ' ' . $p[0] . ' on ' . $p[1] . ' is ' . round( $ratio, 2 ) );
 		}
 	}
-	twd_sk_note( 'Contrast: sage headings, eyebrow and button labels and grove button labels are below WCAG AA (known, see HISTORY.md).' );
+} );
+
+twd_sk_test( 'sizes: packs keep body and lead at 16px or more and small text, eyebrows and buttons at 14px or more', function () {
+	$floors = array( 'size-body' => 16, 'size-lead' => 16, 'size-small' => 14, 'eyebrow-size' => 14, 'btn-size' => 14 );
+	foreach ( array( 'sage', 'grove' ) as $slug ) {
+		$t = twd_sk_pack( $slug )['tokens'];
+		foreach ( $floors as $name => $min ) {
+			twd_sk_true( (float) $t[ $name ] >= $min, $slug . ' ' . $name . ' is ' . $t[ $name ] );
+		}
+	}
+	twd_sk_true( ! TWD_SK_Packs::valid_token( 'size-body', '15px' ) );
+	twd_sk_true( ! TWD_SK_Packs::valid_token( 'eyebrow-size', '11px' ) );
+	twd_sk_true( ! TWD_SK_Packs::valid_token( 'size-small', '13px' ) );
+	twd_sk_true( TWD_SK_Packs::valid_token( 'eyebrow-size', '14px' ) );
 } );

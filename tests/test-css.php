@@ -356,3 +356,17 @@ twd_sk_test( 'css: the narrow text layout is one centred column and the aside la
 	twd_sk_true( 1 === preg_match( '/twd-sk-text:not\(\.twd-sk-text--aside[^{]*\{[^}]*text-align:\s*center/', $raw ), 'no centred rule' );
 	twd_sk_true( 1 === preg_match( '/twd-sk-text--aside\.twd-sk-text--aside \.twd-sk-title[^{]*\{[^}]*text-align:\s*left/', $raw ), 'aside title not left aligned' );
 } );
+
+twd_sk_test( 'css: no text rule uses a literal font size below 14px, and sizes come from tokens or calc over tokens', function () {
+	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	preg_match_all( '/font-size:\s*([^;}]+)/', $raw, $m );
+	twd_sk_true( count( $m[1] ) > 20, 'found font-size rules' );
+	foreach ( $m[1] as $v ) {
+		if ( preg_match_all( '/(\d+(?:\.\d+)?)px/', $v, $px ) && false === strpos( $v, 'var(' ) ) {
+			foreach ( $px[1] as $n ) {
+				twd_sk_true( (float) $n >= 14, 'literal font size ' . trim( $v ) );
+			}
+		}
+		twd_sk_true( ! preg_match( '/(?:^|[^\d.])(?:[0-9]|1[0-3])(?:\.\d+)?(?:px|rem|em)\b/', trim( $v ) ) || false !== strpos( $v, 'var(' ), 'small size ' . trim( $v ) );
+	}
+} );
