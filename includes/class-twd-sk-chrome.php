@@ -228,14 +228,14 @@ class TWD_SK_Chrome {
 		return rtrim( $path, '/' ) === rtrim( $request, '/' ) || ( '/' === $path && '/' === $request );
 	}
 
-	private static function logo_html( $profile, $img_class, $text_class ) {
+	private static function logo_html( $profile, $img_class, $text_class, $lazy = false ) {
 		$name = self::site_name( $profile );
 		if ( $profile['logo_id'] && function_exists( 'wp_get_attachment_image_src' ) ) {
 			$src = wp_get_attachment_image_src( (int) $profile['logo_id'], 'medium' );
 			if ( is_array( $src ) && ! empty( $src[0] ) ) {
 				$w = ! empty( $src[1] ) ? ' width="' . (int) $src[1] . '"' : '';
 				$h = ! empty( $src[2] ) ? ' height="' . (int) $src[2] . '"' : '';
-				return '<img class="' . $img_class . '" src="' . self::url( $src[0] ) . '" alt="' . esc_attr( $name ) . '"' . $w . $h . ' decoding="async">';
+				return '<img class="' . $img_class . '" src="' . self::url( $src[0] ) . '" alt="' . esc_attr( $name ) . '"' . $w . $h . ( $lazy ? ' loading="lazy"' : '' ) . ' decoding="async">';
 			}
 		}
 		return '<span class="' . $text_class . '">' . self::esc( $name ) . '</span>';
@@ -368,7 +368,7 @@ class TWD_SK_Chrome {
 		if ( 'simple' !== $variant ) {
 			$cols = 'centered' === $variant ? 1 : max( 1, min( 3, $eff['columns'] ) );
 
-			$brand = ( $profile['logo_id'] ? '<div>' . self::logo_html( $profile, 'twd-sk-footer__logo-img', 'twd-sk-footer__name' ) . '</div>' : '<p class="twd-sk-footer__name">' . self::esc( self::site_name( $profile ) ) . '</p>' );
+			$brand = ( $profile['logo_id'] ? '<div>' . self::logo_html( $profile, 'twd-sk-footer__logo-img', 'twd-sk-footer__name', true ) . '</div>' : '<p class="twd-sk-footer__name">' . self::esc( self::site_name( $profile ) ) . '</p>' );
 			if ( '' !== $profile['footer_text'] ) {
 				$brand .= '<p class="twd-sk-footer__text">' . self::esc( $profile['footer_text'] ) . '</p>';
 			}

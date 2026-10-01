@@ -126,6 +126,12 @@ function get_current_user_id() {
 function get_the_ID() {
 	return $GLOBALS['twd_stub']['post_id'];
 }
+function is_front_page() {
+	return ! empty( $GLOBALS['twd_stub']['front'] );
+}
+function wp_json_encode( $data, $flags = 0 ) {
+	return json_encode( $data, $flags );
+}
 function get_queried_object_id() {
 	return $GLOBALS['twd_stub']['queried'];
 }
@@ -535,6 +541,7 @@ require_once ABSPATH . 'includes/class-twd-sk-mirror.php';
 require_once ABSPATH . 'includes/class-twd-sk-images.php';
 require_once ABSPATH . 'includes/class-twd-sk-quality.php';
 require_once ABSPATH . 'includes/class-twd-sk-seo.php';
+require_once ABSPATH . 'includes/class-twd-sk-schema.php';
 require_once ABSPATH . 'includes/class-twd-sk-assets.php';
 require_once ABSPATH . 'includes/class-twd-sk-updater.php';
 require_once ABSPATH . 'includes/class-twd-sk-report.php';

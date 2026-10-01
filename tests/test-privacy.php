@@ -102,7 +102,7 @@ twd_sk_test( 'privacy: every web address points at an example domain or a known 
 		'example.com', 'www.example.com', 'example.org', 'example.net', 'example.test',
 		'therapywebdesigns.co.uk',
 		'github.com', 'raw.githubusercontent.com',
-		'www.gnu.org', 'www.w3.org', 'scripts.sil.org', 'openfontlicense.org',
+		'www.gnu.org', 'www.w3.org', 'schema.org', 'scripts.sil.org', 'openfontlicense.org',
 	);
 	foreach ( twd_sk_privacy_files() as $rel => $path ) {
 		preg_match_all( '#https?://(?:[^/@\s"\'<>]*@)?([A-Za-z0-9.-]+)(/[^\s"\'<>)`]*)?#', file_get_contents( $path ), $m, PREG_SET_ORDER );
