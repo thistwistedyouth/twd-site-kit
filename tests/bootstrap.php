@@ -173,6 +173,11 @@ function twd_sk_stub_defaults() {
 		'site_transients_deleted' => array(),
 		'update_plugins_called'   => 0,
 		'deleted_files'           => array(),
+		'nonce_ok'  => 'good-nonce',
+		'scripts'   => array(),
+		'routes'    => array(),
+		'headers'   => array(),
+		'users'     => array( 7 => 'Test Editor' ),
 	);
 }
 
@@ -260,13 +265,93 @@ function __( $text, $domain = '' ) {
 function sanitize_text_field( $text ) {
 	return trim( strip_tags( $text ) );
 }
-function current_user_can( $cap ) {
-	return $GLOBALS['twd_stub']['caps'];
+// caps: true or false for every capability, or a list such as array( 'edit_pages', 'edit_post:12' ).
+function current_user_can( $cap, $arg = null ) {
+	$caps = $GLOBALS['twd_stub']['caps'];
+	if ( ! is_array( $caps ) ) {
+		return (bool) $caps;
+	}
+	return in_array( $cap, $caps, true ) || ( null !== $arg && in_array( $cap . ':' . $arg, $caps, true ) );
 }
+function is_user_logged_in() {
+	return (int) $GLOBALS['twd_stub']['user'] > 0;
+}
+function wp_verify_nonce( $nonce, $action ) {
+	return is_string( $nonce ) && $nonce === $GLOBALS['twd_stub']['nonce_ok'] && 'wp_rest' === $action ? 1 : false;
+}
+function wp_create_nonce( $action ) {
+	return $GLOBALS['twd_stub']['nonce_ok'];
+}
+function apply_filters( $name, $value ) {
+	$args = func_get_args();
+	array_shift( $args );
+	if ( ! empty( $GLOBALS['twd_stub']['hooks'][ $name ] ) ) {
+		foreach ( $GLOBALS['twd_stub']['hooks'][ $name ] as $cb ) {
+			$args[0] = call_user_func_array( $cb, $args );
+		}
+	}
+	return $args[0];
+}
+function get_permalink( $id ) {
+	return 'https://example.test/?page_id=' . (int) $id;
+}
+function get_userdata( $id ) {
+	$users = $GLOBALS['twd_stub']['users'];
+	return isset( $users[ (int) $id ] ) ? (object) array( 'ID' => (int) $id, 'display_name' => $users[ (int) $id ] ) : false;
+}
+function esc_url_raw( $url ) {
+	return $url;
+}
+function rest_url( $path = '' ) {
+	return 'https://example.test/wp-json/' . ltrim( $path, '/' );
+}
+function register_rest_route( $ns, $route, $args ) {
+	$GLOBALS['twd_stub']['routes'][] = array( 'ns' => $ns, 'route' => $route, 'args' => $args );
+}
+function wp_register_script( $handle, $src, $deps = array(), $ver = false, $in_footer = false ) {
+	$GLOBALS['twd_stub']['scripts'][ $handle ] = array( 'src' => $src, 'enqueued' => false, 'data' => null );
+}
+function wp_enqueue_script( $handle, $src = '', $deps = array(), $ver = false, $in_footer = false ) {
+	if ( ! isset( $GLOBALS['twd_stub']['scripts'][ $handle ] ) ) {
+		wp_register_script( $handle, $src, $deps, $ver, $in_footer );
+	}
+	$GLOBALS['twd_stub']['scripts'][ $handle ]['enqueued'] = true;
+}
+function wp_localize_script( $handle, $name, $data ) {
+	$GLOBALS['twd_stub']['scripts'][ $handle ]['data'] = $data;
+	return true;
+}
+function nocache_headers() {
+	$GLOBALS['twd_stub']['headers'][] = 'nocache';
+}
+
+/** Minimal stand-in for WP_REST_Request. */
+class WP_REST_Request {
+	private $params;
+	private $headers;
+	private $body;
+	public function __construct( $params = array(), $headers = array(), $body = null ) {
+		$this->params  = $params;
+		$this->headers = array_change_key_case( $headers, CASE_LOWER );
+		$this->body    = null === $body ? json_encode( $params ) : $body;
+	}
+	public function get_param( $key ) {
+		return array_key_exists( $key, $this->params ) ? $this->params[ $key ] : null;
+	}
+	public function get_header( $name ) {
+		$name = strtolower( str_replace( '_', '-', $name ) );
+		return array_key_exists( $name, $this->headers ) ? $this->headers[ $name ] : null;
+	}
+	public function get_body() {
+		return $this->body;
+	}
+}
+
 function check_admin_referer( $action ) {
 	return $GLOBALS['twd_stub']['referer_ok'];
 }
-function wp_die( $message = '' ) {
+function wp_die( $message = '', $title = '', $args = array() ) {
+	$GLOBALS['twd_stub']['die_args'] = $args;
 	throw new TWD_SK_Stub_Die( $message );
 }
 function wp_safe_redirect( $url ) {
@@ -289,6 +374,10 @@ require_once ABSPATH . 'includes/class-twd-sk-page.php';
 require_once ABSPATH . 'includes/class-twd-sk-packs.php';
 require_once ABSPATH . 'includes/class-twd-sk-assets.php';
 require_once ABSPATH . 'includes/class-twd-sk-updater.php';
+require_once ABSPATH . 'includes/class-twd-sk-report.php';
+require_once ABSPATH . 'includes/class-twd-sk-preview.php';
+require_once ABSPATH . 'includes/class-twd-sk-rest.php';
+require_once ABSPATH . 'includes/class-twd-sk-editor.php';
 
 // Tiny assertion helpers ---------------------------------------------------
 

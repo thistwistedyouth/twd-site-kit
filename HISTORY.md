@@ -17,6 +17,17 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.3.0 (slice 3b, release 1)
+
+- **Why the pop-up never calls an AI.** The client site holds no AI key and makes no outbound call. The round trip stays copy, paste, preview, apply, so the therapist reads and approves everything before it is saved.
+- **Preview uses the real page, not a stand-in.** A frame showing a kit-only copy would hide theme and Elementor interference, which is exactly what went wrong before. The server keeps the cleaned draft in a short-lived transient and the page's own address renders it for its owner only. Trade-off: the articles grid renders, but its live loading depends on the articles plugin's own script.
+- **Apply needs an exact preview.** The Apply button is enabled only for the text that was previewed; changing the text disables it again. The server cleans the HTML again on apply, so the browser is never trusted.
+- **Apply allowed with leftover example text** (decision): a banner shows the count and says publishing is blocked until they are replaced (the block arrives with publishing in 0.3.1).
+- **"Where did these facts come from?"** is optional but prompted, and saved as the version note. Notes are limited to 200 characters by the store.
+- **Nonce checked twice.** Core already treats a request with a bad nonce as signed out; each permission callback also checks the nonce itself so a missing one is refused even where core's check is absent (and in tests).
+- **Editor loads nowhere it should not.** Not for visitors, wp-admin, the preview frame (stylesheet only, for the bar), Elementor's editor or the customizer.
+- **Not verifiable here:** no real WordPress could be run in the build container, so the route wiring, the nonce flow, the preview address in a draft and the interaction with Elementor and caching are covered by tests against stand-ins and a headless browser against a mock server, and need a real-site check.
+
 ## v0.2.6
 
 - Prompt rules tightened after a real run on a test page: ask only when unclear or removing content, images keep their addresses, new images are a visible placeholder (not an invented file name), alt text, heading order, meaningful link text, no outcome promises or health claims, helplines never altered, "ask their web designer" for anything needing the page builder.

@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.2.6
+Stable tag: 0.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,10 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.3.0 =
+* New: "Edit with AI" on the front end for signed-in editors. A button (bottom left) opens a pop-up: copy the prompt, paste the AI's result, see what the cleaner changed and any leftover example text, preview it on the real page (nothing is saved), then apply it as a new version. Undo and restore from the last 10 versions. Every apply asks where the facts came from and saves the answer with the version.
+* New: secure routes under twd-site-kit/v1 (sign-in nonce, edit permission on the page, size limits and rate limits). No AI key and no outbound calls from the site.
 
 = 0.2.6 =
 * New: wp twd-sk check <page_id> lists leftover example text. Saving a page warns about it (nothing is removed).

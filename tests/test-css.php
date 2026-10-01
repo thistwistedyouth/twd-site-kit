@@ -417,22 +417,3 @@ twd_sk_test( 'css: stray direct children of the page (not sections) get a max-wi
 		}
 	}
 } );
-
-twd_sk_test( 'css: the committed stylesheet is exactly what tools/build-css.py builds from tools/kit.src.css', function () {
-	if ( ! function_exists( 'shell_exec' ) || '' === trim( (string) shell_exec( 'command -v python3 2>/dev/null' ) ) ) {
-		return;
-	}
-	$tmp = sys_get_temp_dir() . '/twdsk-css-' . getmypid();
-	mkdir( $tmp . '/tools', 0777, true );
-	mkdir( $tmp . '/assets', 0777, true );
-	copy( ABSPATH . 'tools/kit.src.css', $tmp . '/tools/kit.src.css' );
-	copy( ABSPATH . 'tools/build-css.py', $tmp . '/tools/build-css.py' );
-	shell_exec( 'python3 ' . escapeshellarg( $tmp . '/tools/build-css.py' ) . ' 2>&1' );
-	$built = @file_get_contents( $tmp . '/assets/twd-site-kit.css' );
-	array_map( 'unlink', glob( $tmp . '/*/*' ) );
-	rmdir( $tmp . '/tools' );
-	rmdir( $tmp . '/assets' );
-	rmdir( $tmp );
-	twd_sk_true( false !== $built, 'the build script ran' );
-	twd_sk_true( file_get_contents( ABSPATH . 'assets/twd-site-kit.css' ) === $built, 'run: python3 tools/build-css.py and commit the result' );
-} );

@@ -1,0 +1,135 @@
+/* Selectors are relative to the editor wrapper (.twd-sk-ed). & is the wrapper itself.
+   $token becomes var(--twd-site-token). */
+
+& { font-family: $font-body; font-size: $size-body; line-height: $line-body; color: $color-body; }
+&, & *, & *::before, & *::after { box-sizing: border-box; }
+& [hidden] { display: none !important; }
+
+/* ---- the floating button (bottom left) ---- */
+.twd-sk-ed__open {
+  position: fixed; left: 24px; bottom: 24px; z-index: 99990; min-height: 48px;
+  padding: 12px 22px; border: 1.5px solid $color-primary; border-radius: $radius-pill;
+  background-color: $color-primary; color: $color-on-primary; box-shadow: $shadow-card;
+  font-family: $font-body; font-size: $size-small; font-weight: $btn-weight; line-height: 1.2; cursor: pointer;
+}
+.twd-sk-ed__open:hover, .twd-sk-ed__open:focus-visible {
+  background-color: $color-primary-hover; border-color: $color-primary-hover; color: $color-on-primary;
+}
+
+/* ---- preview bar (inside the preview frame) ---- */
+.twd-sk-ed__bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 99990; padding: 8px 16px; text-align: center;
+  background-color: $color-title; color: $color-surface; font-family: $font-body; font-size: $size-small; line-height: 1.4;
+}
+
+/* ---- overlay and dialog ---- */
+.twd-sk-ed__overlay {
+  position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 99999; display: flex;
+  align-items: center; justify-content: center; padding: 16px; overflow: auto;
+  background-color: $color-modal-overlay;
+}
+.twd-sk-ed__dialog {
+  display: flex; flex-direction: column; width: 100%; max-width: 900px; max-height: 100%;
+  border-radius: $radius-card; background-color: $color-surface; color: $color-body; box-shadow: $shadow-card;
+}
+.twd-sk-ed__header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px;
+  border-bottom: 1px solid $color-border;
+}
+.twd-sk-ed__title {
+  margin: 0; font-family: $font-heading; font-size: $size-h3; font-weight: $title-weight; font-style: $title-style;
+  line-height: $line-heading; color: $color-title;
+}
+.twd-sk-ed__close {
+  min-width: 44px; min-height: 44px; padding: 6px 14px; border: 1px solid $color-border; border-radius: $radius-btn;
+  background-color: $color-surface; color: $color-title; font-family: $font-body; font-size: $size-small; cursor: pointer;
+}
+.twd-sk-ed__tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 20px; border-bottom: 1px solid $color-border; }
+.twd-sk-ed__tab {
+  min-height: 44px; padding: 8px 16px; border: 0; border-bottom: 3px solid transparent; background-color: $color-surface;
+  color: $color-muted; font-family: $font-body; font-size: $size-small; font-weight: $btn-weight; cursor: pointer;
+}
+.twd-sk-ed__tab[aria-selected="true"] { border-bottom-color: $color-primary; color: $color-title; }
+.twd-sk-ed__body { flex: 1 1 auto; padding: 20px; overflow: auto; }
+
+/* ---- steps and text ---- */
+.twd-sk-ed__step { margin: 0 0 24px; }
+.twd-sk-ed__step-title {
+  margin: 0 0 8px; font-family: $font-heading; font-size: $size-title; font-weight: $title-weight; font-style: $title-style;
+  line-height: $line-heading; color: $color-title;
+}
+.twd-sk-ed__help { margin: 0 0 12px; font-size: $size-small; color: $color-muted; }
+.twd-sk-ed__label { display: block; margin: 0 0 6px; font-size: $size-small; font-weight: $title-weight; color: $color-title; }
+
+/* ---- fields ---- */
+.twd-sk-ed__textarea, .twd-sk-ed__input {
+  display: block; width: 100%; padding: 10px 12px; border: 1px solid $color-border; border-radius: $radius-field;
+  background-color: $color-surface; color: $color-body; font-family: $font-body; font-size: $size-body; line-height: $line-body;
+}
+.twd-sk-ed__textarea { min-height: 180px; resize: vertical; }
+.twd-sk-ed__textarea:focus-visible, .twd-sk-ed__input:focus-visible { outline: 2px solid $color-accent-text; outline-offset: 2px; }
+
+/* ---- buttons ---- */
+.twd-sk-ed__actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 0; }
+.twd-sk-ed__btn {
+  display: inline-block; min-height: 44px; padding: 10px 22px; border: 1.5px solid transparent; border-radius: $radius-btn;
+  font-family: $font-body; font-size: $size-small; font-weight: $btn-weight; line-height: 1.2; text-align: center; cursor: pointer;
+}
+.twd-sk-ed__btn--primary { background-color: $color-primary; border-color: $color-primary; color: $color-on-primary; }
+.twd-sk-ed__btn--primary:hover, .twd-sk-ed__btn--primary:focus-visible {
+  background-color: $color-primary-hover; border-color: $color-primary-hover; color: $color-on-primary;
+}
+.twd-sk-ed__btn--secondary { background-color: $color-surface; border-color: $color-border; color: $color-title; }
+.twd-sk-ed__btn--secondary:hover, .twd-sk-ed__btn--secondary:focus-visible {
+  background-color: $color-primary-hover; border-color: $color-primary-hover; color: $color-on-primary;
+}
+.twd-sk-ed__btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+.twd-sk-ed__open:focus-visible, .twd-sk-ed__close:focus-visible, .twd-sk-ed__tab:focus-visible, .twd-sk-ed__btn:focus-visible {
+  outline: 2px solid $color-accent-text; outline-offset: 2px;
+}
+
+/* ---- messages, report and banner ---- */
+.twd-sk-ed__msg {
+  margin: 12px 0 0; padding: 12px 14px; border-left: 4px solid $color-accent; border-radius: $radius-field;
+  background-color: $color-tint; color: $color-title; font-size: $size-small;
+}
+.twd-sk-ed__msg--ok { border-left-color: $color-primary; }
+.twd-sk-ed__list { margin: 8px 0 0; padding-left: 20px; list-style: disc; }
+.twd-sk-ed__list li { margin: 0 0 4px; }
+.twd-sk-ed__banner {
+  margin: 12px 0 0; padding: 12px 14px; border: 1px solid $color-accent; border-radius: $radius-field;
+  background-color: $color-tint; color: $color-title; font-size: $size-small;
+}
+.twd-sk-ed__banner strong { font-weight: $title-weight; }
+
+/* ---- preview frame ---- */
+.twd-sk-ed__frame {
+  display: block; width: 100%; height: 60vh; min-height: 360px; margin: 12px 0 0; border: 1px solid $color-border;
+  border-radius: $radius-field; background-color: $color-surface;
+}
+
+/* ---- version history ---- */
+.twd-sk-ed__versions { margin: 8px 0 0; padding: 0; list-style: none; }
+.twd-sk-ed__version {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0;
+  border-bottom: 1px solid $color-border;
+}
+.twd-sk-ed__version-text { flex: 1 1 260px; min-width: 0; font-size: $size-small; color: $color-body; }
+.twd-sk-ed__version-note { display: block; color: $color-muted; }
+.twd-sk-ed__current { font-weight: $title-weight; color: $color-title; }
+
+/* ---- phones: the pop-up fills the screen and every control is easy to tap ---- */
+@media (max-width: 700px) {
+  .twd-sk-ed__overlay { padding: 0; align-items: stretch; }
+  .twd-sk-ed__dialog { max-width: none; height: 100%; max-height: none; border-radius: 0; }
+  .twd-sk-ed__header { padding: 10px 14px; }
+  .twd-sk-ed__tabs { padding: 0 10px; }
+  .twd-sk-ed__tab { flex: 1 1 auto; min-height: 48px; }
+  .twd-sk-ed__body { padding: 14px; }
+  .twd-sk-ed__btn { width: 100%; min-height: 48px; }
+  .twd-sk-ed__actions { flex-direction: column; }
+  .twd-sk-ed__close { min-height: 48px; min-width: 48px; }
+  .twd-sk-ed__textarea { min-height: 200px; }
+  .twd-sk-ed__frame { height: 50vh; }
+  .twd-sk-ed__open { left: 16px; bottom: 16px; }
+}

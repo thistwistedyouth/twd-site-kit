@@ -32,7 +32,7 @@ class TWD_SK_Page {
 	 * The page being viewed, if it is a single WordPress page. Archives and
 	 * search results return 0 (their queried object id is not a post id).
 	 */
-	private static function viewed_page_id() {
+	public static function viewed_page_id() {
 		if ( function_exists( 'is_singular' ) && ! is_singular( 'page' ) ) {
 			return 0;
 		}
@@ -49,8 +49,36 @@ class TWD_SK_Page {
 		if ( $post_id <= 0 ) {
 			return false;
 		}
-		$html = TWD_SK_Store::get_current( $post_id );
+		$html = self::current_html( $post_id );
 		return '' !== $html && 1 === preg_match( '/<h1[\s>]/i', $html );
+	}
+
+	/**
+	 * The HTML to show for a page: the stored HTML, unless a filter swaps it. The
+	 * only user of the filter is a validated editor preview (TWD_SK_Preview).
+	 */
+	public static function current_html( $post_id ) {
+		return (string) apply_filters( 'twd_sk_page_html', TWD_SK_Store::get_current( (int) $post_id ), (int) $post_id );
+	}
+
+	/**
+	 * True for a page the kit renders: it has stored kit HTML, or it holds the
+	 * [twd_page] shortcode in its content or in Elementor's data.
+	 */
+	public static function is_kit_page( $post_id ) {
+		$post_id = (int) $post_id;
+		if ( $post_id <= 0 ) {
+			return false;
+		}
+		if ( '' !== TWD_SK_Store::get_current( $post_id ) ) {
+			return true;
+		}
+		$content = (string) get_post_field( 'post_content', $post_id );
+		$data    = get_post_meta( $post_id, '_elementor_data', true );
+		if ( is_string( $data ) ) {
+			$content .= $data;
+		}
+		return false !== strpos( $content, '[' . self::SHORTCODE );
 	}
 
 	/**
@@ -92,7 +120,7 @@ class TWD_SK_Page {
 			return '';
 		}
 
-		$html = TWD_SK_Store::get_current( $post_id );
+		$html = self::current_html( $post_id );
 		if ( '' === $html ) {
 			return '';
 		}

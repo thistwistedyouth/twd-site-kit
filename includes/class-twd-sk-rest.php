@@ -1,0 +1,289 @@
+<?php
+/**
+ * TWD_SK_REST: the routes the front-end editor talks to (namespace twd-site-kit/v1).
+ *
+ * Rules for every route:
+ *  - A valid X-WP-Nonce header is required (core checks it, and it is checked again
+ *    here so a missing or wrong nonce is refused even without core's help).
+ *  - The caller must be signed in and hold the capability named on the route.
+ *  - Every write goes through TWD_SK_Store, which runs TWD_SK_Sanitizer. Nothing
+ *    here writes HTML any other way.
+ *  - Request size and request rate are limited per user.
+ *  - No AI key, no outbound request: this plugin never calls an AI service.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+class TWD_SK_REST {
+
+	const ROUTE_NS      = 'twd-site-kit/v1';
+	const MAX_BODY      = 300 * 1024; // 300 KB: the 200 KB page limit plus JSON overhead.
+	const NONCE_HEADER  = 'X-WP-Nonce';
+
+	/** bucket => array( requests allowed, window in seconds ). */
+	private static function limits() {
+		return array(
+			'read'    => array( 120, 60 ),
+			'preview' => array( 30, 60 ),
+			'write'   => array( 30, 60 ),
+		);
+	}
+
+	public static function init() {
+		add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
+	}
+
+	public static function register_routes() {
+		$id = '(?P<id>\d+)';
+
+		register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/prompt', array(
+			'methods'             => 'GET',
+			'callback'            => array( __CLASS__, 'get_prompt' ),
+			'permission_callback' => array( __CLASS__, 'can_read_page' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/versions', array(
+			'methods'             => 'GET',
+			'callback'            => array( __CLASS__, 'get_versions' ),
+			'permission_callback' => array( __CLASS__, 'can_read_page' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/preview', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_preview' ),
+			'permission_callback' => array( __CLASS__, 'can_preview_page' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/preview/discard', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_discard' ),
+			'permission_callback' => array( __CLASS__, 'can_preview_page' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/apply', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_apply' ),
+			'permission_callback' => array( __CLASS__, 'can_write_page' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/undo', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_undo' ),
+			'permission_callback' => array( __CLASS__, 'can_write_page' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/restore', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_restore' ),
+			'permission_callback' => array( __CLASS__, 'can_write_page' ),
+		) );
+	}
+
+	// -- Permission callbacks ---------------------------------------------
+
+	public static function can_read_page( $request ) {
+		return self::guard( $request, 'read' );
+	}
+
+	public static function can_preview_page( $request ) {
+		return self::guard( $request, 'preview' );
+	}
+
+	public static function can_write_page( $request ) {
+		return self::guard( $request, 'write' );
+	}
+
+	/**
+	 * The one gate every route passes: nonce, sign-in, capability on this page,
+	 * request size, rate limit. Returns true or a WP_Error with an HTTP status.
+	 */
+	private static function guard( $request, $bucket ) {
+		$nonce = $request->get_header( self::NONCE_HEADER );
+		if ( ! is_string( $nonce ) || '' === $nonce || ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
+			return self::error( 'twd_sk_bad_nonce', 'Your sign-in has timed out. Reload the page and try again.', 401 );
+		}
+		if ( ! is_user_logged_in() ) {
+			return self::error( 'twd_sk_not_signed_in', 'You need to be signed in.', 401 );
+		}
+		$page_id = (int) $request->get_param( 'id' );
+		if ( $page_id <= 0 || ! current_user_can( 'edit_pages' ) || ! current_user_can( 'edit_post', $page_id ) ) {
+			return self::error( 'twd_sk_forbidden', 'You do not have permission to edit this page.', 403 );
+		}
+		$post = get_post( $page_id );
+		if ( ! $post || 'page' !== $post->post_type ) {
+			return self::error( 'twd_sk_not_a_page', 'That page was not found.', 404 );
+		}
+		if ( strlen( (string) $request->get_body() ) > self::MAX_BODY ) {
+			return self::error( 'twd_sk_too_large', 'That request is too large. A page is limited to 200 KB.', 413 );
+		}
+		return self::rate_limit( $bucket );
+	}
+
+	/**
+	 * A simple fixed window per user and bucket, kept in a transient.
+	 */
+	private static function rate_limit( $bucket ) {
+		$limits = self::limits();
+		list( $max, $window ) = $limits[ $bucket ];
+		$key   = 'twd_sk_rl_' . (int) get_current_user_id() . '_' . $bucket;
+		$state = get_transient( $key );
+		$now   = time();
+		if ( ! is_array( $state ) || ! isset( $state['start'], $state['count'] ) || $now - (int) $state['start'] >= $window ) {
+			$state = array( 'start' => $now, 'count' => 0 );
+		}
+		if ( (int) $state['count'] >= $max ) {
+			return self::error( 'twd_sk_rate_limited', 'Too many requests. Wait a minute and try again.', 429 );
+		}
+		$state['count']++;
+		set_transient( $key, $state, $window );
+		return true;
+	}
+
+	private static function error( $code, $message, $status, $extra = array() ) {
+		return new WP_Error( $code, $message, array( 'status' => $status ) + $extra );
+	}
+
+	/** Store errors carry no HTTP status. Give each one a sensible status. */
+	private static function from_store_error( $e ) {
+		$map  = array(
+			'twd_sk_conflict'  => 409,
+			'twd_sk_too_large' => 413,
+			'twd_sk_empty'     => 400,
+			'twd_sk_bad_page'  => 404,
+		);
+		$code = $e->get_error_code();
+		$data = $e->get_error_data();
+		return self::error( $code, $e->get_error_message(), isset( $map[ $code ] ) ? $map[ $code ] : 400, is_array( $data ) ? $data : array() );
+	}
+
+	// -- Handlers ---------------------------------------------------------
+
+	public static function get_prompt( $request ) {
+		$id   = (int) $request->get_param( 'id' );
+		$html = TWD_SK_Store::get_current( $id );
+		return array(
+			'prompt'         => TWD_SK_Prompt::build( $html ),
+			'version'        => TWD_SK_Store::get_current_version_id( $id ),
+			'leftover_count' => TWD_SK_Report::leftover_total( TWD_SK_Sanitizer::find_leftovers( $html ) ),
+		);
+	}
+
+	public static function get_versions( $request ) {
+		return self::versions_payload( (int) $request->get_param( 'id' ) );
+	}
+
+	/**
+	 * Clean pasted HTML and keep it for a preview. Writes nothing to the page.
+	 */
+	public static function post_preview( $request ) {
+		$id   = (int) $request->get_param( 'id' );
+		$html = $request->get_param( 'html' );
+		if ( ! is_string( $html ) || '' === trim( $html ) ) {
+			return self::error( 'twd_sk_bad_input', 'Paste the HTML from the AI first.', 400 );
+		}
+		if ( strlen( $html ) > TWD_SK_Store::MAX_BYTES ) {
+			return self::error( 'twd_sk_too_large', 'That page is larger than the ' . ( TWD_SK_Store::MAX_BYTES / 1024 ) . ' KB limit.', 413 );
+		}
+
+		$result = TWD_SK_Sanitizer::clean_with_report( $html );
+		if ( '' === $result['html'] ) {
+			return self::error( 'twd_sk_empty', 'Nothing was left after cleaning, so there is nothing to preview.', 400 );
+		}
+
+		$token = TWD_SK_Preview::create( get_current_user_id(), $id, $result['html'] );
+		return array(
+			'token'          => $token,
+			'preview_url'    => TWD_SK_Preview::url( $id, $token ),
+			'expires_in'     => TWD_SK_Preview::TTL,
+			'bytes'          => strlen( $result['html'] ),
+			'report'         => TWD_SK_Report::describe( $result['report'] ),
+			'removed_total'  => (int) $result['report']['total'],
+			'leftovers'      => TWD_SK_Report::describe_leftovers( $result['report']['leftovers'] ),
+			'leftover_count' => TWD_SK_Report::leftover_total( $result['report']['leftovers'] ),
+		);
+	}
+
+	public static function post_discard( $request ) {
+		$token = $request->get_param( 'token' );
+		return array( 'discarded' => TWD_SK_Preview::discard( is_string( $token ) ? $token : '', get_current_user_id() ) );
+	}
+
+	public static function post_apply( $request ) {
+		$id   = (int) $request->get_param( 'id' );
+		$html = $request->get_param( 'html' );
+		$base = self::base_version( $request );
+		if ( is_wp_error( $base ) ) {
+			return $base;
+		}
+		if ( ! is_string( $html ) || '' === trim( $html ) ) {
+			return self::error( 'twd_sk_bad_input', 'There is no HTML to apply.', 400 );
+		}
+		$note = $request->get_param( 'note' );
+		$args = array( 'base_version' => $base, 'note' => is_string( $note ) ? $note : '' );
+
+		$saved = TWD_SK_Store::save( $id, $html, $args );
+		return self::after_write( $id, $saved );
+	}
+
+	public static function post_undo( $request ) {
+		$id   = (int) $request->get_param( 'id' );
+		$base = self::base_version( $request );
+		if ( is_wp_error( $base ) ) {
+			return $base;
+		}
+		return self::after_write( $id, TWD_SK_Store::undo( $id, array( 'base_version' => $base ) ) );
+	}
+
+	public static function post_restore( $request ) {
+		$id      = (int) $request->get_param( 'id' );
+		$version = $request->get_param( 'version' );
+		$base    = self::base_version( $request );
+		if ( is_wp_error( $base ) ) {
+			return $base;
+		}
+		if ( ! is_numeric( $version ) || (int) $version <= 0 ) {
+			return self::error( 'twd_sk_bad_input', 'Choose a version to restore.', 400 );
+		}
+		return self::after_write( $id, TWD_SK_Store::restore( $id, (int) $version, array( 'base_version' => $base ) ) );
+	}
+
+	// -- Helpers ----------------------------------------------------------
+
+	/** Every write says which version it started from, so a stale tab cannot overwrite a newer change. */
+	private static function base_version( $request ) {
+		$base = $request->get_param( 'base_version' );
+		if ( ! is_numeric( $base ) || (int) $base < 0 ) {
+			return self::error( 'twd_sk_bad_input', 'The editor did not say which version it started from. Reload the page and try again.', 400 );
+		}
+		return (int) $base;
+	}
+
+	private static function after_write( $id, $result ) {
+		if ( is_wp_error( $result ) ) {
+			return self::from_store_error( $result );
+		}
+		$leftovers = isset( $result['report']['leftovers'] ) ? $result['report']['leftovers'] : array();
+		return array(
+			'version'        => (int) $result['version'],
+			'unchanged'      => ! empty( $result['unchanged'] ),
+			'report'         => TWD_SK_Report::describe( $result['report'] ),
+			'leftovers'      => TWD_SK_Report::describe_leftovers( $leftovers ),
+			'leftover_count' => TWD_SK_Report::leftover_total( $leftovers ),
+		) + self::versions_payload( $id );
+	}
+
+	private static function versions_payload( $id ) {
+		$current  = TWD_SK_Store::get_current_version_id( $id );
+		$versions = array();
+		foreach ( TWD_SK_Store::list_versions( $id ) as $v ) {
+			$user       = $v['user'] > 0 && function_exists( 'get_userdata' ) ? get_userdata( $v['user'] ) : false;
+			$versions[] = array(
+				'id'      => (int) $v['id'],
+				'created' => (string) $v['created'],
+				'user'    => (int) $v['user'],
+				'by'      => $user ? (string) $user->display_name : '',
+				'note'    => (string) $v['note'],
+				'kind'    => (string) $v['kind'],
+				'bytes'   => (int) $v['bytes'],
+				'current' => (int) $v['id'] === $current,
+			);
+		}
+		return array( 'current_version' => $current, 'versions' => $versions );
+	}
+}

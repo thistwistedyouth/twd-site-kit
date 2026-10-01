@@ -1,9 +1,11 @@
-# Rebuilds assets/twd-site-kit.css from tools/kit.src.css. Run from anywhere:
+# Rebuilds assets/twd-site-kit.css from tools/kit.src.css and assets/twd-site-kit-editor.css
+# from tools/editor.src.css. Run from anywhere:
 #   python3 tools/build-css.py
 # The committed stylesheet is generated: edit tools/kit.src.css, then rebuild.
 # tests/test-css.php fails if the committed file is not what this script produces.
 import re,sys,os
 HERE=os.path.dirname(os.path.abspath(__file__))
+SCOPE='.twd-sk-page'
 src=open(os.path.join(HERE,'kit.src.css')).read()
 VIS=re.compile(r'^(color|background|background-color|background-image|font-family|font-size|font-weight|font-style|line-height|letter-spacing|text-transform|text-decoration|text-align|border|border-(top|right|bottom|left)(-(color|width|style))?|border-color|border-width|border-style|border-radius|box-shadow|padding|padding-(top|right|bottom|left)|margin|margin-(top|right|bottom|left))$')
 def tok(s):
@@ -15,8 +17,8 @@ def sel_out(sel):
     sel=sel.strip()
     sel=double(sel)
     if sel.startswith('&'):
-        return '.twd-sk-page'+sel[1:]
-    return '.twd-sk-page '+sel
+        return SCOPE+sel[1:]
+    return SCOPE+' '+sel
 def split_sel(s):
     out=[];depth=0;cur=''
     for ch in s:
@@ -84,4 +86,17 @@ body.twd-sk-has-h1 .entry-title {
 }
 '''
 open(os.path.join(HERE,'..','assets','twd-site-kit.css'),'w').write(head+parse(src)+'\n'+tail)
+
+# Second stylesheet: the front-end editor pop-up. Same rules, scoped under .twd-sk-ed.
+SCOPE='.twd-sk-ed'
+head_ed='''/* TWD Site Kit: front-end editor (the Edit with AI pop-up). Loaded only for users who can edit.
+ *
+ * Same rules as the page stylesheet (enforced by tests/test-css.php): every rule is scoped under
+ * .twd-sk-ed, every class is doubled, visual properties carry !important, tokens only (--twd-site-*),
+ * no viewport-width tricks, no negative margins, no hidden overflow.
+ */
+
+'''
+src_ed=open(os.path.join(HERE,'editor.src.css')).read()
+open(os.path.join(HERE,'..','assets','twd-site-kit-editor.css'),'w').write(head_ed+parse(src_ed)+'\n')
 print('written')
