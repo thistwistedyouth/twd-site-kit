@@ -133,10 +133,16 @@ function update_option( $name, $value ) {
 function wp_register_style( $handle, $src, $deps = array(), $ver = false ) {
 	$GLOBALS['twd_stub']['styles'][ $handle ] = array( 'src' => $src, 'ver' => $ver, 'enqueued' => false, 'inline' => '' );
 }
-function wp_enqueue_style( $handle ) {
+function wp_enqueue_style( $handle, $src = '', $deps = array(), $ver = false ) {
+	if ( ! isset( $GLOBALS['twd_stub']['styles'][ $handle ] ) ) {
+		wp_register_style( $handle, $src, $deps, $ver );
+	}
 	$GLOBALS['twd_stub']['styles'][ $handle ]['enqueued'] = true;
 }
 function wp_add_inline_style( $handle, $css ) {
+	if ( ! isset( $GLOBALS['twd_stub']['styles'][ $handle ] ) ) {
+		wp_register_style( $handle, '' );
+	}
 	$GLOBALS['twd_stub']['styles'][ $handle ]['inline'] .= $css;
 }
 function add_shortcode( $tag, $callback ) {
@@ -437,6 +443,8 @@ require_once ABSPATH . 'includes/class-twd-sk-store.php';
 require_once ABSPATH . 'includes/class-twd-sk-prompt.php';
 require_once ABSPATH . 'includes/class-twd-sk-page.php';
 require_once ABSPATH . 'includes/class-twd-sk-packs.php';
+require_once ABSPATH . 'includes/class-twd-sk-contrast.php';
+require_once ABSPATH . 'includes/class-twd-sk-site.php';
 require_once ABSPATH . 'includes/class-twd-sk-assets.php';
 require_once ABSPATH . 'includes/class-twd-sk-updater.php';
 require_once ABSPATH . 'includes/class-twd-sk-report.php';

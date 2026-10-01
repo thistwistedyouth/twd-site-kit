@@ -9,8 +9,8 @@ Order of work. Each piece is its own commit on `main`; the version number, zip a
 | # | Piece | State |
 |---|-------|-------|
 | 0 | Foundation: this log, safe mode (`TWD_SK_SAFE_MODE` or `wp twd-sk safe-mode`) | done |
-| 1 | Site tab: pack switch, colour, font and radius overrides, contrast blocking, live preview, reset | next |
-| 2 | Header, footer and site profile: variants, `[twd_header]` and `[twd_footer]`, mobile menu, Theme Builder JSON export | to do |
+| 1 | Site tab: pack switch, colour, font and radius overrides, contrast blocking, live preview, reset | done |
+| 2 | Header, footer and site profile: variants, `[twd_header]` and `[twd_footer]`, mobile menu, Theme Builder JSON export | next |
 | 3 | Starter pages (Home, About, Contact) and the setup command | to do |
 | 4 | SEO: search mirror, SEO tab, structured data, image attributes | to do |
 | 5 | Release 0.4.0: version, zip, update JSON, docs, test script for David's site | to do |

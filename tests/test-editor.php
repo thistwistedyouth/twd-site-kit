@@ -141,6 +141,9 @@ twd_sk_test( 'editor: what counts as a kit page', function () {
 function twd_sk_ed_js() {
 	return file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' );
 }
+function twd_sk_ed_all_js() {
+	return array( 'editor' => twd_sk_ed_js(), 'site' => file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' ) );
+}
 
 twd_sk_test( 'editor js: no way to run or inject code (eval, Function, document.write, innerHTML and friends)', function () {
 	$js = twd_sk_ed_js();
@@ -159,8 +162,63 @@ twd_sk_test( 'editor js: talks only to the address the server gave it, sends the
 } );
 
 twd_sk_test( 'editor js: no native alert, confirm or prompt', function () {
-	$js = twd_sk_ed_js();
-	twd_sk_true( 1 !== preg_match( '/(^|[^.\w])(alert|confirm|prompt)\s*\(/m', $js ), 'no native dialogs' );
+	foreach ( twd_sk_ed_all_js() as $name => $js ) {
+		twd_sk_true( 1 !== preg_match( '/(^|[^.\w])(alert|confirm|prompt)\s*\(/m', $js ), 'no native dialogs in ' . $name );
+	}
+} );
+
+twd_sk_test( 'site js: no way to run or inject code, no storage, no web addresses, and it only talks through the editor api', function () {
+	$js = twd_sk_ed_all_js()['site'];
+	foreach ( array( 'eval(', 'new Function', 'document.write', 'innerHTML', 'outerHTML', 'insertAdjacentHTML', 'srcdoc', 'XMLHttpRequest', 'WebSocket', 'sendBeacon', 'localStorage', 'sessionStorage', 'fetch(', 'importScripts' ) as $bad ) {
+		twd_sk_hasnt( $bad, $js );
+	}
+	twd_sk_true( 1 !== preg_match( '#https?://#i', $js ), 'no web addresses' );
+	twd_sk_has( "api('GET', '/site')", $js );
+	twd_sk_has( "api('POST', '/site/style'", $js );
+	twd_sk_has( "api('POST', '/site/style/reset'", $js );
+	twd_sk_has( "ED.addTab('site', 'Site'", $js );
+} );
+
+twd_sk_test( 'site js: previews by setting custom properties only, blocks the save button on unreadable pairs, and asks before resetting', function () {
+	$js = twd_sk_ed_all_js()['site'];
+	twd_sk_has( "root.style.setProperty(PREFIX + name, value)", $js );
+	twd_sk_has( "root.style.removeProperty(PREFIX + name)", $js );
+	twd_sk_has( "ui.saveBtn.disabled = res.blocking.length > 0", $js );
+	twd_sk_has( 'ED.confirmInline(ui.resetHost', $js );
+	twd_sk_has( "'--twd-site-'", $js );
+	twd_sk_has( 'You cannot save yet. This text would be hard to read', $js );
+	twd_sk_has( 'Nothing is kept until you press Save style', $js );
+	twd_sk_true( 1 !== preg_match( '/style\.cssText|setAttribute\(\s*[\'"]style/', $js ), 'no raw style strings' );
+} );
+
+twd_sk_test( 'site js: it parses (node --check)', function () {
+	if ( ! function_exists( 'shell_exec' ) || '' === trim( (string) shell_exec( 'command -v node 2>/dev/null' ) ) ) {
+		return;
+	}
+	twd_sk_eq( '', trim( (string) shell_exec( 'node --check ' . escapeshellarg( ABSPATH . 'assets/twd-site-kit-editor-site.js' ) . ' 2>&1' ) ) );
+} );
+
+twd_sk_test( 'site: the Site script loads only for administrators, never for an editor and never in safe mode', function () {
+	twd_sk_ed_setup( array( 'edit_pages', 'edit_post:12' ) );
+	twd_sk_true( twd_sk_ed_loaded() );
+	twd_sk_true( ! isset( $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor-site'] ), 'an editor does not get the Site script' );
+
+	twd_sk_ed_setup( array( 'edit_pages', 'edit_post:12', 'manage_options' ) );
+	twd_sk_true( twd_sk_ed_loaded() );
+	$site = $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor-site'];
+	twd_sk_true( $site['enqueued'] );
+	twd_sk_has( '@font-face', $GLOBALS['twd_stub']['styles']['twd-site-kit-editor']['inline'], 'every bundled font is declared so a style can be previewed' );
+	foreach ( array( 'Cormorant Garamond', 'Lora', 'Jost', 'Nunito' ) as $font ) {
+		twd_sk_has( 'font-family:"' . $font . '"', $GLOBALS['twd_stub']['styles']['twd-site-kit-editor']['inline'] );
+	}
+	twd_sk_eq( false, $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['safeMode'] );
+
+	twd_sk_ed_setup( array( 'edit_pages', 'edit_post:12', 'manage_options' ) );
+	$GLOBALS['twd_stub']['scripts'] = array();
+	TWD_SK_Safe::set( true );
+	twd_sk_true( twd_sk_ed_loaded(), 'the editor itself still loads in safe mode' );
+	twd_sk_true( ! isset( $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor-site'] ), 'no Site script in safe mode' );
+	twd_sk_eq( true, $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['safeMode'] );
 } );
 
 twd_sk_test( 'editor js: the behaviour the owner asked for is present', function () {

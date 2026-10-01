@@ -219,6 +219,12 @@
 			addTab('edit', 'Edit this page', buildEditPanel);
 		}
 		addTab('pages', 'Pages', buildPagesPanel);
+		((window.TWD_SK_ED && window.TWD_SK_ED.extraTabs) || []).forEach(function (t) {
+			addTab(t.name, t.label, t.build);
+		});
+		if (cfg.safeMode) {
+			body.insertBefore(el('div', { className: 'twd-sk-ed__banner', role: 'status', text: 'Safe mode is on. The Site tab, header and footer, SEO fields and the newest features are switched off. Your pages and this editor still work.' }), body.firstChild);
+		}
 
 		var dialog = el('div', {
 			className: 'twd-sk-ed__dialog', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'twd-sk-ed-title'
@@ -833,9 +839,20 @@
 	}
 
 	function onDocKeys(e) {
-		if (e.key === 'Escape' && !ui.overlay.hasAttribute('hidden')) {
+		if (ui.overlay.hasAttribute('hidden')) {
+			return;
+		}
+		if (e.key === 'Escape') {
 			e.preventDefault();
 			close();
+			return;
+		}
+		// If the focused control was hidden or removed (a confirmation closing, say), focus falls to the page.
+		// Bring it back inside the pop-up instead of letting Tab wander out.
+		if (e.key === 'Tab' && !ui.dialog.contains(document.activeElement)) {
+			e.preventDefault();
+			var items = focusables();
+			(e.shiftKey ? items[items.length - 1] : items[0] || ui.title).focus();
 		}
 	}
 
@@ -861,6 +878,39 @@
 		openBtn.setAttribute('aria-expanded', 'false');
 		openBtn.focus();
 	}
+
+	// A small inline confirmation inside any container, for tabs added by other scripts. No browser dialogs.
+	function confirmInline(host, opts) {
+		var box = el('div', { className: 'twd-sk-ed__card', role: 'group', 'aria-label': 'Please confirm' });
+		box.appendChild(el('p', { text: opts.text }));
+		var yes = button(opts.yesLabel || 'Yes', 'primary', function () {
+			host.removeChild(box);
+			opts.onYes();
+		});
+		var no = button('Cancel', 'secondary', function () {
+			host.removeChild(box);
+		});
+		box.appendChild(el('div', { className: 'twd-sk-ed__actions' }, [yes, no]));
+		host.appendChild(box);
+		yes.focus();
+	}
+
+	// What other editor scripts (the Site tab) may use. They register tabs here before the pop-up first opens.
+	window.TWD_SK_ED = {
+		cfg: cfg,
+		api: api,
+		el: el,
+		clear: clear,
+		show: show,
+		button: button,
+		message: message,
+		listInto: listInto,
+		confirmInline: confirmInline,
+		extraTabs: [],
+		addTab: function (name, label, build) {
+			this.extraTabs.push({ name: name, label: label, build: build });
+		}
+	};
 
 	openBtn.addEventListener('click', open);
 	show(openBtn, true);

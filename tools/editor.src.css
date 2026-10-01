@@ -104,6 +104,20 @@
 .twd-sk-ed__check { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; margin: 8px 0 0; color: $color-title; font-size: $size-small; cursor: pointer; }
 .twd-sk-ed__check input { flex: 0 0 auto; width: 22px; height: 22px; margin: 2px 0 0; }
 
+/* ---- the Site tab ---- */
+.twd-sk-ed__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; margin: 8px 0 16px; }
+.twd-sk-ed__field { min-width: 0; }
+.twd-sk-ed__inline { display: flex; align-items: center; gap: 10px; }
+.twd-sk-ed__color {
+  width: 56px; height: 44px; padding: 2px; border: 1px solid $color-border; border-radius: $radius-field;
+  background-color: $color-surface; cursor: pointer;
+}
+.twd-sk-ed__hex { font-family: $font-body; font-size: $size-small; color: $color-body; }
+.twd-sk-ed__subtitle {
+  margin: 16px 0 0; font-family: $font-heading; font-size: $size-body; font-weight: $title-weight; font-style: $title-style; color: $color-title;
+}
+.twd-sk-ed__packs { margin: 0 0 8px; }
+
 /* ---- messages, report and banner ---- */
 .twd-sk-ed__msg {
   margin: 12px 0 0; padding: 12px 14px; border-left: 4px solid $color-accent; border-radius: $radius-field;
@@ -150,4 +164,6 @@
   .twd-sk-ed__check { min-height: 48px; }
   .twd-sk-ed__frame { height: 50vh; }
   .twd-sk-ed__open { left: 16px; bottom: 16px; }
+  .twd-sk-ed__grid { grid-template-columns: 1fr; }
+  .twd-sk-ed__color { min-height: 48px; }
 }

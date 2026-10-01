@@ -21,14 +21,14 @@ function twd_sk_status( $e ) {
 	return is_array( $d ) && isset( $d['status'] ) ? $d['status'] : 0;
 }
 
-twd_sk_test( 'rest: the eleven routes exist under twd-site-kit/v1 and none is open to everyone', function () {
+twd_sk_test( 'rest: the fourteen routes exist under twd-site-kit/v1 and none is open to everyone', function () {
 	$routes = twd_sk_rest_routes();
-	twd_sk_eq( 11, count( $routes ) );
+	twd_sk_eq( 14, count( $routes ) );
 	foreach ( $routes as $r ) {
 		twd_sk_eq( 'twd-site-kit/v1', $r['ns'] );
 		twd_sk_true( is_array( $r['args']['permission_callback'] ) && 'TWD_SK_REST' === $r['args']['permission_callback'][0], 'a real permission callback on ' . $r['route'] );
 		twd_sk_true( in_array( $r['args']['methods'], array( 'GET', 'POST' ), true ) );
-		if ( '/pages' !== $r['route'] ) {
+		if ( 0 === strpos( $r['route'], '/pages/' ) ) {
 			twd_sk_has( '(?P<id>\\d+)', $r['route'] );
 		}
 	}
@@ -38,7 +38,7 @@ twd_sk_test( 'rest: the eleven routes exist under twd-site-kit/v1 and none is op
 			$reads[] = $r['route'];
 		}
 	}
-	twd_sk_eq( 3, count( $reads ), 'only prompt, versions and info are GET' );
+	twd_sk_eq( 4, count( $reads ), 'only prompt, versions, info and the site state are GET' );
 } );
 
 twd_sk_test( 'rest security: a visitor, a missing nonce and a wrong nonce are refused on every route (401)', function () {
@@ -72,8 +72,8 @@ twd_sk_test( 'rest security: a signed-in user without edit rights (subscriber, c
 twd_sk_test( 'rest security: an editor is allowed on the page they can edit, refused on another page', function () {
 	twd_sk_rest_setup( array( 'edit_pages', 'edit_post:12', 'publish_pages', 'publish_post:12' ) );
 	foreach ( twd_sk_rest_routes() as $r ) {
-		if ( '/pages' === $r['route'] ) {
-			continue; // creating a page has no page ID; it has its own test
+		if ( false === strpos( $r['route'], '(?P<id>' ) ) {
+			continue; // creating a page and the site settings have no page ID; they have their own tests
 		}
 		$cb = $r['args']['permission_callback'];
 		twd_sk_eq( true, call_user_func( $cb, twd_sk_rest_req( array( 'id' => 12 ) ) ), 'allowed on 12 ' . $r['route'] );
@@ -513,4 +513,180 @@ twd_sk_test( 'rest: the preview and apply payloads carry the must and check coun
 	$app = TWD_SK_REST::post_apply( twd_sk_rest_req( array( 'html' => '<p>Heading here</p><a href="/c">Find out about my services</a>', 'base_version' => 0 ) ) );
 	twd_sk_eq( 1, $app['must_count'] );
 	twd_sk_eq( 1, $app['check_count'] );
+} );
+
+// -- 0.4.0: the Site tab routes ---------------------------------------------------------
+
+function twd_sk_site_caps( $admin = true ) {
+	twd_sk_rest_setup( $admin ? array( 'edit_pages', 'manage_options' ) : array( 'edit_pages', 'edit_post:12', 'publish_pages', 'publish_post:12' ) );
+}
+function twd_sk_site_routes() {
+	$out = array();
+	foreach ( twd_sk_rest_routes() as $r ) {
+		if ( 0 === strpos( $r['route'], '/site' ) ) {
+			$out[] = $r;
+		}
+	}
+	return $out;
+}
+
+twd_sk_test( 'rest site: three routes, each with a real permission callback, none registered in safe mode', function () {
+	twd_sk_site_caps();
+	$routes = twd_sk_site_routes();
+	twd_sk_eq( 3, count( $routes ) );
+	twd_sk_eq( array( '/site', '/site/style', '/site/style/reset' ), array_map( function ( $r ) {
+		return $r['route'];
+	}, $routes ) );
+	TWD_SK_Safe::set( true );
+	twd_sk_eq( 0, count( twd_sk_site_routes() ), 'safe mode: no site routes' );
+	twd_sk_true( count( twd_sk_rest_routes() ) >= 11, 'the 0.3.x routes stay' );
+} );
+
+twd_sk_test( 'rest site security: visitor, missing or wrong nonce are refused on every site route (401)', function () {
+	twd_sk_site_caps();
+	foreach ( twd_sk_site_routes() as $r ) {
+		$cb = $r['args']['permission_callback'];
+		$GLOBALS['twd_stub']['user'] = 0;
+		twd_sk_is_error( 'twd_sk_not_signed_in', call_user_func( $cb, twd_sk_rest_req() ), $r['route'] );
+		$GLOBALS['twd_stub']['user'] = 7;
+		twd_sk_is_error( 'twd_sk_bad_nonce', call_user_func( $cb, twd_sk_rest_req( array(), null ) ), $r['route'] );
+		twd_sk_is_error( 'twd_sk_bad_nonce', call_user_func( $cb, twd_sk_rest_req( array(), 'wrong' ) ), $r['route'] );
+	}
+} );
+
+twd_sk_test( 'rest site security: an editor without manage_options is refused on every site route (403)', function () {
+	foreach ( array( array(), array( 'read' ), array( 'edit_pages' ), array( 'edit_pages', 'publish_pages', 'edit_post:12', 'publish_post:12' ), array( 'edit_posts' ) ) as $caps ) {
+		twd_sk_rest_setup( $caps );
+		foreach ( twd_sk_site_routes() as $r ) {
+			$e = call_user_func( $r['args']['permission_callback'], twd_sk_rest_req() );
+			twd_sk_is_error( 'twd_sk_forbidden', $e, implode( ',', $caps ) . ' on ' . $r['route'] );
+			twd_sk_eq( 403, twd_sk_status( $e ) );
+			twd_sk_has( 'administrators', $e->get_error_message() );
+		}
+	}
+	twd_sk_site_caps();
+	foreach ( twd_sk_site_routes() as $r ) {
+		twd_sk_eq( true, call_user_func( $r['args']['permission_callback'], twd_sk_rest_req() ), 'admin allowed on ' . $r['route'] );
+	}
+} );
+
+twd_sk_test( 'rest site: writes are rate limited per user, and an oversize body is refused', function () {
+	twd_sk_site_caps();
+	for ( $i = 0; $i < 30; $i++ ) {
+		twd_sk_eq( true, TWD_SK_REST::can_manage_site( twd_sk_rest_req() ) );
+	}
+	twd_sk_is_error( 'twd_sk_rate_limited', TWD_SK_REST::can_manage_site( twd_sk_rest_req() ) );
+	twd_sk_site_caps();
+	$GLOBALS['twd_stub']['transients'] = array();
+	twd_sk_is_error( 'twd_sk_too_large', TWD_SK_REST::can_manage_site( twd_sk_rest_req( array(), 'good-nonce', str_repeat( 'a', 300 * 1024 + 1 ) ) ) );
+} );
+
+twd_sk_test( 'rest site: the state lists every pack with its tokens, the editable controls, and the contrast result', function () {
+	twd_sk_site_caps();
+	$out = TWD_SK_REST::get_site( twd_sk_rest_req() );
+	twd_sk_eq( 'sage', $out['active'] );
+	$slugs = array_map( function ( $p ) {
+		return $p['slug'];
+	}, $out['packs'] );
+	twd_sk_eq( array( 'grove', 'sage' ), $slugs );
+	twd_sk_true( isset( $out['packs'][0]['tokens']['color-primary'] ) );
+	twd_sk_true( count( $out['editable'] ) >= 15 );
+	twd_sk_true( in_array( 'Lora', $out['fonts'], true ) );
+	twd_sk_eq( array(), $out['contrast']['blocking'], 'the shipped packs pass' );
+	twd_sk_eq( array(), $out['contrast']['warnings'] );
+} );
+
+twd_sk_test( 'rest site: a pack switch applies the new pack and clears the old overrides', function () {
+	twd_sk_site_caps();
+	TWD_SK_REST::post_site_style( twd_sk_rest_req( array( 'tokens' => array( 'color-accent' => '#112233' ) ) ) );
+	twd_sk_eq( array( 'color-accent' => '#112233' ), TWD_SK_Packs::overrides() );
+	$out = TWD_SK_REST::post_site_style( twd_sk_rest_req( array( 'pack' => 'grove' ) ) );
+	twd_sk_eq( 'grove', $out['active'] );
+	twd_sk_eq( 'grove', TWD_SK_Packs::active_slug() );
+	twd_sk_eq( array(), TWD_SK_Packs::overrides() );
+	twd_sk_is_error( 'twd_sk_unknown_pack', TWD_SK_REST::post_site_style( twd_sk_rest_req( array( 'pack' => 'nope' ) ) ) );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_REST::post_site_style( twd_sk_rest_req( array( 'pack' => array( 'sage' ) ) ) ) );
+	twd_sk_eq( 'grove', TWD_SK_Packs::active_slug(), 'a refused change changes nothing' );
+} );
+
+twd_sk_test( 'rest site: overrides are validated, limited to the editable tokens, and only values that differ from the pack are kept', function () {
+	twd_sk_site_caps();
+	$out = TWD_SK_REST::post_site_style( twd_sk_rest_req( array( 'tokens' => array( 'color-accent' => '#112233', 'radius-btn' => '4px', 'color-title' => '#3A3A3A' ) ) ) );
+	twd_sk_true( ! is_wp_error( $out ) );
+	$stored = TWD_SK_Packs::overrides();
+	twd_sk_eq( '#112233', $stored['color-accent'] );
+	twd_sk_eq( '4px', $stored['radius-btn'] );
+	twd_sk_true( ! isset( $stored['color-title'] ), 'same as the pack, not stored' );
+	twd_sk_eq( '#112233', $out['effective']['color-accent'] );
+	foreach ( array(
+		array( 'size-body' => '10px' ),
+		array( 'color-accent' => 'red;background:url(x)' ),
+		array( 'color-accent' => 'url(javascript:x)' ),
+		array( 'radius-btn' => '-5px' ),
+		array( 'radius-btn' => '50vw' ),
+		array( 'font-body' => 'Comic Sans' ),
+		array( 'color-nope' => '#fff' ),
+		array( 'container' => '2000px' ),
+	) as $bad ) {
+		$before = TWD_SK_Packs::overrides();
+		$e      = TWD_SK_REST::post_site_style( twd_sk_rest_req( array( 'tokens' => $bad ) ) );
+		twd_sk_is_error( 'twd_sk_bad_tokens', $e, json_encode( $bad ) );
+		twd_sk_eq( 400, twd_sk_status( $e ) );
+		twd_sk_eq( $before, TWD_SK_Packs::overrides(), 'nothing saved for ' . json_encode( $bad ) );
+	}
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_REST::post_site_style( twd_sk_rest_req( array( 'tokens' => 'x' ) ) ) );
+} );
+
+twd_sk_test( 'rest site: a save that makes button or band text unreadable is BLOCKED (422) and nothing is stored', function () {
+	twd_sk_site_caps();
+	foreach ( array(
+		array( 'color-on-primary' => '#CCCCCC' ),
+		array( 'color-primary' => '#EEEEEE' ),
+		array( 'color-primary-hover' => '#FFFFFF' ),
+		array( 'color-on-band' => '#777777' ),
+		array( 'color-band' => '#EEEEEE' ),
+		array( 'color-accent-on-dark' => '#555555' ),
+		array( 'color-title' => '#F0F0F0' ),
+		array( 'color-surface' => '#222222' ),
+	) as $bad ) {
+		$e = TWD_SK_REST::post_site_style( twd_sk_rest_req( array( 'tokens' => $bad ) ) );
+		twd_sk_is_error( 'twd_sk_contrast', $e, json_encode( $bad ) );
+		twd_sk_eq( 422, twd_sk_status( $e ) );
+		twd_sk_true( ! empty( $e->get_error_data()['contrast']['blocking'] ) );
+		twd_sk_has( '4.5:1', $e->get_error_message() );
+		twd_sk_eq( array(), TWD_SK_Packs::overrides(), 'nothing stored for ' . json_encode( $bad ) );
+	}
+} );
+
+twd_sk_test( 'rest site: other weak pairs only warn and the save goes through', function () {
+	twd_sk_site_caps();
+	$out = TWD_SK_REST::post_site_style( twd_sk_rest_req( array( 'tokens' => array( 'color-body' => '#BBBBBB', 'color-eyebrow' => '#DDDDDD' ) ) ) );
+	twd_sk_true( ! is_wp_error( $out ), 'saved' );
+	twd_sk_eq( array(), $out['contrast']['blocking'] );
+	$ids = array_map( function ( $w ) {
+		return $w['id'];
+	}, $out['contrast']['warnings'] );
+	twd_sk_true( in_array( 'body_bg', $ids, true ) && in_array( 'eyebrow_bg', $ids, true ) );
+	twd_sk_eq( '#BBBBBB', TWD_SK_Packs::overrides()['color-body'] );
+} );
+
+twd_sk_test( 'rest site: reset clears every override and keeps the pack', function () {
+	twd_sk_site_caps();
+	TWD_SK_REST::post_site_style( twd_sk_rest_req( array( 'pack' => 'grove' ) ) );
+	TWD_SK_REST::post_site_style( twd_sk_rest_req( array( 'tokens' => array( 'color-accent' => '#112233' ) ) ) );
+	$out = TWD_SK_REST::post_site_reset( twd_sk_rest_req() );
+	twd_sk_eq( array(), TWD_SK_Packs::overrides() );
+	twd_sk_eq( 'grove', $out['active'] );
+	twd_sk_eq( array(), (array) $out['overrides'] );
+	twd_sk_eq( TWD_SK_Packs::packs()['grove']['tokens']['color-accent'], $out['effective']['color-accent'] );
+} );
+
+twd_sk_test( 'rest site: the Site classes never touch page HTML, the page store, or the network', function () {
+	foreach ( array( 'class-twd-sk-site.php', 'class-twd-sk-contrast.php' ) as $f ) {
+		$src = file_get_contents( ABSPATH . 'includes/' . $f );
+		foreach ( array( 'TWD_SK_Store', '_twd_sk_html', 'wp_remote_', 'file_put_contents', 'curl_', 'eval(' ) as $bad ) {
+			twd_sk_hasnt( $bad, $src, $f );
+		}
+		twd_sk_hasnt( "\xE2\x80\x94", $src );
+	}
 } );

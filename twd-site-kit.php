@@ -29,6 +29,8 @@ require_once TWD_SK_PATH . 'includes/class-twd-sk-store.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-prompt.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-page.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-packs.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-contrast.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-site.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-assets.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-updater.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-report.php';

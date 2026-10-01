@@ -361,7 +361,53 @@ class TWD_SK_Packs {
 		return $tokens;
 	}
 
+	/** The stored per-site overrides, validated. Unknown or invalid entries are ignored. */
+	public static function overrides() {
+		$stored = function_exists( 'get_option' ) ? get_option( self::OPTION_TOKENS, array() ) : array();
+		if ( ! is_array( $stored ) || ! $stored ) {
+			return array();
+		}
+		return self::validate_tokens( $stored, false )['valid'];
+	}
+
+	/**
+	 * Replace the per-site overrides. Every value is validated; nothing is stored if any is not.
+	 *
+	 * @return true|WP_Error
+	 */
+	public static function set_overrides( $tokens ) {
+		$check = self::validate_tokens( $tokens, false );
+		if ( $check['errors'] ) {
+			return new WP_Error( 'twd_sk_bad_tokens', implode( ' ', $check['errors'] ) );
+		}
+		update_option( self::OPTION_TOKENS, $check['valid'] );
+		return true;
+	}
+
+	public static function clear_overrides() {
+		update_option( self::OPTION_TOKENS, array() );
+	}
+
+	/** @font-face blocks for every bundled font. The Site tab uses it so a pack can be previewed live. */
+	public static function all_fonts_css( $base_url ) {
+		$css = '';
+		foreach ( array_keys( self::fonts() ) as $family ) {
+			$css .= self::font_face_css( array( 'font-heading' => $family ), $base_url );
+		}
+		return $css;
+	}
+
 	// -- CSS output --------------------------------------------------------
+
+	/** The CSS value for a font token: the family first (if bundled), then its fallback stack. */
+	public static function font_css_value( $name ) {
+		$fonts = self::fonts();
+		if ( ! isset( $fonts[ $name ] ) ) {
+			return '';
+		}
+		$stack = $fonts[ $name ]['stack'];
+		return ( 0 === strpos( $name, 'System' ) ) ? $stack : '"' . $name . '", ' . $stack;
+	}
 
 	/**
 	 * :root custom properties for a set of (already validated) tokens.
@@ -375,9 +421,7 @@ class TWD_SK_Packs {
 			}
 			$value = $tokens[ $name ];
 			if ( 'font-heading' === $name || 'font-body' === $name ) {
-				$stack = $fonts[ $value ]['stack'];
-				// A system font is just its stack. A bundled font goes first, then the fallback stack.
-				$value = ( 0 === strpos( $value, 'System' ) ) ? $stack : '"' . $value . '", ' . $stack;
+				$value = self::font_css_value( $value );
 			}
 			$css .= self::VAR_PREFIX . $name . ':' . $value . ';';
 		}

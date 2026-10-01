@@ -14,7 +14,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TWD_SK_Editor {
 
-	const HANDLE = 'twd-site-kit-editor';
+	const HANDLE      = 'twd-site-kit-editor';
+	const HANDLE_SITE = 'twd-site-kit-editor-site';
 
 	public static function init() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue' ), 20 );
@@ -79,8 +80,18 @@ class TWD_SK_Editor {
 			'maxBytes'       => TWD_SK_Store::MAX_BYTES,
 			'maxTitle'       => TWD_SK_Template::MAX_TITLE,
 			'starters'       => TWD_SK_Template::starters(),
+			'safeMode'       => TWD_SK_Safe::on(),
 		) );
 		wp_enqueue_script( self::HANDLE );
+
+		// The Site tab: administrators only, and not in safe mode. Its own script, so nobody else loads it.
+		if ( ! TWD_SK_Safe::on() && current_user_can( 'manage_options' ) ) {
+			wp_register_script( self::HANDLE_SITE, $base . 'assets/twd-site-kit-editor-site.js', array( self::HANDLE ), $ver, true );
+			wp_localize_script( self::HANDLE_SITE, 'TWD_SK_SITE', array( 'enabled' => true ) );
+			wp_enqueue_script( self::HANDLE_SITE );
+			// Every bundled font, so a style can be previewed live.
+			wp_add_inline_style( self::HANDLE, TWD_SK_Packs::all_fonts_css( $base . 'assets/fonts/' ) );
+		}
 	}
 
 	/** The button. It stays hidden until the script runs; the pop-up itself is built by the script. */

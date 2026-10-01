@@ -44,6 +44,10 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_create_page' ),
 			'permission_callback' => array( __CLASS__, 'can_create_page' ),
 		) );
+		if ( ! TWD_SK_Safe::on() ) {
+			self::register_site_routes();
+		}
+
 		register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/info', array(
 			'methods'             => 'GET',
 			'callback'            => array( __CLASS__, 'get_info' ),
@@ -96,6 +100,25 @@ class TWD_SK_REST {
 		) );
 	}
 
+	/** Routes for the Site tab (administrators only). Not registered in safe mode. */
+	private static function register_site_routes() {
+		register_rest_route( self::ROUTE_NS, '/site', array(
+			'methods'             => 'GET',
+			'callback'            => array( __CLASS__, 'get_site' ),
+			'permission_callback' => array( __CLASS__, 'can_read_site' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/style', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_style' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/style/reset', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_reset' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
+	}
+
 	// -- Permission callbacks ---------------------------------------------
 
 	public static function can_read_page( $request ) {
@@ -108,6 +131,15 @@ class TWD_SK_REST {
 
 	public static function can_write_page( $request ) {
 		return self::guard( $request, 'write' );
+	}
+
+	/** Site settings need manage_options (administrators), and no page ID. */
+	public static function can_manage_site( $request ) {
+		return self::guard( $request, 'write', false, 'manage_options' );
+	}
+
+	public static function can_read_site( $request ) {
+		return self::guard( $request, 'read', false, 'manage_options' );
 	}
 
 	/** New draft pages need only edit_pages, and no page ID. */
@@ -132,7 +164,7 @@ class TWD_SK_REST {
 	 * The one gate every route passes: nonce, sign-in, capability on this page,
 	 * request size, rate limit. Returns true or a WP_Error with an HTTP status.
 	 */
-	private static function guard( $request, $bucket, $needs_page = true ) {
+	private static function guard( $request, $bucket, $needs_page = true, $cap = 'edit_pages' ) {
 		$nonce = $request->get_header( self::NONCE_HEADER );
 		if ( ! is_string( $nonce ) || '' === $nonce || ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
 			return self::error( 'twd_sk_bad_nonce', 'Your sign-in has timed out. Reload the page and try again.', 401 );
@@ -141,8 +173,8 @@ class TWD_SK_REST {
 			return self::error( 'twd_sk_not_signed_in', 'You need to be signed in.', 401 );
 		}
 		if ( ! $needs_page ) {
-			if ( ! current_user_can( 'edit_pages' ) ) {
-				return self::error( 'twd_sk_forbidden', 'You do not have permission to create pages.', 403 );
+			if ( ! current_user_can( $cap ) ) {
+				return self::error( 'twd_sk_forbidden', 'manage_options' === $cap ? 'Only administrators can change the site settings.' : 'You do not have permission to create pages.', 403 );
 			}
 		} else {
 			$page_id = (int) $request->get_param( 'id' );
@@ -298,6 +330,34 @@ class TWD_SK_REST {
 			return self::from_store_error( $result );
 		}
 		return self::info_payload( $id );
+	}
+
+	// -- The Site tab -----------------------------------------------------
+
+	public static function get_site( $request ) {
+		return TWD_SK_Site::state();
+	}
+
+	/** Switch pack and/or save colour, font and corner changes. Unreadable button or band text is refused. */
+	public static function post_site_style( $request ) {
+		$pack      = $request->get_param( 'pack' );
+		$overrides = $request->get_param( 'tokens' );
+		if ( null !== $pack && ! is_string( $pack ) ) {
+			return self::error( 'twd_sk_bad_input', 'Choose a style from the list.', 400 );
+		}
+		if ( null !== $overrides && ! is_array( $overrides ) ) {
+			return self::error( 'twd_sk_bad_input', 'The colour and font changes must be a list of names and values.', 400 );
+		}
+		$out = TWD_SK_Site::apply( $pack, $overrides );
+		if ( is_wp_error( $out ) ) {
+			$data = $out->get_error_data();
+			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_contrast' === $out->get_error_code() ? 422 : 400, is_array( $data ) ? $data : array() );
+		}
+		return $out;
+	}
+
+	public static function post_site_reset( $request ) {
+		return TWD_SK_Site::reset();
 	}
 
 	private static function truthy( $value ) {
