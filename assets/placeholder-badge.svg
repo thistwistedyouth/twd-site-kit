@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Placeholder badge">
+<circle cx="100" cy="100" r="92" fill="#e4e1db" stroke="#c4bfb5" stroke-width="6"/>
+<circle cx="100" cy="100" r="62" fill="#d6d2ca"/>
+<path d="M100 56 L112 88 L146 90 L119 111 L129 144 L100 125 L71 144 L81 111 L54 90 L88 88 Z" fill="#efece6"/>
+</svg>

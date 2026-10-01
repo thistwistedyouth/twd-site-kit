@@ -23,6 +23,59 @@ class TWD_SK_Page {
 
 	public static function init() {
 		add_shortcode( self::SHORTCODE, array( __CLASS__, 'render' ) );
+		// A page with a hero h1 does not also show the theme's own page title.
+		add_filter( 'hello_elementor_page_title', array( __CLASS__, 'filter_theme_title' ) );
+		add_filter( 'body_class', array( __CLASS__, 'filter_body_class' ) );
+	}
+
+	/**
+	 * The page being viewed, if it is a single WordPress page. Archives and
+	 * search results return 0 (their queried object id is not a post id).
+	 */
+	private static function viewed_page_id() {
+		if ( function_exists( 'is_singular' ) && ! is_singular( 'page' ) ) {
+			return 0;
+		}
+		$post_id = function_exists( 'get_queried_object_id' ) ? (int) get_queried_object_id() : 0;
+		if ( $post_id <= 0 && function_exists( 'get_the_ID' ) ) {
+			$post_id = (int) get_the_ID();
+		}
+		return $post_id;
+	}
+
+	/** True when the page's stored kit HTML contains an h1 (the hero title). */
+	public static function page_has_h1( $post_id ) {
+		$post_id = (int) $post_id;
+		if ( $post_id <= 0 ) {
+			return false;
+		}
+		$html = TWD_SK_Store::get_current( $post_id );
+		return '' !== $html && 1 === preg_match( '/<h1[\s>]/i', $html );
+	}
+
+	/**
+	 * Hello theme filter (hello_elementor_page_title): return false to hide the
+	 * theme's page title. Only hidden when the kit page has its own h1, so a
+	 * page never ends up with no h1 and never with two.
+	 */
+	public static function filter_theme_title( $show ) {
+		if ( ! $show ) {
+			return $show;
+		}
+		$post_id = self::viewed_page_id();
+		return ( $post_id > 0 && self::page_has_h1( $post_id ) ) ? false : $show;
+	}
+
+	/**
+	 * Body class for themes other than Hello: the stylesheet hides the title area
+	 * under this class. Added only on a page whose kit HTML has its own h1.
+	 */
+	public static function filter_body_class( $classes ) {
+		$post_id = self::viewed_page_id();
+		if ( $post_id > 0 && self::page_has_h1( $post_id ) ) {
+			$classes[] = 'twd-sk-has-h1';
+		}
+		return $classes;
 	}
 
 	/** True once a [twd_page] has rendered on this request. */

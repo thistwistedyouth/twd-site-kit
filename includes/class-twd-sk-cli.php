@@ -8,6 +8,7 @@
  *   wp twd-sk get <page_id>             print the current HTML
  *   wp twd-sk versions <page_id>        list versions, newest first
  *   wp twd-sk undo <page_id>            step back one change (recorded as a new version)
+ *   wp twd-sk pack [<slug>]             list style packs, or switch to one
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -138,6 +139,47 @@ class TWD_SK_CLI {
 	public function undo( $args, $assoc_args ) {
 		$page_id = self::page_id( isset( $args[0] ) ? $args[0] : '' );
 		self::report( $page_id, TWD_SK_Store::undo( $page_id ), 'Undone' );
+	}
+
+	/**
+	 * List the style packs, or switch to one.
+	 *
+	 * With no name it lists the packs and marks the active one. With a name it
+	 * makes that pack active. The change shows on the site once any page cache
+	 * has been cleared.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [<slug>]
+	 * : The pack to switch to, for example sage or grove.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk pack
+	 *     wp twd-sk pack grove
+	 */
+	public function pack( $args, $assoc_args ) {
+		if ( empty( $args[0] ) ) {
+			$active = TWD_SK_Packs::active_slug();
+			$rows   = array();
+			foreach ( TWD_SK_Packs::packs() as $slug => $pack ) {
+				$rows[] = array(
+					'pack'        => $slug,
+					'active'      => ( $slug === $active ) ? 'yes' : '',
+					'name'        => $pack['name'],
+					'description' => $pack['description'],
+				);
+			}
+			\WP_CLI\Utils\format_items( 'table', $rows, array( 'pack', 'active', 'name', 'description' ) );
+			return;
+		}
+
+		$result = TWD_SK_Packs::set_active( (string) $args[0] );
+		if ( is_wp_error( $result ) ) {
+			WP_CLI::error( $result->get_error_message() );
+			return;
+		}
+		WP_CLI::success( 'Style pack is now "' . $args[0] . '". If the site uses a page cache, clear it to see the change.' );
 	}
 
 	// -- Helpers ----------------------------------------------------------

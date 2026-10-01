@@ -31,7 +31,7 @@ class TWD_SK_Store {
 	const META_HTML     = '_twd_sk_html';
 	const META_VERSIONS = '_twd_sk_versions';
 	const MAX_VERSIONS  = 10;
-	const MAX_BYTES     = 204800; // 200 KB per page, before and after cleaning.
+	const MAX_BYTES     = 200 * 1024; // 200 KB per page, before and after cleaning.
 
 	// -- Reading ----------------------------------------------------------
 

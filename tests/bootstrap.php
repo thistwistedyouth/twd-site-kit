@@ -35,6 +35,10 @@ function plugin_dir_path( $file ) {
 	return dirname( $file ) . '/';
 }
 
+define( 'TWD_SK_PATH', ABSPATH );
+define( 'TWD_SK_URL', 'https://example.test/wp-content/plugins/twd-site-kit/' );
+define( 'TWD_SK_VERSION', 'test' );
+
 $GLOBALS['twd_stub'] = array();
 
 function twd_stub_reset() {
@@ -44,6 +48,11 @@ function twd_stub_reset() {
 		'user'       => 7,
 		'shortcodes' => array(),
 		'post_id'    => 0,
+		'queried'    => 0,
+		'singular'   => true,
+		'options'    => array(),
+		'hooks'      => array(),
+		'styles'     => array(),
 	);
 }
 twd_stub_reset();
@@ -101,7 +110,32 @@ function get_the_ID() {
 	return $GLOBALS['twd_stub']['post_id'];
 }
 function get_queried_object_id() {
-	return 0;
+	return $GLOBALS['twd_stub']['queried'];
+}
+function is_singular( $type = '' ) {
+	return $GLOBALS['twd_stub']['singular'];
+}
+function add_filter( $name, $callback ) {
+	$GLOBALS['twd_stub']['hooks'][ $name ][] = $callback;
+}
+function add_action( $name, $callback ) {
+	add_filter( $name, $callback );
+}
+function get_option( $name, $default = false ) {
+	return array_key_exists( $name, $GLOBALS['twd_stub']['options'] ) ? $GLOBALS['twd_stub']['options'][ $name ] : $default;
+}
+function update_option( $name, $value ) {
+	$GLOBALS['twd_stub']['options'][ $name ] = $value;
+	return true;
+}
+function wp_register_style( $handle, $src, $deps = array(), $ver = false ) {
+	$GLOBALS['twd_stub']['styles'][ $handle ] = array( 'src' => $src, 'ver' => $ver, 'enqueued' => false, 'inline' => '' );
+}
+function wp_enqueue_style( $handle ) {
+	$GLOBALS['twd_stub']['styles'][ $handle ]['enqueued'] = true;
+}
+function wp_add_inline_style( $handle, $css ) {
+	$GLOBALS['twd_stub']['styles'][ $handle ]['inline'] .= $css;
 }
 function add_shortcode( $tag, $callback ) {
 	$GLOBALS['twd_stub']['shortcodes'][ $tag ] = $callback;
@@ -122,12 +156,20 @@ require_once ABSPATH . 'includes/class-twd-sk-registry.php';
 require_once ABSPATH . 'includes/class-twd-sk-sanitizer.php';
 require_once ABSPATH . 'includes/class-twd-sk-store.php';
 require_once ABSPATH . 'includes/class-twd-sk-page.php';
+require_once ABSPATH . 'includes/class-twd-sk-packs.php';
+require_once ABSPATH . 'includes/class-twd-sk-assets.php';
 
 // Tiny assertion helpers ---------------------------------------------------
 
 class TWD_SK_Test_Failure extends Exception {}
 
 $GLOBALS['twd_sk_tests'] = array();
+$GLOBALS['twd_sk_notes'] = array();
+
+// A line printed after the run, for facts worth seeing that are not failures.
+function twd_sk_note( $msg ) {
+	$GLOBALS['twd_sk_notes'][ $msg ] = $msg;
+}
 
 function twd_sk_test( $name, $fn ) {
 	$GLOBALS['twd_sk_tests'][] = array( $name, $fn );

@@ -165,13 +165,47 @@ twd_sk_test( 'cli: undo with nothing to undo fails cleanly', function () {
 	} ) );
 } );
 
-twd_sk_test( 'cli: exposes exactly the four commands asked for', function () {
+twd_sk_test( 'cli: exposes exactly the five commands: save, get, versions, undo, pack', function () {
 	$methods = array();
 	foreach ( ( new ReflectionClass( 'TWD_SK_CLI' ) )->getMethods( ReflectionMethod::IS_PUBLIC ) as $m ) {
 		$methods[] = $m->getName();
 	}
 	sort( $methods );
-	twd_sk_eq( array( 'get', 'save', 'undo', 'versions' ), $methods );
+	twd_sk_eq( array( 'get', 'pack', 'save', 'undo', 'versions' ), $methods );
+} );
+
+twd_sk_test( 'cli: pack with no name lists the packs and marks the active one', function () {
+	WP_CLI::reset();
+	( new TWD_SK_CLI() )->pack( array(), array() );
+	$line = WP_CLI::$log[0];
+	twd_sk_has( 'table(table):', $line );
+	$data = json_decode( substr( $line, strlen( 'table(table): ' ) ), true );
+	twd_sk_eq( array( 'pack', 'active', 'name', 'description' ), $data['fields'] );
+	$by = array();
+	foreach ( $data['rows'] as $row ) {
+		$by[ $row['pack'] ] = $row['active'];
+	}
+	twd_sk_eq( array( 'grove' => '', 'sage' => 'yes' ), $by );
+} );
+
+twd_sk_test( 'cli: pack with a name switches the active pack and says what to do about caches', function () {
+	WP_CLI::reset();
+	( new TWD_SK_CLI() )->pack( array( 'grove' ), array() );
+	twd_sk_eq( 'grove', TWD_SK_Packs::active_slug() );
+	twd_sk_has( 'Style pack is now "grove"', WP_CLI::all() );
+	twd_sk_has( 'clear it', WP_CLI::all() );
+	( new TWD_SK_CLI() )->pack( array( 'sage' ), array() );
+	twd_sk_eq( 'sage', TWD_SK_Packs::active_slug() );
+} );
+
+twd_sk_test( 'cli: pack with an unknown name fails, lists the choices and changes nothing', function () {
+	$cli = new TWD_SK_CLI();
+	$msg = twd_sk_cli_fails( function () use ( $cli ) {
+		$cli->pack( array( 'nonsense' ), array() );
+	} );
+	twd_sk_has( 'no style pack called "nonsense"', $msg );
+	twd_sk_has( 'grove, sage', $msg );
+	twd_sk_eq( 'sage', TWD_SK_Packs::active_slug() );
 } );
 
 twd_sk_test( 'cli: commands only use the store API, never the meta keys directly', function () {

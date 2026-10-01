@@ -207,14 +207,14 @@ twd_sk_test( 'store: restore and undo also honour base_version', function () {
 
 twd_sk_test( 'store: input over 200 KB is refused before cleaning', function () {
 	$id = twd_sk_page();
-	$r  = TWD_SK_Store::save( $id, '<p>' . str_repeat( 'a', 204800 ) . '</p>' );
+	$r  = TWD_SK_Store::save( $id, '<p>' . str_repeat( 'a', TWD_SK_Store::MAX_BYTES ) . '</p>' );
 	twd_sk_is_error( 'twd_sk_too_large', $r );
 	twd_sk_eq( '', TWD_SK_Store::get_current( $id ) );
 } );
 
 twd_sk_test( 'store: input just under 200 KB is accepted', function () {
 	$id = twd_sk_page();
-	$r  = TWD_SK_Store::save( $id, '<p>' . str_repeat( 'a', 204000 ) . '</p>' );
+	$r  = TWD_SK_Store::save( $id, '<p>' . str_repeat( 'a', TWD_SK_Store::MAX_BYTES - 800 ) . '</p>' );
 	twd_sk_eq( 1, $r['version'] );
 } );
 

@@ -1,9 +1,72 @@
 <?php
 // [twd_page] shortcode tests.
 
-twd_sk_test( 'page: init registers the twd_page shortcode and nothing else', function () {
+twd_sk_test( 'page: init registers the twd_page shortcode and nothing else as a shortcode', function () {
 	TWD_SK_Page::init();
 	twd_sk_eq( array( 'twd_page' ), array_keys( $GLOBALS['twd_stub']['shortcodes'] ) );
+} );
+
+twd_sk_test( 'page: init hooks the Hello title filter and the body class filter', function () {
+	TWD_SK_Page::init();
+	twd_sk_true( isset( $GLOBALS['twd_stub']['hooks']['hello_elementor_page_title'] ) );
+	twd_sk_true( isset( $GLOBALS['twd_stub']['hooks']['body_class'] ) );
+} );
+
+twd_sk_test( 'title: the theme page title is hidden when the stored page has a hero h1', function () {
+	twd_stub_add_post( 13, 'page' );
+	TWD_SK_Store::save( 13, TWD_SK_Registry::get( 'hero' )['skeleton'] );
+	$GLOBALS['twd_stub']['queried'] = 13;
+	twd_sk_eq( false, TWD_SK_Page::filter_theme_title( true ) );
+} );
+
+twd_sk_test( 'title: the theme page title stays when the stored page has no h1', function () {
+	twd_stub_add_post( 13, 'page' );
+	TWD_SK_Store::save( 13, TWD_SK_Registry::get( 'text' )['skeleton'] );
+	$GLOBALS['twd_stub']['queried'] = 13;
+	twd_sk_eq( true, TWD_SK_Page::filter_theme_title( true ) );
+} );
+
+twd_sk_test( 'title: the theme page title stays on a page with nothing stored', function () {
+	twd_stub_add_post( 13, 'page' );
+	$GLOBALS['twd_stub']['queried'] = 13;
+	twd_sk_eq( true, TWD_SK_Page::filter_theme_title( true ) );
+} );
+
+twd_sk_test( 'title: an already hidden title stays hidden, and an h1 that was demoted does not hide the theme title', function () {
+	twd_stub_add_post( 13, 'page' );
+	TWD_SK_Store::save( 13, '<section class="twd-sk-text"><h1 class="twd-sk-hero__title">Stray</h1></section>' );
+	$GLOBALS['twd_stub']['queried'] = 13;
+	twd_sk_eq( true, TWD_SK_Page::filter_theme_title( true ), 'demoted h1 means no h1 stored, so the theme title stays' );
+	twd_sk_eq( false, TWD_SK_Page::filter_theme_title( false ) );
+} );
+
+twd_sk_test( 'title: archives and search results are never touched, even if their queried id matches a page', function () {
+	twd_stub_add_post( 13, 'page' );
+	TWD_SK_Store::save( 13, TWD_SK_Registry::get( 'hero' )['skeleton'] );
+	$GLOBALS['twd_stub']['queried']  = 13;
+	$GLOBALS['twd_stub']['singular'] = false;
+	twd_sk_eq( true, TWD_SK_Page::filter_theme_title( true ) );
+	twd_sk_eq( array( 'a' ), TWD_SK_Page::filter_body_class( array( 'a' ) ) );
+} );
+
+twd_sk_test( 'title: the body class twd-sk-has-h1 is added only on a page with a hero h1', function () {
+	twd_stub_add_post( 13, 'page' );
+	twd_stub_add_post( 14, 'page' );
+	TWD_SK_Store::save( 13, TWD_SK_Registry::get( 'hero' )['skeleton'] );
+	TWD_SK_Store::save( 14, TWD_SK_Registry::get( 'text' )['skeleton'] );
+	$GLOBALS['twd_stub']['queried'] = 13;
+	twd_sk_eq( array( 'x', 'twd-sk-has-h1' ), TWD_SK_Page::filter_body_class( array( 'x' ) ) );
+	$GLOBALS['twd_stub']['queried'] = 14;
+	twd_sk_eq( array( 'x' ), TWD_SK_Page::filter_body_class( array( 'x' ) ) );
+	$GLOBALS['twd_stub']['queried'] = 0;
+	twd_sk_eq( array( 'x' ), TWD_SK_Page::filter_body_class( array( 'x' ) ) );
+} );
+
+twd_sk_test( 'title: page_has_h1 reads only the stored HTML and ignores h1 inside other words', function () {
+	twd_stub_add_post( 13, 'page' );
+	update_post_meta( 13, '_twd_sk_html', wp_slash( '<p>an h1 is mentioned in this text, and <h10>this</h10></p>' ) );
+	twd_sk_eq( false, TWD_SK_Page::page_has_h1( 13 ) );
+	twd_sk_eq( false, TWD_SK_Page::page_has_h1( 0 ) );
 } );
 
 twd_sk_test( 'page: renders the current page stored html inside one wrapper class', function () {

@@ -8,7 +8,8 @@
  *
  * Method: parse with DOMDocument, walk every node, rebuild the output.
  *  - scripts, styles, iframes, forms and similar are removed with their contents
- *  - unknown tags are unwrapped (children kept), h1 is demoted to h2
+ *  - unknown tags are unwrapped (children kept). A page may have one h1: the first
+ *    hero title (class twd-sk-hero__title inside .twd-sk-hero). Any other h1 becomes h2
  *  - only a short list of attributes survives, per tag
  *  - classes are checked against the registry allowlist
  *  - links and images: http, https, mailto, tel, relative paths and #anchors only
@@ -83,30 +84,34 @@ class TWD_SK_Sanitizer {
 	 * }
 	 */
 	public static function clean_with_report( $html ) {
-		$removed = array(
-			'classes'    => array(),
-			'tags'       => array(),
-			'attributes' => array(),
-			'urls'       => array(),
-			'shortcodes' => array(),
-			'dashes'     => array(),
+		$ctx = array(
+			'removed' => array(
+				'classes'    => array(),
+				'tags'       => array(),
+				'attributes' => array(),
+				'urls'       => array(),
+				'shortcodes' => array(),
+				'dashes'     => array(),
+			),
+			// The one h1 a page may have is used up by the first accepted hero title.
+			'h1_used' => false,
 		);
 
 		if ( ! is_string( $html ) ) {
-			return self::result( '', $removed );
+			return self::result( '', $ctx['removed'] );
 		}
 		$html = self::ensure_utf8( $html );
 		if ( '' === trim( $html ) ) {
-			return self::result( '', $removed );
+			return self::result( '', $ctx['removed'] );
 		}
 
 		$doc = self::load( $html );
 		if ( null === $doc ) {
-			return self::result( '', $removed );
+			return self::result( '', $ctx['removed'] );
 		}
 		$body = $doc->getElementsByTagName( 'body' )->item( 0 );
 		if ( ! $body ) {
-			return self::result( '', $removed );
+			return self::result( '', $ctx['removed'] );
 		}
 
 		$root = null;
@@ -117,17 +122,17 @@ class TWD_SK_Sanitizer {
 			}
 		}
 		if ( null === $root ) {
-			return self::result( '', $removed );
+			return self::result( '', $ctx['removed'] );
 		}
 
-		self::walk_children( $doc, $body, $root, $removed );
+		self::walk_children( $doc, $body, $root, $ctx );
 
 		$out = '';
 		foreach ( $body->childNodes as $child ) {
 			$out .= $doc->saveHTML( $child );
 		}
 
-		return self::result( trim( $out ), $removed );
+		return self::result( trim( $out ), $ctx['removed'] );
 	}
 
 	/**
@@ -276,32 +281,32 @@ class TWD_SK_Sanitizer {
 		return $ok ? $doc : null;
 	}
 
-	private static function walk_children( DOMDocument $doc, DOMNode $parent, DOMNode $root, array &$removed ) {
+	private static function walk_children( DOMDocument $doc, DOMNode $parent, DOMNode $root, array &$ctx ) {
 		$children = array();
 		foreach ( $parent->childNodes as $child ) {
 			$children[] = $child;
 		}
 		foreach ( $children as $child ) {
-			self::process_node( $doc, $child, $root, $removed );
+			self::process_node( $doc, $child, $root, $ctx );
 		}
 	}
 
-	private static function process_node( DOMDocument $doc, DOMNode $node, DOMNode $root, array &$removed ) {
+	private static function process_node( DOMDocument $doc, DOMNode $node, DOMNode $root, array &$ctx ) {
 		$type = $node->nodeType;
 
 		if ( XML_TEXT_NODE === $type ) {
-			self::clean_text_node( $node, $removed );
+			self::clean_text_node( $node, $ctx );
 			return;
 		}
 		if ( XML_ELEMENT_NODE !== $type ) {
 			// Comments, CDATA, processing instructions.
-			$removed['tags'][] = ( XML_COMMENT_NODE === $type ) ? 'comment' : 'non-element node';
+			$ctx['removed']['tags'][] = ( XML_COMMENT_NODE === $type ) ? 'comment' : 'non-element node';
 			$node->parentNode->removeChild( $node );
 			return;
 		}
 
 		if ( $node->isSameNode( $root ) ) {
-			self::walk_children( $doc, $node, $root, $removed );
+			self::walk_children( $doc, $node, $root, $ctx );
 			self::unwrap( $node );
 			return;
 		}
@@ -309,25 +314,35 @@ class TWD_SK_Sanitizer {
 		$tag = strtolower( $node->nodeName );
 
 		if ( isset( self::remove_with_contents()[ $tag ] ) ) {
-			$removed['tags'][] = $tag;
+			$ctx['removed']['tags'][] = $tag;
 			$node->parentNode->removeChild( $node );
 			return;
 		}
 
 		if ( 'h1' === $tag ) {
-			$removed['tags'][] = 'h1 (demoted to h2)';
-			$node              = self::rename( $doc, $node, 'h2' );
-			$tag               = 'h2';
+			// A page may have exactly one h1: the first hero title. Any other h1
+			// becomes an h2. Attributes are cleaned as for an h2 (class and id).
+			$keep = self::clean_attributes( $node, 'h2', $ctx );
+			if ( ! $ctx['h1_used'] && self::is_hero_title( $node, $keep ) ) {
+				$ctx['h1_used'] = true;
+				$final          = 'h1';
+			} else {
+				$ctx['removed']['tags'][] = 'h1 (demoted to h2)';
+				$final                    = 'h2';
+			}
+			$node = self::rebuild( $doc, $node, $final, $keep );
+			self::walk_children( $doc, $node, $root, $ctx );
+			return;
 		}
 
 		if ( ! isset( self::allowed_tags()[ $tag ] ) ) {
-			$removed['tags'][] = $tag;
-			self::walk_children( $doc, $node, $root, $removed );
+			$ctx['removed']['tags'][] = $tag;
+			self::walk_children( $doc, $node, $root, $ctx );
 			self::unwrap( $node );
 			return;
 		}
 
-		$keep = self::clean_attributes( $node, $tag, $removed );
+		$keep = self::clean_attributes( $node, $tag, $ctx );
 		if ( false === $keep ) {
 			$node->parentNode->removeChild( $node );
 			return;
@@ -335,7 +350,25 @@ class TWD_SK_Sanitizer {
 
 		$node = self::rebuild( $doc, $node, $tag, $keep );
 
-		self::walk_children( $doc, $node, $root, $removed );
+		self::walk_children( $doc, $node, $root, $ctx );
+	}
+
+	/**
+	 * An h1 is acceptable only when it carries the hero title class (after class
+	 * filtering) and sits inside an element carrying the hero class. Ancestors
+	 * have already been rebuilt from their cleaned attributes by the time their
+	 * children are processed, so their classes can be trusted here.
+	 */
+	private static function is_hero_title( DOMElement $node, array $keep ) {
+		if ( ! isset( $keep['class'] ) || ! in_array( 'twd-sk-hero__title', explode( ' ', $keep['class'] ), true ) ) {
+			return false;
+		}
+		for ( $parent = $node->parentNode; $parent instanceof DOMElement; $parent = $parent->parentNode ) {
+			if ( in_array( 'twd-sk-hero', explode( ' ', $parent->getAttribute( 'class' ) ), true ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static function unwrap( DOMNode $node ) {
@@ -346,24 +379,6 @@ class TWD_SK_Sanitizer {
 		$parent->removeChild( $node );
 	}
 
-	private static function rename( DOMDocument $doc, DOMElement $node, $new_tag ) {
-		$new = $doc->createElement( $new_tag );
-		foreach ( $node->attributes as $attr ) {
-			// Odd attribute names (with a colon, say) can be refused by the DOM.
-			// They would be removed in the next step anyway, so just skip them.
-			try {
-				$new->setAttribute( $attr->nodeName, $attr->value );
-			} catch ( DOMException $e ) {
-				continue;
-			}
-		}
-		while ( $node->firstChild ) {
-			$new->appendChild( $node->firstChild );
-		}
-		$node->parentNode->replaceChild( $new, $node );
-		return $new;
-	}
-
 	/**
 	 * Decide which attributes survive. Returns the survivors as name => value,
 	 * or false if the element should be dropped entirely (an image left with no
@@ -371,7 +386,7 @@ class TWD_SK_Sanitizer {
 	 * one from the survivors, because removeAttribute() cannot remove attributes
 	 * with a colon in the name (xmlns:xlink, xlink:href).
 	 */
-	private static function clean_attributes( DOMElement $el, $tag, array &$removed ) {
+	private static function clean_attributes( DOMElement $el, $tag, array &$ctx ) {
 		$allowed = self::allowed_attributes( $tag );
 		$keep    = array();
 
@@ -380,7 +395,7 @@ class TWD_SK_Sanitizer {
 			$value = $attr->value;
 
 			if ( ! in_array( $lname, $allowed, true ) ) {
-				$removed['attributes'][] = $lname . ' on <' . $tag . '>';
+				$ctx['removed']['attributes'][] = $lname . ' on <' . $tag . '>';
 				continue;
 			}
 
@@ -392,7 +407,7 @@ class TWD_SK_Sanitizer {
 						if ( isset( $list[ $class ] ) ) {
 							$classes[ $class ] = $class;
 						} else {
-							$removed['classes'][] = $class;
+							$ctx['removed']['classes'][] = $class;
 						}
 					}
 					if ( $classes ) {
@@ -404,14 +419,14 @@ class TWD_SK_Sanitizer {
 					if ( preg_match( '/^twd-sk-[a-z0-9-]{1,48}$/', $value ) ) {
 						$keep['id'] = $value;
 					} else {
-						$removed['attributes'][] = 'id on <' . $tag . '>';
+						$ctx['removed']['attributes'][] = 'id on <' . $tag . '>';
 					}
 					break;
 
 				case 'href':
 					$safe = self::safe_url( $value, array( 'http', 'https', 'mailto', 'tel' ) );
 					if ( false === $safe ) {
-						$removed['urls'][] = 'href: ' . self::shorten( $value );
+						$ctx['removed']['urls'][] = 'href: ' . self::shorten( $value );
 					} else {
 						$keep['href'] = $safe;
 					}
@@ -420,7 +435,7 @@ class TWD_SK_Sanitizer {
 				case 'src':
 					$safe = self::safe_url( $value, array( 'http', 'https' ) );
 					if ( false === $safe ) {
-						$removed['urls'][] = 'src: ' . self::shorten( $value );
+						$ctx['removed']['urls'][] = 'src: ' . self::shorten( $value );
 					} else {
 						$keep['src'] = $safe;
 					}
@@ -430,7 +445,7 @@ class TWD_SK_Sanitizer {
 					if ( '_blank' === $value ) {
 						$keep['target'] = '_blank';
 					} else {
-						$removed['attributes'][] = 'target on <' . $tag . '>';
+						$ctx['removed']['attributes'][] = 'target on <' . $tag . '>';
 					}
 					break;
 
@@ -440,7 +455,7 @@ class TWD_SK_Sanitizer {
 						if ( in_array( $token, self::allowed_rel_tokens(), true ) ) {
 							$tokens[ $token ] = $token;
 						} else {
-							$removed['attributes'][] = 'rel token ' . $token;
+							$ctx['removed']['attributes'][] = 'rel token ' . $token;
 						}
 					}
 					if ( $tokens ) {
@@ -453,13 +468,13 @@ class TWD_SK_Sanitizer {
 					if ( preg_match( '/^\d{1,4}$/', $value ) ) {
 						$keep[ $lname ] = $value;
 					} else {
-						$removed['attributes'][] = $lname . ' on <' . $tag . '>';
+						$ctx['removed']['attributes'][] = $lname . ' on <' . $tag . '>';
 					}
 					break;
 
 				case 'alt':
 				case 'title':
-					$keep[ $lname ] = self::clean_text( $value, $removed );
+					$keep[ $lname ] = self::clean_text( $value, $ctx );
 					break;
 
 				case 'open':
@@ -479,7 +494,7 @@ class TWD_SK_Sanitizer {
 		}
 
 		if ( 'img' === $tag && ! isset( $keep['src'] ) ) {
-			$removed['tags'][] = 'img (no valid src)';
+			$ctx['removed']['tags'][] = 'img (no valid src)';
 			return false;
 		}
 
@@ -511,25 +526,25 @@ class TWD_SK_Sanitizer {
 		return $value;
 	}
 
-	private static function clean_text_node( DOMNode $node, array &$removed ) {
+	private static function clean_text_node( DOMNode $node, array &$ctx ) {
 		$old = $node->data;
-		$new = self::clean_text( $old, $removed );
+		$new = self::clean_text( $old, $ctx );
 		if ( $new !== $old ) {
 			$node->data = $new;
 		}
 	}
 
 	/** Shortcode removal, then dash stripping. Used for text nodes and alt/title. */
-	private static function clean_text( $text, array &$removed ) {
+	private static function clean_text( $text, array &$ctx ) {
 		if ( '' === $text ) {
 			return $text;
 		}
-		$text = self::clean_shortcodes( $text, $removed );
+		$text = self::clean_shortcodes( $text, $ctx );
 
 		$dash = self::dash_pattern();
 		if ( preg_match_all( '/.{0,12}' . $dash . '.{0,12}/us', $text, $found ) ) {
 			foreach ( $found[0] as $snippet ) {
-				$removed['dashes'][] = trim( preg_replace( '/\s+/', ' ', $snippet ) );
+				$ctx['removed']['dashes'][] = trim( preg_replace( '/\s+/', ' ', $snippet ) );
 			}
 		}
 		return self::strip_dashes( $text );
@@ -539,7 +554,7 @@ class TWD_SK_Sanitizer {
 	 * Remove every shortcode except those the registry allows. An allowed
 	 * shortcode is rebuilt from scratch with only its validated attributes.
 	 */
-	private static function clean_shortcodes( $text, array &$removed ) {
+	private static function clean_shortcodes( $text, array &$ctx ) {
 		if ( false === strpos( $text, '[' ) ) {
 			return $text;
 		}
@@ -550,20 +565,20 @@ class TWD_SK_Sanitizer {
 
 		return preg_replace_callback(
 			$pattern,
-			function ( $m ) use ( $allowed, &$removed ) {
+			function ( $m ) use ( $allowed, &$ctx ) {
 				$token = $m[0];
 
 				if ( 0 === strpos( $token, '[[' ) || 0 === strpos( $token, '[/' ) ) {
-					$removed['shortcodes'][] = self::shorten( $token );
+					$ctx['removed']['shortcodes'][] = self::shorten( $token );
 					return '';
 				}
 				if ( ! preg_match( '/^\[([A-Za-z_][\w-]*)(.*)\]$/s', $token, $parts ) ) {
-					$removed['shortcodes'][] = self::shorten( $token );
+					$ctx['removed']['shortcodes'][] = self::shorten( $token );
 					return '';
 				}
 				$tag = $parts[1];
 				if ( ! isset( $allowed[ $tag ] ) ) {
-					$removed['shortcodes'][] = self::shorten( $token );
+					$ctx['removed']['shortcodes'][] = self::shorten( $token );
 					return '';
 				}
 
@@ -588,7 +603,7 @@ class TWD_SK_Sanitizer {
 					if ( isset( $spec[ $name ] ) && preg_match( $spec[ $name ], $value ) ) {
 						$found[ $name ] = $value;
 					} else {
-						$removed['shortcodes'][] = $tag . ' attribute ' . $name;
+						$ctx['removed']['shortcodes'][] = $tag . ' attribute ' . $name;
 					}
 				}
 

@@ -255,7 +255,7 @@ twd_sk_test( 'sanitiser: image src allows http, https and relative, nothing else
 	twd_sk_eq( '<img src="https://example.com/a.png" alt="">', twd_sk_clean( '<img src="https://example.com/a.png" alt="">' ) );
 	twd_sk_eq( '<img src="http://example.com/a.png" alt="">', twd_sk_clean( '<img src="http://example.com/a.png" alt="">' ) );
 	twd_sk_eq( '<img src="/wp-content/uploads/a.png" alt="">', twd_sk_clean( '<img src="/wp-content/uploads/a.png" alt="">' ) );
-	foreach ( array( 'javascript:alert(1)', 'data:image/svg+xml,<svg onload=alert(1)>', 'mailto:a@b.co', 'tel:123', 'ftp://x/y.png' ) as $src ) {
+	foreach ( array( 'javascript:alert(1)', 'data:image/svg+xml,<svg onload=alert(1)>', 'mailto:a@example.com', 'tel:123', 'ftp://x/y.png' ) as $src ) {
 		twd_sk_eq( '', twd_sk_clean( '<img src="' . htmlspecialchars( $src ) . '" alt="x">' ), 'blocked: ' . $src );
 	}
 } );

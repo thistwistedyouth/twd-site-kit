@@ -43,6 +43,9 @@ foreach ( $GLOBALS['twd_sk_tests'] as $t ) {
 }
 
 echo "\n";
+foreach ( $GLOBALS['twd_sk_notes'] as $note ) {
+	echo 'NOTE  ' . $note . "\n";
+}
 echo $pass . ' passed, ' . $fail . ' failed, ' . ( $pass + $fail ) . " total\n";
 if ( $fail ) {
 	echo "Failed:\n  " . implode( "\n  ", $failed ) . "\n";

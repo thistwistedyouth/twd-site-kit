@@ -9,7 +9,7 @@ function twd_sk_hostile_inputs() {
 		'<svg><script>alert(1)</script></svg>',
 		'<div style="background:url(javascript:alert(1))">x</div>',
 		'<iframe srcdoc="<script>alert(1)</script>"></iframe>',
-		'<p>[gallery][twd_page][embed]http://x[/embed]</p>',
+		'<p>[gallery][twd_page][embed]http://example.com[/embed]</p>',
 		'<<script>script>alert(1)<</script>/script>',
 		'<a href="&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58;alert(1)">x</a>',
 		'<a href="//evil.example/x">x</a><img src="//evil.example/a.png">',

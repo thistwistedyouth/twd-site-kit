@@ -2,5 +2,5 @@
 
 Reserved for the self-hosted updater (later slice) and the install zip.
 
-- `twd-site-kit-latest.zip` is the plugin, ready to upload in WordPress (Plugins, Add New, Upload Plugin).
+- `twd-site-kit-latest.zip` is the plugin, ready to upload in WordPress (Plugins, Add New, Upload Plugin). It holds the plugin files, the stylesheet, the bundled fonts, the style packs and the gallery. Built by `bin/build-zip.sh`.
 - **This repo must stay public.** The updater on each client site reads this folder and the releases without logging in. Never put credentials or client content here.

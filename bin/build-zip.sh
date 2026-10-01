@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build dist/twd-site-kit-latest.zip and verify it against the source.
-# Same pattern as the articles plugin: cp -r (not rsync), one top-level
-# folder, no docs or tests inside, then a diff check before anything is pushed.
+# Same pattern as the articles plugin: cp -r (not rsync), one top-level folder,
+# no docs or tests inside, then a diff check before anything is pushed.
 # Run from the repo root:  bash bin/build-zip.sh
 set -e
 
@@ -10,10 +10,15 @@ BUILD="$(mktemp -d)"
 VERIFY="$(mktemp -d)"
 trap 'rm -rf "$BUILD" "$VERIFY"' EXIT
 
+# What ships: the main file plus these folders. Nothing else.
+FOLDERS="includes assets packs starters"
+
 # 1. Copy ONLY the plugin files into a folder named twd-site-kit.
-mkdir -p "$BUILD/twd-site-kit/includes"
+mkdir -p "$BUILD/twd-site-kit"
 cp "$ROOT/twd-site-kit.php" "$BUILD/twd-site-kit/"
-cp -r "$ROOT/includes/." "$BUILD/twd-site-kit/includes/"
+for d in $FOLDERS; do
+	cp -r "$ROOT/$d" "$BUILD/twd-site-kit/$d"
+done
 find "$BUILD/twd-site-kit" -name '.git*' -exec rm -rf {} + 2>/dev/null || true
 
 # 2. Build the zip fresh.
@@ -27,20 +32,26 @@ rm -f "$ROOT/dist/twd-site-kit-latest.zip"
 TOP="$(unzip -Z1 "$ROOT/dist/twd-site-kit-latest.zip" | cut -d/ -f1 | sort -u)"
 [ "$TOP" = "twd-site-kit" ] || { echo "FAIL: zip must have exactly one top-level folder twd-site-kit, got: $TOP"; exit 1; }
 
+# Every file is identical to its source (diff -q prints nothing when they match).
 diff -q "$VERIFY/twd-site-kit/twd-site-kit.php" "$ROOT/twd-site-kit.php"
-for f in "$ROOT"/includes/*.php; do
-	diff -q "$VERIFY/twd-site-kit/includes/$(basename "$f")" "$f"
+for d in $FOLDERS; do
+	diff -r -q "$VERIFY/twd-site-kit/$d" "$ROOT/$d"
 done
 
 # Same set of files both ways: nothing missing, nothing extra.
 ( cd "$VERIFY/twd-site-kit" && find . -type f | sort ) > "$VERIFY/zip.list"
-( cd "$ROOT" && { echo ./twd-site-kit.php; find ./includes -type f; } | sort ) > "$VERIFY/src.list"
+( cd "$ROOT" && { echo ./twd-site-kit.php; for d in $FOLDERS; do find ./$d -type f; done; } | sort ) > "$VERIFY/src.list"
 diff "$VERIFY/zip.list" "$VERIFY/src.list"
 
 # Nothing that must not ship.
-if unzip -Z1 "$ROOT/dist/twd-site-kit-latest.zip" | grep -i -E 'claude|history|tests/|\.git|readme|bin/|dist/'; then
+if unzip -Z1 "$ROOT/dist/twd-site-kit-latest.zip" | grep -i -E 'claude|history|readme\.md|tests/|\.git|bin/|dist/'; then
 	echo "FAIL: the zip contains files that must not ship"; exit 1
 fi
+
+# Everything the plugin loads is in the zip.
+for f in twd-site-kit.php includes/class-twd-sk-registry.php includes/class-twd-sk-sanitizer.php includes/class-twd-sk-store.php includes/class-twd-sk-page.php includes/class-twd-sk-packs.php includes/class-twd-sk-assets.php includes/class-twd-sk-cli.php assets/twd-site-kit.css packs/sage.json packs/grove.json starters/_gallery.html; do
+	[ -f "$VERIFY/twd-site-kit/$f" ] || { echo "FAIL: missing from the zip: $f"; exit 1; }
+done
 
 echo "OK: dist/twd-site-kit-latest.zip matches the source."
 unzip -l "$ROOT/dist/twd-site-kit-latest.zip"
