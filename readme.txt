@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.3.1
+Stable tag: 0.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,14 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.4.0 =
+* New: Site tab for administrators. Switch the style pack, change colours, fonts and corner roundness with a live preview, and reset. Text that would be hard to read is refused.
+* New: site details (name, logo, menu, contact lines, footer text, legal links) with a header and a footer, four layouts each, a mobile menu, and two Elementor Theme Builder templates to import. Each uses one shortcode: [twd_header] and [twd_footer].
+* New: Home, About and Contact starter pages and a setup command (wp twd-sk setup, or a button in the Site tab). Everything is a visible placeholder and nothing is published.
+* New: Search tab. Search title, description, sharing picture, keep out of search, and the page address, with page checks. Works with Yoast SEO, or prints its own tags when there is no SEO plugin.
+* New: a plain-text copy of each page so site search and SEO tools can read it, picture sizes and lazy loading, and structured data for the practice and therapist on the front page.
+* New: safe mode (define TWD_SK_SAFE_MODE in wp-config, or wp twd-sk safe-mode on) switches the new features off and keeps the 0.3.1 ones working.
 
 = 0.3.1 =
 * New: the "TWD Kit Page" page template. Full width, no theme padding, theme header and footer kept (including an Elementor Theme Builder header and footer), no page builder needed for the page body.
