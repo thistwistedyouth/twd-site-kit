@@ -13,6 +13,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 class TWD_SK_Modules {
 
 	public static function init() {
-		// Modules register here as they are added.
+		TWD_SK_Mirror::init();
 	}
 }

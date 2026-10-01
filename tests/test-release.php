@@ -24,7 +24,9 @@ function twd_sk_release_other() {
 }
 
 function twd_sk_release_fixture() {
-	$root = sys_get_temp_dir() . '/twdsk-rel-' . getmypid() . '-' . mt_rand( 1000, 9999 );
+	do {
+		$root = sys_get_temp_dir() . '/twdsk-rel-' . getmypid() . '-' . bin2hex( random_bytes( 4 ) );
+	} while ( file_exists( $root ) );
 	mkdir( $root . '/dist', 0777, true );
 	mkdir( $root . '/bin', 0777, true );
 	foreach ( array( 'twd-site-kit.php', 'readme.txt', 'dist/twd-site-kit-latest.zip', 'dist/twd-site-kit-update.json' ) as $f ) {

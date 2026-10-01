@@ -134,6 +134,11 @@ class TWD_SK_Page {
 	 * Run the allowed shortcodes in stored HTML and neutralise the rest.
 	 */
 	public static function render_html( $html ) {
+		// Picture attributes (size, lazy loading, hero priority) are added now, never stored.
+		// Done before any shortcode runs, so other plugins' pictures are left alone.
+		if ( ! TWD_SK_Safe::on() && class_exists( 'TWD_SK_Images' ) ) {
+			$html = TWD_SK_Images::process( $html );
+		}
 		$allowed = array_keys( TWD_SK_Registry::allowed_shortcodes() );
 		$slots   = array();
 		$salt    = substr( md5( uniqid( '', true ) ), 0, 8 );

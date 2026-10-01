@@ -152,6 +152,10 @@ class TWD_SK_Template {
 				return new WP_Error( 'twd_sk_other_content', 'This page also has other Elementor content (' . implode( ', ', $other ) . ') that would stop showing.', array( 'other_content' => $other ) );
 			}
 			update_post_meta( $post_id, self::META_KEY, self::SLUG );
+			// The page's text now goes into its content too, so search and SEO tools can find it.
+			if ( ! TWD_SK_Safe::on() && class_exists( 'TWD_SK_Mirror' ) ) {
+				TWD_SK_Mirror::sync( $post_id );
+			}
 		} elseif ( self::uses_template( $post_id ) ) {
 			update_post_meta( $post_id, self::META_KEY, 'default' );
 		}

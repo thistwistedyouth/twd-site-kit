@@ -42,6 +42,15 @@ foreach ( $GLOBALS['twd_sk_tests'] as $t ) {
 	}
 }
 
+// Tidy the scratch folders the tests made in the system temp folder.
+foreach ( (array) glob( sys_get_temp_dir() . '/twdsk*' ) as $leftover ) {
+	$items = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $leftover, FilesystemIterator::SKIP_DOTS ), RecursiveIteratorIterator::CHILD_FIRST );
+	foreach ( is_dir( $leftover ) ? $items : array() as $item ) {
+		$item->isDir() ? @rmdir( $item->getPathname() ) : @unlink( $item->getPathname() );
+	}
+	is_dir( $leftover ) ? @rmdir( $leftover ) : @unlink( $leftover );
+}
+
 echo "\n";
 foreach ( $GLOBALS['twd_sk_notes'] as $note ) {
 	echo 'NOTE  ' . $note . "\n";

@@ -51,7 +51,9 @@ class TWD_SK_Store {
 
 	/** Leftover example text split by level: array( must => ..., check => ... ). */
 	public static function get_leftover_levels( $post_id ) {
-		return TWD_SK_Sanitizer::find_leftovers_by_level( self::get_current( $post_id ) );
+		$levels = TWD_SK_Sanitizer::find_leftovers_by_level( self::get_current( $post_id ) );
+		// The SEO fields add their own example text to the same check, so the publish block covers them too.
+		return function_exists( 'apply_filters' ) ? apply_filters( 'twd_sk_leftover_levels', $levels, (int) $post_id ) : $levels;
 	}
 
 	public static function get_current_version_id( $post_id ) {
@@ -324,6 +326,11 @@ class TWD_SK_Store {
 		// the HTML would be lost.
 		update_post_meta( $post_id, self::META_VERSIONS, wp_slash( array( 'seq' => $id, 'items' => $items ) ) );
 		update_post_meta( $post_id, self::META_HTML, wp_slash( $clean ) );
+
+		// Other parts of the plugin (the search mirror) follow every new version.
+		if ( function_exists( 'do_action' ) ) {
+			do_action( 'twd_sk_committed', (int) $post_id, $clean );
+		}
 
 		return array(
 			'version'   => $id,

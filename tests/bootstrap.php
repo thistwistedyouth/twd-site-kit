@@ -205,6 +205,8 @@ function twd_sk_stub_defaults() {
 		'users'     => array( 7 => 'Test Editor' ),
 		'inserted'  => array(),
 		'attachments' => array(),
+		'media_urls'  => array(),
+		'media_meta'  => array(),
 		'option_throws' => false,
 		'bloginfo'  => array(),
 		'privacy_url' => '',
@@ -325,6 +327,15 @@ function apply_filters( $name, $value ) {
 	}
 	return $args[0];
 }
+function do_action( $name ) {
+	$args = func_get_args();
+	array_shift( $args );
+	if ( ! empty( $GLOBALS['twd_stub']['hooks'][ $name ] ) ) {
+		foreach ( $GLOBALS['twd_stub']['hooks'][ $name ] as $cb ) {
+			call_user_func_array( $cb, $args );
+		}
+	}
+}
 function get_permalink( $id ) {
 	return 'https://example.test/?page_id=' . (int) $id;
 }
@@ -383,6 +394,13 @@ class WP_REST_Request {
 	}
 }
 
+/** Media library in the stand-in: url => array( id ), and id => metadata. */
+function attachment_url_to_postid( $url ) {
+	return isset( $GLOBALS['twd_stub']['media_urls'][ $url ] ) ? (int) $GLOBALS['twd_stub']['media_urls'][ $url ] : 0;
+}
+function wp_get_attachment_metadata( $id ) {
+	return isset( $GLOBALS['twd_stub']['media_meta'][ (int) $id ] ) ? $GLOBALS['twd_stub']['media_meta'][ (int) $id ] : false;
+}
 function esc_attr( $text ) {
 	return htmlspecialchars( (string) $text, ENT_QUOTES );
 }
@@ -504,6 +522,8 @@ require_once ABSPATH . 'includes/class-twd-sk-chrome.php';
 require_once ABSPATH . 'includes/class-twd-sk-elementor.php';
 require_once ABSPATH . 'includes/class-twd-sk-starters.php';
 require_once ABSPATH . 'includes/class-twd-sk-setup.php';
+require_once ABSPATH . 'includes/class-twd-sk-mirror.php';
+require_once ABSPATH . 'includes/class-twd-sk-images.php';
 require_once ABSPATH . 'includes/class-twd-sk-assets.php';
 require_once ABSPATH . 'includes/class-twd-sk-updater.php';
 require_once ABSPATH . 'includes/class-twd-sk-report.php';
