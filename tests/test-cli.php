@@ -165,13 +165,13 @@ twd_sk_test( 'cli: undo with nothing to undo fails cleanly', function () {
 	} ) );
 } );
 
-twd_sk_test( 'cli: exposes exactly the five commands: save, get, versions, undo, pack', function () {
+twd_sk_test( 'cli: exposes exactly the six commands: save, get, versions, undo, pack, prompt', function () {
 	$methods = array();
 	foreach ( ( new ReflectionClass( 'TWD_SK_CLI' ) )->getMethods( ReflectionMethod::IS_PUBLIC ) as $m ) {
 		$methods[] = $m->getName();
 	}
 	sort( $methods );
-	twd_sk_eq( array( 'get', 'pack', 'save', 'undo', 'versions' ), $methods );
+	twd_sk_eq( array( 'get', 'pack', 'prompt', 'save', 'undo', 'versions' ), $methods );
 } );
 
 twd_sk_test( 'cli: pack with no name lists the packs and marks the active one', function () {

@@ -399,3 +399,40 @@ twd_sk_test( 'css: the articles grid rules are all scoped under .twd-sk-page, do
 		twd_sk_true( false !== strpos( $m[1], 'font-size: var(--twd-site-size-small)' ), $c . ' uses the small size token (14px floor)' );
 	}
 } );
+
+twd_sk_test( 'css: stray direct children of the page (not sections) get a max-width and side padding, sections are untouched', function () {
+	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	preg_match( '/\.twd-sk-page > :not\(section\):not\(\.twd-sk-inner\.twd-sk-inner\)[^{]*\{([^}]*)\}/', $raw, $m );
+	twd_sk_true( ! empty( $m[1] ), 'stray rule present' );
+	twd_sk_has( 'max-width: var(--twd-site-container)', $m[1] );
+	twd_sk_has( 'padding-left: var(--twd-site-gutter) !important', $m[1] );
+	twd_sk_has( 'padding-right: var(--twd-site-gutter) !important', $m[1] );
+	twd_sk_has( 'margin-left: auto', $m[1] );
+	twd_sk_true( 1 === preg_match( '/@media[^{]*\{(?:(?!\n\}).)*\.twd-sk-page > :not\(section\)[^{]*\{[^}]*gutter-sm/s', $raw ), 'smaller side padding on phones' );
+	// No registry section root may be matched by the stray rule: every section root is a section element.
+	foreach ( TWD_SK_Registry::all() as $id => $c ) {
+		twd_sk_true( 1 === preg_match( '/^<section\b/', $c['skeleton'] ), $id . ' root is a section' );
+		foreach ( $c['variants'] as $v ) {
+			twd_sk_true( 1 === preg_match( '/^<section\b/', $v['skeleton'] ), $id . ' variant root is a section' );
+		}
+	}
+} );
+
+twd_sk_test( 'css: the committed stylesheet is exactly what tools/build-css.py builds from tools/kit.src.css', function () {
+	if ( ! function_exists( 'shell_exec' ) || '' === trim( (string) shell_exec( 'command -v python3 2>/dev/null' ) ) ) {
+		return;
+	}
+	$tmp = sys_get_temp_dir() . '/twdsk-css-' . getmypid();
+	mkdir( $tmp . '/tools', 0777, true );
+	mkdir( $tmp . '/assets', 0777, true );
+	copy( ABSPATH . 'tools/kit.src.css', $tmp . '/tools/kit.src.css' );
+	copy( ABSPATH . 'tools/build-css.py', $tmp . '/tools/build-css.py' );
+	shell_exec( 'python3 ' . escapeshellarg( $tmp . '/tools/build-css.py' ) . ' 2>&1' );
+	$built = @file_get_contents( $tmp . '/assets/twd-site-kit.css' );
+	array_map( 'unlink', glob( $tmp . '/*/*' ) );
+	rmdir( $tmp . '/tools' );
+	rmdir( $tmp . '/assets' );
+	rmdir( $tmp );
+	twd_sk_true( false !== $built, 'the build script ran' );
+	twd_sk_true( file_get_contents( ABSPATH . 'assets/twd-site-kit.css' ) === $built, 'run: python3 tools/build-css.py and commit the result' );
+} );

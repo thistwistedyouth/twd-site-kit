@@ -17,6 +17,15 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.2.5
+
+- **Prompt command.** `wp twd-sk prompt <page_id>` prints the client prompt from `TWD_SK_Prompt`. It carries the owner's rules verbatim in intent (ask first, one change at a time, full HTML in one code block, one h1, no scripts or inline styles or forms or iframes, never invent credentials or details, confidentiality, keep the safety notice, the therapist's voice, no em dashes). The prompt is long because it carries every skeleton; trim it if a chat window struggles.
+- **Placeholder conflict found and fixed.** The prompt tells the AI to write `[PLACEHOLDER]`, but the sanitiser removed any bare bracket word as a shortcode. The sanitiser now keeps exactly `[PLACEHOLDER]` and `[PLACEHOLDER: words]` as text. Registry skeletons still avoid brackets.
+- **Loose text wrapped.** Text sitting directly in the page was left bare by slice 1 (an old test pinned that). CSS cannot style a bare text node, so the sanitiser now wraps each run of loose text in a `p`; a lone link or whitespace is left alone. The stray-content CSS rule then gives direct non-section children a max-width and side padding.
+- **Stylesheet source in the repo.** `tools/kit.src.css` and `tools/build-css.py` are now committed; a test fails if the generated file drifts from the source. Before this the source lived only in a session scratch folder.
+- **Release tests no longer hold a version number.**
+- **Column fix still unconfirmed.** The half-empty image rows seen on a real site could not be reproduced in a browser harness with Elementor-like wrappers. The CSS was made stricter anyway (plain fr columns, full width, children can shrink). Needs screenshots and computed styles from the real site.
+
 ## Slice 2c (v0.2.1)
 
 ### The self-hosted updater, and how it differs from the articles plugin's
@@ -36,7 +45,7 @@ The cloud session's git proxy refuses tag pushes, so there are no tags. The upda
 
 ### Known limits
 - GitHub's raw address caches for a few minutes, so right after a release the JSON and zip can briefly disagree. The updater then refuses (safe). Wait and check again.
-- The updater has been tested here against a stand-in for WordPress, not a real WordPress install. The first real test is installing 0.2.1 by hand and releasing 0.2.2.
+- The updater was tested against a stand-in for WordPress. 0.2.4 was installed by hand on a real site; 0.2.5 is the first real one-click update.
 
 ## Slice 2a (v0.2.0)
 
@@ -62,9 +71,9 @@ Four open-licence variable fonts (Latin subset, woff2) are bundled so client sit
 ### Safety notice: verify before launch
 The default support-line list in the `notice` component (Samaritans, Shout, NHS 111, CALM, emergency services) was taken from a reference site. They are public national services, but **verify every name, number, opening time and wording against the official sources before any site launches**, and keep them under review. Text-message numbers are shown as plain text because the `sms:` scheme is not allowed in links. A small plugin-provided script for Esc to close and focus handling is a later slice; until then the modal closes by its close link or by clicking outside it.
 
-### Accessibility (resolved in 0.2.3)
+### Accessibility (resolved in 0.2.3, articles grid in 0.2.4)
 
-Both packs now meet 4.5:1 for the pairs the components use: button labels on primary and on hover, text on the band, the accent on the band, headings, accent text and eyebrows on the page and card backgrounds, and the dark title on the tint. To get there Sage's green was darkened (primary, headings, band) and its gold eyebrow and hover darkened; Grove's green and band were darkened and its hover changed to a darker gold. On bands and cta sections the primary button is a light button with the dark title colour so it never blends into the band. On the tint tone the body copy uses the dark title colour. A test checks every one of these pairs. Text size floors are tested too: body and lead 16px, small text, eyebrows and buttons 14px; pack validation rejects values below those.
+Both packs now meet 4.5:1 for the pairs the components use: button labels on primary and on hover, text on the band, the accent on the band, headings, accent text and eyebrows on the page and card backgrounds, and the dark title on the tint. To get there Sage's green was darkened (primary, headings, band) and its gold eyebrow and hover darkened; Grove's green and band were darkened and its hover changed to a darker gold. On bands and cta sections the primary button is a light button with the dark title colour so it never blends into the band. On the tint tone the body copy uses the dark title colour. The articles plugin's grid is restyled from the pack (0.2.4) so its text meets the same sizes and its accent is the accessible one. A test checks every one of these pairs. Text size floors are tested too: body and lead 16px, small text, eyebrows and buttons 14px; pack validation rejects values below those.
 
 ### A privacy slip, found and fixed
 One slice 1 commit on the public branch (9531fe2) named a client's private content repo in CLAUDE.md as an example. It was removed in slice 2a, but it remains in the git history. Cleaning history needs a force push and is the owner's call. A privacy guard test now fails if a client repo name, email, phone number, web address, upload path or long number appears, and optionally checks a private list of client words kept outside the repo.

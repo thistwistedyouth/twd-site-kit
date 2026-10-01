@@ -88,6 +88,17 @@
 .twd-sk-page .twd-sk-inner--narrow.twd-sk-inner--narrow {
   max-width: var(--twd-site-container-narrow);
 }
+/* Stray content: any direct child of the page that is not a section (a loose paragraph,
+   a heading outside a component) gets a readable column and side padding so it never
+   touches the viewport edge. Sections and their own containers are left alone. */
+.twd-sk-page > :not(section):not(.twd-sk-inner.twd-sk-inner):not(.twd-sk-gallery-label.twd-sk-gallery-label) {
+  width: 100%;
+  max-width: var(--twd-site-container);
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: var(--twd-site-gutter) !important;
+  padding-right: var(--twd-site-gutter) !important;
+}
 .twd-sk-page .twd-sk-tone-base.twd-sk-tone-base {
   background-color: var(--twd-site-color-bg) !important;
 }
@@ -1080,6 +1091,10 @@
 }
 @media (max-width: 768px) {
   .twd-sk-page .twd-sk-inner.twd-sk-inner {
+    padding-left: var(--twd-site-gutter-sm) !important;
+    padding-right: var(--twd-site-gutter-sm) !important;
+  }
+  .twd-sk-page > :not(section):not(.twd-sk-inner.twd-sk-inner):not(.twd-sk-gallery-label.twd-sk-gallery-label) {
     padding-left: var(--twd-site-gutter-sm) !important;
     padding-right: var(--twd-site-gutter-sm) !important;
   }

@@ -8,6 +8,7 @@
  *   wp twd-sk get <page_id>             print the current HTML
  *   wp twd-sk versions <page_id>        list versions, newest first
  *   wp twd-sk undo <page_id>            step back one change (recorded as a new version)
+ *   wp twd-sk prompt <page_id>          print the client AI prompt (rules, style guide, this page's HTML)
  *   wp twd-sk pack [<slug>]             list style packs, or switch to one
  */
 
@@ -180,6 +181,24 @@ class TWD_SK_CLI {
 			return;
 		}
 		WP_CLI::success( 'Style pack is now "' . $args[0] . '". If the site uses a page cache, clear it to see the change.' );
+	}
+
+	/**
+	 * Print the client AI prompt for a page: fixed rules, a style guide generated from
+	 * the registry, and the page's current stored HTML. Paste it into an AI chat.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <page_id>
+	 * : ID of the WordPress page that holds the [twd_page] shortcode.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk prompt 12 > prompt.txt
+	 */
+	public function prompt( $args, $assoc_args ) {
+		$page_id = self::page_id( isset( $args[0] ) ? $args[0] : '' );
+		WP_CLI::line( rtrim( TWD_SK_Prompt::build( TWD_SK_Store::get_current( $page_id ) ) ) );
 	}
 
 	// -- Helpers ----------------------------------------------------------

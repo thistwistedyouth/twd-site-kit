@@ -22,8 +22,21 @@ twd_sk_test( 'sanitiser: clean allowed markup passes through unchanged', functio
 	twd_sk_eq( $in, twd_sk_clean( $in ) );
 } );
 
-twd_sk_test( 'sanitiser: bare text at the top level stays text, not wrapped in a paragraph', function () {
-	twd_sk_eq( 'Just words', twd_sk_clean( 'Just words' ) );
+twd_sk_test( 'sanitiser: loose text at the top level is wrapped in a paragraph so CSS can style it', function () {
+	twd_sk_eq( '<p>Just words</p>', twd_sk_clean( 'Just words' ) );
+	twd_sk_eq( '<p>Hello <b>there</b></p><section class="twd-sk-text">in</section><p>tail</p>', twd_sk_clean( 'Hello <b>there</b><section class="twd-sk-text">in</section>tail' ) );
+	// Text inside an element, whitespace and a lone link are not touched.
+	twd_sk_eq( '<p>in a p</p>', twd_sk_clean( '<p>in a p</p>' ) );
+	twd_sk_eq( '<a href="#x">link</a>', twd_sk_clean( '<a href="#x">link</a>' ) );
+	twd_sk_eq( "<p>a</p>\n<p>b</p>", twd_sk_clean( "<p>a</p>\n<p>b</p>" ) );
+} );
+
+twd_sk_test( 'sanitiser: [PLACEHOLDER] and [PLACEHOLDER: words] are kept as plain text, other brackets still go', function () {
+	twd_sk_eq( '<p>[PLACEHOLDER] [PLACEHOLDER: registration number]</p>', twd_sk_clean( '<p>[PLACEHOLDER] [PLACEHOLDER: registration number]</p>' ) );
+	$out = twd_sk_clean( '<p>[PLACEHOLDERX] [gallery ids="1"] [PLACEHOLDER: a [b] c]</p>' );
+	twd_sk_hasnt( 'PLACEHOLDERX', $out );
+	twd_sk_hasnt( 'gallery', $out );
+	twd_sk_hasnt( '[b]', $out );
 } );
 
 twd_sk_test( 'sanitiser: clean() returns exactly the html from clean_with_report()', function () {

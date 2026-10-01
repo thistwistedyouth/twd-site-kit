@@ -126,6 +126,7 @@ class TWD_SK_Sanitizer {
 		}
 
 		self::walk_children( $doc, $body, $root, $ctx );
+		self::wrap_loose_text( $doc, $body );
 
 		$out = '';
 		foreach ( $body->childNodes as $child ) {
@@ -279,6 +280,48 @@ class TWD_SK_Sanitizer {
 		libxml_clear_errors();
 		libxml_use_internal_errors( $previous );
 		return $ok ? $doc : null;
+	}
+
+	/**
+	 * Loose text and inline markup sitting directly in the page (not inside any
+	 * element) cannot be styled by CSS, so each run of it is wrapped in a paragraph.
+	 * A run with no loose text of its own (a lone link, whitespace, a line break) is left alone.
+	 */
+	private static function wrap_loose_text( DOMDocument $doc, DOMNode $body ) {
+		$inline = array_flip( array( 'a', 'span', 'strong', 'em', 'b', 'i', 'u', 'small', 'sub', 'sup', 'mark', 'br', 'q', 'cite' ) );
+		$runs   = array();
+		$run    = array();
+		foreach ( iterator_to_array( $body->childNodes ) as $child ) {
+			$is_text   = XML_TEXT_NODE === $child->nodeType;
+			$is_inline = XML_ELEMENT_NODE === $child->nodeType && isset( $inline[ strtolower( $child->nodeName ) ] );
+			if ( $is_text || $is_inline ) {
+				$run[] = $child;
+				continue;
+			}
+			if ( $run ) {
+				$runs[] = $run;
+				$run    = array();
+			}
+		}
+		if ( $run ) {
+			$runs[] = $run;
+		}
+		foreach ( $runs as $nodes ) {
+			$loose = '';
+			foreach ( $nodes as $n ) {
+				if ( XML_TEXT_NODE === $n->nodeType ) {
+					$loose .= $n->textContent;
+				}
+			}
+			if ( '' === trim( str_replace( "\xC2\xA0", ' ', $loose ) ) ) {
+				continue;
+			}
+			$p = $doc->createElement( 'p' );
+			$nodes[0]->parentNode->insertBefore( $p, $nodes[0] );
+			foreach ( $nodes as $n ) {
+				$p->appendChild( $n );
+			}
+		}
 	}
 
 	private static function walk_children( DOMDocument $doc, DOMNode $parent, DOMNode $root, array &$ctx ) {
@@ -567,6 +610,12 @@ class TWD_SK_Sanitizer {
 			$pattern,
 			function ( $m ) use ( $allowed, &$ctx ) {
 				$token = $m[0];
+
+				// A visible stand-in for a detail the client has not supplied, for example
+				// [PLACEHOLDER] or [PLACEHOLDER: registration number]. It is plain text, never a shortcode.
+				if ( preg_match( '/^\[PLACEHOLDER(?::[ \t][^\[\]]{1,60})?\]$/', $token ) ) {
+					return $token;
+				}
 
 				if ( 0 === strpos( $token, '[[' ) || 0 === strpos( $token, '[/' ) ) {
 					$ctx['removed']['shortcodes'][] = self::shorten( $token );
