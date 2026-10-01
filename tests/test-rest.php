@@ -21,14 +21,16 @@ function twd_sk_status( $e ) {
 	return is_array( $d ) && isset( $d['status'] ) ? $d['status'] : 0;
 }
 
-twd_sk_test( 'rest: the seven routes exist under twd-site-kit/v1 and none is open to everyone', function () {
+twd_sk_test( 'rest: the eleven routes exist under twd-site-kit/v1 and none is open to everyone', function () {
 	$routes = twd_sk_rest_routes();
-	twd_sk_eq( 7, count( $routes ) );
+	twd_sk_eq( 11, count( $routes ) );
 	foreach ( $routes as $r ) {
 		twd_sk_eq( 'twd-site-kit/v1', $r['ns'] );
 		twd_sk_true( is_array( $r['args']['permission_callback'] ) && 'TWD_SK_REST' === $r['args']['permission_callback'][0], 'a real permission callback on ' . $r['route'] );
 		twd_sk_true( in_array( $r['args']['methods'], array( 'GET', 'POST' ), true ) );
-		twd_sk_has( '(?P<id>\\d+)', $r['route'] );
+		if ( '/pages' !== $r['route'] ) {
+			twd_sk_has( '(?P<id>\\d+)', $r['route'] );
+		}
 	}
 	$reads  = array();
 	foreach ( $routes as $r ) {
@@ -36,7 +38,7 @@ twd_sk_test( 'rest: the seven routes exist under twd-site-kit/v1 and none is ope
 			$reads[] = $r['route'];
 		}
 	}
-	twd_sk_eq( 2, count( $reads ), 'only prompt and versions are GET' );
+	twd_sk_eq( 3, count( $reads ), 'only prompt, versions and info are GET' );
 } );
 
 twd_sk_test( 'rest security: a visitor, a missing nonce and a wrong nonce are refused on every route (401)', function () {
@@ -68,12 +70,46 @@ twd_sk_test( 'rest security: a signed-in user without edit rights (subscriber, c
 } );
 
 twd_sk_test( 'rest security: an editor is allowed on the page they can edit, refused on another page', function () {
-	twd_sk_rest_setup();
+	twd_sk_rest_setup( array( 'edit_pages', 'edit_post:12', 'publish_pages', 'publish_post:12' ) );
 	foreach ( twd_sk_rest_routes() as $r ) {
+		if ( '/pages' === $r['route'] ) {
+			continue; // creating a page has no page ID; it has its own test
+		}
 		$cb = $r['args']['permission_callback'];
 		twd_sk_eq( true, call_user_func( $cb, twd_sk_rest_req( array( 'id' => 12 ) ) ), 'allowed on 12 ' . $r['route'] );
 		twd_sk_is_error( 'twd_sk_forbidden', call_user_func( $cb, twd_sk_rest_req( array( 'id' => 13 ) ) ), 'refused on 13 ' . $r['route'] );
 	}
+} );
+
+twd_sk_test( 'rest security: creating a page needs edit_pages, and the nonce and sign-in like every other route', function () {
+	twd_sk_rest_setup( array( 'edit_pages' ) );
+	twd_sk_eq( true, TWD_SK_REST::can_create_page( twd_sk_rest_req() ) );
+	twd_sk_is_error( 'twd_sk_bad_nonce', TWD_SK_REST::can_create_page( twd_sk_rest_req( array(), null ) ) );
+	twd_sk_is_error( 'twd_sk_bad_nonce', TWD_SK_REST::can_create_page( twd_sk_rest_req( array(), 'wrong' ) ) );
+	$GLOBALS['twd_stub']['user'] = 0;
+	twd_sk_is_error( 'twd_sk_not_signed_in', TWD_SK_REST::can_create_page( twd_sk_rest_req() ) );
+	$GLOBALS['twd_stub']['user'] = 7;
+	foreach ( array( array(), array( 'read' ), array( 'edit_posts' ) ) as $caps ) {
+		$GLOBALS['twd_stub']['caps'] = $caps;
+		$e = TWD_SK_REST::can_create_page( twd_sk_rest_req() );
+		twd_sk_is_error( 'twd_sk_forbidden', $e, implode( ',', $caps ) );
+		twd_sk_eq( 403, twd_sk_status( $e ) );
+	}
+} );
+
+twd_sk_test( 'rest security: publishing and unpublishing need publish rights on top of edit rights (403 for an author-level user)', function () {
+	twd_sk_rest_setup( array( 'edit_pages', 'edit_post:12' ) );
+	$e = TWD_SK_REST::can_publish_page( twd_sk_rest_req() );
+	twd_sk_is_error( 'twd_sk_cannot_publish', $e );
+	twd_sk_eq( 403, twd_sk_status( $e ) );
+	twd_sk_rest_setup( array( 'edit_pages', 'edit_post:12', 'publish_pages' ) );
+	twd_sk_is_error( 'twd_sk_cannot_publish', TWD_SK_REST::can_publish_page( twd_sk_rest_req() ) );
+	twd_sk_rest_setup( array( 'edit_pages', 'edit_post:12', 'publish_pages', 'publish_post:12' ) );
+	twd_sk_eq( true, TWD_SK_REST::can_publish_page( twd_sk_rest_req() ) );
+	$GLOBALS['twd_stub']['user'] = 0;
+	twd_sk_is_error( 'twd_sk_not_signed_in', TWD_SK_REST::can_publish_page( twd_sk_rest_req() ) );
+	$GLOBALS['twd_stub']['user'] = 7;
+	twd_sk_is_error( 'twd_sk_bad_nonce', TWD_SK_REST::can_publish_page( twd_sk_rest_req( array(), 'nope' ) ) );
 } );
 
 twd_sk_test( 'rest security: only WordPress pages are allowed (a post id is refused with 404)', function () {
@@ -274,4 +310,207 @@ twd_sk_test( 'rest: the preview banner data includes the newer markers with a pl
 	}
 	twd_sk_true( isset( $markers['/service-N'], $markers['Read more about this approach'], $markers['your-image'] ) );
 	twd_sk_has( 'sample link to a service page', $markers['/service-N'] );
+} );
+
+// -- 0.3.1: new pages, publishing, template, the two leftover levels ----------------------
+
+function twd_sk_status_caps() {
+	twd_sk_rest_setup( array( 'edit_pages', 'edit_post:12', 'publish_pages', 'publish_post:12' ) );
+}
+
+twd_sk_test( 'rest: creating a page makes a DRAFT with the kit template and no content, whatever else is asked', function () {
+	twd_sk_rest_setup( array( 'edit_pages' ) );
+	$out = TWD_SK_REST::post_create_page( twd_sk_rest_req( array( 'title' => 'About me', 'starter' => 'blank', 'status' => 'publish', 'post_status' => 'publish' ) ) );
+	twd_sk_true( is_array( $out ), 'created' );
+	twd_sk_eq( 'draft', $out['status'] );
+	twd_sk_eq( 'About me', $out['title'] );
+	twd_sk_has( 'page_id=', $out['url'] );
+	$post = get_post( $out['id'] );
+	twd_sk_eq( 'draft', $post->post_status );
+	twd_sk_eq( 'page', $post->post_type );
+	twd_sk_eq( '', $post->post_content );
+	twd_sk_eq( 7, $post->post_author );
+	twd_sk_eq( 'twd-site-kit-page.php', get_post_meta( $out['id'], '_wp_page_template', true ) );
+	twd_sk_eq( '', TWD_SK_Store::get_current( $out['id'] ), 'no kit html yet' );
+	twd_sk_eq( 'draft', $GLOBALS['twd_stub']['inserted'][0]['post_status'] );
+} );
+
+twd_sk_test( 'rest: creating a page refuses a missing, empty, too long or non-text title and an unknown starter', function () {
+	twd_sk_rest_setup( array( 'edit_pages' ) );
+	foreach ( array( array(), array( 'title' => '' ), array( 'title' => '   ' ), array( 'title' => '<b></b>' ), array( 'title' => array( 'x' ) ), array( 'title' => str_repeat( 'a', 121 ) ), array( 'title' => 'Ok', 'starter' => 'home' ), array( 'title' => 'Ok', 'starter' => array( 'blank' ) ) ) as $params ) {
+		$e = TWD_SK_REST::post_create_page( twd_sk_rest_req( $params ) );
+		twd_sk_is_error( 'twd_sk_bad_input', $e, json_encode( $params ) );
+		twd_sk_eq( 400, twd_sk_status( $e ) );
+	}
+	twd_sk_eq( array(), $GLOBALS['twd_stub']['inserted'], 'nothing was created' );
+} );
+
+twd_sk_test( 'rest: a page title is plain text, long dashes are removed, and a failed insert is reported', function () {
+	twd_sk_rest_setup( array( 'edit_pages' ) );
+	$out = TWD_SK_REST::post_create_page( twd_sk_rest_req( array( 'title' => '<script>x()</script>Hello <b>there</b> ' . "\xE2\x80\x94" . ' friend' ) ) );
+	twd_sk_hasnt( '<', $out['title'] );
+	twd_sk_hasnt( "\xE2\x80\x94", $out['title'] );
+	$GLOBALS['twd_stub']['insert_fails'] = true;
+	$e = TWD_SK_REST::post_create_page( twd_sk_rest_req( array( 'title' => 'Fine' ) ) );
+	twd_sk_is_error( 'insert_failed', $e );
+} );
+
+twd_sk_test( 'rest: creating pages is limited to 10 an hour per user (429)', function () {
+	twd_sk_rest_setup( array( 'edit_pages' ) );
+	for ( $i = 0; $i < 10; $i++ ) {
+		twd_sk_eq( true, TWD_SK_REST::can_create_page( twd_sk_rest_req() ), 'call ' . ( $i + 1 ) );
+	}
+	$e = TWD_SK_REST::can_create_page( twd_sk_rest_req() );
+	twd_sk_is_error( 'twd_sk_rate_limited', $e );
+	twd_sk_eq( 429, twd_sk_status( $e ) );
+} );
+
+twd_sk_test( 'rest: info reports status, template, readiness and the leftovers by level', function () {
+	twd_sk_status_caps();
+	TWD_SK_Store::save( 12, '<p>Heading here</p><a href="/c">Contact me about a first session</a>' );
+	$out = TWD_SK_REST::get_info( twd_sk_rest_req() );
+	twd_sk_eq( 12, $out['id'] );
+	twd_sk_eq( 'publish', $out['status'] );
+	twd_sk_eq( true, $out['is_kit_page'] );
+	twd_sk_eq( false, $out['uses_template'] );
+	twd_sk_eq( true, $out['has_content'] );
+	twd_sk_eq( 1, $out['must_count'] );
+	twd_sk_eq( 1, $out['check_count'] );
+	twd_sk_eq( 2, $out['leftover_count'] );
+	$levels = array();
+	foreach ( $out['leftovers'] as $l ) {
+		$levels[ $l['marker'] ] = $l['level'];
+	}
+	twd_sk_eq( array( 'Heading here' => 'must', 'Contact me about a first session' => 'check' ), $levels );
+} );
+
+twd_sk_test( 'rest: publishing needs a confirmation and a valid status', function () {
+	twd_sk_status_caps();
+	TWD_SK_Store::save( 12, '<p>Real words only.</p>' );
+	get_post( 12 )->post_status = 'draft';
+	twd_sk_is_error( 'twd_sk_confirm_needed', TWD_SK_REST::post_status( twd_sk_rest_req( array( 'status' => 'publish' ) ) ) );
+	twd_sk_is_error( 'twd_sk_confirm_needed', TWD_SK_REST::post_status( twd_sk_rest_req( array( 'status' => 'publish', 'confirm' => false ) ) ) );
+	twd_sk_is_error( 'twd_sk_confirm_needed', TWD_SK_REST::post_status( twd_sk_rest_req( array( 'status' => 'publish', 'confirm' => 'no' ) ) ) );
+	foreach ( array( null, 'pending', 'private', 'trash', array( 'publish' ), '' ) as $bad ) {
+		twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_REST::post_status( twd_sk_rest_req( array( 'status' => $bad, 'confirm' => true ) ) ), json_encode( $bad ) );
+	}
+	twd_sk_eq( 'draft', get_post( 12 )->post_status, 'nothing changed' );
+	$out = TWD_SK_REST::post_status( twd_sk_rest_req( array( 'status' => 'publish', 'confirm' => true ) ) );
+	twd_sk_eq( 'publish', $out['status'] );
+	twd_sk_eq( 'publish', get_post( 12 )->post_status );
+} );
+
+twd_sk_test( 'rest: publishing is BLOCKED while must-fix example text remains, unless explicitly overridden', function () {
+	twd_sk_status_caps();
+	TWD_SK_Store::save( 12, '<p>Heading here</p><img src="/u/your-image.jpg" alt="x">' );
+	get_post( 12 )->post_status = 'draft';
+	$e = TWD_SK_REST::post_status( twd_sk_rest_req( array( 'status' => 'publish', 'confirm' => true ) ) );
+	twd_sk_is_error( 'twd_sk_leftovers', $e );
+	twd_sk_eq( 409, twd_sk_status( $e ) );
+	$markers = array();
+	foreach ( $e->get_error_data()['leftovers'] as $l ) {
+		$markers[] = $l['marker'];
+	}
+	twd_sk_true( in_array( 'Heading here', $markers, true ) && in_array( 'your-image', $markers, true ) );
+	twd_sk_eq( 'draft', get_post( 12 )->post_status, 'still a draft' );
+	// Anything but a clear yes is not an override.
+	foreach ( array( false, 0, '0', 'no', 'false', null, '' ) as $no ) {
+		twd_sk_is_error( 'twd_sk_leftovers', TWD_SK_REST::post_status( twd_sk_rest_req( array( 'status' => 'publish', 'confirm' => true, 'override_placeholders' => $no ) ) ), json_encode( $no ) );
+	}
+	twd_sk_eq( 'draft', get_post( 12 )->post_status );
+	$out = TWD_SK_REST::post_status( twd_sk_rest_req( array( 'status' => 'publish', 'confirm' => true, 'override_placeholders' => true ) ) );
+	twd_sk_eq( 'publish', $out['status'] );
+} );
+
+twd_sk_test( 'rest: every kind of must-fix marker blocks publishing, and the sample link wording never does', function () {
+	twd_sk_status_caps();
+	foreach ( TWD_SK_Sanitizer::leftover_markers() as $marker ) {
+		$html = '/service-N' === $marker ? '<a href="/service-1">x</a>' : '<p>' . $marker . '</p>';
+		TWD_SK_Store::save( 12, $html );
+		get_post( 12 )->post_status = 'draft';
+		$e = TWD_SK_REST::post_status( twd_sk_rest_req( array( 'status' => 'publish', 'confirm' => true ) ) );
+		if ( 'check' === TWD_SK_Sanitizer::leftover_level( $marker ) ) {
+			twd_sk_true( ! is_wp_error( $e ), 'check level must not block: ' . $marker );
+			twd_sk_eq( 'publish', get_post( 12 )->post_status );
+		} else {
+			twd_sk_is_error( 'twd_sk_leftovers', $e, 'must fix blocks: ' . $marker );
+			twd_sk_eq( 'draft', get_post( 12 )->post_status );
+		}
+	}
+} );
+
+twd_sk_test( 'rest: an empty page, a page that does not use the kit, and the front page are refused', function () {
+	twd_sk_status_caps();
+	get_post( 12 )->post_status = 'draft';
+	twd_sk_is_error( 'twd_sk_empty_page', TWD_SK_REST::post_status( twd_sk_rest_req( array( 'status' => 'publish', 'confirm' => true ) ) ) );
+	twd_stub_add_post( 30, 'page', 'Plain page' );
+	$GLOBALS['twd_stub']['caps'] = array( 'edit_pages', 'edit_post:30', 'publish_pages', 'publish_post:30' );
+	twd_sk_is_error( 'twd_sk_not_kit_page', TWD_SK_REST::post_status( twd_sk_rest_req( array( 'id' => 30, 'status' => 'publish', 'confirm' => true ) ) ) );
+	twd_sk_status_caps();
+	TWD_SK_Store::save( 12, '<p>Real words.</p>' );
+	$GLOBALS['twd_stub']['options']['page_on_front'] = 12;
+	$e = TWD_SK_REST::post_status( twd_sk_rest_req( array( 'status' => 'draft', 'confirm' => true ) ) );
+	twd_sk_is_error( 'twd_sk_site_page', $e );
+	twd_sk_eq( 409, twd_sk_status( $e ) );
+	twd_sk_eq( 'publish', get_post( 12 )->post_status );
+} );
+
+twd_sk_test( 'rest: unpublishing sends a published kit page back to draft, with a confirmation', function () {
+	twd_sk_status_caps();
+	TWD_SK_Store::save( 12, '<p>Real words.</p>' );
+	twd_sk_is_error( 'twd_sk_confirm_needed', TWD_SK_REST::post_status( twd_sk_rest_req( array( 'status' => 'draft' ) ) ) );
+	$out = TWD_SK_REST::post_status( twd_sk_rest_req( array( 'status' => 'draft', 'confirm' => true ) ) );
+	twd_sk_eq( 'draft', $out['status'] );
+	twd_sk_eq( 'draft', get_post( 12 )->post_status );
+	$updates = $GLOBALS['twd_stub']['updated'];
+	twd_sk_eq( array( 'ID' => 12, 'post_status' => 'draft' ), $updates[0], 'only the status is changed' );
+} );
+
+twd_sk_test( 'rest: switching to the kit template needs a confirmation when other Elementor content would stop showing', function () {
+	twd_sk_rest_setup();
+	update_post_meta( 12, '_elementor_data', json_encode( array( array( 'elType' => 'section', 'elements' => array( array( 'elType' => 'column', 'elements' => array(
+		array( 'elType' => 'widget', 'widgetType' => 'shortcode', 'settings' => array( 'shortcode' => '[twd_page]' ) ),
+		array( 'elType' => 'widget', 'widgetType' => 'google_maps' ),
+		array( 'elType' => 'widget', 'widgetType' => 'form' ),
+		array( 'elType' => 'widget', 'widgetType' => 'spacer' ),
+	) ) ) ) ) ) );
+	$e = TWD_SK_REST::post_template( twd_sk_rest_req( array( 'use' => 'kit' ) ) );
+	twd_sk_is_error( 'twd_sk_other_content', $e );
+	twd_sk_eq( 409, twd_sk_status( $e ) );
+	twd_sk_eq( array( 'google_maps', 'form' ), $e->get_error_data()['other_content'] );
+	twd_sk_has( 'google_maps', $e->get_error_message() );
+	twd_sk_eq( false, TWD_SK_Template::uses_template( 12 ), 'not switched' );
+	$out = TWD_SK_REST::post_template( twd_sk_rest_req( array( 'use' => 'kit', 'confirm_other_content' => true ) ) );
+	twd_sk_eq( true, $out['uses_template'] );
+	twd_sk_eq( true, TWD_SK_Template::uses_template( 12 ) );
+} );
+
+twd_sk_test( 'rest: a plain [twd_page] page switches to the kit template and back, and bad requests are refused', function () {
+	twd_sk_rest_setup();
+	$out = TWD_SK_REST::post_template( twd_sk_rest_req( array( 'use' => 'kit' ) ) );
+	twd_sk_eq( true, $out['uses_template'] );
+	twd_sk_eq( 'twd-site-kit-page.php', get_post_meta( 12, '_wp_page_template', true ) );
+	$out = TWD_SK_REST::post_template( twd_sk_rest_req( array( 'use' => 'default' ) ) );
+	twd_sk_eq( false, $out['uses_template'] );
+	twd_sk_eq( 'default', get_post_meta( 12, '_wp_page_template', true ) );
+	foreach ( array( null, 'other', '', array( 'kit' ) ) as $bad ) {
+		twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_REST::post_template( twd_sk_rest_req( array( 'use' => $bad ) ) ) );
+	}
+	twd_stub_add_post( 31, 'page', 'No kit here' );
+	$GLOBALS['twd_stub']['caps'] = array( 'edit_pages', 'edit_post:31' );
+	$e = TWD_SK_REST::post_template( twd_sk_rest_req( array( 'id' => 31, 'use' => 'kit' ) ) );
+	twd_sk_is_error( 'twd_sk_not_kit_page', $e );
+	twd_sk_eq( 400, twd_sk_status( $e ) );
+	twd_sk_eq( '', get_post_meta( 31, '_wp_page_template', true ) );
+} );
+
+twd_sk_test( 'rest: the preview and apply payloads carry the must and check counts', function () {
+	twd_sk_rest_setup();
+	$out = TWD_SK_REST::post_preview( twd_sk_rest_req( array( 'html' => '<p>Heading here</p><a href="/c">Find out about my services</a><a href="/d">Read more about this approach</a>' ) ) );
+	twd_sk_eq( 3, $out['leftover_count'] );
+	twd_sk_eq( 1, $out['must_count'] );
+	twd_sk_eq( 2, $out['check_count'] );
+	$app = TWD_SK_REST::post_apply( twd_sk_rest_req( array( 'html' => '<p>Heading here</p><a href="/c">Find out about my services</a>', 'base_version' => 0 ) ) );
+	twd_sk_eq( 1, $app['must_count'] );
+	twd_sk_eq( 1, $app['check_count'] );
 } );

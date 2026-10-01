@@ -28,6 +28,7 @@ class TWD_SK_REST {
 			'read'    => array( 120, 60 ),
 			'preview' => array( 30, 60 ),
 			'write'   => array( 30, 60 ),
+			'create'  => array( 10, 3600 ),
 		);
 	}
 
@@ -38,6 +39,26 @@ class TWD_SK_REST {
 	public static function register_routes() {
 		$id = '(?P<id>\d+)';
 
+		register_rest_route( self::ROUTE_NS, '/pages', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_create_page' ),
+			'permission_callback' => array( __CLASS__, 'can_create_page' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/info', array(
+			'methods'             => 'GET',
+			'callback'            => array( __CLASS__, 'get_info' ),
+			'permission_callback' => array( __CLASS__, 'can_read_page' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/status', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_status' ),
+			'permission_callback' => array( __CLASS__, 'can_publish_page' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/template', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_template' ),
+			'permission_callback' => array( __CLASS__, 'can_write_page' ),
+		) );
 		register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/prompt', array(
 			'methods'             => 'GET',
 			'callback'            => array( __CLASS__, 'get_prompt' ),
@@ -89,11 +110,29 @@ class TWD_SK_REST {
 		return self::guard( $request, 'write' );
 	}
 
+	/** New draft pages need only edit_pages, and no page ID. */
+	public static function can_create_page( $request ) {
+		return self::guard( $request, 'create', false );
+	}
+
+	/** Publishing and unpublishing need publish rights on top of edit rights. */
+	public static function can_publish_page( $request ) {
+		$page_id = (int) $request->get_param( 'id' );
+		$ok      = self::guard( $request, 'write' );
+		if ( true !== $ok ) {
+			return $ok;
+		}
+		if ( ! current_user_can( 'publish_pages' ) || ! current_user_can( 'publish_post', $page_id ) ) {
+			return self::error( 'twd_sk_cannot_publish', 'You do not have permission to publish or unpublish pages.', 403 );
+		}
+		return true;
+	}
+
 	/**
 	 * The one gate every route passes: nonce, sign-in, capability on this page,
 	 * request size, rate limit. Returns true or a WP_Error with an HTTP status.
 	 */
-	private static function guard( $request, $bucket ) {
+	private static function guard( $request, $bucket, $needs_page = true ) {
 		$nonce = $request->get_header( self::NONCE_HEADER );
 		if ( ! is_string( $nonce ) || '' === $nonce || ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
 			return self::error( 'twd_sk_bad_nonce', 'Your sign-in has timed out. Reload the page and try again.', 401 );
@@ -101,13 +140,19 @@ class TWD_SK_REST {
 		if ( ! is_user_logged_in() ) {
 			return self::error( 'twd_sk_not_signed_in', 'You need to be signed in.', 401 );
 		}
-		$page_id = (int) $request->get_param( 'id' );
-		if ( $page_id <= 0 || ! current_user_can( 'edit_pages' ) || ! current_user_can( 'edit_post', $page_id ) ) {
-			return self::error( 'twd_sk_forbidden', 'You do not have permission to edit this page.', 403 );
-		}
-		$post = get_post( $page_id );
-		if ( ! $post || 'page' !== $post->post_type ) {
-			return self::error( 'twd_sk_not_a_page', 'That page was not found.', 404 );
+		if ( ! $needs_page ) {
+			if ( ! current_user_can( 'edit_pages' ) ) {
+				return self::error( 'twd_sk_forbidden', 'You do not have permission to create pages.', 403 );
+			}
+		} else {
+			$page_id = (int) $request->get_param( 'id' );
+			if ( $page_id <= 0 || ! current_user_can( 'edit_pages' ) || ! current_user_can( 'edit_post', $page_id ) ) {
+				return self::error( 'twd_sk_forbidden', 'You do not have permission to edit this page.', 403 );
+			}
+			$post = get_post( $page_id );
+			if ( ! $post || 'page' !== $post->post_type ) {
+				return self::error( 'twd_sk_not_a_page', 'That page was not found.', 404 );
+			}
 		}
 		if ( strlen( (string) $request->get_body() ) > self::MAX_BODY ) {
 			return self::error( 'twd_sk_too_large', 'That request is too large. A page is limited to 200 KB.', 413 );
@@ -142,10 +187,16 @@ class TWD_SK_REST {
 	/** Store errors carry no HTTP status. Give each one a sensible status. */
 	private static function from_store_error( $e ) {
 		$map  = array(
-			'twd_sk_conflict'  => 409,
-			'twd_sk_too_large' => 413,
-			'twd_sk_empty'     => 400,
-			'twd_sk_bad_page'  => 404,
+			'twd_sk_conflict'      => 409,
+			'twd_sk_too_large'     => 413,
+			'twd_sk_empty'         => 400,
+			'twd_sk_bad_page'      => 404,
+			'twd_sk_not_a_page'    => 404,
+			'twd_sk_leftovers'     => 409,
+			'twd_sk_other_content' => 409,
+			'twd_sk_site_page'     => 409,
+			'twd_sk_not_kit_page'  => 400,
+			'twd_sk_empty_page'    => 400,
 		);
 		$code = $e->get_error_code();
 		$data = $e->get_error_data();
@@ -162,6 +213,95 @@ class TWD_SK_REST {
 			'version'        => TWD_SK_Store::get_current_version_id( $id ),
 			'leftover_count' => TWD_SK_Report::leftover_total( TWD_SK_Sanitizer::find_leftovers( $html ) ),
 		);
+	}
+
+	/**
+	 * Where a page stands: status, template, publish readiness. Read only.
+	 */
+	public static function get_info( $request ) {
+		return self::info_payload( (int) $request->get_param( 'id' ) );
+	}
+
+	private static function info_payload( $id ) {
+		$post      = get_post( $id );
+		$leftovers = TWD_SK_Sanitizer::find_leftovers( TWD_SK_Store::get_current( $id ) );
+		return array(
+			'id'            => (int) $id,
+			'title'         => $post ? (string) $post->post_title : '',
+			'status'        => $post ? (string) $post->post_status : '',
+			'is_kit_page'   => TWD_SK_Page::is_kit_page( $id ),
+			'uses_template' => TWD_SK_Template::uses_template( $id ),
+			'other_content' => TWD_SK_Template::other_elementor_content( $id ),
+			'is_site_page'  => TWD_SK_Template::is_site_page( $id ),
+			'has_content'   => '' !== TWD_SK_Store::get_current( $id ),
+		) + self::leftover_fields( $leftovers );
+	}
+
+	/** Create a draft page set up for the kit. Never published, never given content. */
+	public static function post_create_page( $request ) {
+		$title   = $request->get_param( 'title' );
+		$starter = $request->get_param( 'starter' );
+		if ( ! is_string( $title ) ) {
+			return self::error( 'twd_sk_bad_input', 'Give the page a title.', 400 );
+		}
+		if ( null !== $starter && ! is_string( $starter ) ) {
+			return self::error( 'twd_sk_bad_input', 'Choose one of the starting layouts on offer.', 400 );
+		}
+		$id = TWD_SK_Template::create_page( $title, is_string( $starter ) && '' !== $starter ? $starter : 'blank' );
+		if ( is_wp_error( $id ) ) {
+			return self::from_store_error( $id );
+		}
+		return array(
+			'id'     => (int) $id,
+			'status' => 'draft',
+			'title'  => (string) get_post( $id )->post_title,
+			'url'    => get_permalink( $id ),
+		);
+	}
+
+	/** Publish or unpublish. The server asks for a confirmation and blocks leftover example text. */
+	public static function post_status( $request ) {
+		$id      = (int) $request->get_param( 'id' );
+		$status  = $request->get_param( 'status' );
+		$confirm = self::truthy( $request->get_param( 'confirm' ) );
+		if ( ! is_string( $status ) || ! in_array( $status, array( 'publish', 'draft' ), true ) ) {
+			return self::error( 'twd_sk_bad_input', 'The status must be publish or draft.', 400 );
+		}
+		if ( ! $confirm ) {
+			return self::error( 'twd_sk_confirm_needed', 'Please confirm first.', 400 );
+		}
+		$result = TWD_SK_Template::set_status( $id, $status, self::truthy( $request->get_param( 'override_placeholders' ) ) );
+		if ( is_wp_error( $result ) ) {
+			$err = self::from_store_error( $result );
+			$data = $result->get_error_data();
+			if ( is_array( $data ) && isset( $data['levels'] ) ) {
+				$data = array(
+					'status'  => 409,
+					'leftovers' => TWD_SK_Report::describe_leftovers( $data['levels']['must'] + $data['levels']['check'] ),
+				);
+				return new WP_Error( $result->get_error_code(), $result->get_error_message(), $data );
+			}
+			return $err;
+		}
+		return self::info_payload( $id );
+	}
+
+	/** Switch a page to the kit template, or back to the theme's. */
+	public static function post_template( $request ) {
+		$id  = (int) $request->get_param( 'id' );
+		$use = $request->get_param( 'use' );
+		if ( ! is_string( $use ) || ! in_array( $use, array( 'kit', 'default' ), true ) ) {
+			return self::error( 'twd_sk_bad_input', 'Choose the kit template or the default one.', 400 );
+		}
+		$result = TWD_SK_Template::switch_template( $id, 'kit' === $use, self::truthy( $request->get_param( 'confirm_other_content' ) ) );
+		if ( is_wp_error( $result ) ) {
+			return self::from_store_error( $result );
+		}
+		return self::info_payload( $id );
+	}
+
+	private static function truthy( $value ) {
+		return true === $value || 1 === $value || '1' === $value || 'true' === $value;
 	}
 
 	public static function get_versions( $request ) {
@@ -194,9 +334,7 @@ class TWD_SK_REST {
 			'bytes'          => strlen( $result['html'] ),
 			'report'         => TWD_SK_Report::describe( $result['report'] ),
 			'removed_total'  => (int) $result['report']['total'],
-			'leftovers'      => TWD_SK_Report::describe_leftovers( $result['report']['leftovers'] ),
-			'leftover_count' => TWD_SK_Report::leftover_total( $result['report']['leftovers'] ),
-		);
+		) + self::leftover_fields( $result['report']['leftovers'] );
 	}
 
 	public static function post_discard( $request ) {
@@ -263,9 +401,18 @@ class TWD_SK_REST {
 			'version'        => (int) $result['version'],
 			'unchanged'      => ! empty( $result['unchanged'] ),
 			'report'         => TWD_SK_Report::describe( $result['report'] ),
+		) + self::leftover_fields( $leftovers ) + self::versions_payload( $id );
+	}
+
+	/** The leftover fields every payload carries: the list (each item has a level) and the counts. */
+	private static function leftover_fields( $leftovers ) {
+		$levels = TWD_SK_Report::leftover_levels( $leftovers );
+		return array(
 			'leftovers'      => TWD_SK_Report::describe_leftovers( $leftovers ),
 			'leftover_count' => TWD_SK_Report::leftover_total( $leftovers ),
-		) + self::versions_payload( $id );
+			'must_count'     => $levels['must'],
+			'check_count'    => $levels['check'],
+		);
 	}
 
 	private static function versions_payload( $id ) {

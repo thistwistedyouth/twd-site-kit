@@ -67,6 +67,11 @@
   background-color: $color-surface; color: $color-body; font-family: $font-body; font-size: $size-body; line-height: $line-body;
 }
 .twd-sk-ed__textarea { min-height: 180px; resize: vertical; }
+.twd-sk-ed__select {
+  display: block; width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid $color-border; border-radius: $radius-field;
+  background-color: $color-surface; color: $color-body; font-family: $font-body; font-size: $size-body; line-height: $line-body;
+}
+.twd-sk-ed__select:focus-visible { outline: 2px solid $color-accent-text; outline-offset: 2px; }
 .twd-sk-ed__textarea:focus-visible, .twd-sk-ed__input:focus-visible { outline: 2px solid $color-accent-text; outline-offset: 2px; }
 
 /* ---- buttons ---- */
@@ -87,6 +92,17 @@
 .twd-sk-ed__open:focus-visible, .twd-sk-ed__close:focus-visible, .twd-sk-ed__tab:focus-visible, .twd-sk-ed__btn:focus-visible {
   outline: 2px solid $color-accent-text; outline-offset: 2px;
 }
+
+/* ---- cards, rows, links and the override checkbox ---- */
+.twd-sk-ed__card {
+  margin: 12px 0 0; padding: 14px; border: 1px solid $color-border; border-radius: $radius-card; background-color: $color-surface;
+  color: $color-body; font-size: $size-small;
+}
+.twd-sk-ed__card p { margin: 0 0 8px; }
+.twd-sk-ed__row { margin: 0 0 6px; font-size: $size-body; color: $color-body; }
+.twd-sk-ed__link { color: $color-accent-text; font-size: $size-small; text-decoration: underline; }
+.twd-sk-ed__check { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; margin: 8px 0 0; color: $color-title; font-size: $size-small; cursor: pointer; }
+.twd-sk-ed__check input { flex: 0 0 auto; width: 22px; height: 22px; margin: 2px 0 0; }
 
 /* ---- messages, report and banner ---- */
 .twd-sk-ed__msg {
@@ -130,6 +146,8 @@
   .twd-sk-ed__actions { flex-direction: column; }
   .twd-sk-ed__close { min-height: 48px; min-width: 48px; }
   .twd-sk-ed__textarea { min-height: 200px; }
+  .twd-sk-ed__select { min-height: 48px; }
+  .twd-sk-ed__check { min-height: 48px; }
   .twd-sk-ed__frame { height: 50vh; }
   .twd-sk-ed__open { left: 16px; bottom: 16px; }
 }

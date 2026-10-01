@@ -182,6 +182,38 @@ class TWD_SK_Sanitizer {
 	}
 
 	/**
+	 * The "check" level: wording that is an example but may be right for a real page
+	 * (the example button and link texts). It warns and never blocks publishing. Every
+	 * other marker is "must fix".
+	 */
+	private static function check_level_markers() {
+		return array(
+			'Contact me about a first session',
+			'Find out about my services',
+			'Read more about this approach',
+			'Call me to arrange a first session',
+		);
+	}
+
+	/** 'must' or 'check' for a marker. */
+	public static function leftover_level( $marker ) {
+		return in_array( $marker, self::check_level_markers(), true ) ? 'check' : 'must';
+	}
+
+	/**
+	 * Leftovers split by level.
+	 *
+	 * @return array { must: marker => count, check: marker => count }
+	 */
+	public static function find_leftovers_by_level( $html ) {
+		$out = array( 'must' => array(), 'check' => array() );
+		foreach ( self::find_leftovers( $html ) as $marker => $count ) {
+			$out[ self::leftover_level( $marker ) ][ $marker ] = $count;
+		}
+		return $out;
+	}
+
+	/**
 	 * Find leftover example text in some HTML.
 	 *
 	 * @return array marker => number of times it appears. Empty when there are none.

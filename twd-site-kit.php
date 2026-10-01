@@ -3,7 +3,7 @@
  * Plugin Name: TWD Site Kit
  * Plugin URI: https://therapywebdesigns.co.uk/
  * Description: Pages for therapist sites built from sanitised HTML and a fixed set of components, with version history, style packs and bundled fonts. Sibling to the Articles & Resource Production Plugin.
- * Version: 0.3.0
+ * Version: 0.3.1
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: Therapy Web Designs
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TWD_SK_VERSION', '0.3.0' );
+define( 'TWD_SK_VERSION', '0.3.1' );
 define( 'TWD_SK_PATH', plugin_dir_path( __FILE__ ) );
 define( 'TWD_SK_URL', plugin_dir_url( __FILE__ ) );
 
@@ -31,12 +31,14 @@ require_once TWD_SK_PATH . 'includes/class-twd-sk-packs.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-assets.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-updater.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-report.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-template.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-preview.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-rest.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-editor.php';
 
 add_action( 'init', array( 'TWD_SK_Page', 'init' ) );
 TWD_SK_Assets::init();
+TWD_SK_Template::init();
 TWD_SK_Preview::init();
 TWD_SK_REST::init();
 TWD_SK_Editor::init();

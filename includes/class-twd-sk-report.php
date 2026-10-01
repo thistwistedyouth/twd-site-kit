@@ -98,7 +98,7 @@ class TWD_SK_Report {
 	 * Leftover example text as a list of items for display.
 	 *
 	 * @param array $leftovers marker => count (from the cleaning report).
-	 * @return array[] each: marker, count, meaning
+	 * @return array[] each: marker, count, meaning, level ('must' blocks publishing, 'check' only warns)
 	 */
 	public static function describe_leftovers( $leftovers ) {
 		$out = array();
@@ -111,9 +111,21 @@ class TWD_SK_Report {
 				'marker'  => (string) $marker,
 				'count'   => (int) $count,
 				'meaning' => isset( $meanings[ $marker ] ) ? $meanings[ $marker ] : 'example text',
+				'level'   => TWD_SK_Sanitizer::leftover_level( (string) $marker ),
 			);
 		}
 		return $out;
+	}
+
+	/** Totals by level: array( must, check ). */
+	public static function leftover_levels( $leftovers ) {
+		$totals = array( 'must' => 0, 'check' => 0 );
+		if ( is_array( $leftovers ) ) {
+			foreach ( $leftovers as $marker => $count ) {
+				$totals[ TWD_SK_Sanitizer::leftover_level( (string) $marker ) ] += (int) $count;
+			}
+		}
+		return $totals;
 	}
 
 	/** Total number of leftover items. */

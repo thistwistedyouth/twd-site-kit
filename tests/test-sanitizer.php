@@ -580,3 +580,26 @@ twd_sk_test( 'leftovers: the whole gallery carries example text, so it warns, an
 	twd_sk_eq( 0, $rep['report']['total'], 'nothing removed' );
 	twd_sk_true( count( $rep['report']['leftovers'] ) >= 5, 'gallery warns about its example text' );
 } );
+
+twd_sk_test( 'leftover levels: only the four example link texts are "check"; every other marker is "must fix"', function () {
+	$check = array( 'Contact me about a first session', 'Find out about my services', 'Read more about this approach', 'Call me to arrange a first session' );
+	foreach ( TWD_SK_Sanitizer::leftover_markers() as $marker ) {
+		twd_sk_eq( in_array( $marker, $check, true ) ? 'check' : 'must', TWD_SK_Sanitizer::leftover_level( $marker ), $marker );
+	}
+	foreach ( array( 'example.com', 'your-image', 'your-badge', 'PHONE_NUMBER', '/service-N', 'Quote text here', 'Another quote here', 'Name and context', 'A short statement in your own words', 'Question here', 'Answer here', 'Topic one', 'Short description here', 'Short introduction here', 'Service name here', '[PLACEHOLDER', 'Heading here', 'Paragraph text here', 'Short label here', 'Describe the image' ) as $must ) {
+		twd_sk_eq( 'must', TWD_SK_Sanitizer::leftover_level( $must ), $must );
+	}
+	foreach ( $check as $c ) {
+		twd_sk_eq( 'check', TWD_SK_Sanitizer::leftover_level( $c ), $c );
+	}
+} );
+
+twd_sk_test( 'leftover levels: find_leftovers_by_level splits what find_leftovers finds, and the two always add up', function () {
+	$html = '<p>Heading here</p><a href="/x">Contact me about a first session</a><a href="/service-1">x</a><a href="/y">Call me to arrange a first session</a><p>[PLACEHOLDER: fee]</p>';
+	$by   = TWD_SK_Sanitizer::find_leftovers_by_level( $html );
+	twd_sk_eq( array( 'Heading here' => 1, '/service-N' => 1, '[PLACEHOLDER' => 1 ), $by['must'] );
+	twd_sk_eq( array( 'Contact me about a first session' => 1, 'Call me to arrange a first session' => 1 ), $by['check'] );
+	twd_sk_eq( TWD_SK_Sanitizer::find_leftovers( $html ), $by['must'] + $by['check'] );
+	twd_sk_eq( array( 'must' => array(), 'check' => array() ), TWD_SK_Sanitizer::find_leftovers_by_level( '<p>Real words.</p>' ) );
+	twd_sk_eq( array( 'must' => array(), 'check' => array() ), TWD_SK_Sanitizer::find_leftovers_by_level( '' ) );
+} );

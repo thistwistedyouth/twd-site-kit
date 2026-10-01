@@ -17,11 +17,16 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
-## Unreleased (to ship with 0.3.1)
+## v0.3.1 (slice 3b, release 2)
 
+- **Page template, not Elementor.** A kit page needs no Elementor setup: a plugin template calls `get_header()` and `get_footer()`. Checked by reading Hello 3.5.1: `header.php` and `footer.php` call `elementor_theme_do_location('header' / 'footer')` and fall back to Hello's own parts, so an Elementor Theme Builder header and footer still apply. Priority 99 on `template_include` is there so an Elementor Pro single-page template does not win. The Theme Builder state on David's site was not reported (the message arrived with the placeholder text unfilled); the template was built assuming none, and the one thing to confirm on a real site is that the header and footer appear.
+- **Switching can hide content.** A page that holds a form or map in Elementor beside the shortcode loses them on the kit template, so the switch asks first and lists them.
+- **Two-level leftover check** (decided by the owner): must fix blocks publishing (override is explicit), check never blocks. The owner's list named some markers; the others (sample headings, labels, paragraphs, image descriptions, `[PLACEHOLDER`) were put at "must fix" because they are plainly sample text and an earlier decision was to block publishing while placeholders remain.
+- **The editor button is on every front-end page for editors** (it was only on kit pages in 0.3.0), because the New page tab works anywhere. The Edit tab still needs a kit page.
+- **No mirror yet.** The SEO plan's HTML mirror (page HTML copied into the page content for search and Yoast) was proposed but not approved, so it is not in 0.3.1.
 - **Prompt and checker fixes found from the 0.3.0 prompt output.** The style guide's example link text is now meaningful ("Contact me about a first session", "Find out about my services", "Read more about this approach", "Call me to arrange a first session") so it no longer contradicts the link text rule, and a test forbids vague example link text. A new rule says never to state policies (confidentiality, safeguarding, cancellation, refunds) or DBS, accreditation or registration status without the therapist's wording, using `[PLACEHOLDER: policy wording needed]`. The style guide also says every word in the examples is a sample.
 - **Leftover markers extended** (see CLAUDE.md). Beyond the list asked for, markers were added for the testimonial, pull-out, FAQ, topic, description and introduction examples, because a test showed those examples slipped through the check. "First step" was left out on purpose: it is ordinary prose and would warn on real pages.
-- **Known side effect:** the example link wording is now flagged, so a page that keeps "Contact me about a first session" gets a warning (and, from 0.3.1, a publish block unless overridden).
+- **Example link wording is check level:** a page that keeps "Contact me about a first session" gets a warning but is never blocked from publishing.
 - **Prompt size:** about 22.6 KB (was about 22 KB).
 
 ## v0.3.0 (slice 3b, release 1)

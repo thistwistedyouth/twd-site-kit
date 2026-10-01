@@ -51,3 +51,16 @@ twd_sk_test( 'report: the wording holds no em or en dashes', function () {
 	$src = file_get_contents( ABSPATH . 'includes/class-twd-sk-report.php' );
 	twd_sk_true( false === strpos( $src, "\xE2\x80\x94" ) && false === strpos( $src, "\xE2\x80\x93" ) );
 } );
+
+twd_sk_test( 'report: leftovers carry their level, and the totals are split by level', function () {
+	$left = array( 'example.com' => 2, 'Contact me about a first session' => 1, 'Find out about my services' => 3, '[PLACEHOLDER' => 1 );
+	$out  = TWD_SK_Report::describe_leftovers( $left );
+	$by   = array();
+	foreach ( $out as $item ) {
+		$by[ $item['marker'] ] = $item['level'];
+	}
+	twd_sk_eq( array( 'example.com' => 'must', 'Contact me about a first session' => 'check', 'Find out about my services' => 'check', '[PLACEHOLDER' => 'must' ), $by );
+	twd_sk_eq( array( 'must' => 3, 'check' => 4 ), TWD_SK_Report::leftover_levels( $left ) );
+	twd_sk_eq( array( 'must' => 0, 'check' => 0 ), TWD_SK_Report::leftover_levels( array() ) );
+	twd_sk_eq( array( 'must' => 0, 'check' => 0 ), TWD_SK_Report::leftover_levels( 'nope' ) );
+} );

@@ -49,6 +49,11 @@ class TWD_SK_Store {
 		return TWD_SK_Sanitizer::find_leftovers( self::get_current( $post_id ) );
 	}
 
+	/** Leftover example text split by level: array( must => ..., check => ... ). */
+	public static function get_leftover_levels( $post_id ) {
+		return TWD_SK_Sanitizer::find_leftovers_by_level( self::get_current( $post_id ) );
+	}
+
 	public static function get_current_version_id( $post_id ) {
 		$items = self::read( (int) $post_id )['items'];
 		return $items ? (int) end( $items )['id'] : 0;

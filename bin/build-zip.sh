@@ -12,7 +12,7 @@ VERIFY="$(mktemp -d)"
 trap 'rm -rf "$BUILD" "$VERIFY"' EXIT
 
 # What ships: the main file, readme.txt and these folders. Nothing else.
-FOLDERS="includes assets packs starters"
+FOLDERS="includes assets packs starters templates"
 
 # 1. Copy ONLY the plugin files into a folder named twd-site-kit.
 mkdir -p "$BUILD/twd-site-kit"
@@ -51,7 +51,7 @@ if unzip -Z1 "$ROOT/dist/twd-site-kit-latest.zip" | grep -i -E 'claude|history|r
 fi
 
 # Everything the plugin loads is in the zip.
-for f in twd-site-kit.php readme.txt includes/class-twd-sk-updater.php includes/class-twd-sk-registry.php includes/class-twd-sk-sanitizer.php includes/class-twd-sk-store.php includes/class-twd-sk-prompt.php includes/class-twd-sk-report.php includes/class-twd-sk-preview.php includes/class-twd-sk-rest.php includes/class-twd-sk-editor.php includes/class-twd-sk-page.php includes/class-twd-sk-packs.php includes/class-twd-sk-assets.php includes/class-twd-sk-cli.php assets/twd-site-kit.css assets/twd-site-kit-editor.css assets/twd-site-kit-editor.js packs/sage.json packs/grove.json starters/_gallery.html; do
+for f in twd-site-kit.php readme.txt includes/class-twd-sk-updater.php includes/class-twd-sk-registry.php includes/class-twd-sk-sanitizer.php includes/class-twd-sk-store.php includes/class-twd-sk-prompt.php includes/class-twd-sk-report.php includes/class-twd-sk-template.php includes/class-twd-sk-preview.php includes/class-twd-sk-rest.php includes/class-twd-sk-editor.php includes/class-twd-sk-page.php includes/class-twd-sk-packs.php includes/class-twd-sk-assets.php includes/class-twd-sk-cli.php assets/twd-site-kit.css assets/twd-site-kit-editor.css assets/twd-site-kit-editor.js templates/kit-page.php packs/sage.json packs/grove.json starters/_gallery.html; do
 	[ -f "$VERIFY/twd-site-kit/$f" ] || { echo "FAIL: missing from the zip: $f"; exit 1; }
 done
 

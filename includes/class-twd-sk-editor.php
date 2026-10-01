@@ -3,10 +3,9 @@
  * TWD_SK_Editor: loads the front-end editor (the "Edit with AI" button and pop-up).
  *
  * Nothing here is loaded for visitors. The script, the stylesheet and the button
- * only exist for a signed-in user who can edit pages, on a front-end page they can
- * edit, never in wp-admin, never inside the Elementor editor or the customizer,
- * and never inside the preview frame (a preview gets the stylesheet alone, for its
- * "Preview only" bar).
+ * only exist for a signed-in user who can edit pages, on the front end. Never in
+ * wp-admin, never inside the Elementor editor or the customizer, and never inside the
+ * preview frame (a preview gets the stylesheet alone, for its "Preview only" bar).
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -32,6 +31,10 @@ class TWD_SK_Editor {
 
 	/**
 	 * What the editor needs to know about this request, or null when it must not load.
+	 *
+	 * It loads for any signed-in user who can edit pages, on any front-end page, because the
+	 * New page tab works anywhere. The Edit tab needs a kit page they can edit, and the
+	 * This page card needs a single page they can edit.
 	 */
 	public static function context() {
 		if ( is_admin() || ! is_user_logged_in() || ! current_user_can( 'edit_pages' ) ) {
@@ -40,11 +43,13 @@ class TWD_SK_Editor {
 		if ( TWD_SK_Preview::is_preview_request() || self::in_builder_or_customizer() ) {
 			return null;
 		}
-		$page_id = TWD_SK_Page::viewed_page_id();
-		if ( $page_id <= 0 || ! current_user_can( 'edit_post', $page_id ) || ! TWD_SK_Page::is_kit_page( $page_id ) ) {
-			return null;
-		}
-		return array( 'page_id' => $page_id );
+		$page_id  = TWD_SK_Page::viewed_page_id();
+		$can_edit = $page_id > 0 && current_user_can( 'edit_post', $page_id );
+		return array(
+			'page_id'      => $can_edit ? $page_id : 0,
+			'is_kit_page'  => $can_edit && TWD_SK_Page::is_kit_page( $page_id ),
+			'can_publish'  => $can_edit && current_user_can( 'publish_pages' ) && current_user_can( 'publish_post', $page_id ),
+		);
 	}
 
 	public static function enqueue() {
@@ -68,8 +73,12 @@ class TWD_SK_Editor {
 			'restUrl'        => esc_url_raw( rest_url( TWD_SK_REST::ROUTE_NS ) ),
 			'nonce'          => wp_create_nonce( 'wp_rest' ),
 			'pageId'         => (int) $context['page_id'],
-			'currentVersion' => TWD_SK_Store::get_current_version_id( $context['page_id'] ),
+			'isKitPage'      => (bool) $context['is_kit_page'],
+			'canPublish'     => (bool) $context['can_publish'],
+			'currentVersion' => $context['page_id'] ? TWD_SK_Store::get_current_version_id( $context['page_id'] ) : 0,
 			'maxBytes'       => TWD_SK_Store::MAX_BYTES,
+			'maxTitle'       => TWD_SK_Template::MAX_TITLE,
+			'starters'       => TWD_SK_Template::starters(),
 		) );
 		wp_enqueue_script( self::HANDLE );
 	}

@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.3.0
+Stable tag: 0.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,13 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.3.1 =
+* New: the "TWD Kit Page" page template. Full width, no theme padding, theme header and footer kept (including an Elementor Theme Builder header and footer), no page builder needed for the page body.
+* New: Pages tab in the pop-up. New page makes a draft already set up for the kit. This page shows status and template, with Publish and Unpublish (each asks for a confirmation) and "Switch this page to the kit template" for pages that use the [twd_page] shortcode.
+* New: publishing is blocked while "must fix" example text remains (example addresses, sample picture names, sample testimonials and so on) unless you tick an explicit override. Example button wording is only a "check" warning and never blocks. Both levels show in the pop-up and in wp twd-sk check.
+* Improved: example link wording in the style guide is meaningful, a new rule stops the AI stating policies or registration status without the therapist's wording, and the leftover check covers more sample text.
+* The Edit with AI button now shows on every front-end page for editors (the Pages tab works anywhere); the Edit tab still needs a kit page.
 
 = 0.3.0 =
 * New: "Edit with AI" on the front end for signed-in editors. A button (bottom left) opens a pop-up: copy the prompt, paste the AI's result, see what the cleaner changed and any leftover example text, preview it on the real page (nothing is saved), then apply it as a new version. Undo and restore from the last 10 versions. Every apply asks where the facts came from and saves the answer with the version.

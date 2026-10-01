@@ -289,3 +289,30 @@ twd_sk_test( 'cli: check lists the newer markers too (picture names, sample serv
 	twd_sk_has( '/service-N (1)', $all );
 	twd_sk_has( 'Contact me about a first session (1)', $all );
 } );
+
+twd_sk_test( 'cli: check shows the two levels, must fix first and check marked as never blocking', function () {
+	WP_CLI::reset();
+	twd_stub_add_post( 12, 'page', '[twd_page]' );
+	TWD_SK_Store::save( 12, '<p>Heading here</p><a href="/c">Contact me about a first session</a>' );
+	( new TWD_SK_CLI() )->check( array( '12' ), array() );
+	$all = WP_CLI::all();
+	twd_sk_has( 'still has example text', $all );
+	twd_sk_has( 'Must fix before publishing:', $all );
+	twd_sk_has( 'Heading here (1)', $all );
+	twd_sk_has( 'Check (never blocks publishing):', $all );
+	twd_sk_has( 'Contact me about a first session (1)', $all );
+	twd_sk_true( strpos( $all, 'Must fix before publishing:' ) < strpos( $all, 'Check (never blocks publishing):' ), 'must fix listed first' );
+	twd_sk_true( strpos( $all, 'Heading here (1)' ) < strpos( $all, 'Check (never blocks' ), 'must item under its own heading' );
+} );
+
+twd_sk_test( 'cli: check with only check-level wording warns gently and says it never blocks', function () {
+	WP_CLI::reset();
+	twd_stub_add_post( 12, 'page', '[twd_page]' );
+	TWD_SK_Store::save( 12, '<a href="/c">Find out about my services</a>' );
+	( new TWD_SK_CLI() )->check( array( '12' ), array() );
+	$all = WP_CLI::all();
+	twd_sk_has( 'has example wording to check. It never blocks publishing', $all );
+	twd_sk_hasnt( 'Must fix before publishing', $all );
+	twd_sk_hasnt( 'still has example text', $all );
+	twd_sk_has( 'Find out about my services (1)', $all );
+} );

@@ -62,6 +62,8 @@ function twd_stub_add_post( $id, $type = 'page', $content = '' ) {
 		'ID'           => $id,
 		'post_type'    => $type,
 		'post_content' => $content,
+		'post_status'  => 'publish',
+		'post_title'   => 'Page ' . $id,
 	);
 }
 
@@ -178,6 +180,10 @@ function twd_sk_stub_defaults() {
 		'routes'    => array(),
 		'headers'   => array(),
 		'users'     => array( 7 => 'Test Editor' ),
+		'inserted'  => array(),
+		'updated'   => array(),
+		'insert_fails' => false,
+		'loop_reset' => true,
 	);
 }
 
@@ -347,6 +353,64 @@ class WP_REST_Request {
 	}
 }
 
+function wp_strip_all_tags( $text ) {
+	return trim( strip_tags( (string) $text ) );
+}
+function get_the_title( $id = 0 ) {
+	$post = get_post( $id ? $id : get_the_ID() );
+	return $post ? $post->post_title : '';
+}
+/** Creates a post in the stand-in store. Mimics core: refuses a page template that is not registered. */
+function wp_insert_post( $args, $wp_error = false ) {
+	$GLOBALS['twd_stub']['inserted'][] = $args;
+	$ids = array_keys( $GLOBALS['twd_stub']['posts'] );
+	$id  = ( $ids ? max( $ids ) : 100 ) + 1;
+	if ( ! empty( $GLOBALS['twd_stub']['insert_fails'] ) ) {
+		return $wp_error ? new WP_Error( 'insert_failed', 'Could not create the page.' ) : 0;
+	}
+	twd_stub_add_post( $id, $args['post_type'], $args['post_content'] );
+	$GLOBALS['twd_stub']['posts'][ $id ]->post_status = $args['post_status'];
+	$GLOBALS['twd_stub']['posts'][ $id ]->post_title  = $args['post_title'];
+	$GLOBALS['twd_stub']['posts'][ $id ]->post_author = $args['post_author'];
+	if ( ! empty( $args['page_template'] ) ) {
+		update_post_meta( $id, '_wp_page_template', $args['page_template'] );
+	}
+	return $id;
+}
+function wp_update_post( $args, $wp_error = false ) {
+	$GLOBALS['twd_stub']['updated'][] = $args;
+	$post = get_post( $args['ID'] );
+	if ( ! $post ) {
+		return $wp_error ? new WP_Error( 'invalid_post', 'Invalid post.' ) : 0;
+	}
+	foreach ( $args as $k => $v ) {
+		$post->$k = $v;
+	}
+	return $args['ID'];
+}
+function have_posts() {
+	static $done = false;
+	if ( ! empty( $GLOBALS['twd_stub']['loop_reset'] ) ) {
+		$done = false;
+		$GLOBALS['twd_stub']['loop_reset'] = false;
+	}
+	if ( $done ) {
+		return false;
+	}
+	$done = true;
+	return true;
+}
+function the_post() {}
+function get_header() {
+	echo '[HEADER]';
+}
+function get_footer() {
+	echo '[FOOTER]';
+}
+function get_page_template_slug() {
+	return get_post_meta( get_queried_object_id(), '_wp_page_template', true );
+}
+
 function check_admin_referer( $action ) {
 	return $GLOBALS['twd_stub']['referer_ok'];
 }
@@ -375,6 +439,7 @@ require_once ABSPATH . 'includes/class-twd-sk-packs.php';
 require_once ABSPATH . 'includes/class-twd-sk-assets.php';
 require_once ABSPATH . 'includes/class-twd-sk-updater.php';
 require_once ABSPATH . 'includes/class-twd-sk-report.php';
+require_once ABSPATH . 'includes/class-twd-sk-template.php';
 require_once ABSPATH . 'includes/class-twd-sk-preview.php';
 require_once ABSPATH . 'includes/class-twd-sk-rest.php';
 require_once ABSPATH . 'includes/class-twd-sk-editor.php';

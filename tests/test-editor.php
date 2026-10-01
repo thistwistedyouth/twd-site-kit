@@ -69,20 +69,45 @@ twd_sk_test( 'editor: nothing loads in wp-admin, in the preview frame, in Elemen
 	twd_sk_true( ! twd_sk_ed_loaded(), 'elementor preview' );
 	unset( $_GET['elementor-preview'] );
 
-	$GLOBALS['twd_stub']['queried'] = 20;
-	twd_sk_true( ! twd_sk_ed_loaded(), 'not a kit page' );
-	$GLOBALS['twd_stub']['queried'] = 12;
+} );
 
+twd_sk_test( 'editor: on a page that is not a kit page, or on no page at all, only the Pages tab is on offer', function () {
+	twd_sk_ed_setup();
+	$GLOBALS['twd_stub']['queried'] = 20;
+	twd_sk_true( twd_sk_ed_loaded(), 'loads for the New page tab' );
+	$data = $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data'];
+	twd_sk_eq( 20, $data['pageId'] );
+	twd_sk_eq( false, $data['isKitPage'] );
+
+	twd_sk_ed_setup();
 	$GLOBALS['twd_stub']['singular'] = false;
 	$GLOBALS['twd_stub']['queried']  = 0;
 	$GLOBALS['twd_stub']['post_id']  = 0;
-	twd_sk_true( ! twd_sk_ed_loaded(), 'not a single page' );
-	twd_sk_eq( '', twd_sk_ed_markup() );
+	twd_sk_true( twd_sk_ed_loaded(), 'loads on an archive' );
+	$data = $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data'];
+	twd_sk_eq( 0, $data['pageId'] );
+	twd_sk_eq( false, $data['isKitPage'] );
+	twd_sk_eq( false, $data['canPublish'] );
+	twd_sk_has( 'id="twd-sk-ed-open"', twd_sk_ed_markup() );
 } );
 
-twd_sk_test( 'editor: a user who can edit pages but not this page gets nothing', function () {
+twd_sk_test( 'editor: a user who can edit pages but not this page gets the Pages tab only, with no page ID and no publish rights', function () {
 	twd_sk_ed_setup( array( 'edit_pages' ) );
-	twd_sk_true( ! twd_sk_ed_loaded() );
+	twd_sk_true( twd_sk_ed_loaded() );
+	$data = $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data'];
+	twd_sk_eq( 0, $data['pageId'] );
+	twd_sk_eq( false, $data['isKitPage'] );
+	twd_sk_eq( false, $data['canPublish'] );
+} );
+
+twd_sk_test( 'editor: publish rights are passed to the script only for users who hold them on this page', function () {
+	twd_sk_ed_setup( array( 'edit_pages', 'edit_post:12' ) );
+	twd_sk_true( twd_sk_ed_loaded() );
+	twd_sk_eq( false, $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['canPublish'] );
+	twd_sk_ed_setup( array( 'edit_pages', 'edit_post:12', 'publish_pages', 'publish_post:12' ) );
+	twd_sk_true( twd_sk_ed_loaded() );
+	twd_sk_eq( true, $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['canPublish'] );
+	twd_sk_eq( true, $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['isKitPage'] );
 } );
 
 twd_sk_test( 'editor: a validated preview loads the stylesheet only, never the script or the button', function () {
@@ -159,7 +184,16 @@ twd_sk_test( 'editor js: the behaviour the owner asked for is present', function
 		'base_version: state.version' => 'every write names its base version',
 		'twd-sk-ed__textarea' => 'paste box',
 		'maxlength: \'200\'' => 'note length',
-		'You can still apply it, but the page cannot be published' => 'leftover banner',
+		'Must fix before publishing: ' => 'must fix banner',
+		'These never block publishing' => 'check level banner',
+		'You can still apply this, but the page cannot be published until they are replaced' => 'apply allowed with leftovers',
+		'Publish this page' => 'publish',
+		'Unpublish this page' => 'unpublish',
+		"Switch this page to the kit template" => 'switch template',
+		'Create draft page' => 'new page',
+		'Yes, publish anyway' => 'override publish',
+		'twd-sk-ed-override' => 'explicit override checkbox',
+		'confirm: true' => 'publishing sends a confirmation',
 	) as $needle => $what ) {
 		twd_sk_has( $needle, $js, $what );
 	}

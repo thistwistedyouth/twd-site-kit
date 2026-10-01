@@ -62,7 +62,7 @@ class TWD_SK_Page {
 	}
 
 	/**
-	 * True for a page the kit renders: it has stored kit HTML, or it holds the
+	 * True for a page the kit renders: it has stored kit HTML, uses the kit template, or holds the
 	 * [twd_page] shortcode in its content or in Elementor's data.
 	 */
 	public static function is_kit_page( $post_id ) {
@@ -70,7 +70,7 @@ class TWD_SK_Page {
 		if ( $post_id <= 0 ) {
 			return false;
 		}
-		if ( '' !== TWD_SK_Store::get_current( $post_id ) ) {
+		if ( '' !== TWD_SK_Store::get_current( $post_id ) || TWD_SK_Template::uses_template( $post_id ) ) {
 			return true;
 		}
 		$content = (string) get_post_field( 'post_content', $post_id );

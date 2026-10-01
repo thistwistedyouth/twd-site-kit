@@ -185,8 +185,10 @@ class TWD_SK_CLI {
 	}
 
 	/**
-	 * List example text still on a page (example.com, PHONE_NUMBER, "Heading here" and so
-	 * on, or any [PLACEHOLDER). Nothing is changed. Run it before a page goes live.
+	 * List example text still on a page, in two levels: "must fix" (blocks publishing:
+	 * example.com, PHONE_NUMBER, "Heading here", any [PLACEHOLDER and so on) and "check"
+	 * (the example button wording, which only warns). Nothing is changed. Run it before a
+	 * page goes live.
 	 *
 	 * ## OPTIONS
 	 *
@@ -200,14 +202,25 @@ class TWD_SK_CLI {
 			WP_CLI::error( 'Page ' . $page_id . ' has no stored content.' );
 			return;
 		}
-		$found = TWD_SK_Store::get_leftovers( $page_id );
-		if ( ! $found ) {
+		$levels = TWD_SK_Store::get_leftover_levels( $page_id );
+		if ( ! $levels['must'] && ! $levels['check'] ) {
 			WP_CLI::success( 'Page ' . $page_id . ' has no leftover example text.' );
 			return;
 		}
-		WP_CLI::warning( 'Page ' . $page_id . ' still has example text. Replace it before the page goes live:' );
-		foreach ( $found as $marker => $count ) {
-			WP_CLI::log( '  ' . $marker . ' (' . $count . ')' );
+		if ( $levels['must'] ) {
+			WP_CLI::warning( 'Page ' . $page_id . ' still has example text. Replace it before the page goes live:' );
+			WP_CLI::log( 'Must fix before publishing:' );
+			foreach ( $levels['must'] as $marker => $count ) {
+				WP_CLI::log( '  ' . $marker . ' (' . $count . ')' );
+			}
+		} else {
+			WP_CLI::warning( 'Page ' . $page_id . ' has example wording to check. It never blocks publishing:' );
+		}
+		if ( $levels['check'] ) {
+			WP_CLI::log( 'Check (never blocks publishing):' );
+			foreach ( $levels['check'] as $marker => $count ) {
+				WP_CLI::log( '  ' . $marker . ' (' . $count . ')' );
+			}
 		}
 	}
 

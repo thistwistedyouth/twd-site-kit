@@ -16,6 +16,8 @@
 	}
 
 	var state = {
+		tab: '',
+		info: null,
 		version: cfg.currentVersion || 0,
 		prompt: '',
 		token: '',
@@ -140,20 +142,36 @@
 		box.appendChild(ul);
 	}
 
+	// Example text still on the page, in two levels. "Must fix" blocks publishing (applying is still
+	// allowed); "check" only warns and never blocks.
 	function leftoverBanner(box, data) {
 		clear(box);
-		if (!data || !data.leftover_count) {
+		var must = [];
+		var check = [];
+		((data && data.leftovers) || []).forEach(function (item) {
+			(item.level === 'check' ? check : must).push(item);
+		});
+		if (!must.length && !check.length) {
 			show(box, false);
 			return;
 		}
-		box.appendChild(el('strong', {
-			text: data.leftover_count + ' example or missing detail' + (data.leftover_count === 1 ? '' : 's') + ' still on the page.'
-		}));
-		box.appendChild(document.createTextNode(' You can still apply it, but the page cannot be published until they are replaced.'));
-		var lines = data.leftovers.map(function (item) {
-			return item.marker + ' (' + item.count + '): ' + item.meaning;
-		});
-		listInto(box, lines);
+		function lines(items) {
+			return items.map(function (item) {
+				return item.marker + ' (' + item.count + '): ' + item.meaning;
+			});
+		}
+		if (must.length) {
+			var n = data.must_count;
+			box.appendChild(el('strong', { text: 'Must fix before publishing: ' + n + ' example or missing detail' + (n === 1 ? '' : 's') + '.' }));
+			box.appendChild(document.createTextNode(' You can still apply this, but the page cannot be published until they are replaced.'));
+			listInto(box, lines(must));
+		}
+		if (check.length) {
+			var c = data.check_count;
+			box.appendChild(el('strong', { text: 'To check: ' + c + ' piece' + (c === 1 ? '' : 's') + ' of example wording.' }));
+			box.appendChild(document.createTextNode(' These never block publishing. Keep them only if they are right for this page.'));
+			listInto(box, lines(check));
+		}
 		show(box, true);
 	}
 
@@ -177,24 +195,37 @@
 		var closeBtn = el('button', { type: 'button', className: 'twd-sk-ed__close', text: 'Close', 'aria-label': 'Close the editor' });
 		closeBtn.addEventListener('click', close);
 
-		var tab = el('button', {
-			type: 'button', role: 'tab', id: 'twd-sk-ed-tab-edit', className: 'twd-sk-ed__tab',
-			'aria-selected': 'true', 'aria-controls': 'twd-sk-ed-panel-edit', text: 'Edit this page'
-		});
-		var tabs = el('div', { className: 'twd-sk-ed__tabs', role: 'tablist', 'aria-label': 'Editor sections' }, [tab]);
+		var tabs = el('div', { className: 'twd-sk-ed__tabs', role: 'tablist', 'aria-label': 'Editor sections' });
 		tabs.addEventListener('keydown', onTabKeys);
+		var body = el('div', { className: 'twd-sk-ed__body' });
+		ui.tabs = {};
 
-		var panel = el('div', {
-			role: 'tabpanel', id: 'twd-sk-ed-panel-edit', 'aria-labelledby': 'twd-sk-ed-tab-edit'
-		});
-		buildEditPanel(panel);
+		function addTab(name, label, buildPanel) {
+			var tab = el('button', {
+				type: 'button', role: 'tab', id: 'twd-sk-ed-tab-' + name, className: 'twd-sk-ed__tab',
+				'aria-selected': 'false', 'aria-controls': 'twd-sk-ed-panel-' + name, text: label
+			});
+			var panel = el('div', { role: 'tabpanel', id: 'twd-sk-ed-panel-' + name, 'aria-labelledby': 'twd-sk-ed-tab-' + name, hidden: '' });
+			buildPanel(panel);
+			tab.addEventListener('click', function () {
+				selectTab(name);
+			});
+			tabs.appendChild(tab);
+			body.appendChild(panel);
+			ui.tabs[name] = { tab: tab, panel: panel };
+		}
+
+		if (cfg.isKitPage && cfg.pageId) {
+			addTab('edit', 'Edit this page', buildEditPanel);
+		}
+		addTab('pages', 'Pages', buildPagesPanel);
 
 		var dialog = el('div', {
 			className: 'twd-sk-ed__dialog', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'twd-sk-ed-title'
 		}, [
 			el('div', { className: 'twd-sk-ed__header' }, [title, closeBtn]),
 			tabs,
-			el('div', { className: 'twd-sk-ed__body' }, [panel])
+			body
 		]);
 		dialog.addEventListener('keydown', trapFocus);
 
@@ -208,6 +239,19 @@
 		ui.title = title;
 		root.appendChild(ui.overlay);
 		state.built = true;
+		selectTab(ui.tabs.edit ? 'edit' : 'pages');
+	}
+
+	function selectTab(name) {
+		Object.keys(ui.tabs).forEach(function (key) {
+			var on = key === name;
+			ui.tabs[key].tab.setAttribute('aria-selected', on ? 'true' : 'false');
+			show(ui.tabs[key].panel, on);
+		});
+		state.tab = name;
+		if (name === 'pages') {
+			loadInfo();
+		}
 	}
 
 	function buildEditPanel(panel) {
@@ -497,6 +541,256 @@
 		});
 	}
 
+	/* ---- the Pages tab: this page's status and template, and new pages ---- */
+
+	var STATUS_LABELS = { publish: 'Published', draft: 'Draft', pending: 'Pending review', 'private': 'Private', future: 'Scheduled' };
+
+	function buildPagesPanel(panel) {
+		if (cfg.pageId) {
+			ui.pgStatus = el('p', { className: 'twd-sk-ed__row' });
+			ui.pgTemplate = el('p', { className: 'twd-sk-ed__row' });
+			ui.pgBanner = el('div', { className: 'twd-sk-ed__banner', hidden: '' });
+			ui.publishBtn = button('Publish this page', 'primary', function () {
+				askPublish('publish');
+			});
+			ui.unpublishBtn = button('Unpublish this page', 'secondary', function () {
+				askPublish('draft');
+			});
+			ui.switchBtn = button('Switch this page to the kit template', 'secondary', function () {
+				doSwitch('kit', false);
+			});
+			ui.switchBackBtn = button('Switch back to the theme\'s template', 'secondary', function () {
+				askSwitchBack();
+			});
+			[ui.publishBtn, ui.unpublishBtn, ui.switchBtn, ui.switchBackBtn].forEach(function (b) {
+				show(b, false);
+			});
+			ui.pgHelp = el('p', { className: 'twd-sk-ed__help', hidden: '' });
+			ui.confirm = el('div', { className: 'twd-sk-ed__card', role: 'group', 'aria-label': 'Please confirm', hidden: '' });
+			ui.pgMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+			panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+				el('h3', { className: 'twd-sk-ed__step-title', text: 'This page' }),
+				ui.pgStatus,
+				ui.pgTemplate,
+				ui.pgBanner,
+				ui.pgHelp,
+				el('div', { className: 'twd-sk-ed__actions' }, [ui.publishBtn, ui.unpublishBtn, ui.switchBtn, ui.switchBackBtn]),
+				ui.confirm,
+				ui.pgMsg
+			]));
+		}
+
+		ui.newTitle = el('input', { id: 'twd-sk-ed-newtitle', className: 'twd-sk-ed__input', type: 'text', maxlength: String(cfg.maxTitle || 120), autocomplete: 'off' });
+		ui.newTitle.addEventListener('input', function () {
+			ui.newBtn.disabled = !ui.newTitle.value.trim();
+		});
+		ui.newStarter = el('select', { id: 'twd-sk-ed-newstarter', className: 'twd-sk-ed__select' });
+		var starters = cfg.starters || { blank: 'Blank page' };
+		Object.keys(starters).forEach(function (key) {
+			ui.newStarter.appendChild(el('option', { value: key, text: starters[key] }));
+		});
+		ui.newBtn = button('Create draft page', 'primary', doCreate);
+		ui.newBtn.disabled = true;
+		ui.newMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		ui.newLink = el('a', { className: 'twd-sk-ed__link', text: 'Open the new draft page', hidden: '' });
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'New page' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'This makes a draft page that is ready for the kit. Nothing is published until you publish it. More starting layouts arrive later.' }),
+			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-newtitle', text: 'Page title' }),
+			ui.newTitle,
+			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-newstarter', text: 'Starting layout' }),
+			ui.newStarter,
+			el('div', { className: 'twd-sk-ed__actions' }, [ui.newBtn]),
+			ui.newMsg,
+			el('p', {}, [ui.newLink])
+		]));
+	}
+
+	function loadInfo() {
+		if (!cfg.pageId) {
+			return Promise.resolve();
+		}
+		return api('GET', pagePath('/info')).then(renderInfo, function (err) {
+			message(ui.pgMsg, err.message, false);
+		});
+	}
+
+	function renderInfo(info) {
+		state.info = info;
+		var published = info.status === 'publish';
+		clear(ui.pgStatus);
+		ui.pgStatus.appendChild(el('strong', { text: 'Status: ' }));
+		ui.pgStatus.appendChild(document.createTextNode(STATUS_LABELS[info.status] || info.status));
+		clear(ui.pgTemplate);
+		ui.pgTemplate.appendChild(el('strong', { text: 'Template: ' }));
+		ui.pgTemplate.appendChild(document.createTextNode(info.uses_template ? 'TWD Kit Page (no page builder needed)' : 'The theme\'s own template'));
+		leftoverBanner(ui.pgBanner, info);
+
+		var kit = info.is_kit_page;
+		show(ui.publishBtn, kit && cfg.canPublish && !published);
+		show(ui.unpublishBtn, kit && cfg.canPublish && published && !info.is_site_page);
+		show(ui.switchBtn, kit && !info.uses_template);
+		show(ui.switchBackBtn, kit && info.uses_template);
+		var help = '';
+		if (!kit) {
+			help = 'This page does not use the kit, so there is nothing to publish or switch here.';
+		} else if (!cfg.canPublish) {
+			help = 'You can edit this page, but only someone with publishing rights can publish or unpublish it.';
+		} else if (!info.uses_template) {
+			help = 'This page shows the kit through a shortcode. The kit template shows it with no page builder setup, and keeps your theme header and footer.';
+		}
+		ui.pgHelp.textContent = help;
+		show(ui.pgHelp, !!help);
+	}
+
+	// One inline confirmation box for every risky action. No browser dialogs.
+	function askConfirm(opts) {
+		clear(ui.confirm);
+		ui.confirm.appendChild(el('p', { text: opts.text }));
+		if (opts.lines && opts.lines.length) {
+			listInto(ui.confirm, opts.lines);
+		}
+		var override = null;
+		var yes = button(opts.yesLabel, 'primary', function () {
+			show(ui.confirm, false);
+			opts.onYes(override ? override.checked : false);
+		});
+		if (opts.overrideLabel) {
+			override = el('input', { type: 'checkbox', id: 'twd-sk-ed-override' });
+			var label = el('label', { className: 'twd-sk-ed__check', 'for': 'twd-sk-ed-override' }, [override, el('span', { text: opts.overrideLabel })]);
+			override.addEventListener('change', function () {
+				yes.disabled = !override.checked;
+			});
+			yes.disabled = true;
+			ui.confirm.appendChild(label);
+		}
+		var no = button('Cancel', 'secondary', function () {
+			show(ui.confirm, false);
+		});
+		ui.confirm.appendChild(el('div', { className: 'twd-sk-ed__actions' }, [yes, no]));
+		show(ui.confirm, true);
+		yes.focus();
+	}
+
+	function markerLines(items) {
+		return (items || []).map(function (item) {
+			return item.marker + ' (' + item.count + '): ' + item.meaning;
+		});
+	}
+
+	function askPublish(target) {
+		message(ui.pgMsg, '', true);
+		api('GET', pagePath('/info')).then(function (info) {
+			renderInfo(info);
+			if (target === 'draft') {
+				askConfirm({
+					text: 'Unpublish this page? It goes back to draft and visitors will no longer see it.',
+					yesLabel: 'Yes, unpublish',
+					onYes: function () {
+						doStatus('draft', false);
+					}
+				});
+				return;
+			}
+			var must = (info.leftovers || []).filter(function (i) {
+				return i.level !== 'check';
+			});
+			var check = (info.leftovers || []).filter(function (i) {
+				return i.level === 'check';
+			});
+			if (!info.has_content) {
+				message(ui.pgMsg, 'This page is empty. Add content on the Edit this page tab before publishing.', false);
+				return;
+			}
+			if (must.length) {
+				askConfirm({
+					text: 'This page still has example text that should be replaced before it goes live:',
+					lines: markerLines(must).concat(check.length ? ['Also worth checking:'].concat(markerLines(check)) : []),
+					yesLabel: 'Yes, publish anyway',
+					overrideLabel: 'I understand, publish with the example text still on the page',
+					onYes: function (override) {
+						doStatus('publish', override);
+					}
+				});
+				return;
+			}
+			askConfirm({
+				text: 'Publish this page? Anyone with the link will be able to see it.',
+				lines: check.length ? ['Worth checking (this does not block publishing):'].concat(markerLines(check)) : [],
+				yesLabel: 'Yes, publish',
+				onYes: function () {
+					doStatus('publish', false);
+				}
+			});
+		}, function (err) {
+			message(ui.pgMsg, err.message, false);
+		});
+	}
+
+	function doStatus(target, override) {
+		message(ui.pgMsg, target === 'publish' ? 'Publishing...' : 'Unpublishing...', true);
+		api('POST', pagePath('/status'), { status: target, confirm: true, override_placeholders: !!override }).then(function (info) {
+			renderInfo(info);
+			message(ui.pgMsg, target === 'publish' ? 'Published.' : 'Unpublished. The page is a draft again.', true);
+		}, function (err) {
+			message(ui.pgMsg, err.message, false);
+			loadInfo();
+		});
+	}
+
+	function doSwitch(use, confirmOther) {
+		message(ui.pgMsg, 'Switching...', true);
+		api('POST', pagePath('/template'), { use: use, confirm_other_content: !!confirmOther }).then(function (info) {
+			renderInfo(info);
+			message(ui.pgMsg, use === 'kit' ? 'Done. This page now uses the kit template. Reload the page to see it.' : 'Done. This page now uses the theme\'s template. Reload the page to see it.', true);
+		}, function (err) {
+			if (err.status === 409 && err.code === 'twd_sk_other_content') {
+				message(ui.pgMsg, '', true);
+				askConfirm({
+					text: err.message + ' Switch anyway?',
+					yesLabel: 'Switch anyway',
+					onYes: function () {
+						doSwitch('kit', true);
+					}
+				});
+				return;
+			}
+			message(ui.pgMsg, err.message, false);
+		});
+	}
+
+	function askSwitchBack() {
+		message(ui.pgMsg, '', true);
+		askConfirm({
+			text: 'Switch back to the theme\'s template? The kit page only shows if the page still holds the kit shortcode.',
+			yesLabel: 'Yes, switch back',
+			onYes: function () {
+				doSwitch('default', false);
+			}
+		});
+	}
+
+	function doCreate() {
+		var title = ui.newTitle.value.trim();
+		if (!title) {
+			return;
+		}
+		message(ui.newMsg, 'Creating the draft page...', true);
+		show(ui.newLink, false);
+		ui.newBtn.disabled = true;
+		api('POST', '/pages', { title: title, starter: ui.newStarter.value }).then(function (data) {
+			message(ui.newMsg, 'Draft page "' + data.title + '" created. It is not published.', true);
+			if (typeof data.url === 'string' && (data.url.indexOf(window.location.origin + '/') === 0 || data.url.charAt(0) === '/')) {
+				ui.newLink.setAttribute('href', data.url);
+				show(ui.newLink, true);
+			}
+			ui.newTitle.value = '';
+		}, function (err) {
+			message(ui.newMsg, err.message, false);
+			ui.newBtn.disabled = !ui.newTitle.value.trim();
+		});
+	}
+
 	/* ---- opening, closing, keyboard ---- */
 
 	function focusables() {
@@ -553,8 +847,13 @@
 		show(ui.overlay, true);
 		openBtn.setAttribute('aria-expanded', 'true');
 		ui.title.focus();
-		loadPrompt();
-		loadVersions();
+		if (ui.tabs.edit) {
+			loadPrompt();
+			loadVersions();
+		}
+		if (state.tab === 'pages') {
+			loadInfo();
+		}
 	}
 
 	function close() {
