@@ -28,6 +28,7 @@ class TWD_SK_Prompt {
 			'Every image needs descriptive alt text that says what the picture shows. Use empty alt text only for a purely decorative image.',
 			'Link text must be meaningful on its own. Write "Read about anxiety support", never "click here" or "read more".',
 			'Never invent credentials, registration numbers, fees, testimonials or contact details. Where a detail is missing, write [PLACEHOLDER] or [PLACEHOLDER: what is needed] and ask the therapist for it.',
+			'Never state policies (confidentiality, safeguarding, cancellation, refunds) or DBS, accreditation or registration status unless the therapist has supplied the wording. Where it is missing, write [PLACEHOLDER: policy wording needed] and ask for it.',
 			'Never promise outcomes and never make health claims. Stay within the advertising guidance of the therapist\'s professional body.',
 			'Keep client confidentiality. Use composites only. Never write a real client story or anything that could identify a person.',
 			'Keep any safety notice on the page. Do not remove or shorten it. Never change the helpline numbers or their wording.',
@@ -42,7 +43,7 @@ class TWD_SK_Prompt {
 	public static function style_guide() {
 		$data = TWD_SK_Registry::style_guide_data();
 		$out  = array();
-		$out[] = 'A page is a list of sections, one component after another. Each section is a section element with the classes shown. Copy an example, then change the words.';
+		$out[] = 'A page is a list of sections, one component after another. Each section is a section element with the classes shown. Copy an example, then change the words. Every word in the examples is a sample: replace all of it with the therapist\'s own wording, including the words on buttons and links, and every address.';
 		$out[] = '';
 		foreach ( $data['components'] as $id => $c ) {
 			$out[] = '### ' . $c['label'] . ' (' . $id . ')';

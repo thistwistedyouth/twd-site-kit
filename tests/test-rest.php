@@ -263,3 +263,15 @@ twd_sk_test( 'rest: the REST class writes only through the store and calls nothi
 	twd_sk_hasnt( "\xE2\x80\x94", $src );
 	twd_sk_hasnt( "\xE2\x80\x93", $src );
 } );
+
+twd_sk_test( 'rest: the preview banner data includes the newer markers with a plain meaning', function () {
+	twd_sk_rest_setup();
+	$out = TWD_SK_REST::post_preview( twd_sk_rest_req( array( 'html' => '<a href="/service-1">Read more about this approach</a><img src="/u/your-image.jpg" alt="x">' ) ) );
+	twd_sk_eq( 3, $out['leftover_count'] );
+	$markers = array();
+	foreach ( $out['leftovers'] as $l ) {
+		$markers[ $l['marker'] ] = $l['meaning'];
+	}
+	twd_sk_true( isset( $markers['/service-N'], $markers['Read more about this approach'], $markers['your-image'] ) );
+	twd_sk_has( 'sample link to a service page', $markers['/service-N'] );
+} );

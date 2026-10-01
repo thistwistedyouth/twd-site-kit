@@ -278,3 +278,14 @@ twd_sk_test( 'cli: save warns about leftover example text without removing it', 
 	twd_sk_eq( '<p>Paragraph text here</p>', TWD_SK_Store::get_current( 12 ) );
 	unlink( $file );
 } );
+
+twd_sk_test( 'cli: check lists the newer markers too (picture names, sample service links, sample link wording)', function () {
+	WP_CLI::reset();
+	twd_stub_add_post( 12, 'page', '[twd_page]' );
+	TWD_SK_Store::save( 12, '<img src="/wp-content/uploads/your-badge.png" alt="x"><a href="/service-1">x</a><a href="/contact">Contact me about a first session</a>' );
+	( new TWD_SK_CLI() )->check( array( '12' ), array() );
+	$all = WP_CLI::all();
+	twd_sk_has( 'your-badge (1)', $all );
+	twd_sk_has( '/service-N (1)', $all );
+	twd_sk_has( 'Contact me about a first session (1)', $all );
+} );

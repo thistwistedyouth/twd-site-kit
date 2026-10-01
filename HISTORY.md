@@ -17,6 +17,13 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## Unreleased (to ship with 0.3.1)
+
+- **Prompt and checker fixes found from the 0.3.0 prompt output.** The style guide's example link text is now meaningful ("Contact me about a first session", "Find out about my services", "Read more about this approach", "Call me to arrange a first session") so it no longer contradicts the link text rule, and a test forbids vague example link text. A new rule says never to state policies (confidentiality, safeguarding, cancellation, refunds) or DBS, accreditation or registration status without the therapist's wording, using `[PLACEHOLDER: policy wording needed]`. The style guide also says every word in the examples is a sample.
+- **Leftover markers extended** (see CLAUDE.md). Beyond the list asked for, markers were added for the testimonial, pull-out, FAQ, topic, description and introduction examples, because a test showed those examples slipped through the check. "First step" was left out on purpose: it is ordinary prose and would warn on real pages.
+- **Known side effect:** the example link wording is now flagged, so a page that keeps "Contact me about a first session" gets a warning (and, from 0.3.1, a publish block unless overridden).
+- **Prompt size:** about 22.6 KB (was about 22 KB).
+
 ## v0.3.0 (slice 3b, release 1)
 
 - **Why the pop-up never calls an AI.** The client site holds no AI key and makes no outbound call. The round trip stays copy, paste, preview, apply, so the therapist reads and approves everything before it is saved.

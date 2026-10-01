@@ -141,20 +141,48 @@ class TWD_SK_Sanitizer {
 	 * warning only: the HTML is never changed because of it.
 	 */
 	public static function leftover_markers() {
+		return array_keys( self::leftover_patterns() );
+	}
+
+	/**
+	 * marker => regex, or null for plain text matched without regard to case. The
+	 * regex form is for markers that must not catch real addresses: only the sample
+	 * "/service-1" style links count, not a real page called /service-anxiety.
+	 */
+	private static function leftover_patterns() {
 		return array(
-			'example.com',
-			'PHONE_NUMBER',
-			'Short label here',
-			'Heading here',
-			'Paragraph text here',
-			'Describe the image',
-			'your-image.jpg',
-			'[PLACEHOLDER',
+			'example.com'                       => null,
+			'example.org'                       => null,
+			'example.net'                       => null,
+			'PHONE_NUMBER'                      => null,
+			'Short label here'                  => null,
+			'Heading here'                      => null,
+			'Paragraph text here'               => null,
+			'Describe the image'                => null,
+			'Quote text here'                   => null,
+			'Another quote here'                => null,
+			'Name and context'                  => null,
+			'Question here'                     => null,
+			'Answer here'                       => null,
+			'Topic one'                         => null,
+			'Short description here'            => null,
+			'Short introduction here'           => null,
+			'Service name here'                 => null,
+			'A short statement in your own words' => null,
+			'your-image'                        => null,
+			'your-badge'                        => null,
+			'/service-N'                        => '#href\s*=\s*["\']/service-\d+["\'/?\#]#i',
+			'[PLACEHOLDER'                      => null,
+			// The example link texts in the style guide. Real links need the therapist's own words.
+			'Contact me about a first session'  => null,
+			'Find out about my services'        => null,
+			'Read more about this approach'     => null,
+			'Call me to arrange a first session' => null,
 		);
 	}
 
 	/**
-	 * Find leftover example text in some HTML (case-insensitive).
+	 * Find leftover example text in some HTML.
 	 *
 	 * @return array marker => number of times it appears. Empty when there are none.
 	 */
@@ -163,8 +191,9 @@ class TWD_SK_Sanitizer {
 		if ( ! is_string( $html ) || '' === $html ) {
 			return $found;
 		}
-		foreach ( self::leftover_markers() as $marker ) {
-			$n = substr_count( strtolower( $html ), strtolower( $marker ) );
+		$lower = strtolower( $html );
+		foreach ( self::leftover_patterns() as $marker => $regex ) {
+			$n = null === $regex ? substr_count( $lower, strtolower( $marker ) ) : (int) preg_match_all( $regex, $html );
 			if ( $n > 0 ) {
 				$found[ $marker ] = $n;
 			}

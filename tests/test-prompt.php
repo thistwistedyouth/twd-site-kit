@@ -51,6 +51,10 @@ twd_sk_test( 'prompt: every fixed rule the owner asked for is present', function
 		'Link text must be meaningful',
 		'Never invent credentials, registration numbers, fees, testimonials or contact details',
 		'[PLACEHOLDER]',
+		'Never state policies (confidentiality, safeguarding, cancellation, refunds) or DBS, accreditation or registration status',
+		'[PLACEHOLDER: policy wording needed]',
+		'unless the therapist has supplied the wording',
+		'Every word in the examples is a sample',
 		'Never promise outcomes and never make health claims',
 		"advertising guidance of the therapist's professional body",
 		'client confidentiality',
@@ -113,4 +117,46 @@ twd_sk_test( 'cli: prompt needs a numeric page id', function () {
 		( new TWD_SK_CLI() )->prompt( array( 'abc' ), array() );
 	} );
 	twd_sk_has( 'page ID must be a number', $msg );
+} );
+
+twd_sk_test( 'prompt: example link text in the style guide is meaningful, so it never contradicts the link text rule', function () {
+	$vague = array( 'read more', 'click here', 'here', 'more', 'find out more', 'get in touch', 'call', 'learn more', 'link', 'this', 'go' );
+	$count = 0;
+	foreach ( TWD_SK_Registry::style_guide_data()['components'] as $c ) {
+		$skeletons = array( $c['skeleton'] );
+		foreach ( $c['variants'] as $v ) {
+			$skeletons[] = $v['skeleton'];
+		}
+		foreach ( $skeletons as $html ) {
+			preg_match_all( '/<a\b[^>]*>(.*?)<\/a>/s', $html, $m );
+			foreach ( $m[1] as $inner ) {
+				$text = trim( strip_tags( $inner ) );
+				if ( '' === $text || 'Close' === $text ) {
+					continue; // an empty card link or a visually hidden Close label
+				}
+				$count++;
+				twd_sk_true( ! in_array( strtolower( $text ), $vague, true ), 'vague example link text in ' . $c['id'] . ': ' . $text );
+			}
+		}
+	}
+	twd_sk_true( $count > 10, 'link texts checked: ' . $count );
+	$prompt = TWD_SK_Prompt::build( '' );
+	foreach ( array( 'Contact me about a first session', 'Find out about my services', 'Read more about this approach' ) as $text ) {
+		twd_sk_has( '>' . $text . '</a>', $prompt );
+	}
+} );
+
+twd_sk_test( 'prompt: the policy rule sits beside the credentials rule and names every policy the owner listed', function () {
+	$rules = TWD_SK_Prompt::rules();
+	$at    = null;
+	foreach ( $rules as $i => $r ) {
+		if ( 0 === strpos( $r, 'Never state policies' ) ) {
+			$at = $i;
+			foreach ( array( 'confidentiality', 'safeguarding', 'cancellation', 'refunds', 'DBS', 'accreditation', 'registration status' ) as $word ) {
+				twd_sk_has( $word, $r );
+			}
+		}
+	}
+	twd_sk_true( null !== $at, 'policy rule exists' );
+	twd_sk_has( 'Never invent credentials', $rules[ $at - 1 ] );
 } );

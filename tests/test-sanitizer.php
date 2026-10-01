@@ -508,17 +508,61 @@ twd_sk_test( 'house rules: no em or en dash appears anywhere in the source files
 } );
 
 twd_sk_test( 'leftovers: every example marker is found, case-insensitively, and counted', function () {
-	$html = '<p>Heading here</p><p>paragraph TEXT here</p><a href="mailto:you@example.com">x</a><a href="tel:PHONE_NUMBER">y</a><span>Short label here</span><img src="/wp-content/uploads/your-image.jpg" alt="Describe the image"><p>[PLACEHOLDER: fee]</p><p>[PLACEHOLDER]</p>';
+	$html = '<p>Heading here</p><p>paragraph TEXT here</p><a href="mailto:you@example.com">x</a><p>Mail Example.org</p><p>or example.net</p><p>Quote text here, Another quote here</p><p>Name and context</p><a href="tel:PHONE_NUMBER">y</a><span>Short label here</span>'
+		. '<img src="/wp-content/uploads/your-image.jpg" alt="Describe the image"><img src="/wp-content/uploads/your-badge.png" alt="x"><a href="/service-2">s</a>'
+		. '<a href="/contact">CONTACT me about a first session</a><a href="/s">Find out about my services</a><a href="/a">Read more about this approach</a><a href="tel:1">Call me to arrange a first session</a>'
+		. '<p>Question here?</p><p>Answer here.</p><p>Topic one</p><p>Short description here.</p><p>Short introduction here.</p><h3>Service name here</h3><p>A short statement in your own words.</p>'
+		. '<p>[PLACEHOLDER: fee]</p><p>[PLACEHOLDER]</p>';
 	$found = TWD_SK_Sanitizer::find_leftovers( $html );
 	foreach ( TWD_SK_Sanitizer::leftover_markers() as $marker ) {
 		twd_sk_true( isset( $found[ $marker ] ), 'marker not found: ' . $marker );
 	}
 	twd_sk_eq( 2, $found['[PLACEHOLDER'] );
-	foreach ( array( 'example.com', 'PHONE_NUMBER', 'Short label here', 'Heading here', 'Paragraph text here', 'Describe the image' ) as $must ) {
+	foreach ( array( 'example.com', 'PHONE_NUMBER', 'Short label here', 'Heading here', 'Paragraph text here', 'Describe the image', 'Quote text here', 'Another quote here', 'Name and context', 'Question here', 'Answer here', 'Topic one', 'Short description here', 'Short introduction here', 'Service name here', 'A short statement in your own words', 'your-image', 'your-badge', '/service-N', 'Contact me about a first session', 'Find out about my services', 'Read more about this approach', 'Call me to arrange a first session' ) as $must ) {
 		twd_sk_true( in_array( $must, TWD_SK_Sanitizer::leftover_markers(), true ), 'required marker: ' . $must );
 	}
 	twd_sk_eq( array(), TWD_SK_Sanitizer::find_leftovers( '<p>Real words about a real practice.</p>' ) );
 	twd_sk_eq( array(), TWD_SK_Sanitizer::find_leftovers( '' ) );
+} );
+
+twd_sk_test( 'leftovers: example.com is caught in any form (email, www, path, case), your-image and your-badge with any extension', function () {
+	foreach ( array( 'you@example.com', 'https://example.com', 'https://www.example.com/directions', 'EXAMPLE.COM', 'Visit example.com today' ) as $form ) {
+		twd_sk_true( isset( TWD_SK_Sanitizer::find_leftovers( '<p>' . $form . '</p>' )['example.com'] ), $form );
+	}
+	foreach ( array( '/wp-content/uploads/your-image.jpg', '/x/your-image-2.png', '/x/YOUR-IMAGE.webp' ) as $src ) {
+		twd_sk_true( isset( TWD_SK_Sanitizer::find_leftovers( '<img src="' . $src . '" alt="x">' )['your-image'] ), $src );
+	}
+	foreach ( array( '/x/your-badge.png', '/x/your-badge.svg' ) as $src ) {
+		twd_sk_true( isset( TWD_SK_Sanitizer::find_leftovers( '<img src="' . $src . '" alt="x">' )['your-badge'] ), $src );
+	}
+} );
+
+twd_sk_test( 'leftovers: only sample /service-1 style links are caught, a real page such as /service-anxiety is not', function () {
+	foreach ( array( '/service-1', '/service-12', '/service-3/' ) as $href ) {
+		twd_sk_eq( array( '/service-N' => 1 ), TWD_SK_Sanitizer::find_leftovers( '<a href="' . $href . '">x</a>' ), $href );
+	}
+	twd_sk_eq( array( '/service-N' => 2 ), TWD_SK_Sanitizer::find_leftovers( '<a href="/service-1">a</a><a href="/service-2">b</a>' ) );
+	foreach ( array( '/service-anxiety', '/services', '/my-service-1x', '/service' ) as $href ) {
+		twd_sk_eq( array(), TWD_SK_Sanitizer::find_leftovers( '<a href="' . $href . '">x</a>' ), $href );
+	}
+	twd_sk_eq( array(), TWD_SK_Sanitizer::find_leftovers( '<p>See /service-1 in the text.</p>' ), 'only an href counts' );
+} );
+
+twd_sk_test( 'leftovers: every example in every registry skeleton is flagged, and a page of the therapist\'s own words is not', function () {
+	foreach ( TWD_SK_Registry::style_guide_data()['components'] as $c ) {
+		if ( 'notice' === $c['id'] ) {
+			continue; // The safety notice holds real support-line text that must stay on a page.
+		}
+		$skeletons = array( $c['skeleton'] );
+		foreach ( $c['variants'] as $v ) {
+			$skeletons[] = $v['skeleton'];
+		}
+		foreach ( $skeletons as $html ) {
+			twd_sk_true( TWD_SK_Sanitizer::find_leftovers( $html ) !== array(), $c['id'] . ' example is flagged as example text' );
+		}
+	}
+	$own = '<section class="twd-sk-text twd-sk-tone-surface"><div class="twd-sk-inner"><h2 class="twd-sk-title">How I work</h2><p>Plain, honest words.</p><a class="twd-sk-btn twd-sk-btn--primary" href="/service-anxiety">Anxiety support</a></div></section>';
+	twd_sk_eq( array(), TWD_SK_Sanitizer::find_leftovers( $own ) );
 } );
 
 twd_sk_test( 'leftovers: the cleaning report warns about them but keeps the text and does not count them as removals', function () {
