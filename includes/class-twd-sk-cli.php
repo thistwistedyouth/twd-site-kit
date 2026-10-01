@@ -10,6 +10,7 @@
  *   wp twd-sk undo <page_id>            step back one change (recorded as a new version)
  *   wp twd-sk check <page_id>           list leftover example text still on the page
  *   wp twd-sk prompt <page_id>          print the client AI prompt (rules, style guide, this page's HTML)
+ *   wp twd-sk export-templates [--dir=<path>]  write the two Elementor Theme Builder templates (header, footer) as JSON
  *   wp twd-sk safe-mode [on|off|status]  switch the newest features off, or back on
  *   wp twd-sk pack [<slug>]             list style packs, or switch to one
  */
@@ -273,6 +274,33 @@ class TWD_SK_CLI {
 		} else {
 			WP_CLI::success( 'Safe mode is OFF.' );
 		}
+	}
+
+	/**
+	 * Write the two Elementor Theme Builder templates (a header and a footer, each one Shortcode
+	 * widget) as JSON files for importing into a base site. After importing, set each template's
+	 * display condition to the entire site.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--dir=<path>]
+	 * : Folder to write into. Default: the current folder.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk export-templates --dir=/tmp
+	 */
+	public function export_templates( $args, $assoc_args ) {
+		$dir = isset( $assoc_args['dir'] ) ? rtrim( (string) $assoc_args['dir'], '/\\' ) : getcwd();
+		if ( ! is_dir( $dir ) || ! is_writable( $dir ) ) {
+			WP_CLI::error( 'Cannot write to that folder: ' . $dir );
+			return;
+		}
+		foreach ( TWD_SK_Elementor::files() as $name => $json ) {
+			file_put_contents( $dir . '/' . $name, $json );
+			WP_CLI::success( 'Wrote ' . $dir . '/' . $name );
+		}
+		WP_CLI::log( 'In Elementor: Templates, Theme Builder, import each file, then set its display condition to Entire Site.' );
 	}
 
 	// -- Helpers ----------------------------------------------------------

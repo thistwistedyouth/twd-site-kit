@@ -165,13 +165,13 @@ twd_sk_test( 'cli: undo with nothing to undo fails cleanly', function () {
 	} ) );
 } );
 
-twd_sk_test( 'cli: exposes exactly these commands: save, get, versions, undo, pack, prompt, check, safe_mode', function () {
+twd_sk_test( 'cli: exposes exactly these commands: save, get, versions, undo, pack, prompt, check, safe_mode, export_templates', function () {
 	$methods = array();
 	foreach ( ( new ReflectionClass( 'TWD_SK_CLI' ) )->getMethods( ReflectionMethod::IS_PUBLIC ) as $m ) {
 		$methods[] = $m->getName();
 	}
 	sort( $methods );
-	twd_sk_eq( array( 'check', 'get', 'pack', 'prompt', 'safe_mode', 'save', 'undo', 'versions' ), $methods );
+	twd_sk_eq( array( 'check', 'export_templates', 'get', 'pack', 'prompt', 'safe_mode', 'save', 'undo', 'versions' ), $methods );
 } );
 
 twd_sk_test( 'cli: pack with no name lists the packs and marks the active one', function () {
@@ -315,4 +315,21 @@ twd_sk_test( 'cli: check with only check-level wording warns gently and says it 
 	twd_sk_hasnt( 'Must fix before publishing', $all );
 	twd_sk_hasnt( 'still has example text', $all );
 	twd_sk_has( 'Find out about my services (1)', $all );
+} );
+
+twd_sk_test( 'cli: export-templates writes the two Theme Builder JSON files and says how to import them', function () {
+	WP_CLI::reset();
+	$dir = sys_get_temp_dir() . '/twdsk-export-' . getmypid();
+	mkdir( $dir );
+	( new TWD_SK_CLI() )->export_templates( array(), array( 'dir' => $dir ) );
+	foreach ( array( 'twd-header.json', 'twd-footer.json' ) as $f ) {
+		twd_sk_true( file_exists( $dir . '/' . $f ), $f );
+		twd_sk_eq( TWD_SK_Elementor::files()[ $f ], file_get_contents( $dir . '/' . $f ) );
+		unlink( $dir . '/' . $f );
+	}
+	twd_sk_has( 'Entire Site', WP_CLI::all() );
+	twd_sk_has( 'Cannot write', twd_sk_cli_fails( function () use ( $dir ) {
+		( new TWD_SK_CLI() )->export_templates( array(), array( 'dir' => $dir . '/missing' ) );
+	} ) );
+	rmdir( $dir );
 } );

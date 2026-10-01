@@ -299,11 +299,22 @@ class TWD_SK_Packs {
 		if ( $check['errors'] ) {
 			return null;
 		}
+		// Which header and footer layout this pack prefers. Anything not recognised falls back to the defaults.
+		$chrome = array( 'header' => 'bar', 'footer' => 'columns' );
+		if ( isset( $data['chrome'] ) && is_array( $data['chrome'] ) ) {
+			if ( isset( $data['chrome']['header'] ) && is_string( $data['chrome']['header'] ) && isset( TWD_SK_Chrome::header_variants()[ $data['chrome']['header'] ] ) ) {
+				$chrome['header'] = $data['chrome']['header'];
+			}
+			if ( isset( $data['chrome']['footer'] ) && is_string( $data['chrome']['footer'] ) && isset( TWD_SK_Chrome::footer_variants()[ $data['chrome']['footer'] ] ) ) {
+				$chrome['footer'] = $data['chrome']['footer'];
+			}
+		}
 		return array(
 			'slug'        => $slug,
 			'name'        => $data['name'],
 			'description' => isset( $data['description'] ) && is_string( $data['description'] ) ? $data['description'] : '',
 			'tokens'      => $check['valid'],
+			'chrome'      => $chrome,
 		);
 	}
 
@@ -320,6 +331,13 @@ class TWD_SK_Packs {
 		}
 		ksort( $out );
 		return $out;
+	}
+
+	/** The active pack's preferred header and footer layouts: array( header, footer ). */
+	public static function chrome_defaults() {
+		$packs = self::packs();
+		$slug  = self::active_slug();
+		return isset( $packs[ $slug ]['chrome'] ) ? $packs[ $slug ]['chrome'] : array( 'header' => 'bar', 'footer' => 'columns' );
 	}
 
 	public static function active_slug() {

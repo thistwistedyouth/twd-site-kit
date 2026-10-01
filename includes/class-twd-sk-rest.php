@@ -117,6 +117,28 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_site_reset' ),
 			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 		) );
+		register_rest_route( self::ROUTE_NS, '/site/profile', array(
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'get_site_profile' ),
+				'permission_callback' => array( __CLASS__, 'can_read_site' ),
+			),
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_site_profile' ),
+				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+			),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/chrome', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_chrome' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/templates', array(
+			'methods'             => 'GET',
+			'callback'            => array( __CLASS__, 'get_site_templates' ),
+			'permission_callback' => array( __CLASS__, 'can_read_site' ),
+		) );
 	}
 
 	// -- Permission callbacks ---------------------------------------------
@@ -358,6 +380,62 @@ class TWD_SK_REST {
 
 	public static function post_site_reset( $request ) {
 		return TWD_SK_Site::reset();
+	}
+
+	/** The profile, the header and footer settings, and what is still missing or placeholder. */
+	private static function profile_payload() {
+		$profile = TWD_SK_Profile::get();
+		$levels  = TWD_SK_Profile::leftovers( $profile );
+		$eff     = TWD_SK_Chrome::effective();
+		return array(
+			'profile'   => $profile,
+			'missing'   => TWD_SK_Profile::missing( $profile ),
+			'leftovers' => array(
+				'must'  => TWD_SK_Report::describe_leftovers( $levels['must'] ),
+				'check' => TWD_SK_Report::describe_leftovers( $levels['check'] ),
+			),
+			'chrome'    => array(
+				'settings'        => TWD_SK_Chrome::settings(),
+				'effective'       => $eff,
+				'header_variants' => TWD_SK_Chrome::header_variants(),
+				'footer_variants' => TWD_SK_Chrome::footer_variants(),
+				'pack_defaults'   => TWD_SK_Packs::chrome_defaults(),
+			),
+		);
+	}
+
+	public static function get_site_profile( $request ) {
+		return self::profile_payload();
+	}
+
+	/** Save some or all profile fields. Every field is validated; nothing is stored if any is not. */
+	public static function post_site_profile( $request ) {
+		$profile = $request->get_param( 'profile' );
+		if ( ! is_array( $profile ) ) {
+			return self::error( 'twd_sk_bad_input', 'Send the profile as a set of fields.', 400 );
+		}
+		$saved = TWD_SK_Profile::save( $profile );
+		if ( is_wp_error( $saved ) ) {
+			return self::error( $saved->get_error_code(), $saved->get_error_message(), 400 );
+		}
+		return self::profile_payload();
+	}
+
+	public static function post_site_chrome( $request ) {
+		$settings = $request->get_param( 'settings' );
+		if ( ! is_array( $settings ) ) {
+			return self::error( 'twd_sk_bad_input', 'Send the header and footer settings as a set of fields.', 400 );
+		}
+		$saved = TWD_SK_Chrome::save_settings( $settings );
+		if ( is_wp_error( $saved ) ) {
+			return self::error( $saved->get_error_code(), $saved->get_error_message(), 400 );
+		}
+		return self::profile_payload();
+	}
+
+	/** The two Theme Builder templates as JSON text, for the base-site import. */
+	public static function get_site_templates( $request ) {
+		return array( 'files' => TWD_SK_Elementor::files() );
 	}
 
 	private static function truthy( $value ) {

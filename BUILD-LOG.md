@@ -10,12 +10,17 @@ Order of work. Each piece is its own commit on `main`; the version number, zip a
 |---|-------|-------|
 | 0 | Foundation: this log, safe mode (`TWD_SK_SAFE_MODE` or `wp twd-sk safe-mode`) | done |
 | 1 | Site tab: pack switch, colour, font and radius overrides, contrast blocking, live preview, reset | done |
-| 2 | Header, footer and site profile: variants, `[twd_header]` and `[twd_footer]`, mobile menu, Theme Builder JSON export | next |
-| 3 | Starter pages (Home, About, Contact) and the setup command | to do |
+| 2 | Header, footer and site profile: variants, `[twd_header]` and `[twd_footer]`, mobile menu, Theme Builder JSON export | done |
+| 3 | Starter pages (Home, About, Contact) and the setup command | next |
 | 4 | SEO: search mirror, SEO tab, structured data, image attributes | to do |
 | 5 | Release 0.4.0: version, zip, update JSON, docs, test script for David's site | to do |
 
 Already shipped before this release (0.3.1, the commit titled "0.3.1: TWD Kit Page template..."): the TWD Kit Page template, the Pages tab (New page, Publish and Unpublish with confirmation, Switch this page to the kit template), the two-level leftover check and the publish block, the prompt and checker fixes. They were listed again in the 0.4.0 brief and were not rebuilt.
+
+Piece 2 notes:
+- Variants were chosen from the two reference sites (pulled fresh; no new reference folders had been added). Both have a logo on the left with a menu and a button on the right (one has a one-level dropdown, one a text logo with a small subtitle), a menu button on small screens, and a footer of up to three columns (brand and short text, links, contact) over a bottom bar with the copyright and legal links; one has a fixed header. That gave the `bar` header and `columns` footer as the defaults, with `centered`, `split`, `minimal`, `band`, `centered` and `simple` as the other layouts. No names, copy, labels, numbers or paths from the references are in the plugin.
+- The Theme Builder templates are generated JSON (`starters/elementor/`). Whether Elementor Pro 4.3.1 accepts them on import, and whether the display condition must be set by hand afterwards, is NOT verified here.
+- If the plugin is deactivated, an Elementor Shortcode widget shows its raw `[twd_header]` text (nothing in the plugin can prevent that). Recovery is in the section above (set the template's display condition to nothing or delete it).
 
 Open notes:
 - The Theme Builder state on David's site was not reported (the brief had an unfilled placeholder). Assumed none.

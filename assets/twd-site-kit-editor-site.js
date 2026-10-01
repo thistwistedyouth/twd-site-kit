@@ -375,8 +375,383 @@
 		load();
 	}
 
+	/* ---- site details (the profile) and the header and footer ---- */
+
+	var P = { data: null };
+	var pui = {};
+
+	function field(labelText, control, help) {
+		var id = control.getAttribute('id');
+		var kids = [el('label', { className: 'twd-sk-ed__label', 'for': id, text: labelText })];
+		if (help) {
+			kids.push(el('p', { className: 'twd-sk-ed__help', text: help }));
+		}
+		kids.push(control);
+		return el('div', { className: 'twd-sk-ed__field' }, kids);
+	}
+
+	function textInput(id, maxlength) {
+		return el('input', { id: id, type: 'text', className: 'twd-sk-ed__input', maxlength: String(maxlength), autocomplete: 'off' });
+	}
+
+	function textArea(id, rows) {
+		return el('textarea', { id: id, className: 'twd-sk-ed__textarea', rows: String(rows), spellcheck: 'false' });
+	}
+
+	// One line per link: "Label | /link". In the menu a line that starts with a dash is a sub-menu link under the line above.
+	function linksToText(list, withChildren) {
+		var lines = [];
+		(list || []).forEach(function (item) {
+			lines.push(item.label + ' | ' + item.url);
+			if (withChildren) {
+				(item.children || []).forEach(function (c) {
+					lines.push('- ' + c.label + ' | ' + c.url);
+				});
+			}
+		});
+		return lines.join('\n');
+	}
+
+	function parseLinks(text, withChildren) {
+		var list = [];
+		var error = '';
+		String(text).split('\n').forEach(function (raw) {
+			var line = raw.trim();
+			if (!line || error) {
+				return;
+			}
+			var child = false;
+			if (line.charAt(0) === '-') {
+				child = true;
+				line = line.substr(1).trim();
+			}
+			var bar = line.indexOf('|');
+			if (bar < 1 || !line.substr(bar + 1).trim()) {
+				error = 'Each line needs a label, a bar and a link, like: About | /about';
+				return;
+			}
+			var item = { label: line.substr(0, bar).trim(), url: line.substr(bar + 1).trim() };
+			if (child) {
+				if (!withChildren || !list.length) {
+					error = 'A sub-menu line (starting with a dash) must come under a menu line.';
+					return;
+				}
+				list[list.length - 1].children.push(item);
+			} else {
+				if (withChildren) {
+					item.children = [];
+				}
+				list.push(item);
+			}
+		});
+		return { list: list, error: error };
+	}
+
+	function lines(text) {
+		return String(text).split('\n').map(function (l) {
+			return l.trim();
+		}).filter(function (l) {
+			return l;
+		});
+	}
+
+	function pickMedia(done) {
+		if (!(window.wp && window.wp.media)) {
+			message(pui.msg, 'The media library is not available here. Type the picture number instead.', false);
+			return;
+		}
+		var frame = window.wp.media({ title: 'Choose a logo', button: { text: 'Use this picture' }, multiple: false, library: { type: 'image' } });
+		frame.on('select', function () {
+			var a = frame.state().get('selection').first().toJSON();
+			done(a.id);
+		});
+		frame.open();
+	}
+
+	function fillProfile() {
+		var p = P.data.profile;
+		pui.name.value = p.site_name;
+		pui.logo.value = p.logo_id ? String(p.logo_id) : '';
+		pui.ctaLabel.value = p.cta_label;
+		pui.ctaUrl.value = p.cta_url;
+		pui.phone.value = p.phone;
+		pui.email.value = p.email;
+		pui.address.value = (p.address || []).join('\n');
+		pui.area.value = p.area_served;
+		pui.footerText.value = p.footer_text;
+		pui.registration.value = (p.registration || []).join('\n');
+		pui.menu.value = linksToText(p.menu, true);
+		pui.legal.value = linksToText(p.legal, false);
+		pui.personName.value = p.person_name;
+		pui.personJob.value = p.person_job;
+		pui.sameAs.value = (p.same_as || []).join('\n');
+		renderChecks();
+	}
+
+	function renderChecks() {
+		clear(pui.checks);
+		var d = P.data;
+		var must = d.leftovers.must || [];
+		var check = d.leftovers.check || [];
+		if (d.missing && d.missing.length) {
+			pui.checks.appendChild(el('strong', { text: 'Still missing:' }));
+			listInto(pui.checks, d.missing);
+		}
+		if (must.length) {
+			pui.checks.appendChild(el('strong', { text: 'Example text still in the site details (replace it before the site goes live):' }));
+			listInto(pui.checks, must.map(function (i) {
+				return i.marker + ' (' + i.count + '): ' + i.meaning;
+			}));
+		}
+		if (check.length) {
+			pui.checks.appendChild(el('strong', { text: 'To check:' }));
+			listInto(pui.checks, check.map(function (i) {
+				return i.marker + ' (' + i.count + '): ' + i.meaning;
+			}));
+		}
+		if (!(d.missing && d.missing.length) && !must.length && !check.length) {
+			pui.checks.appendChild(document.createTextNode('The site details are complete.'));
+		}
+		show(pui.checks, true);
+	}
+
+	function collectProfile() {
+		var menu = parseLinks(pui.menu.value, true);
+		if (menu.error) {
+			return { error: 'Menu: ' + menu.error };
+		}
+		var legal = parseLinks(pui.legal.value, false);
+		if (legal.error) {
+			return { error: 'Legal links: ' + legal.error };
+		}
+		var logo = pui.logo.value.trim();
+		if (logo && !/^\d+$/.test(logo)) {
+			return { error: 'The logo must be the number of a picture in the media library.' };
+		}
+		return {
+			profile: {
+				site_name: pui.name.value,
+				logo_id: logo ? parseInt(logo, 10) : 0,
+				menu: menu.list,
+				cta_label: pui.ctaLabel.value,
+				cta_url: pui.ctaUrl.value,
+				phone: pui.phone.value,
+				email: pui.email.value,
+				address: lines(pui.address.value),
+				area_served: pui.area.value,
+				footer_text: pui.footerText.value,
+				legal: legal.list,
+				registration: lines(pui.registration.value),
+				person_name: pui.personName.value,
+				person_job: pui.personJob.value,
+				same_as: lines(pui.sameAs.value)
+			}
+		};
+	}
+
+	function saveProfile() {
+		var got = collectProfile();
+		if (got.error) {
+			message(pui.msg, got.error, false);
+			return;
+		}
+		message(pui.msg, 'Saving...', true);
+		api('POST', '/site/profile', { profile: got.profile }).then(function (data) {
+			P.data = data;
+			fillProfile();
+			message(pui.msg, 'Saved. Reload the page to see the header and footer change.', true);
+			show(pui.reloadBtn, true);
+		}, function (err) {
+			message(pui.msg, err.message, false);
+		});
+	}
+
+	function buildProfileSection(panel) {
+		pui.name = textInput('twd-sk-pf-name', 80);
+		pui.logo = textInput('twd-sk-pf-logo', 12);
+		pui.logoBtn = button('Choose from the media library', 'secondary', function () {
+			pickMedia(function (id) {
+				pui.logo.value = String(id);
+			});
+		});
+		pui.ctaLabel = textInput('twd-sk-pf-ctalabel', 30);
+		pui.ctaUrl = textInput('twd-sk-pf-ctaurl', 300);
+		pui.phone = textInput('twd-sk-pf-phone', 40);
+		pui.email = textInput('twd-sk-pf-email', 100);
+		pui.address = textArea('twd-sk-pf-address', 3);
+		pui.area = textInput('twd-sk-pf-area', 120);
+		pui.footerText = textArea('twd-sk-pf-footertext', 3);
+		pui.registration = textArea('twd-sk-pf-registration', 3);
+		pui.menu = textArea('twd-sk-pf-menu', 7);
+		pui.legal = textArea('twd-sk-pf-legal', 3);
+		pui.personName = textInput('twd-sk-pf-personname', 80);
+		pui.personJob = textInput('twd-sk-pf-personjob', 80);
+		pui.sameAs = textArea('twd-sk-pf-sameas', 3);
+		pui.checks = el('div', { className: 'twd-sk-ed__banner', role: 'status', hidden: '' });
+		pui.msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		pui.saveBtn = button('Save site details', 'primary', saveProfile);
+		pui.reloadBtn = button('Reload the page to see it', 'secondary', function () {
+			window.location.reload();
+		});
+		show(pui.reloadBtn, false);
+		var logoRow = el('div', { className: 'twd-sk-ed__inline' }, [pui.logo, pui.logoBtn]);
+		logoRow.setAttribute('id', 'twd-sk-pf-logo-row');
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Site details' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'These feed the header, the footer and the search engine details. Only add what the client has given you. Leave a box empty rather than guess.' }),
+			pui.checks,
+			el('div', { className: 'twd-sk-ed__grid' }, [
+				field('Site name', pui.name, 'Shown as text if there is no logo.'),
+				field('Logo picture number', logoRow, 'Optional. A picture from the media library.'),
+				field('Header button text', pui.ctaLabel),
+				field('Header button link', pui.ctaUrl, 'A page on this site, such as /contact.'),
+				field('Phone number', pui.phone),
+				field('Email address', pui.email),
+				field('Where you work', pui.area, 'For example a town, or Online.'),
+				field('Therapist name', pui.personName, 'For the search engine details.'),
+				field('Therapist job title', pui.personJob)
+			]),
+			field('Address lines', pui.address, 'Up to three lines. Leave empty for an online practice.'),
+			field('Footer text', pui.footerText, 'One or two sentences.'),
+			field('Registration or membership lines', pui.registration, 'Only exactly what the therapist has supplied. One line each, up to four.'),
+			field('Menu', pui.menu, 'One link per line: Label | /link. A line starting with a dash is a sub-menu link under the line above. Up to 8 menu items.'),
+			field('Legal links', pui.legal, 'One per line: Label | /link. Shown in the footer.'),
+			field('Professional profile links', pui.sameAs, 'Full https addresses, one per line, up to four. Optional.'),
+			el('div', { className: 'twd-sk-ed__actions' }, [pui.saveBtn, pui.reloadBtn]),
+			pui.msg
+		]));
+		P.ready = api('GET', '/site/profile').then(function (data) {
+			P.data = data;
+			fillProfile();
+		}, function (err) {
+			message(pui.msg, err.message, false);
+		});
+	}
+
+	var cui = {};
+
+	function fillChrome() {
+		var c = P.data.chrome;
+		cui.header.value = c.settings.header_variant;
+		cui.footer.value = c.settings.footer_variant;
+		cui.cols.value = String(c.settings.footer_columns);
+		cui.sticky.checked = !!c.settings.sticky;
+		cui.button.checked = !!c.settings.show_button;
+		cui.strip.checked = !!c.settings.show_strip;
+		var e = c.effective;
+		cui.note.textContent = 'Now showing: ' + c.header_variants[e.header] + ' (header), ' + c.footer_variants[e.footer] + ' (footer).' + (e.sticky_note ? ' The centred header cannot be fixed to the top, so that setting is ignored.' : '');
+	}
+
+	function selectWith(id, options, emptyLabel) {
+		var select = el('select', { id: id, className: 'twd-sk-ed__select' });
+		if (emptyLabel) {
+			select.appendChild(el('option', { value: '', text: emptyLabel }));
+		}
+		Object.keys(options).forEach(function (k) {
+			select.appendChild(el('option', { value: k, text: options[k] }));
+		});
+		return select;
+	}
+
+	function checkbox(id, labelText) {
+		var input = el('input', { id: id, type: 'checkbox' });
+		return { input: input, label: el('label', { className: 'twd-sk-ed__check', 'for': id }, [input, el('span', { text: labelText })]) };
+	}
+
+	function saveChrome() {
+		message(cui.msg, 'Saving...', true);
+		api('POST', '/site/chrome', {
+			settings: {
+				header_variant: cui.header.value,
+				footer_variant: cui.footer.value,
+				footer_columns: parseInt(cui.cols.value, 10),
+				sticky: cui.sticky.checked,
+				show_button: cui.button.checked,
+				show_strip: cui.strip.checked
+			}
+		}).then(function (data) {
+			P.data = data;
+			fillChrome();
+			message(cui.msg, 'Saved. Reload the page to see the new header and footer.', true);
+			show(cui.reloadBtn, true);
+		}, function (err) {
+			message(cui.msg, err.message, false);
+		});
+	}
+
+	function downloadTemplates() {
+		message(cui.msg, 'Preparing the files...', true);
+		api('GET', '/site/templates').then(function (data) {
+			Object.keys(data.files).forEach(function (name) {
+				var blob = new Blob([data.files[name]], { type: 'application/json' });
+				var url = window.URL.createObjectURL(blob);
+				var a = el('a', { href: url, download: name });
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				window.setTimeout(function () {
+					window.URL.revokeObjectURL(url);
+				}, 1000);
+			});
+			message(cui.msg, 'Downloaded twd-header.json and twd-footer.json. In Elementor: Templates, Theme Builder, import each file, then set its display condition to Entire Site.', true);
+		}, function (err) {
+			message(cui.msg, err.message, false);
+		});
+	}
+
+	function buildChromeSection(panel) {
+		cui.header = selectWith('twd-sk-ch-header', {}, 'Use the style\'s own layout');
+		cui.footer = selectWith('twd-sk-ch-footer', {}, 'Use the style\'s own layout');
+		cui.cols = selectWith('twd-sk-ch-cols', { '1': 'One column', '2': 'Two columns', '3': 'Three columns' }, '');
+		var sticky = checkbox('twd-sk-ch-sticky', 'Keep the header fixed at the top of the screen');
+		var btn = checkbox('twd-sk-ch-button', 'Show the header button');
+		var strip = checkbox('twd-sk-ch-strip', 'Show a thin strip with the phone number and email above the header');
+		cui.sticky = sticky.input;
+		cui.button = btn.input;
+		cui.strip = strip.input;
+		cui.note = el('p', { className: 'twd-sk-ed__help' });
+		cui.msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		cui.saveBtn = button('Save header and footer', 'primary', saveChrome);
+		cui.reloadBtn = button('Reload the page to see it', 'secondary', function () {
+			window.location.reload();
+		});
+		show(cui.reloadBtn, false);
+		cui.exportBtn = button('Download the Theme Builder templates', 'secondary', downloadTemplates);
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Header and footer' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'The header and footer print from the site details above, through two shortcodes in the Elementor Theme Builder. Choose how they look here.' }),
+			cui.note,
+			el('div', { className: 'twd-sk-ed__grid' }, [
+				field('Header layout', cui.header),
+				field('Footer layout', cui.footer),
+				field('Footer columns', cui.cols, 'Used by the column footers.')
+			]),
+			sticky.label,
+			btn.label,
+			strip.label,
+			el('div', { className: 'twd-sk-ed__actions' }, [cui.saveBtn, cui.exportBtn, cui.reloadBtn]),
+			cui.msg
+		]));
+		// The layout names come with the profile, so fill the lists once it has arrived.
+		P.ready.then(function () {
+			if (!P.data) {
+				return;
+			}
+			var c = P.data.chrome;
+			Object.keys(c.header_variants).forEach(function (k) {
+				cui.header.appendChild(el('option', { value: k, text: c.header_variants[k] }));
+			});
+			Object.keys(c.footer_variants).forEach(function (k) {
+				cui.footer.appendChild(el('option', { value: k, text: c.footer_variants[k] }));
+			});
+			fillChrome();
+		});
+	}
+
 	function buildSite(panel) {
 		buildStyleSection(panel);
+		buildProfileSection(panel);
+		buildChromeSection(panel);
 	}
 
 	ED.addTab('site', 'Site', buildSite);

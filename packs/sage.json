@@ -2,6 +2,10 @@
  "slug": "sage",
  "name": "Sage",
  "description": "Soft sage green, warm cream and a touch of gold. Serif italic headings, a light sans body, pill buttons and rounded cards. Warm and gentle.",
+ "chrome": {
+  "header": "bar",
+  "footer": "columns"
+ },
  "tokens": {
   "color-bg": "#FAF7F2",
   "color-surface": "#FFFFFF",

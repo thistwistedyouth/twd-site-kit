@@ -89,6 +89,10 @@ class TWD_SK_Editor {
 			wp_register_script( self::HANDLE_SITE, $base . 'assets/twd-site-kit-editor-site.js', array( self::HANDLE ), $ver, true );
 			wp_localize_script( self::HANDLE_SITE, 'TWD_SK_SITE', array( 'enabled' => true ) );
 			wp_enqueue_script( self::HANDLE_SITE );
+			// The media library picker, for choosing a logo.
+			if ( function_exists( 'wp_enqueue_media' ) ) {
+				wp_enqueue_media();
+			}
 			// Every bundled font, so a style can be previewed live.
 			wp_add_inline_style( self::HANDLE, TWD_SK_Packs::all_fonts_css( $base . 'assets/fonts/' ) );
 		}

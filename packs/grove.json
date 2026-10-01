@@ -2,6 +2,10 @@
  "slug": "grove",
  "name": "Grove",
  "description": "Deep forest green, sage and gold on warm cream. Serif headings, a friendly sans body, square-ish buttons and calm centred layouts. Grounded and professional.",
+ "chrome": {
+  "header": "bar",
+  "footer": "band"
+ },
  "tokens": {
   "color-bg": "#FBF8F3",
   "color-surface": "#FFFFFF",

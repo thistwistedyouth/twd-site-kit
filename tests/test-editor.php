@@ -381,3 +381,26 @@ twd_sk_test( 'build: the committed stylesheets are exactly what tools/build-css.
 	rmdir( $tmp . '/assets' );
 	rmdir( $tmp );
 } );
+
+twd_sk_test( 'site js: the profile, header and footer sections use only the editor api, the media picker is optional, and downloads are built from Blobs', function () {
+	$js = twd_sk_ed_all_js()['site'];
+	foreach ( array( "api('GET', '/site/profile')", "api('POST', '/site/profile'", "api('POST', '/site/chrome'", "api('GET', '/site/templates')", 'new Blob(', 'createObjectURL', 'revokeObjectURL', 'window.wp.media', 'Each line needs a label, a bar and a link', 'must come under a menu line', 'Only add what the client has given you' ) as $needle ) {
+		twd_sk_has( $needle, $js );
+	}
+	twd_sk_has( "Download the Theme Builder templates", $js );
+} );
+
+twd_sk_test( 'site: the media library script loads only for administrators, not for an editor and not in safe mode', function () {
+	twd_sk_ed_setup( array( 'edit_pages', 'edit_post:12' ) );
+	twd_sk_true( twd_sk_ed_loaded() );
+	twd_sk_true( empty( $GLOBALS['twd_stub']['media_enqueued'] ), 'editor: no media scripts' );
+	twd_sk_ed_setup( array( 'edit_pages', 'edit_post:12', 'manage_options' ) );
+	$GLOBALS['twd_stub']['media_enqueued'] = false;
+	twd_sk_true( twd_sk_ed_loaded() );
+	twd_sk_true( ! empty( $GLOBALS['twd_stub']['media_enqueued'] ), 'administrator: media scripts' );
+	twd_sk_ed_setup( array( 'edit_pages', 'edit_post:12', 'manage_options' ) );
+	$GLOBALS['twd_stub']['media_enqueued'] = false;
+	TWD_SK_Safe::set( true );
+	twd_sk_true( twd_sk_ed_loaded() );
+	twd_sk_true( empty( $GLOBALS['twd_stub']['media_enqueued'] ), 'safe mode: no media scripts' );
+} );

@@ -31,6 +31,9 @@ require_once TWD_SK_PATH . 'includes/class-twd-sk-page.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-packs.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-contrast.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-site.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-profile.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-chrome.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-elementor.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-assets.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-updater.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-report.php';
@@ -48,6 +51,8 @@ TWD_SK_REST::init();
 TWD_SK_Editor::init();
 TWD_SK_Updater::init();
 TWD_SK_Safe::init();
+// The header and footer shortcodes stay registered in safe mode (they print a plain version).
+TWD_SK_Chrome::init();
 
 // The newest modules (0.4.0) start only outside safe mode.
 if ( ! TWD_SK_Safe::on() ) {

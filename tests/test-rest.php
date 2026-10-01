@@ -11,19 +11,27 @@ function twd_sk_rest_req( $params = array(), $nonce = 'good-nonce', $body = null
 	$headers = null === $nonce ? array() : array( 'X-WP-Nonce' => $nonce );
 	return new WP_REST_Request( $params + array( 'id' => 12 ), $headers, $body );
 }
+/** Every registered endpoint, one entry each (a route with a GET and a POST gives two). */
 function twd_sk_rest_routes() {
 	$GLOBALS['twd_stub']['routes'] = array();
 	TWD_SK_REST::register_routes();
-	return $GLOBALS['twd_stub']['routes'];
+	$out = array();
+	foreach ( $GLOBALS['twd_stub']['routes'] as $r ) {
+		$list = isset( $r['args']['methods'] ) ? array( $r['args'] ) : $r['args'];
+		foreach ( $list as $one ) {
+			$out[] = array( 'ns' => $r['ns'], 'route' => $r['route'], 'args' => $one );
+		}
+	}
+	return $out;
 }
 function twd_sk_status( $e ) {
 	$d = $e->get_error_data();
 	return is_array( $d ) && isset( $d['status'] ) ? $d['status'] : 0;
 }
 
-twd_sk_test( 'rest: the fourteen routes exist under twd-site-kit/v1 and none is open to everyone', function () {
+twd_sk_test( 'rest: the eighteen routes exist under twd-site-kit/v1 and none is open to everyone', function () {
 	$routes = twd_sk_rest_routes();
-	twd_sk_eq( 14, count( $routes ) );
+	twd_sk_eq( 18, count( $routes ) );
 	foreach ( $routes as $r ) {
 		twd_sk_eq( 'twd-site-kit/v1', $r['ns'] );
 		twd_sk_true( is_array( $r['args']['permission_callback'] ) && 'TWD_SK_REST' === $r['args']['permission_callback'][0], 'a real permission callback on ' . $r['route'] );
@@ -38,7 +46,7 @@ twd_sk_test( 'rest: the fourteen routes exist under twd-site-kit/v1 and none is 
 			$reads[] = $r['route'];
 		}
 	}
-	twd_sk_eq( 4, count( $reads ), 'only prompt, versions, info and the site state are GET' );
+	twd_sk_eq( 6, count( $reads ), 'only prompt, versions, info, the site state, the profile and the templates are GET' );
 } );
 
 twd_sk_test( 'rest security: a visitor, a missing nonce and a wrong nonce are refused on every route (401)', function () {
@@ -533,8 +541,8 @@ function twd_sk_site_routes() {
 twd_sk_test( 'rest site: three routes, each with a real permission callback, none registered in safe mode', function () {
 	twd_sk_site_caps();
 	$routes = twd_sk_site_routes();
-	twd_sk_eq( 3, count( $routes ) );
-	twd_sk_eq( array( '/site', '/site/style', '/site/style/reset' ), array_map( function ( $r ) {
+	twd_sk_eq( 7, count( $routes ) );
+	twd_sk_eq( array( '/site', '/site/style', '/site/style/reset', '/site/profile', '/site/profile', '/site/chrome', '/site/templates' ), array_map( function ( $r ) {
 		return $r['route'];
 	}, $routes ) );
 	TWD_SK_Safe::set( true );
@@ -689,4 +697,72 @@ twd_sk_test( 'rest site: the Site classes never touch page HTML, the page store,
 		}
 		twd_sk_hasnt( "\xE2\x80\x94", $src );
 	}
+} );
+
+// -- 0.4.0: profile, header and footer routes ---------------------------------------------
+
+twd_sk_test( 'rest site: profile, chrome and templates routes exist, admin only, and are not registered in safe mode', function () {
+	twd_sk_site_caps();
+	$routes = twd_sk_site_routes();
+	$names  = array_map( function ( $r ) {
+		return $r['route'];
+	}, $routes );
+	foreach ( array( '/site/profile', '/site/chrome', '/site/templates' ) as $r ) {
+		twd_sk_true( in_array( $r, $names, true ), $r );
+	}
+	foreach ( $routes as $r ) {
+		$GLOBALS['twd_stub']['caps'] = array( 'edit_pages', 'edit_post:12' );
+		twd_sk_is_error( 'twd_sk_forbidden', call_user_func( $r['args']['permission_callback'], twd_sk_rest_req() ), $r['route'] );
+	}
+	TWD_SK_Safe::set( true );
+	twd_sk_eq( 0, count( twd_sk_site_routes() ) );
+} );
+
+twd_sk_test( 'rest site: the profile saves through validation and returns the leftover check and what is missing', function () {
+	twd_sk_site_caps();
+	$out = TWD_SK_REST::get_site_profile( twd_sk_rest_req() );
+	twd_sk_eq( 3, count( $out['missing'] ) );
+	twd_sk_eq( 'bar', $out['chrome']['effective']['header'] );
+	twd_sk_eq( array( 'bar', 'columns' ), array_values( $out['chrome']['pack_defaults'] ) );
+	$out = TWD_SK_REST::post_site_profile( twd_sk_rest_req( array( 'profile' => TWD_SK_Profile::starter() ) ) );
+	twd_sk_true( ! is_wp_error( $out ) );
+	twd_sk_true( count( $out['leftovers']['must'] ) >= 3, 'the starter is flagged' );
+	twd_sk_eq( '[PLACEHOLDER: practice name]', $out['profile']['site_name'] );
+	$markers = array_map( function ( $l ) {
+		return $l['marker'];
+	}, $out['leftovers']['must'] );
+	twd_sk_true( in_array( '[PLACEHOLDER', $markers, true ) && in_array( 'PHONE_NUMBER', $markers, true ) );
+} );
+
+twd_sk_test( 'rest site: a bad profile is refused with 400 and nothing changes', function () {
+	twd_sk_site_caps();
+	TWD_SK_REST::post_site_profile( twd_sk_rest_req( array( 'profile' => array( 'site_name' => 'Keep me' ) ) ) );
+	foreach ( array( array( 'menu' => array( array( 'label' => 'x', 'url' => 'javascript:alert(1)' ) ) ), array( 'email' => 'nope' ), array( 'unknown' => 'x' ) ) as $bad ) {
+		$e = TWD_SK_REST::post_site_profile( twd_sk_rest_req( array( 'profile' => $bad ) ) );
+		twd_sk_is_error( 'twd_sk_bad_profile', $e, json_encode( $bad ) );
+		twd_sk_eq( 400, twd_sk_status( $e ) );
+	}
+	twd_sk_eq( 'Keep me', TWD_SK_Profile::get()['site_name'] );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_REST::post_site_profile( twd_sk_rest_req( array( 'profile' => 'x' ) ) ) );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_REST::post_site_profile( twd_sk_rest_req( array() ) ) );
+} );
+
+twd_sk_test( 'rest site: header and footer settings are validated and applied', function () {
+	twd_sk_site_caps();
+	$out = TWD_SK_REST::post_site_chrome( twd_sk_rest_req( array( 'settings' => array( 'header_variant' => 'split', 'footer_variant' => 'band', 'sticky' => true, 'footer_columns' => 2 ) ) ) );
+	twd_sk_eq( 'split', $out['chrome']['effective']['header'] );
+	twd_sk_eq( true, $out['chrome']['effective']['sticky'] );
+	twd_sk_eq( 2, $out['chrome']['effective']['columns'] );
+	$e = TWD_SK_REST::post_site_chrome( twd_sk_rest_req( array( 'settings' => array( 'header_variant' => 'wild' ) ) ) );
+	twd_sk_is_error( 'twd_sk_bad_chrome', $e );
+	twd_sk_eq( 400, twd_sk_status( $e ) );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_REST::post_site_chrome( twd_sk_rest_req( array( 'settings' => 'x' ) ) ) );
+} );
+
+twd_sk_test( 'rest site: the Theme Builder templates are served as JSON text', function () {
+	twd_sk_site_caps();
+	$out = TWD_SK_REST::get_site_templates( twd_sk_rest_req() );
+	twd_sk_eq( array( 'twd-header.json', 'twd-footer.json' ), array_keys( $out['files'] ) );
+	twd_sk_has( '[twd_header]', $out['files']['twd-header.json'] );
+	twd_sk_has( '[twd_footer]', $out['files']['twd-footer.json'] );
 } );

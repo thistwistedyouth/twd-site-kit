@@ -124,6 +124,9 @@ function add_action( $name, $callback ) {
 	add_filter( $name, $callback );
 }
 function get_option( $name, $default = false ) {
+	if ( ! empty( $GLOBALS['twd_stub']['option_throws'] ) ) {
+		throw new Exception( 'database unavailable' );
+	}
 	return array_key_exists( $name, $GLOBALS['twd_stub']['options'] ) ? $GLOBALS['twd_stub']['options'][ $name ] : $default;
 }
 function update_option( $name, $value ) {
@@ -187,6 +190,10 @@ function twd_sk_stub_defaults() {
 		'headers'   => array(),
 		'users'     => array( 7 => 'Test Editor' ),
 		'inserted'  => array(),
+		'attachments' => array(),
+		'option_throws' => false,
+		'bloginfo'  => array(),
+		'privacy_url' => '',
 		'updated'   => array(),
 		'insert_fails' => false,
 		'loop_reset' => true,
@@ -333,6 +340,9 @@ function wp_localize_script( $handle, $name, $data ) {
 	$GLOBALS['twd_stub']['scripts'][ $handle ]['data'] = $data;
 	return true;
 }
+function wp_enqueue_media() {
+	$GLOBALS['twd_stub']['media_enqueued'] = true;
+}
 function nocache_headers() {
 	$GLOBALS['twd_stub']['headers'][] = 'nocache';
 }
@@ -359,6 +369,36 @@ class WP_REST_Request {
 	}
 }
 
+function esc_attr( $text ) {
+	return htmlspecialchars( (string) $text, ENT_QUOTES );
+}
+function home_url( $path = '' ) {
+	return 'https://example.test' . $path;
+}
+function get_bloginfo( $what = 'name' ) {
+	$info = isset( $GLOBALS['twd_stub']['bloginfo'] ) ? $GLOBALS['twd_stub']['bloginfo'] : array();
+	return isset( $info[ $what ] ) ? $info[ $what ] : ( 'name' === $what ? 'Test Site' : '' );
+}
+/** Attachments in the stand-in: id => array( url, width, height, is_image ). */
+function wp_get_attachment_image_src( $id, $size = 'thumbnail' ) {
+	$a = isset( $GLOBALS['twd_stub']['attachments'][ (int) $id ] ) ? $GLOBALS['twd_stub']['attachments'][ (int) $id ] : null;
+	return ( $a && ! empty( $a['is_image'] ) ) ? array( $a['url'], $a['w'], $a['h'], false ) : false;
+}
+function wp_attachment_is_image( $id ) {
+	return ! empty( $GLOBALS['twd_stub']['attachments'][ (int) $id ]['is_image'] );
+}
+function get_privacy_policy_url() {
+	return isset( $GLOBALS['twd_stub']['privacy_url'] ) ? $GLOBALS['twd_stub']['privacy_url'] : '';
+}
+function get_pages( $args = array() ) {
+	$out = array();
+	foreach ( $GLOBALS['twd_stub']['posts'] as $post ) {
+		if ( 'page' === $post->post_type && 'publish' === $post->post_status ) {
+			$out[] = $post;
+		}
+	}
+	return array_slice( $out, 0, isset( $args['number'] ) ? $args['number'] : 100 );
+}
 function wp_strip_all_tags( $text ) {
 	return trim( strip_tags( (string) $text ) );
 }
@@ -445,6 +485,9 @@ require_once ABSPATH . 'includes/class-twd-sk-page.php';
 require_once ABSPATH . 'includes/class-twd-sk-packs.php';
 require_once ABSPATH . 'includes/class-twd-sk-contrast.php';
 require_once ABSPATH . 'includes/class-twd-sk-site.php';
+require_once ABSPATH . 'includes/class-twd-sk-profile.php';
+require_once ABSPATH . 'includes/class-twd-sk-chrome.php';
+require_once ABSPATH . 'includes/class-twd-sk-elementor.php';
 require_once ABSPATH . 'includes/class-twd-sk-assets.php';
 require_once ABSPATH . 'includes/class-twd-sk-updater.php';
 require_once ABSPATH . 'includes/class-twd-sk-report.php';

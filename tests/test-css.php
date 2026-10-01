@@ -229,7 +229,7 @@ twd_sk_test( 'css: no imports, no external urls, no expressions, no javascript',
 
 twd_sk_test( 'css: every registry class (shared and component) appears in the stylesheet, so no class is a dead hook', function () {
 	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
-	foreach ( array_keys( TWD_SK_Registry::allowed_classes() ) as $class ) {
+	foreach ( array_merge( array_keys( TWD_SK_Registry::allowed_classes() ), TWD_SK_Chrome::classes() ) as $class ) {
 		twd_sk_true( 1 === preg_match( '/\.' . preg_quote( $class, '/' ) . '(?![A-Za-z0-9_-])/', $raw ), 'styled: ' . $class );
 	}
 } );
@@ -237,7 +237,8 @@ twd_sk_test( 'css: every registry class (shared and component) appears in the st
 twd_sk_test( 'css: every class in the stylesheet is a registry class (no styling for a class the sanitiser would strip)', function () {
 	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
 	preg_match_all( '/\.(twd-sk-[A-Za-z0-9_-]+)/', $raw, $m );
-	$allowed = TWD_SK_Registry::allowed_classes();
+	// The header and footer classes are printed by TWD_SK_Chrome, not allowed in page HTML.
+	$allowed = TWD_SK_Registry::allowed_classes() + array_flip( TWD_SK_Chrome::classes() );
 	foreach ( array_unique( $m[1] ) as $class ) {
 		if ( 'twd-sk-page' === $class || 'twd-sk-has-h1' === $class ) {
 			continue;
@@ -257,7 +258,8 @@ twd_sk_test( 'css: the helpline modal is pure CSS, shown with :target and fixed 
 			}
 		}
 	}
-	twd_sk_eq( array( '.twd-sk-page .twd-sk-modal.twd-sk-modal' ), $fixed );
+	// The helpline modal, and the optional fixed header (a sticky header option, with a spacer that holds its place).
+	twd_sk_eq( array( '.twd-sk-page .twd-sk-modal.twd-sk-modal', '.twd-sk-page .twd-sk-header--sticky.twd-sk-header--sticky' ), $fixed );
 } );
 
 twd_sk_test( 'css: images use the object-position token and object-fit cover, and image rows use grid with stretch, never flex', function () {
