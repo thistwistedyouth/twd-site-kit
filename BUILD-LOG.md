@@ -1,21 +1,35 @@
 # Build log
 
-What is done and what is next, newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md.
+The one place to see where this project is. Newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md. Update this file at the end of every piece of work, in the same commit.
 
-## 0.4.0 (in progress)
+## Where we are (last updated at release 0.5.0)
 
-Order of work. Each piece is its own commit on `main`; the version number, zip and update JSON change only at the end.
+**Released and live in the update file:** 0.5.0. Sites update from Plugins, "Check for updates", "update now".
 
-| # | Piece | State |
-|---|-------|-------|
-| 0 | Foundation: this log, safe mode (`TWD_SK_SAFE_MODE` or `wp twd-sk safe-mode`) | done |
-| 1 | Site tab: pack switch, colour, font and radius overrides, contrast blocking, live preview, reset | done |
-| 2 | Header, footer and site profile: variants, `[twd_header]` and `[twd_footer]`, mobile menu, Theme Builder JSON export | done |
-| 3 | Starter pages (Home, About, Contact) and the setup command | done |
-| 4 | SEO: search mirror, Search tab, structured data, image attributes | done |
-| 5 | Release 0.4.0: version, zip, update JSON, docs, test script for David's site | in progress |
+| Version | What it added |
+|---|---|
+| 0.5.0 | Ask the AI in the Edit this page tab (by section or whole page, preview before saving, testimonials and the safety notice locked), external AI copy and paste tucked under a toggle |
+| 0.4.1 | Edit header and Edit footer pills (after Edit with AI is opened), prompt before closing with unsaved changes |
+| 0.4.0 | Safe mode, Site tab, site details with header and footer (Theme Builder JSON), Home, About and Contact starters and the setup command, Search tab, plain-text copy of pages, structured data, image attributes |
+| 0.3.1 | Kit page template, Pages tab (new page, publish, switch template), two-level leftover check |
+| 0.3.0 | The Edit with AI pop-up: prompt, preview, apply, history |
 
-Already shipped before this release (0.3.1, the commit titled "0.3.1: TWD Kit Page template..."): the TWD Kit Page template, the Pages tab (New page, Publish and Unpublish with confirmation, Switch this page to the kit template), the two-level leftover check and the publish block, the prompt and checker fixes. They were listed again in the 0.4.0 brief and were not rebuilt.
+**Next, in order (agreed with the owner):**
+1. 0.5.1: header, footer and style proposals from the AI (structured values, never free HTML or CSS), reusing the site details check, the contrast check and the live preview.
+2. 0.5.2: a Voice and facts note in the Site tab (administrators only), added to every AI request; and Add a section.
+- Not planned, on purpose: rewriting every page at once, free CSS, free HTML for the header and footer.
+
+**Waiting on other projects (cross-project contract):**
+- The Articles & Resource Production plugin (`twd-article-publisher`, repo `therapy-web-designs`) must offer two filters before Ask the AI can appear: `twd_ai_is_configured` (true when a key is saved) and `twd_ai_complete( null, $system, $message, $max_tokens )` (returns text, a WP_Error, or null). Site Kit holds no key and calls no AI service. Status when last checked: not yet added (that plugin was at 1.33.0). The filter names were chosen here; if the other project picks different ones, change them in `class-twd-sk-ai.php`.
+- Nothing else is waiting.
+
+**Not yet verified on a real site (needs a human):** importing the two Theme Builder templates on Elementor Pro 4.3.1 and their display condition, real Yoast behaviour (writing its fields, the schema graph filter), the media picker, how a page behaves if the plugin is deactivated, caching on the host, and Ask the AI with a real key. The test plan is in the release notes of each version in the conversation that built it; the 0.4.0 steps are in the section below.
+
+**Known limitation:** a page that still uses the old `[twd_page]` shortcode cannot be mirrored into its content for site search until its content is cleared once after switching it to the kit template.
+
+**Working rules between conversations:** one code conversation per repository. A change that belongs in another repository is written as a short brief, copied to that repository's conversation, and listed above under "Waiting on other projects" until it is done. Private details (client names, copy, contact details, credentials) never go in this public repository.
+
+## 0.4.0 build notes
 
 Piece 2 notes:
 - Variants were chosen from the two reference sites (pulled fresh; no new reference folders had been added). Both have a logo on the left with a menu and a button on the right (one has a one-level dropdown, one a text logo with a small subtitle), a menu button on small screens, and a footer of up to three columns (brand and short text, links, contact) over a bottom bar with the copyright and legal links; one has a fixed header. That gave the `bar` header and `columns` footer as the defaults, with `centered`, `split`, `minimal`, `band`, `centered` and `simple` as the other layouts. No names, copy, labels, numbers or paths from the references are in the plugin.

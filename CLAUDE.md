@@ -17,6 +17,10 @@ Target site: Hello theme + Elementor (header and footer only) + Articles plugin 
 - v0.3.0 (slice 3b, release 1 of 3): the front-end "Edit with AI" pop-up, Tab 1 (edit this page): REST routes, preview, apply, history.
 - v0.3.1: the TWD Kit Page template, the Pages tab (new page, publish and unpublish, switch template), the two-level leftover check, prompt fixes.
 - v0.4.0: safe mode, the Site tab, the site profile with header and footer (Theme Builder JSON), the Home, About and Contact starters and the setup command, SEO basics (plain-text mirror, Search tab, structured data, image attributes).
+- v0.4.1: Edit header and Edit footer pills (after Edit with AI is opened), prompt before closing with unsaved changes.
+- v0.5.0: Ask the AI (by section or whole page, through two filters offered by another plugin, no key here).
+
+Current status, the next steps and what is waiting on other projects live in **BUILD-LOG.md**, updated at the end of every piece of work.
 
 Not built yet: a base site and installer, a REST import endpoint, a deploy workflow, the safety-notice enhancement script (Esc and focus handling). The column fix for image_text and text-aside is unconfirmed on a real site (see HISTORY.md). Importing the Theme Builder JSON on Elementor Pro 4.3.1 is unverified (see BUILD-LOG.md).
 
