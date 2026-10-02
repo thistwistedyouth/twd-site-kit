@@ -227,3 +227,36 @@ twd_sk_test( 'ai rest: asking the AI is limited to 10 every 10 minutes per user 
 	twd_sk_eq( 429, twd_sk_status( $e ) );
 	twd_sk_eq( true, TWD_SK_REST::can_write_page( twd_sk_rest_req() ), 'normal writes are not affected' );
 } );
+
+twd_sk_test( 'ai js: the editor sends the version it started from, the unlock choices, and offers the external AI as an option', function () {
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' );
+	twd_sk_has( "api('POST', pagePath('/remix'), body)", $js );
+	twd_sk_has( "api('GET', pagePath('/sections'))", $js );
+	twd_sk_has( 'base_version: state.version', $js );
+	twd_sk_has( 'Copy prompt for external AI', $js );
+	twd_sk_has( 'Use an external AI instead', $js );
+	twd_sk_has( 'Check every fact and every claim before you apply', $js );
+	twd_sk_has( 'Allow new wording (only words the therapist has given you)', $js );
+	twd_sk_has( 'if (cfg.ai)', $js );
+	twd_sk_hasnt( 'innerHTML', $js );
+	twd_sk_true( 1 !== preg_match( '#https?://#i', $js ), 'no web addresses' );
+	twd_sk_true( 1 !== preg_match( '/(^|[^.\w])(alert|confirm|prompt)\s*\(/m', $js ), 'no native dialogs' );
+} );
+
+twd_sk_test( 'ai: the editor is told about AI only for an editor on a kit page when a key is set up', function () {
+	twd_sk_ed_setup();
+	$GLOBALS['twd_stub']['hooks'] = array();
+	twd_sk_true( twd_sk_ed_loaded() );
+	twd_sk_eq( false, $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['ai'], 'no provider' );
+	twd_sk_ai_provider( 'x', true );
+	twd_sk_ed_loaded();
+	twd_sk_eq( true, $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['ai'] );
+	twd_sk_ai_provider( 'x', false );
+	twd_sk_ed_loaded();
+	twd_sk_eq( false, $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['ai'], 'provider without a key' );
+	twd_sk_ai_provider( 'x', true );
+	TWD_SK_Safe::set( true );
+	twd_sk_ed_loaded();
+	twd_sk_eq( false, $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['ai'], 'safe mode' );
+	TWD_SK_Safe::set( false );
+} );

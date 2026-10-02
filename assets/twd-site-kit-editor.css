@@ -327,6 +327,83 @@
   height: 22px;
   margin: 2px 0 0 !important;
 }
+/* ---- ask the AI: modes, sections, chips, the external AI toggle ---- */
+.twd-sk-ed .twd-sk-ed__modes.twd-sk-ed__modes {
+  margin: 0 0 8px !important;
+}
+.twd-sk-ed .twd-sk-ed__seclist.twd-sk-ed__seclist {
+  margin: 0 0 12px !important;
+  padding: 4px 12px !important;
+  border: 1px solid var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-field) !important;
+  background-color: var(--twd-site-color-surface) !important;
+}
+.twd-sk-ed .twd-sk-ed__sec.twd-sk-ed__sec {
+  padding: 2px 0 !important;
+  border-bottom: 1px solid var(--twd-site-color-border) !important;
+}
+.twd-sk-ed .twd-sk-ed__sec.twd-sk-ed__sec:last-child {
+  border-bottom: 0 !important;
+}
+.twd-sk-ed .twd-sk-ed__locknote.twd-sk-ed__locknote {
+  margin: 0 0 0 32px !important;
+}
+.twd-sk-ed .twd-sk-ed__unlock.twd-sk-ed__unlock {
+  margin: 0 0 6px 32px !important;
+  min-height: 36px;
+}
+.twd-sk-ed .twd-sk-ed__chips.twd-sk-ed__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 8px !important;
+}
+.twd-sk-ed .twd-sk-ed__chip.twd-sk-ed__chip {
+  min-height: 36px;
+  padding: 6px 14px !important;
+  border: 1px solid var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-pill) !important;
+  background-color: var(--twd-site-color-surface) !important;
+  color: var(--twd-site-color-title) !important;
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  line-height: 1.2 !important;
+  cursor: pointer;
+}
+.twd-sk-ed .twd-sk-ed__chip.twd-sk-ed__chip:hover,
+.twd-sk-ed .twd-sk-ed__chip.twd-sk-ed__chip:focus-visible {
+  background-color: var(--twd-site-color-primary-hover) !important;
+  border-color: var(--twd-site-color-primary-hover) !important;
+  color: var(--twd-site-color-on-primary) !important;
+}
+.twd-sk-ed .twd-sk-ed__textarea.twd-sk-ed__textarea.twd-sk-ed__short.twd-sk-ed__short {
+  min-height: 88px;
+  height: 96px;
+}
+.twd-sk-ed .twd-sk-ed__disclose.twd-sk-ed__disclose {
+  display: block;
+  min-height: 44px;
+  margin: 0 !important;
+  padding: 10px 0 !important;
+  border: 0 !important;
+  background: none !important;
+  color: var(--twd-site-color-accent-text) !important;
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  text-decoration: underline !important;
+  cursor: pointer;
+}
+.twd-sk-ed .twd-sk-ed__chip.twd-sk-ed__chip:focus-visible,
+.twd-sk-ed .twd-sk-ed__disclose.twd-sk-ed__disclose:focus-visible {
+  outline: 2px solid var(--twd-site-color-accent-text);
+  outline-offset: 2px;
+}
+.twd-sk-ed .twd-sk-ed__external.twd-sk-ed__external {
+  margin: 8px 0 0 !important;
+  padding: 12px 14px !important;
+  border: 1px solid var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-card) !important;
+}
 /* ---- the Site tab ---- */
 .twd-sk-ed .twd-sk-ed__grid.twd-sk-ed__grid {
   display: grid;

@@ -224,7 +224,7 @@ twd_sk_test( 'site: the Site script loads only for administrators, never for an 
 twd_sk_test( 'editor js: the behaviour the owner asked for is present', function () {
 	$js = twd_sk_ed_js();
 	foreach ( array(
-		'Copy prompt' => 'copy button',
+		'Copy prompt for external AI' => 'copy button',
 		'Preview' => 'preview',
 		'Discard preview' => 'discard preview button',
 		'Where did these facts come from?' => 'provenance field',
