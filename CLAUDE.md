@@ -4,6 +4,23 @@ A WordPress plugin, sibling to the Articles & Resource Production Plugin (`twd-a
 
 Target site: Hello theme + Elementor (header and footer only) + Articles plugin + Site Kit.
 
+## How we work (read this first)
+
+**At the start of every session:** read this file, then `BUILD-LOG.md` (where we are, what is next, what is waiting on other projects). Say in one line what state the project is in before starting.
+
+**At the end of every piece of work, without being asked:** update `BUILD-LOG.md` ("Where we are", "Next", "Waiting on other projects", and anything newly verified or found broken) and the Status list here, in the same commit as the work. Add the why to `HISTORY.md` when a decision was made. Then run the full tests and push.
+
+**Before building:**
+- Complex or risky changes are discussed first, in plain words, and the owner approves. Small, clear changes just get done.
+- Each task has one line saying what "done" means, in terms of what a person can do and see. If it is missing or unclear, ask once.
+- Do not start a new feature while an earlier one is still unverified on a real site, unless the owner says so. Put what needs checking in `BUILD-LOG.md`.
+
+**Between projects:** one session per repository. A change that belongs in another repository is written as a short brief for the owner to copy across, and listed under "Waiting on other projects" until it is done. Other repositories are read only unless the owner says otherwise.
+
+**Releases:** each one reaches every site that runs the plugin, so test first, batch changes, give a test script ordered by risk and plain steps to update, and keep a backup and rollback path in mind (safe mode, and a higher version carrying the older good code).
+
+**Privacy:** this repository is public. Client names, copy, contact details, numbers, image paths and credentials never go in it.
+
 ## Status
 
 - Slice 1 (v0.1.0): plugin skeleton, components registry, sanitiser, page store with versions, `[twd_page]` shortcode, WP-CLI commands, tests.
