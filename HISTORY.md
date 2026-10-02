@@ -17,6 +17,12 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.4.1 (edit pills and the unsaved prompt)
+
+- **Pills only after Edit with AI is opened,** as the owner asked, and only for administrators (the Site script is admin only). They are placed by script over the header and footer, not printed into them, so a page cached for visitors never contains one and the Theme Builder layout cannot be disturbed.
+- **Header and footer content lives in the site details,** so each pill opens the Site tab and puts the cursor in the matching box (menu, footer text) instead of building a second form. The layout options sit just below.
+- **The prompt is inline,** like every other confirmation (no native dialogs). It also covers Escape and clicking outside the pop-up. Compared with a snapshot, so putting the text back by hand clears the warning.
+
 ## v0.4.0 (safe mode, Site tab, site profile, starters, SEO basics)
 
 - **Safe mode first.** One switch (wp-config constant, option, or `wp twd-sk safe-mode`) turns off everything added in 0.4.0 and keeps 0.3.1 working. It is built before the modules so every module is added behind it. The template and Pages tab stay on in safe mode, because a page made with the template would otherwise show blank.

@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.4.0
+Stable tag: 0.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,10 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.4.1 =
+* New: "Edit header" and "Edit footer" buttons. After you click Edit with AI, small buttons appear on the header and footer of the page. Each opens the pop-up on the Site tab at the right box. They appear for administrators only, never for visitors, and only where the kit header and footer are used.
+* New: closing the pop-up with unsaved changes (pasted page text, style, site details, header and footer settings, or search details) now asks first. Keep editing, or close and lose the changes. This applies to the Close button, the Escape key and clicking outside the pop-up.
 
 = 0.4.0 =
 * New: Site tab for administrators. Switch the style pack, change colours, fonts and corner roundness with a live preview, and reset. Text that would be hard to read is refused.
