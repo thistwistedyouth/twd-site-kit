@@ -17,6 +17,14 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.5.0 (Ask the AI)
+
+- **Keyless on purpose.** The articles plugin already holds the client's key (its generator is article specific and its key lookup and Anthropic call are private). Site Kit asks for text through a filter, so the key lives in one place and Site Kit stays free of any AI service address. The two plugins agree on two filter names only.
+- **A remix is a draft, not a save.** It fills the paste box and goes through the same preview and apply as a pasted result, so there is one write path, one cleaner and one history.
+- **Sections by default.** The pop-up lists the page's sections and asks the AI to change only the ones ticked. The others are put back byte for byte (tested), which also makes calls cheaper and quicker. Whole page is available but not the default.
+- **Locked wording.** A testimonial is a real client's words and the safety notice holds real helplines, so a remix may not change their wording unless the person says they are supplying it. Enforced after the reply by comparing text, not by trusting the prompt.
+- **Not built, on purpose:** rewriting every page at once, free CSS, free HTML for the header and footer. Header, footer and style proposals are planned for 0.5.1, and a Voice and facts note for 0.5.2.
+
 ## v0.4.1 (edit pills and the unsaved prompt)
 
 - **Pills only after Edit with AI is opened,** as the owner asked, and only for administrators (the Site script is admin only). They are placed by script over the header and footer, not printed into them, so a page cached for visitors never contains one and the Theme Builder layout cannot be disturbed.

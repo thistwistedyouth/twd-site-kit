@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.4.1
+Stable tag: 0.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,12 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.5.0 =
+* New: Ask the AI. When the site has an AI key (set in the Articles plugin), the Edit this page tab can change the page for you. Choose the sections to change, or the whole page, say what you want, and see a preview before anything is saved. Sections you did not choose stay exactly as they are.
+* New: testimonials and the safety notice are locked. The AI can change their layout but not their words, unless you say you are supplying new wording.
+* Changed: the copy and paste way is still there, under "Use an external AI instead", and its button is now "Copy prompt for external AI". With no AI key, the tab looks as before.
+* This plugin does not hold an AI key or contact any AI service. It asks the Articles plugin to do that.
 
 = 0.4.1 =
 * New: "Edit header" and "Edit footer" buttons. After you click Edit with AI, small buttons appear on the header and footer of the page. Each opens the pop-up on the Site tab at the right box. They appear for administrators only, never for visitors, and only where the kit header and footer are used.
