@@ -486,6 +486,7 @@
 		pui.personJob.value = p.person_job;
 		pui.sameAs.value = (p.same_as || []).join('\n');
 		renderChecks();
+		pui.snap = profileSnap();
 	}
 
 	function renderChecks() {
@@ -639,6 +640,7 @@
 		cui.button.checked = !!c.settings.show_button;
 		cui.strip.checked = !!c.settings.show_strip;
 		var e = c.effective;
+		cui.snap = chromeSnap();
 		cui.note.textContent = 'Now showing: ' + c.header_variants[e.header] + ' (header), ' + c.footer_variants[e.footer] + ' (footer).' + (e.sticky_note ? ' The centred header cannot be fixed to the top, so that setting is ignored.' : '');
 	}
 
@@ -840,6 +842,116 @@
 			});
 		}, function () {});
 	}
+
+	/* ---- unsaved changes and the edit pills ---- */
+
+	function sameMap(a, b) {
+		var ka = Object.keys(a || {});
+		var kb = Object.keys(b || {});
+		if (ka.length !== kb.length) {
+			return false;
+		}
+		return ka.every(function (k) {
+			return Object.prototype.hasOwnProperty.call(b, k) && String(a[k]) === String(b[k]);
+		});
+	}
+
+	function profileSnap() {
+		var got = collectProfile();
+		return JSON.stringify(got.error ? { error: got.error, raw: [pui.menu.value, pui.legal.value, pui.logo.value] } : got.profile);
+	}
+
+	function chromeSnap() {
+		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.sticky.checked, cui.button.checked, cui.strip.checked]);
+	}
+
+	ED.addDirtyCheck(function () {
+		if (!S.data) {
+			return '';
+		}
+		return (S.pack !== S.data.active || !sameMap(S.draft, S.data.overrides || {})) ? 'style changes (colours, fonts or corners)' : '';
+	}, function () {
+		discard();
+	});
+
+	ED.addDirtyCheck(function () {
+		return (P.data && pui.snap !== undefined && profileSnap() !== pui.snap) ? 'site details (menu, contact lines, footer text and so on)' : '';
+	}, function () {
+		if (P.data) {
+			fillProfile();
+		}
+	});
+
+	ED.addDirtyCheck(function () {
+		return (P.data && cui.snap !== undefined && chromeSnap() !== cui.snap) ? 'header and footer layout settings' : '';
+	}, function () {
+		if (P.data) {
+			fillChrome();
+		}
+	});
+
+	// Edit pills: small buttons laid over the corner of the header and the footer. They appear once Edit with AI has
+	// been opened on this page, and stay until the page is reloaded. They sit in the editor wrapper, never inside the
+	// header or footer, so the site's own layout is untouched. They only exist where the kit prints the header or footer.
+	var PILLS = [
+		{ selector: '.twd-sk-chrome .twd-sk-header', label: 'Edit header', aria: 'Edit the header: menu and site details', field: 'twd-sk-pf-menu', host: null, node: null },
+		{ selector: '.twd-sk-chrome .twd-sk-footer', label: 'Edit footer', aria: 'Edit the footer: text and legal links', field: 'twd-sk-pf-footertext', host: null, node: null }
+	];
+	var pillQueued = false;
+
+	function placePills() {
+		pillQueued = false;
+		PILLS.forEach(function (pill) {
+			if (!pill.node || !pill.host) {
+				return;
+			}
+			var r = pill.host.getBoundingClientRect();
+			var visible = r.height > 0 && r.bottom > 40 && r.top < window.innerHeight - 40;
+			if (!visible) {
+				show(pill.node, false);
+				return;
+			}
+			show(pill.node, true);
+			pill.node.style.top = Math.max(r.top + 6, 6) + 'px';
+			pill.node.style.left = Math.max(r.left + 6, 6) + 'px';
+		});
+	}
+
+	function queuePills() {
+		if (!pillQueued) {
+			pillQueued = true;
+			window.requestAnimationFrame(placePills);
+		}
+	}
+
+	function addPills() {
+		var any = false;
+		PILLS.forEach(function (pill) {
+			if (pill.node) {
+				any = true;
+				return;
+			}
+			var host = document.querySelector(pill.selector);
+			if (!host) {
+				return;
+			}
+			any = true;
+			pill.host = host;
+			pill.node = el('button', { type: 'button', className: 'twd-sk-ed__pill', text: pill.label, 'aria-label': pill.aria });
+			pill.node.addEventListener('click', function () {
+				ED.openAt('site', pill.field);
+			});
+			document.getElementById('twd-sk-ed').appendChild(pill.node);
+		});
+		if (any && !addPills.bound) {
+			addPills.bound = true;
+			window.addEventListener('scroll', queuePills, { passive: true });
+			window.addEventListener('resize', queuePills);
+		}
+		queuePills();
+	}
+
+	ED.onOpen.push(addPills);
 
 	function buildSite(panel) {
 		buildStyleSection(panel);

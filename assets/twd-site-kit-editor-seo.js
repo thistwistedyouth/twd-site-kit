@@ -180,6 +180,7 @@
 			ui.quality.appendChild(el('p', { text: 'Nothing to fix. Pictures have descriptions, headings are in order and links say where they go.' }));
 		}
 		show(ui.quality, true);
+		S.snap = JSON.stringify(collect(false));
 	}
 
 	function load() {
@@ -303,6 +304,14 @@
 			message(ui.schemaOut, 'Found ' + nodes.length + ' structured data block' + (nodes.length === 1 ? '' : 's') + ', with no duplicates.', true);
 		}
 	}
+
+	ED.addDirtyCheck(function () {
+		return (S.data && S.snap && JSON.stringify(collect(false)) !== S.snap) ? 'search details (title, description, picture or address)' : '';
+	}, function () {
+		if (S.data) {
+			fill(S.data);
+		}
+	});
 
 	ED.addTab('seo', 'Search', build);
 })();

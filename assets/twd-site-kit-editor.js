@@ -193,7 +193,7 @@
 	function build() {
 		var title = el('h2', { id: 'twd-sk-ed-title', className: 'twd-sk-ed__title', text: 'Edit with AI', tabindex: '-1' });
 		var closeBtn = el('button', { type: 'button', className: 'twd-sk-ed__close', text: 'Close', 'aria-label': 'Close the editor' });
-		closeBtn.addEventListener('click', close);
+		closeBtn.addEventListener('click', requestClose);
 
 		var tabs = el('div', { className: 'twd-sk-ed__tabs', role: 'tablist', 'aria-label': 'Editor sections' });
 		tabs.addEventListener('keydown', onTabKeys);
@@ -238,7 +238,7 @@
 		ui.overlay = el('div', { id: 'twd-sk-ed-overlay', className: 'twd-sk-ed__overlay', hidden: '' }, [dialog]);
 		ui.overlay.addEventListener('mousedown', function (e) {
 			if (e.target === ui.overlay) {
-				close();
+				requestClose();
 			}
 		});
 		ui.dialog = dialog;
@@ -848,7 +848,11 @@
 		}
 		if (e.key === 'Escape') {
 			e.preventDefault();
-			close();
+			if (ui.closeCard) {
+				keepEditing();
+			} else {
+				requestClose();
+			}
 			return;
 		}
 		// If the focused control was hidden or removed (a confirmation closing, say), focus falls to the page.
@@ -874,6 +878,114 @@
 		}
 		if (state.tab === 'pages') {
 			loadInfo();
+		}
+		var hooks = (window.TWD_SK_ED && window.TWD_SK_ED.onOpen) || [];
+		hooks.forEach(function (fn) {
+			try {
+				fn();
+			} catch (err) {
+				// A broken extra script must never stop the editor opening.
+			}
+		});
+	}
+
+	// Everything the person has changed but not saved, as short plain phrases. Other scripts add their own checks.
+	function unsavedList() {
+		var out = [];
+		if (ui.paste && ui.paste.value.trim()) {
+			out.push('page text that you pasted but have not applied');
+		}
+		((window.TWD_SK_ED && window.TWD_SK_ED.dirtyChecks) || []).forEach(function (check) {
+			var label = '';
+			try {
+				label = check.test();
+			} catch (err) {
+				label = '';
+			}
+			if (label) {
+				out.push(label);
+			}
+		});
+		return out;
+	}
+
+	function discardUnsaved() {
+		if (ui.paste && ui.paste.value) {
+			var token = state.token;
+			ui.paste.value = '';
+			clearPreview();
+			message(ui.previewMsg, '', true);
+			if (token) {
+				api('POST', pagePath('/preview/discard'), { token: token }).then(function () {}, function () {});
+			}
+		}
+		((window.TWD_SK_ED && window.TWD_SK_ED.dirtyChecks) || []).forEach(function (check) {
+			if (typeof check.discard === 'function') {
+				try {
+					check.discard();
+				} catch (err) {
+					// Closing must still work.
+				}
+			}
+		});
+	}
+
+	function keepEditing() {
+		if (ui.closeCard && ui.closeCard.parentNode) {
+			ui.closeCard.parentNode.removeChild(ui.closeCard);
+		}
+		ui.closeCard = null;
+		ui.title.focus();
+	}
+
+	// Close, but ask first when something has not been saved. Inline card, no browser dialogs.
+	function requestClose() {
+		if (ui.overlay.hasAttribute('hidden')) {
+			return;
+		}
+		if (ui.closeCard) {
+			ui.closeCard.querySelector('button').focus();
+			return;
+		}
+		var list = unsavedList();
+		if (!list.length) {
+			close();
+			return;
+		}
+		var stay = button('Keep editing', 'primary', keepEditing);
+		var leave = button('Close and lose these changes', 'secondary', function () {
+			keepEditing();
+			discardUnsaved();
+			close();
+		});
+		var card = el('div', { className: 'twd-sk-ed__card twd-sk-ed__closecard', role: 'alertdialog', 'aria-labelledby': 'twd-sk-ed-close-title' }, [
+			el('p', { id: 'twd-sk-ed-close-title', className: 'twd-sk-ed__label', text: 'You have changes that are not saved.' })
+		]);
+		listInto(card, list);
+		card.appendChild(el('p', { text: 'If you close now they are lost.' }));
+		card.appendChild(el('div', { className: 'twd-sk-ed__actions' }, [stay, leave]));
+		ui.dialog.insertBefore(card, ui.dialog.querySelector('.twd-sk-ed__tabs'));
+		ui.closeCard = card;
+		stay.focus();
+	}
+
+	// Open the pop-up on a tab and put the cursor in a named field (the edit pills use this).
+	function openAt(tab, fieldId) {
+		if (ui.overlay && !ui.overlay.hasAttribute('hidden')) {
+			keepEditing();
+		}
+		open();
+		if (ui.tabs[tab]) {
+			selectTab(tab);
+		}
+		if (fieldId) {
+			var target = document.getElementById(fieldId);
+			if (target) {
+				if (target.scrollIntoView) {
+					target.scrollIntoView({ block: 'center' });
+				}
+				target.focus();
+			}
 		}
 	}
 
@@ -912,6 +1024,12 @@
 		confirmInline: confirmInline,
 		extraTabs: [],
 		tabHooks: {},
+		onOpen: [],
+		dirtyChecks: [],
+		addDirtyCheck: function (test, discard) {
+			this.dirtyChecks.push({ test: test, discard: discard });
+		},
+		openAt: openAt,
 		addTab: function (name, label, build) {
 			this.extraTabs.push({ name: name, label: label, build: build });
 		}

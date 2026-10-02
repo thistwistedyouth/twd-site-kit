@@ -16,6 +16,15 @@
   background-color: $color-primary-hover; border-color: $color-primary-hover; color: $color-on-primary;
 }
 
+/* ---- edit pills (laid over the corner of the header and footer once Edit with AI has been opened) ---- */
+.twd-sk-ed__pill {
+  position: fixed; z-index: 99980; min-height: 32px; padding: 4px 14px; border: 1.5px solid $color-surface;
+  border-radius: $radius-pill; background-color: $color-title; color: $color-surface; box-shadow: $shadow-card;
+  font-family: $font-body; font-size: $size-small; font-weight: $btn-weight; line-height: 1.2; cursor: pointer;
+}
+.twd-sk-ed__pill:hover, .twd-sk-ed__pill:focus-visible { background-color: $color-primary; border-color: $color-primary; color: $color-on-primary; }
+.twd-sk-ed__pill:focus-visible { outline: 2px solid $color-accent-text; outline-offset: 2px; }
+
 /* ---- preview bar (inside the preview frame) ---- */
 .twd-sk-ed__bar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 99990; padding: 8px 16px; text-align: center;

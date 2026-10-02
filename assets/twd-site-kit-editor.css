@@ -45,6 +45,33 @@
   border-color: var(--twd-site-color-primary-hover) !important;
   color: var(--twd-site-color-on-primary) !important;
 }
+/* ---- edit pills (laid over the corner of the header and footer once Edit with AI has been opened) ---- */
+.twd-sk-ed .twd-sk-ed__pill.twd-sk-ed__pill {
+  position: fixed;
+  z-index: 99980;
+  min-height: 32px;
+  padding: 4px 14px !important;
+  border: 1.5px solid var(--twd-site-color-surface) !important;
+  border-radius: var(--twd-site-radius-pill) !important;
+  background-color: var(--twd-site-color-title) !important;
+  color: var(--twd-site-color-surface) !important;
+  box-shadow: var(--twd-site-shadow-card) !important;
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  font-weight: var(--twd-site-btn-weight) !important;
+  line-height: 1.2 !important;
+  cursor: pointer;
+}
+.twd-sk-ed .twd-sk-ed__pill.twd-sk-ed__pill:hover,
+.twd-sk-ed .twd-sk-ed__pill.twd-sk-ed__pill:focus-visible {
+  background-color: var(--twd-site-color-primary) !important;
+  border-color: var(--twd-site-color-primary) !important;
+  color: var(--twd-site-color-on-primary) !important;
+}
+.twd-sk-ed .twd-sk-ed__pill.twd-sk-ed__pill:focus-visible {
+  outline: 2px solid var(--twd-site-color-accent-text);
+  outline-offset: 2px;
+}
 /* ---- preview bar (inside the preview frame) ---- */
 .twd-sk-ed .twd-sk-ed__bar.twd-sk-ed__bar {
   position: fixed;
