@@ -29,9 +29,9 @@ function twd_sk_status( $e ) {
 	return is_array( $d ) && isset( $d['status'] ) ? $d['status'] : 0;
 }
 
-twd_sk_test( 'rest: the twenty-two routes exist under twd-site-kit/v1 and none is open to everyone', function () {
+twd_sk_test( 'rest: the twenty-four routes exist under twd-site-kit/v1 and none is open to everyone', function () {
 	$routes = twd_sk_rest_routes();
-	twd_sk_eq( 22, count( $routes ) );
+	twd_sk_eq( 24, count( $routes ) );
 	foreach ( $routes as $r ) {
 		twd_sk_eq( 'twd-site-kit/v1', $r['ns'] );
 		twd_sk_true( is_array( $r['args']['permission_callback'] ) && 'TWD_SK_REST' === $r['args']['permission_callback'][0], 'a real permission callback on ' . $r['route'] );
@@ -46,7 +46,7 @@ twd_sk_test( 'rest: the twenty-two routes exist under twd-site-kit/v1 and none i
 			$reads[] = $r['route'];
 		}
 	}
-	twd_sk_eq( 8, count( $reads ), 'only prompt, versions, info, the search details, the site state, the profile, the setup plan and the templates are GET' );
+	twd_sk_eq( 9, count( $reads ), 'only prompt, versions, info, the sections, the search details, the site state, the profile, the setup plan and the templates are GET' );
 } );
 
 twd_sk_test( 'rest security: a visitor, a missing nonce and a wrong nonce are refused on every route (401)', function () {

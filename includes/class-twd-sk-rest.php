@@ -29,6 +29,7 @@ class TWD_SK_REST {
 			'preview' => array( 30, 60 ),
 			'write'   => array( 30, 60 ),
 			'create'  => array( 10, 3600 ),
+			'ai'      => array( 10, 600 ),
 		);
 	}
 
@@ -65,6 +66,18 @@ class TWD_SK_REST {
 					'callback'            => array( __CLASS__, 'post_seo' ),
 					'permission_callback' => array( __CLASS__, 'can_write_page' ),
 				),
+			) );
+		}
+		if ( ! TWD_SK_Safe::on() ) {
+			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/sections', array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'get_sections' ),
+				'permission_callback' => array( __CLASS__, 'can_read_page' ),
+			) );
+			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/remix', array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_remix' ),
+				'permission_callback' => array( __CLASS__, 'can_remix_page' ),
 			) );
 		}
 		register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/status', array(
@@ -175,6 +188,11 @@ class TWD_SK_REST {
 
 	public static function can_preview_page( $request ) {
 		return self::guard( $request, 'preview' );
+	}
+
+	/** Asking the AI spends the site's key, so it has its own, tighter limit. */
+	public static function can_remix_page( $request ) {
+		return self::guard( $request, 'ai' );
 	}
 
 	public static function can_write_page( $request ) {
@@ -378,6 +396,47 @@ class TWD_SK_REST {
 			return self::from_store_error( $result );
 		}
 		return self::info_payload( $id );
+	}
+
+	// -- AI remix ---------------------------------------------------------
+
+	/** The page as a list of sections, and whether AI is available. Read only. */
+	public static function get_sections( $request ) {
+		$id = (int) $request->get_param( 'id' );
+		return array(
+			'ai'       => TWD_SK_AI::available(),
+			'version'  => TWD_SK_Store::get_current_version_id( $id ),
+			'sections' => TWD_SK_Sections::describe( TWD_SK_Store::get_current( $id ) ),
+		);
+	}
+
+	/**
+	 * Ask the AI for a candidate page. Saves nothing: the editor then previews the candidate
+	 * and applies it through the normal routes.
+	 */
+	public static function post_remix( $request ) {
+		$id   = (int) $request->get_param( 'id' );
+		$base = self::base_version( $request );
+		if ( is_wp_error( $base ) ) {
+			return $base;
+		}
+		if ( $base !== (int) TWD_SK_Store::get_current_version_id( $id ) ) {
+			return self::error( 'twd_sk_conflict', 'This page changed since you opened the editor. Reload the page and try again.', 409 );
+		}
+		$result = TWD_SK_AI::remix( $id, array(
+			'mode'        => $request->get_param( 'mode' ),
+			'indexes'     => $request->get_param( 'indexes' ),
+			'unlock'      => $request->get_param( 'unlock' ),
+			'instruction' => $request->get_param( 'instruction' ),
+			'facts'       => $request->get_param( 'facts' ),
+		) );
+		if ( is_wp_error( $result ) ) {
+			$map    = array( 'twd_sk_bad_input' => 400, 'twd_sk_empty_page' => 400, 'twd_sk_ai_unavailable' => 503 );
+			$code   = $result->get_error_code();
+			$status = isset( $map[ $code ] ) ? $map[ $code ] : 502;
+			return self::error( $code, $result->get_error_message(), $status );
+		}
+		return $result;
 	}
 
 	// -- Search details ---------------------------------------------------

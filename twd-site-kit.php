@@ -41,6 +41,8 @@ require_once TWD_SK_PATH . 'includes/class-twd-sk-images.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-quality.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-seo.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-schema.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-sections.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-ai.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-assets.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-updater.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-report.php';

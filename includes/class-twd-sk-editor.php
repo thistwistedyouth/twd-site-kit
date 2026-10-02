@@ -82,6 +82,7 @@ class TWD_SK_Editor {
 			'maxTitle'       => TWD_SK_Template::MAX_TITLE,
 			'starters'       => TWD_SK_Template::starters(),
 			'safeMode'       => TWD_SK_Safe::on(),
+			'ai'             => (bool) $context['is_kit_page'] && TWD_SK_AI::available(),
 		) );
 		wp_enqueue_script( self::HANDLE );
 
