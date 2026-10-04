@@ -4,10 +4,11 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 
 ## Where we are (last updated at release 0.5.0)
 
-**Released and live in the update file:** 0.5.0. Sites update from Plugins, "Check for updates", "update now".
+**Released and live in the update file:** 0.5.1. Sites update from Plugins, "Check for updates", "update now".
 
 | Version | What it added |
 |---|---|
+| 0.5.1 | Fix: a missing Site name no longer makes the header ignore the typed menu (it uses the WordPress site title) |
 | 0.5.0 | Ask the AI in the Edit this page tab (by section or whole page, preview before saving, testimonials and the safety notice locked), external AI copy and paste tucked under a toggle |
 | 0.4.1 | Edit header and Edit footer pills (after Edit with AI is opened), prompt before closing with unsaved changes |
 | 0.4.0 | Safe mode, Site tab, site details with header and footer (Theme Builder JSON), Home, About and Contact starters and the setup command, Search tab, plain-text copy of pages, structured data, image attributes |

@@ -267,7 +267,8 @@ class TWD_SK_Chrome {
 
 	public static function render_header() {
 		$profile = TWD_SK_Profile::get();
-		if ( TWD_SK_Safe::on() || '' === $profile['site_name'] || ! $profile['menu'] ) {
+		// The site name falls back to the WordPress site title, so a missing name never drops the menu.
+		if ( TWD_SK_Safe::on() || ! $profile['menu'] ) {
 			return self::render_minimal_header();
 		}
 		$eff   = self::effective();
@@ -348,7 +349,7 @@ class TWD_SK_Chrome {
 
 	public static function render_footer() {
 		$profile = TWD_SK_Profile::get();
-		if ( TWD_SK_Safe::on() || '' === $profile['site_name'] ) {
+		if ( TWD_SK_Safe::on() || TWD_SK_Profile::is_empty() ) {
 			return self::render_minimal_footer();
 		}
 		$eff     = self::effective();

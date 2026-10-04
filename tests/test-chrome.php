@@ -390,3 +390,15 @@ twd_sk_test( 'elementor: the committed JSON files are exactly what the generator
 	}
 	twd_sk_eq( 2, count( glob( ABSPATH . 'starters/elementor/*.json' ) ), 'only the two templates' );
 } );
+
+twd_sk_test( 'chrome: a missing site name uses the WordPress site title and still shows the menu and the footer details', function () {
+	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'site_name' => '', 'footer_text' => 'Gentle therapy.', 'menu' => array( array( 'label' => 'About', 'url' => '/about', 'children' => array() ) ) ) ) );
+	$GLOBALS['twd_stub']['bloginfo']['name'] = 'Title From WordPress';
+	$h = TWD_SK_Chrome::render_header();
+	twd_sk_has( 'Title From WordPress', $h );
+	twd_sk_has( 'twd-sk-header__toggle', $h, 'the full header, not the plain one' );
+	twd_sk_has( 'href="/about"', $h, 'the typed menu, not a list of pages' );
+	$f = TWD_SK_Chrome::render_footer();
+	twd_sk_has( 'Gentle therapy.', $f, 'the full footer' );
+	twd_sk_has( 'Title From WordPress', $f );
+} );

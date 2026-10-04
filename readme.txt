@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.5.0
+Stable tag: 0.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.5.1 =
+* Fixed: the header no longer drops your typed menu when the Site name box is empty. It uses the WordPress site title instead. The footer likewise.
 
 = 0.5.0 =
 * New: Ask the AI. When the site has an AI key (set in the Articles plugin), the Edit this page tab can change the page for you. Choose the sections to change, or the whole page, say what you want, and see a preview before anything is saved. Sections you did not choose stay exactly as they are.
