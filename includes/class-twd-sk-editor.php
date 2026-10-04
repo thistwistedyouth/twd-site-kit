@@ -83,6 +83,9 @@ class TWD_SK_Editor {
 			'starters'       => TWD_SK_Template::starters(),
 			'safeMode'       => TWD_SK_Safe::on(),
 			'ai'             => (bool) $context['is_kit_page'] && TWD_SK_AI::available(),
+			'aiAvailable'    => TWD_SK_AI::available(),
+			'recipes'        => TWD_SK_Recipes::labels(),
+			'canManage'      => current_user_can( 'manage_options' ),
 		) );
 		wp_enqueue_script( self::HANDLE );
 

@@ -75,8 +75,9 @@ class TWD_SK_Prompt {
 	 * The whole prompt.
 	 *
 	 * @param string $page_html The page's current stored HTML (may be empty).
+	 * @param string $facts_block Practice facts to include (only for a person allowed to see them).
 	 */
-	public static function build( $page_html ) {
+	public static function build( $page_html, $facts_block = '' ) {
 		$out   = array();
 		$out[] = 'You are helping a therapist edit one page of their website. The page is HTML made from a fixed set of components.';
 		$out[] = '';
@@ -88,6 +89,11 @@ class TWD_SK_Prompt {
 		$out[] = '## Style guide';
 		$out[] = self::style_guide();
 		$out[] = '';
+		if ( '' !== $facts_block ) {
+			$out[] = '## Facts about the therapist';
+			$out[] = $facts_block;
+			$out[] = '';
+		}
 		$out[] = '## The page as it is now';
 		$page_html = trim( (string) $page_html );
 		if ( '' === $page_html ) {

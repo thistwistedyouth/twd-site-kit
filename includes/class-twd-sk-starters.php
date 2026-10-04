@@ -118,9 +118,17 @@ class TWD_SK_Starters {
 		if ( ! isset( $pages[ $key ] ) ) {
 			return '';
 		}
+		return self::build( $pages[ $key ]['parts'] );
+	}
+
+	/**
+	 * A page outline from a list of parts (component id and variant class), with every piece of
+	 * sample wording turned into a visible placeholder marker. The first hero's title is the h1.
+	 */
+	public static function build( $parts ) {
 		$out   = array();
 		$first = true;
-		foreach ( $pages[ $key ]['parts'] as $part ) {
+		foreach ( $parts as $part ) {
 			$skeleton = self::skeleton( $part[0], $part[1] );
 			// The safety notice keeps its real support-line text.
 			if ( 'notice' !== $part[0] ) {

@@ -48,7 +48,7 @@ class TWD_SK_AI {
 			}
 		}
 		$out[] = 'Change only what the instruction asks for. Keep every other word, link and image as it is.';
-		$out[] = 'Use only the facts in the page and in the facts the therapist supplied. Where the instruction needs a fact you do not have, write [PLACEHOLDER: what is needed].';
+		$out[] = 'Use only the facts in the page, the practice facts and the site details the therapist supplied. Where you need a fact you do not have, write [PLACEHOLDER: what is needed]. Never invent a qualification, registration, fee, policy, contact detail, testimonial or claim.';
 		return $out;
 	}
 
@@ -85,9 +85,14 @@ class TWD_SK_AI {
 	public static function user_message( $mode, $parts, $chosen, $instruction, $facts ) {
 		$out   = array();
 		$out[] = 'What to change: ' . $instruction;
+		$master = TWD_SK_Facts::prompt_block();
+		if ( '' !== $master ) {
+			$out[] = '';
+			$out[] = $master;
+		}
 		if ( '' !== $facts ) {
 			$out[] = '';
-			$out[] = 'Facts the therapist supplied (the only new facts you may use):';
+			$out[] = 'Extra facts the therapist supplied for this change (the only other new facts you may use):';
 			$out[] = $facts;
 		}
 		$out[] = '';
@@ -247,5 +252,120 @@ class TWD_SK_AI {
 			$report[] = 'The AI made no change.';
 		}
 		return array( 'html' => $html, 'report' => $report, 'kept' => $kept, 'changed' => $changed );
+	}
+
+	// -- A new page from the practice facts ------------------------------------
+
+	/** System text for drafting a whole new page. */
+	public static function page_system_prompt() {
+		$out   = array();
+		$out[] = 'You write one new page for a therapist\'s website. The page is HTML made from a fixed set of components.';
+		$out[] = '';
+		$out[] = '## Output';
+		$out[] = 'Reply with the full page as raw HTML: a list of section elements that follows the outline you are given. Nothing before, nothing after, no code fence, no commentary.';
+		$out[] = '';
+		$out[] = '## Rules';
+		$rules = self::rules();
+		$rules[] = 'Follow the outline: keep its components and their order. Replace every [PLACEHOLDER] in the outline with real wording written from the practice facts, in the therapist\'s own voice. Where the facts do not say what is needed, keep a [PLACEHOLDER: what is needed] there.';
+		$rules[] = 'Keep every image address in the outline exactly as it is. The therapist adds real pictures later. Never invent an image file name.';
+		$rules[] = 'Use the contact details and registration wording exactly as given in the facts and site details. If they are not given, leave a [PLACEHOLDER].';
+		foreach ( $rules as $i => $rule ) {
+			$out[] = ( $i + 1 ) . '. ' . $rule;
+		}
+		$out[] = '';
+		$out[] = '## Style guide';
+		$out[] = TWD_SK_Prompt::style_guide();
+		return implode( "\n", $out ) . "\n";
+	}
+
+	/** The request text for drafting a new page of a type. */
+	public static function page_message( $in ) {
+		$r     = TWD_SK_Recipes::get( $in['type'] );
+		$out   = array();
+		$out[] = 'Write this page: ' . $r['intent'];
+		$out[] = 'Page title: ' . $in['title'];
+		if ( '' !== $in['topic'] ) {
+			$out[] = 'Topic: ' . $in['topic'];
+		}
+		if ( '' !== $in['notes'] ) {
+			$out[] = 'Extra notes from the person asking: ' . $in['notes'];
+		}
+		$master = TWD_SK_Facts::prompt_block();
+		$out[]  = '';
+		if ( '' !== $master ) {
+			$out[] = $master;
+		}
+		if ( '' === TWD_SK_Facts::get() ) {
+			$out[] = 'No practice facts have been saved yet. Do not invent any. Keep a [PLACEHOLDER: what is needed] wherever a fact is needed.';
+		}
+		$out[]  = '';
+		$out[]  = 'The outline to follow (replace the placeholders, keep the components and their order):';
+		$out[]  = TWD_SK_Recipes::skeleton( $in['type'] );
+		return implode( "\n", $out ) . "\n";
+	}
+
+	/**
+	 * One text the person can paste into an external AI chat to draft the page.
+	 * Includes the practice facts only when the caller says the person may see them.
+	 */
+	public static function page_prompt( $in, $include_facts ) {
+		$r = self::page_message( $in );
+		if ( ! $include_facts ) {
+			$block = TWD_SK_Facts::prompt_block();
+			if ( '' !== $block ) {
+				$r = str_replace( $block, 'The therapist will give you the practice facts in the chat. Ask for them first, and use only what they say.', $r );
+			}
+		}
+		return self::page_system_prompt() . "\n## The request\n" . $r;
+	}
+
+	/**
+	 * Draft a new page from the practice facts and save it as a DRAFT page set up for the kit.
+	 * The page is created only after the AI has answered with something usable.
+	 *
+	 * @return array|WP_Error { id, title, url, sections, leftover_count, must_count }
+	 */
+	public static function generate_page( $raw ) {
+		if ( ! self::available() ) {
+			return self::err( 'twd_sk_ai_unavailable', 'AI is not set up on this site. Use the copy and paste way, or ask your web designer to add a key.' );
+		}
+		$in = TWD_SK_Recipes::inputs( $raw );
+		if ( is_wp_error( $in ) ) {
+			return $in;
+		}
+		$reply = apply_filters( 'twd_ai_complete', null, self::page_system_prompt(), self::page_message( $in ), self::TOKENS_PAGE );
+		if ( is_wp_error( $reply ) ) {
+			return $reply;
+		}
+		if ( ! is_string( $reply ) || '' === trim( $reply ) ) {
+			return self::err( 'twd_sk_ai_unavailable', 'The AI did not answer. No page was created. Try again in a moment.' );
+		}
+		$reply = self::strip_fence( $reply );
+		if ( strlen( $reply ) > TWD_SK_Store::MAX_BYTES ) {
+			return self::err( 'twd_sk_ai_bad_result', 'The AI sent back more than a page can hold. No page was created. Try again with shorter notes.' );
+		}
+		$parts = TWD_SK_Sections::split( $reply );
+		if ( ! $parts['sections'] ) {
+			return self::err( 'twd_sk_ai_bad_result', 'The AI did not send back a page. No page was created. Try again.' );
+		}
+		$html = implode( "\n", $parts['sections'] );
+
+		$id = TWD_SK_Template::create_page( $in['title'], 'blank' );
+		if ( is_wp_error( $id ) ) {
+			return $id;
+		}
+		$saved = TWD_SK_Store::save( $id, $html, array( 'base_version' => 0, 'note' => 'AI draft from the practice facts (' . $in['type'] . ')' ) );
+		if ( is_wp_error( $saved ) ) {
+			return $saved;
+		}
+		$levels = TWD_SK_Sanitizer::find_leftovers_by_level( TWD_SK_Store::get_current( $id ) );
+		return array(
+			'id'             => (int) $id,
+			'title'          => (string) get_post( $id )->post_title,
+			'url'            => get_permalink( $id ),
+			'sections'       => count( TWD_SK_Sections::split( TWD_SK_Store::get_current( $id ) )['sections'] ),
+			'must_count'     => TWD_SK_Report::leftover_total( $levels['must'] ),
+			'check_count'    => TWD_SK_Report::leftover_total( $levels['check'] ),
+		);
 	}
 }

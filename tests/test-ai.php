@@ -175,7 +175,7 @@ twd_sk_test( 'ai remix: facts keep their line breaks, lose tags and long dashes,
 	twd_sk_hasnt( '<script>', $m );
 	twd_sk_hasnt( '<b>', $m );
 	twd_sk_hasnt( "\xE2\x80\x94", $m );
-	twd_sk_has( 'the only new facts you may use', $m );
+	twd_sk_has( 'the only other new facts you may use', $m );
 } );
 
 twd_sk_test( 'ai rest: sections and remix routes are guarded, tied to the page version, and absent in safe mode', function () {

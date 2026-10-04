@@ -69,6 +69,16 @@ class TWD_SK_REST {
 			) );
 		}
 		if ( ! TWD_SK_Safe::on() ) {
+			register_rest_route( self::ROUTE_NS, '/pages/generate', array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_generate' ),
+				'permission_callback' => array( __CLASS__, 'can_generate_page' ),
+			) );
+			register_rest_route( self::ROUTE_NS, '/pages/recipe-prompt', array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_recipe_prompt' ),
+				'permission_callback' => array( __CLASS__, 'can_create_page' ),
+			) );
 			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/sections', array(
 				'methods'             => 'GET',
 				'callback'            => array( __CLASS__, 'get_sections' ),
@@ -173,6 +183,18 @@ class TWD_SK_REST {
 				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 			),
 		) );
+		register_rest_route( self::ROUTE_NS, '/site/facts', array(
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'get_site_facts' ),
+				'permission_callback' => array( __CLASS__, 'can_read_site' ),
+			),
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_site_facts' ),
+				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+			),
+		) );
 		register_rest_route( self::ROUTE_NS, '/site/templates', array(
 			'methods'             => 'GET',
 			'callback'            => array( __CLASS__, 'get_site_templates' ),
@@ -188,6 +210,15 @@ class TWD_SK_REST {
 
 	public static function can_preview_page( $request ) {
 		return self::guard( $request, 'preview' );
+	}
+
+	/** A new AI drafted page spends the key and makes a page, so it passes both limits. */
+	public static function can_generate_page( $request ) {
+		$ok = self::guard( $request, 'ai', false );
+		if ( true !== $ok ) {
+			return $ok;
+		}
+		return self::rate_limit( 'create' );
 	}
 
 	/** Asking the AI spends the site's key, so it has its own, tighter limit. */
@@ -307,7 +338,7 @@ class TWD_SK_REST {
 		$id   = (int) $request->get_param( 'id' );
 		$html = TWD_SK_Store::get_current( $id );
 		return array(
-			'prompt'         => TWD_SK_Prompt::build( $html ),
+			'prompt'         => TWD_SK_Prompt::build( $html, current_user_can( 'manage_options' ) ? TWD_SK_Facts::prompt_block() : '' ),
 			'version'        => TWD_SK_Store::get_current_version_id( $id ),
 			'leftover_count' => TWD_SK_Report::leftover_total( TWD_SK_Sanitizer::find_leftovers( $html ) ),
 		);
@@ -396,6 +427,60 @@ class TWD_SK_REST {
 			return self::from_store_error( $result );
 		}
 		return self::info_payload( $id );
+	}
+
+	// -- Practice facts and new pages from them -------------------------------
+
+	private static function facts_payload() {
+		return array(
+			'text'     => TWD_SK_Facts::get(),
+			'updated'  => TWD_SK_Facts::updated(),
+			'max'      => TWD_SK_Facts::MAX,
+			'template' => TWD_SK_Facts::template(),
+		);
+	}
+
+	public static function get_site_facts( $request ) {
+		return self::facts_payload();
+	}
+
+	public static function post_site_facts( $request ) {
+		$saved = TWD_SK_Facts::save( $request->get_param( 'text' ) );
+		if ( is_wp_error( $saved ) ) {
+			return self::error( $saved->get_error_code(), $saved->get_error_message(), 400 );
+		}
+		return self::facts_payload();
+	}
+
+	/** Draft a new page from the practice facts. Creates a DRAFT only. */
+	public static function post_generate( $request ) {
+		$result = TWD_SK_AI::generate_page( array(
+			'type'  => $request->get_param( 'type' ),
+			'title' => $request->get_param( 'title' ),
+			'topic' => $request->get_param( 'topic' ),
+			'notes' => $request->get_param( 'notes' ),
+		) );
+		if ( is_wp_error( $result ) ) {
+			$map    = array( 'twd_sk_bad_input' => 400, 'twd_sk_ai_unavailable' => 503 );
+			$code   = $result->get_error_code();
+			$status = isset( $map[ $code ] ) ? $map[ $code ] : 502;
+			return self::error( $code, $result->get_error_message(), $status );
+		}
+		return $result;
+	}
+
+	/** The text to paste into an external AI to draft a page. Saves nothing. */
+	public static function post_recipe_prompt( $request ) {
+		$in = TWD_SK_Recipes::inputs( array(
+			'type'  => $request->get_param( 'type' ),
+			'title' => $request->get_param( 'title' ),
+			'topic' => $request->get_param( 'topic' ),
+			'notes' => $request->get_param( 'notes' ),
+		) );
+		if ( is_wp_error( $in ) ) {
+			return self::error( $in->get_error_code(), $in->get_error_message(), 400 );
+		}
+		return array( 'prompt' => TWD_SK_AI::page_prompt( $in, current_user_can( 'manage_options' ) ), 'title' => $in['title'] );
 	}
 
 	// -- AI remix ---------------------------------------------------------
