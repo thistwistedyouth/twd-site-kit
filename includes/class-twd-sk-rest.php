@@ -195,6 +195,11 @@ class TWD_SK_REST {
 				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 			),
 		) );
+		register_rest_route( self::ROUTE_NS, '/site/propose', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_propose' ),
+			'permission_callback' => array( __CLASS__, 'can_propose_site' ),
+		) );
 		register_rest_route( self::ROUTE_NS, '/site/templates', array(
 			'methods'             => 'GET',
 			'callback'            => array( __CLASS__, 'get_site_templates' ),
@@ -210,6 +215,11 @@ class TWD_SK_REST {
 
 	public static function can_preview_page( $request ) {
 		return self::guard( $request, 'preview' );
+	}
+
+	/** AI suggestions for the header, footer and style: administrators only, and the AI limit. */
+	public static function can_propose_site( $request ) {
+		return self::guard( $request, 'ai', false, 'manage_options' );
 	}
 
 	/** A new AI drafted page spends the key and makes a page, so it passes both limits. */
@@ -450,6 +460,18 @@ class TWD_SK_REST {
 			return self::error( $saved->get_error_code(), $saved->get_error_message(), 400 );
 		}
 		return self::facts_payload();
+	}
+
+	/** Ask the AI to suggest header, footer or style values. Saves nothing. */
+	public static function post_site_propose( $request ) {
+		$result = TWD_SK_Proposals::propose( $request->get_param( 'kind' ), $request->get_param( 'instruction' ) );
+		if ( is_wp_error( $result ) ) {
+			$map    = array( 'twd_sk_bad_input' => 400, 'twd_sk_ai_unavailable' => 503 );
+			$code   = $result->get_error_code();
+			$status = isset( $map[ $code ] ) ? $map[ $code ] : 502;
+			return self::error( $code, $result->get_error_message(), $status );
+		}
+		return $result;
 	}
 
 	/** Draft a new page from the practice facts. Creates a DRAFT only. */

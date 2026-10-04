@@ -29,9 +29,9 @@ function twd_sk_status( $e ) {
 	return is_array( $d ) && isset( $d['status'] ) ? $d['status'] : 0;
 }
 
-twd_sk_test( 'rest: the twenty-eight routes exist under twd-site-kit/v1 and none is open to everyone', function () {
+twd_sk_test( 'rest: the twenty-nine routes exist under twd-site-kit/v1 and none is open to everyone', function () {
 	$routes = twd_sk_rest_routes();
-	twd_sk_eq( 28, count( $routes ) );
+	twd_sk_eq( 29, count( $routes ) );
 	foreach ( $routes as $r ) {
 		twd_sk_eq( 'twd-site-kit/v1', $r['ns'] );
 		twd_sk_true( is_array( $r['args']['permission_callback'] ) && 'TWD_SK_REST' === $r['args']['permission_callback'][0], 'a real permission callback on ' . $r['route'] );
@@ -541,8 +541,8 @@ function twd_sk_site_routes() {
 twd_sk_test( 'rest site: the site routes, each with a real permission callback, none registered in safe mode', function () {
 	twd_sk_site_caps();
 	$routes = twd_sk_site_routes();
-	twd_sk_eq( 11, count( $routes ) );
-	twd_sk_eq( array( '/site', '/site/style', '/site/style/reset', '/site/profile', '/site/profile', '/site/chrome', '/site/setup', '/site/setup', '/site/facts', '/site/facts', '/site/templates' ), array_map( function ( $r ) {
+	twd_sk_eq( 12, count( $routes ) );
+	twd_sk_eq( array( '/site', '/site/style', '/site/style/reset', '/site/profile', '/site/profile', '/site/chrome', '/site/setup', '/site/setup', '/site/facts', '/site/facts', '/site/propose', '/site/templates' ), array_map( function ( $r ) {
 		return $r['route'];
 	}, $routes ) );
 	TWD_SK_Safe::set( true );
