@@ -2,7 +2,7 @@
 
 The one place to see where this project is. Newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md. Update this file at the end of every piece of work, in the same commit.
 
-## Where we are (last updated at release 0.5.0)
+## Where we are (last updated at release 0.6.1, 4 Oct 2026)
 
 **Released and live in the update file:** 0.6.1. Sites update from Plugins, "Check for updates", "update now".
 
@@ -20,15 +20,14 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 | 0.3.0 | The Edit with AI pop-up: prompt, preview, apply, history |
 
 **Next, in order (agreed with the owner):**
-1. Verify 0.4.0 to 0.5.3 on the pilot site (see the lists below) before building more.
+1. Verify 0.4.0 to 0.6.1 on the pilot site (see the lists below) before building more, including Ask the AI now that the articles plugin has its filters.
 2. Later, only when asked: Add a section (pick a type, say what it is for).
 - Not planned, on purpose: rewriting every page at once, free CSS, free HTML for the header and footer.
 
 **Waiting on other projects (cross-project contract):**
-- The Articles & Resource Production plugin (`twd-article-publisher`, repo `therapy-web-designs`) must offer two filters before Ask the AI can appear: `twd_ai_is_configured` (true when a key is saved) and `twd_ai_complete( null, $system, $message, $max_tokens )` (returns text, a WP_Error, or null). Site Kit holds no key and calls no AI service. Status when last checked: not yet added (that plugin was at 1.33.0). The filter names were chosen here; if the other project picks different ones, change them in `class-twd-sk-ai.php`.
-- Nothing else is waiting. Ask the AI, drafting pages with AI and the Site tab suggestions all need those two filters, so they stay hidden until the articles plugin offers them.
+- Nothing. The Articles & Resource Production plugin (`twd-article-publisher`, repo `therapy-web-designs`) now offers the two filters Site Kit uses, from its version 1.34.0 (checked 4 Oct 2026): `twd_ai_is_configured` (true when a key is saved) and `twd_ai_complete( null, $system, $message, $max_tokens )` (returns text, a WP_Error, or null; max tokens clamped to 256 to 8000). The names match what Site Kit calls. Site Kit holds no key and calls no AI service. Ask the AI, drafting pages with AI, Fill with AI and the Site tab suggestions appear on a site only when that plugin is at 1.34.0 or later with a key saved.
 
-**Not yet verified on a real site (needs a human):** importing the two Theme Builder templates on Elementor Pro 4.3.1 and their display condition, real Yoast behaviour (writing its fields, the schema graph filter), the media picker, how a page behaves if the plugin is deactivated, caching on the host, and Ask the AI with a real key. The test plan is in the release notes of each version in the conversation that built it; the 0.4.0 steps are in the section below.
+**Not yet verified on a real site (needs a human):** importing the two Theme Builder templates on Elementor Pro 4.3.1 and their display condition, real Yoast behaviour (writing its fields, the schema graph filter), the media picker, how a page behaves if the plugin is deactivated, caching on the host, Ask the AI, drafting pages and the Site tab suggestions with a real key (the articles plugin side is now in place), importing a real site brief, and the fold-outs on a real phone. The test plan is in the release notes of each version in the conversation that built it; the 0.4.0 steps are in the section below.
 
 **Known limitation:** a page that still uses the old `[twd_page]` shortcode cannot be mirrored into its content for site search until its content is cleared once after switching it to the kit template.
 

@@ -35,8 +35,8 @@ Target site: Hello theme + Elementor (header and footer only) + Articles plugin 
 - v0.3.1: the TWD Kit Page template, the Pages tab (new page, publish and unpublish, switch template), the two-level leftover check, prompt fixes.
 - v0.4.0: safe mode, the Site tab, the site profile with header and footer (Theme Builder JSON), the Home, About and Contact starters and the setup command, SEO basics (plain-text mirror, Search tab, structured data, image attributes).
 - v0.4.1: Edit header and Edit footer pills (after Edit with AI is opened), prompt before closing with unsaved changes.
-- v0.6.1: the site brief (one JSON file for a whole site, interview prompt, check then apply, draft outline pages). v0.6.0: a simpler pop-up (fold-outs, one clear Edit screen). v0.5.3: AI suggestions for header, footer and style (structured values, filled into the Site tab boxes, never saved by themselves). v0.5.2: practice facts (master document) and drafting new pages from them. v0.5.1: a missing Site name no longer drops the typed menu.
 - v0.5.0: Ask the AI (by section or whole page, through two filters offered by another plugin, no key here).
+- v0.6.1: the site brief (one JSON file for a whole site, interview prompt, check then apply, draft outline pages). v0.6.0: a simpler pop-up (fold-outs, one clear Edit screen). v0.5.3: AI suggestions for header, footer and style (structured values, filled into the Site tab boxes, never saved by themselves). v0.5.2: practice facts (master document) and drafting new pages from them. v0.5.1: a missing Site name no longer drops the typed menu.
 
 Current status, the next steps and what is waiting on other projects live in **BUILD-LOG.md**, updated at the end of every piece of work.
 
