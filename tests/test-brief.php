@@ -214,3 +214,22 @@ twd_sk_test( 'brief: the new classes hold no key and no web call', function () {
 		twd_sk_hasnt( $bad, $php );
 	}
 } );
+
+twd_sk_test( 'brief js: only through the editor api, interview prompt and download, asks before applying, no addresses, no injection', function () {
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' );
+	twd_sk_has( "api('GET', '/site/brief')", $js );
+	twd_sk_has( "api('POST', '/site/brief/plan'", $js );
+	twd_sk_has( "api('POST', '/site/brief/apply'", $js );
+	twd_sk_has( 'confirm: true', $js );
+	twd_sk_has( 'Copy the interview prompt', $js );
+	twd_sk_has( 'Download the current brief', $js );
+	twd_sk_has( 'Nothing is published.', $js );
+	twd_sk_has( "api('POST', '/pages/generate', { page_id: entry.id", $js );
+	twd_sk_has( 'a site brief that has not been applied', $js );
+	twd_sk_hasnt( 'innerHTML', $js );
+	twd_sk_hasnt( 'eval(', $js );
+	twd_sk_true( 1 !== preg_match( '#https?://#i', $js ), 'no web addresses' );
+	twd_sk_true( 1 !== preg_match( '/(^|[^.\w])(alert|confirm|prompt)\s*\(/m', $js ), 'no native dialogs' );
+	// Pages in the result link only to this site.
+	twd_sk_has( "pg.url.indexOf(window.location.origin + '/') === 0", $js );
+} );

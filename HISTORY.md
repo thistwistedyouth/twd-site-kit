@@ -17,6 +17,14 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.6.1 (the site brief)
+
+- **The builder makes the first version, the client tweaks.** The initial site is built by the designer, from a conversation with the therapist, and the client (an editor) only adjusts afterwards. So the heavy input is one file, made outside the plugin, rather than a wizard clients would see.
+- **The interview happens in a normal Claude chat,** not in the plugin. It costs nothing to build, the questions can be improved without a release, and the plugin stays free of an AI conversation loop. The prompt is generated from code (allowed layouts, packs and page types) so it cannot drift from what the importer accepts.
+- **Check, then apply.** Pasting a file shows exactly what would happen, and filled-in details are kept unless overwrite is ticked. Anything not allowed is dropped with a sentence and nothing is trusted: the same validators the Site tab saves with decide.
+- **Pages become draft outlines, then AI fills them one at a time.** Creating a page by AI inside one request would risk a timeout and cost for twenty pages. Outlines are instant and free, and each has a Fill with AI button.
+- **No pictures in the file.** Pictures are media library items and cannot travel in JSON. They stay a manual checklist.
+
 ## v0.6.0 (a simpler pop-up)
 
 - **The pop-up grew feature by feature and showed all of it to everyone.** The client (an editor) needs three things: change this page, make a page, set its search details. The builder (an administrator) needs the rest once. Detail is now folded away rather than removed, so nothing was deleted and nothing needs a new permission.

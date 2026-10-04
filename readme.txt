@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.6.0
+Stable tag: 0.6.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.6.1 =
+* New: the site brief. One JSON file that describes a whole site (details, menu, header and footer, style, practice facts and the pages to create). Copy the interview prompt, run it in a Claude conversation with the therapist, paste the finished file into the Site tab, check what it would do, then apply it. Details already filled in are kept unless you choose to replace them, and pages are created as draft outlines that you can fill with AI one at a time. You can also download the current site as a brief.
 
 = 0.6.0 =
 * Changed: a simpler pop-up. The Site tab sections, history and undo, extra options and the external AI route are now closed fold-outs with a one-line summary, and the Edit screen shows only what to change, the preview and one Apply button. Nothing was removed.

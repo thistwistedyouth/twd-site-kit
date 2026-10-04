@@ -1170,13 +1170,264 @@
 		});
 	}
 
+	/* ---- the site brief: one JSON file for the whole site ---- */
+
+	var bui = { plan: null, lastText: '', applied: true };
+
+	function copyText(text, box, msg, okText) {
+		var copied = false;
+		try {
+			if (navigator.clipboard && navigator.clipboard.writeText) {
+				navigator.clipboard.writeText(text);
+				copied = true;
+			}
+		} catch (e) {
+			copied = false;
+		}
+		box.value = text;
+		if (copied) {
+			show(box, false);
+			message(msg, okText, true);
+		} else {
+			show(box, true);
+			box.focus();
+			box.select();
+			message(msg, 'The text is selected below. Press Ctrl+C (Cmd+C on a Mac) to copy it.', false);
+		}
+	}
+
+	function briefLines(plan) {
+		var out = [];
+		(plan.items || []).forEach(function (i) {
+			var what = i.action === 'set' ? 'will be set' : (i.action === 'skip_filled' ? 'already filled in, kept as it is' : 'no change');
+			out.push(i.label + ': ' + what + (i.action === 'set' ? ' (' + i.before + ' to ' + i.after + ')' : ''));
+		});
+		return out;
+	}
+
+	function renderBriefPlan(plan) {
+		clear(bui.planBox);
+		var lines = briefLines(plan);
+		bui.planBox.appendChild(el('strong', { text: 'What this brief would do:' }));
+		if (lines.length) {
+			listInto(bui.planBox, lines);
+		} else {
+			bui.planBox.appendChild(el('p', { text: 'Nothing in the site details, header, footer, style or facts would change.' }));
+		}
+		if ((plan.pages || []).length) {
+			bui.planBox.appendChild(el('strong', { text: 'Pages listed in the brief:' }));
+			listInto(bui.planBox, plan.pages.map(function (pg) {
+				return pg.title + ' (' + pg.type + ')' + (pg.exists ? ': already exists, will not be created again' : (bui.build.input.checked ? ': will be created as a draft outline' : ': not created unless you tick the box below'));
+			}));
+		}
+		if (plan.errors && plan.errors.length) {
+			bui.planBox.appendChild(el('strong', { text: 'Not allowed, so dropped:' }));
+			listInto(bui.planBox, plan.errors);
+		}
+		if (plan.ignored && plan.ignored.length) {
+			bui.planBox.appendChild(el('strong', { text: 'Ignored:' }));
+			listInto(bui.planBox, plan.ignored);
+		}
+		if (plan.blocking && plan.blocking.length) {
+			bui.planBox.appendChild(el('strong', { text: 'The style cannot be saved, because this text would be hard to read:' }));
+			listInto(bui.planBox, plan.blocking);
+		}
+		show(bui.planBox, true);
+		var can = (plan.items || []).some(function (i) {
+			return i.action === 'set';
+		}) || (bui.build.input.checked && (plan.pages || []).some(function (pg) {
+			return !pg.exists;
+		}));
+		bui.applyBtn.disabled = !can;
+	}
+
+	function briefCheck() {
+		var text = bui.text.value;
+		if (!text.trim()) {
+			message(bui.msg, 'Paste a site brief first.', false);
+			return;
+		}
+		message(bui.msg, 'Checking...', true);
+		bui.applyBtn.disabled = true;
+		api('POST', '/site/brief/plan', { brief: text, overwrite: bui.over.input.checked }).then(function (plan) {
+			bui.plan = plan;
+			bui.lastText = text;
+			message(bui.msg, 'Checked. Nothing has been changed yet. Read the list below, then press Apply.', true);
+			renderBriefPlan(plan);
+		}, function (err) {
+			show(bui.planBox, false);
+			message(bui.msg, err.message, false);
+		});
+	}
+
+	function refreshAfterBrief(state) {
+		if (state && P.data) {
+			P.data = state;
+			fillProfile();
+			fillChrome();
+		}
+		api('GET', '/site/facts').then(function (data) {
+			fui.data = data;
+			fillFacts();
+		}, function () {});
+		load();
+	}
+
+	function fillPage(entry, btn, note) {
+		btn.disabled = true;
+		message(note, 'Asking the AI. This can take up to a minute.', true);
+		api('POST', '/pages/generate', { page_id: entry.id, type: entry.type, title: entry.title, topic: entry.topic, notes: entry.notes }).then(function (data) {
+			message(note, 'Filled in. ' + (data.must_count ? data.must_count + ' placeholder or example items still need replacing before it can be published. ' : '') + 'Check every fact.', true);
+			btn.disabled = false;
+		}, function (err) {
+			message(note, err.message, false);
+			btn.disabled = false;
+		});
+	}
+
+	function renderBriefResult(res) {
+		clear(bui.result);
+		if (res.applied && res.applied.length) {
+			bui.result.appendChild(el('strong', { text: 'Done:' }));
+			listInto(bui.result, res.applied);
+		}
+		if (res.skipped && res.skipped.length) {
+			bui.result.appendChild(el('strong', { text: 'Left as it was:' }));
+			listInto(bui.result, res.skipped);
+		}
+		if (res.errors && res.errors.length) {
+			bui.result.appendChild(el('strong', { text: 'Not saved:' }));
+			listInto(bui.result, res.errors);
+		}
+		if (res.ignored && res.ignored.length) {
+			bui.result.appendChild(el('strong', { text: 'Ignored:' }));
+			listInto(bui.result, res.ignored);
+		}
+		(res.pages || []).forEach(function (pg) {
+			var row = el('div', { className: 'twd-sk-ed__row' });
+			var safe = typeof pg.url === 'string' && (pg.url.indexOf(window.location.origin + '/') === 0 || pg.url.charAt(0) === '/');
+			row.appendChild(document.createTextNode('Draft "' + pg.title + '" (' + pg.type + '). '));
+			if (safe) {
+				row.appendChild(el('a', { className: 'twd-sk-ed__link', href: pg.url, text: 'Open it' }));
+			}
+			bui.result.appendChild(row);
+			if (ED.cfg.aiAvailable) {
+				var note = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+				var btn = button('Fill "' + pg.title + '" with AI', 'secondary', function () {
+					fillPage(pg, btn, note);
+				});
+				bui.result.appendChild(el('div', { className: 'twd-sk-ed__actions' }, [btn]));
+				bui.result.appendChild(note);
+			}
+		});
+		show(bui.result, true);
+	}
+
+	function briefApply() {
+		ED.confirmInline(bui.confirmHost, {
+			text: 'Apply this site brief? Details that are already filled in are ' + (bui.over.input.checked ? 'REPLACED' : 'kept') + '. ' + (bui.build.input.checked ? 'Pages in the brief are created as drafts. ' : 'No pages are created. ') + 'Nothing is published.',
+			yesLabel: 'Yes, apply it',
+			onYes: function () {
+				message(bui.msg, 'Applying...', true);
+				bui.applyBtn.disabled = true;
+				api('POST', '/site/brief/apply', { brief: bui.lastText, overwrite: bui.over.input.checked, build_pages: bui.build.input.checked, confirm: true }).then(function (res) {
+					bui.applied = true;
+					bui.text.value = '';
+					show(bui.planBox, false);
+					message(bui.msg, 'Applied.', true);
+					renderBriefResult(res);
+					refreshAfterBrief(res.profile_state);
+				}, function (err) {
+					bui.applyBtn.disabled = false;
+					message(bui.msg, err.message, false);
+				});
+			}
+		});
+	}
+
+	function buildBriefSection(panel) {
+		bui.text = el('textarea', { id: 'twd-sk-brief', className: 'twd-sk-ed__textarea twd-sk-ed__tall', spellcheck: 'false' });
+		bui.text.addEventListener('input', function () {
+			bui.applied = bui.text.value.trim() === '';
+			bui.applyBtn.disabled = true;
+		});
+		bui.msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		bui.planBox = el('div', { className: 'twd-sk-ed__banner', role: 'status', hidden: '' });
+		bui.result = el('div', { className: 'twd-sk-ed__banner', role: 'status', hidden: '' });
+		bui.confirmHost = el('div', {});
+		bui.promptBox = el('textarea', { className: 'twd-sk-ed__textarea', readonly: '', 'aria-label': 'The interview prompt, selected so you can copy it', hidden: '' });
+		bui.over = checkbox('twd-sk-brief-over', 'Replace details that are already filled in');
+		bui.build = checkbox('twd-sk-brief-build', 'Create the pages in the brief as draft outlines');
+		bui.build.input.checked = true;
+		[bui.over.input, bui.build.input].forEach(function (c) {
+			c.addEventListener('change', function () {
+				if (bui.text.value.trim() && bui.plan) {
+					briefCheck();
+				}
+			});
+		});
+		bui.checkBtn = button('Check it', 'primary', briefCheck);
+		bui.applyBtn = button('Apply', 'secondary', briefApply);
+		bui.applyBtn.disabled = true;
+		bui.promptBtn = button('Copy the interview prompt', 'secondary', function () {
+			message(bui.msg, 'Preparing the prompt...', true);
+			api('GET', '/site/brief').then(function (data) {
+				copyText(data.prompt, bui.promptBox, bui.msg, 'Copied. Paste it into a Claude conversation. It will interview the therapist and finish with the brief.');
+			}, function (err) {
+				message(bui.msg, err.message, false);
+			});
+		});
+		bui.exportBtn = button('Download the current brief', 'secondary', function () {
+			message(bui.msg, 'Preparing the file...', true);
+			api('GET', '/site/brief').then(function (data) {
+				var blob = new Blob([JSON.stringify(data.brief, null, 2)], { type: 'application/json' });
+				var url = window.URL.createObjectURL(blob);
+				var a = el('a', { href: url, download: 'site-brief.json' });
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				window.setTimeout(function () {
+					window.URL.revokeObjectURL(url);
+				}, 1000);
+				message(bui.msg, 'Downloaded site-brief.json.', true);
+			}, function (err) {
+				message(bui.msg, err.message, false);
+			});
+		});
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Site brief' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'One file that describes the whole site: details, menu, header and footer, style, practice facts and the pages to create. Gather it in a conversation (copy the interview prompt), paste the result here, check what it would do, then apply it. You can download the current site as a brief at any time.' }),
+			el('div', { className: 'twd-sk-ed__actions' }, [bui.promptBtn, bui.exportBtn]),
+			bui.promptBox,
+			field('Paste a site brief (JSON)', bui.text),
+			bui.over.label,
+			bui.build.label,
+			el('div', { className: 'twd-sk-ed__actions' }, [bui.checkBtn, bui.applyBtn]),
+			bui.confirmHost,
+			bui.msg,
+			bui.planBox,
+			bui.result
+		]));
+	}
+
+	ED.addDirtyCheck(function () {
+		return (bui.text && bui.text.value.trim() && !bui.applied) ? 'a site brief that has not been applied' : '';
+	}, function () {
+		if (bui.text) {
+			bui.text.value = '';
+			bui.applied = true;
+		}
+	});
+
 	function buildSite(panel) {
+		buildBriefSection(panel);
 		buildStyleSection(panel);
 		buildProfileSection(panel);
 		buildFactsSection(panel);
 		buildChromeSection(panel);
 		buildSetupSection(panel);
 		var summaries = {
+			'Site brief': 'Build or update the whole site from one file',
 			'Style': 'Pick a look, colours, fonts and corners',
 			'Site details': 'Name, menu, contact lines, footer text',
 			'Practice facts': 'The master document the AI writes from',

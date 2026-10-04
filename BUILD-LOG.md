@@ -4,10 +4,11 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 
 ## Where we are (last updated at release 0.5.0)
 
-**Released and live in the update file:** 0.6.0. Sites update from Plugins, "Check for updates", "update now".
+**Released and live in the update file:** 0.6.1. Sites update from Plugins, "Check for updates", "update now".
 
 | Version | What it added |
 |---|---|
+| 0.6.1 | Site brief: one JSON file for a whole site, interview prompt for a Claude chat, check then apply, draft outline pages with Fill with AI |
 | 0.6.0 | A simpler pop-up: Site tab sections, history, extras and the external AI route are closed fold-outs, the Edit screen is one clear step |
 | 0.5.3 | Ask the AI in the Site tab for the header, footer and style (structured values filled into the boxes, never saved by themselves, contrast still enforced) |
 | 0.5.2 | Practice facts (admin only master document) and drafting new pages from them (About, Contact, Home, service or topic, Q and A), by AI or with a prompt for an external AI |
