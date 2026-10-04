@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.5.2
+Stable tag: 0.5.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.5.3 =
+* New: Ask the AI in the Site tab. Describe a change to the header, the footer or the style and the AI suggests values, which are filled into the boxes you already use. Nothing is saved until you press the normal Save buttons, colours always stay easy to read, and phone numbers, emails, addresses and registration lines can never be changed by the AI.
 
 = 0.5.2 =
 * New: Practice facts. One master document about the person and their practice, in the Site tab (administrators only, never shown on the site). The AI uses only this and the site details for anything new it writes.

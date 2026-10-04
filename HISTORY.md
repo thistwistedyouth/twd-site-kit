@@ -17,6 +17,13 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.5.3 (AI suggestions for header, footer and style)
+
+- **Structured values, not markup.** Header, footer and style are settings, not free content. Asking the AI for HTML or CSS here would risk the mobile menu, the legal links and readable contrast for no gain, so it answers with the same fields the Site tab edits and each one is validated by the code that saves it.
+- **Fill the form, do not save.** A proposal is put into the boxes the person already uses, so it is visible, editable, covered by the unsaved prompt and undoable, and saving needs the normal button. This also removed the need for any new write path.
+- **Where it lives.** It sits in the Site tab beside the thing it changes, not in the page editor. Header and footer changes are administrator work, so they live where administrators already are, and the page editor stays about one page.
+- **Contact details and registration lines are out of reach** of the AI on purpose: they are facts the therapist must supply, and an invented phone number or membership line is the worst error the kit could make.
+
 ## v0.5.2 (practice facts and pages from them)
 
 - **One master document, not many prompts.** Facts about a person arrived in chat messages and had to be re-pasted into every AI request. They now live once, in the site, and every AI request carries them. The AI may use only those facts and the real site details for anything new, and writes a visible placeholder where they are silent. This is how the kit avoids invented qualifications, fees and claims.

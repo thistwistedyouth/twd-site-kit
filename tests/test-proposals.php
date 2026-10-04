@@ -165,3 +165,20 @@ twd_sk_test( 'proposals: no key, no web call, and no code or CSS is ever accepte
 		twd_sk_hasnt( $bad, $php );
 	}
 } );
+
+twd_sk_test( 'proposals js: only through the editor api, fills the existing boxes, no addresses, no injection, only when AI is available', function () {
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' );
+	twd_sk_has( "api('POST', '/site/propose'", $js );
+	twd_sk_has( 'ED.cfg.aiAvailable', $js );
+	twd_sk_has( 'Ask the AI to change the header', $js );
+	twd_sk_has( 'Ask the AI to change the footer', $js );
+	twd_sk_has( 'Ask the AI to change the style', $js );
+	twd_sk_has( 'Check every word before you save', $js );
+	twd_sk_has( 'It cannot be saved as it stands', $js );
+	twd_sk_hasnt( 'innerHTML', $js );
+	twd_sk_hasnt( 'fetch(', $js );
+	twd_sk_true( 1 !== preg_match( '#https?://#i', $js ), 'no web addresses' );
+	twd_sk_true( 1 !== preg_match( '/(^|[^.\w])(alert|confirm|prompt)\s*\(/m', $js ), 'no native dialogs' );
+	// A proposal fills form boxes and the style preview; it never posts to a save route by itself.
+	twd_sk_true( 1 !== preg_match( "/propose[^;]*\\.then\\([^)]*api\\('POST', '\\/site\\/(profile|chrome|style)/s", $js ) );
+} );

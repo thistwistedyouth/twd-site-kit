@@ -364,14 +364,15 @@
 		ui.resetHost = el('div', {});
 		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
 			el('h3', { className: 'twd-sk-ed__step-title', text: 'Style' }),
-			el('p', { className: 'twd-sk-ed__help', text: 'Pick a style, then change colours, fonts and corners if you need to. Changes show on this page straight away. Nothing is kept until you press Save style.' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'Pick a style, then change colours, fonts and corners if you need to. Changes show on this page straight away. Nothing is kept until you press Save style.' })
+		].concat(aiBlocks(['style'])).concat([
 			ui.packs,
 			ui.controls,
 			ui.contrast,
 			el('div', { className: 'twd-sk-ed__actions' }, [ui.saveBtn, ui.discardBtn, ui.resetBtn, ui.reloadBtn]),
 			ui.resetHost,
 			ui.msg
-		]));
+		])));
 		load();
 	}
 
@@ -721,7 +722,8 @@
 		cui.exportBtn = button('Download the Theme Builder templates', 'secondary', downloadTemplates);
 		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
 			el('h3', { className: 'twd-sk-ed__step-title', text: 'Header and footer' }),
-			el('p', { className: 'twd-sk-ed__help', text: 'The header and footer print from the site details above, through two shortcodes in the Elementor Theme Builder. Choose how they look here.' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'The header and footer print from the site details above, through two shortcodes in the Elementor Theme Builder. Choose how they look here.' })
+		].concat(aiBlocks(['header', 'footer'])).concat([
 			cui.note,
 			el('div', { className: 'twd-sk-ed__grid' }, [
 				field('Header layout', cui.header),
@@ -733,7 +735,7 @@
 			strip.label,
 			el('div', { className: 'twd-sk-ed__actions' }, [cui.saveBtn, cui.exportBtn, cui.reloadBtn]),
 			cui.msg
-		]));
+		])));
 		// The layout names come with the profile, so fill the lists once it has arrived.
 		P.ready.then(function () {
 			if (!P.data) {
@@ -1020,6 +1022,153 @@
 			fillFacts();
 		}
 	});
+
+	/* ---- AI suggestions for the header, the footer and the style ---- */
+
+	var AI_TEXT = {
+		header: { title: 'Ask the AI to change the header', help: 'For example: add an About and a Contact link, or make the button say Book a call.', done: 'The suggestions are filled into the Site details boxes (menu and button) and the Header and footer settings below. Look them over, then press Save site details and Save header and footer to keep them.' },
+		footer: { title: 'Ask the AI to change the footer', help: 'For example: shorten the footer text, or add a link to the cookie policy.', done: 'The suggestions are filled into the Site details boxes (footer text and legal links) and the Header and footer settings below. Look them over, then press Save site details and Save header and footer to keep them.' },
+		style: { title: 'Ask the AI to change the style', help: 'For example: make it calmer and more earthy, or use squarer buttons. Colours always stay easy to read.', done: 'The suggestion is previewed on this page now. Nothing is kept until you press Save style.' }
+	};
+
+	function setValue(box, value) {
+		box.value = value === null || value === undefined ? '' : String(value);
+	}
+
+	function fillProposal(kind, v) {
+		if (kind === 'style') {
+			if (v.pack) {
+				S.pack = v.pack;
+				S.draft = {};
+			}
+			Object.keys(v.tokens || {}).forEach(function (name) {
+				S.draft[name] = v.tokens[name];
+			});
+			clearPreview();
+			previewAll();
+			renderPacks();
+			renderControls();
+			return;
+		}
+		if (kind === 'header') {
+			if (v.menu) {
+				pui.menu.value = linksToText(v.menu, true);
+			}
+			if ('cta_label' in v) {
+				setValue(pui.ctaLabel, v.cta_label);
+			}
+			if ('cta_url' in v) {
+				setValue(pui.ctaUrl, v.cta_url);
+			}
+			if ('header_variant' in v) {
+				cui.header.value = v.header_variant;
+			}
+			if ('sticky' in v) {
+				cui.sticky.checked = !!v.sticky;
+			}
+			if ('show_button' in v) {
+				cui.button.checked = !!v.show_button;
+			}
+			if ('show_strip' in v) {
+				cui.strip.checked = !!v.show_strip;
+			}
+			return;
+		}
+		if ('footer_text' in v) {
+			setValue(pui.footerText, v.footer_text);
+		}
+		if (v.legal) {
+			pui.legal.value = linksToText(v.legal, false);
+		}
+		if ('footer_variant' in v) {
+			cui.footer.value = v.footer_variant;
+		}
+		if ('footer_columns' in v) {
+			cui.cols.value = String(v.footer_columns);
+		}
+	}
+
+	function undoProposal(kind) {
+		if (kind === 'style') {
+			discard();
+			return;
+		}
+		if (P.data) {
+			fillProfile();
+			fillChrome();
+		}
+	}
+
+	function aiBlock(kind) {
+		if (!ED.cfg.aiAvailable) {
+			return null;
+		}
+		var t = AI_TEXT[kind];
+		var id = 'twd-sk-prop-' + kind;
+		var box = el('textarea', { id: id, className: 'twd-sk-ed__textarea twd-sk-ed__short', maxlength: '1000', spellcheck: 'true' });
+		var msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		var ask = button('Ask the AI', 'primary', function () {
+			var instruction = box.value.trim();
+			if (!instruction) {
+				message(msg, 'Say what you want changed first.', false);
+				box.focus();
+				return;
+			}
+			if (kind !== 'style' && !P.data) {
+				message(msg, 'The site details are still loading. Try again in a moment.', false);
+				return;
+			}
+			if (kind === 'style' && !S.data) {
+				message(msg, 'The style settings are still loading. Try again in a moment.', false);
+				return;
+			}
+			ask.disabled = true;
+			message(msg, 'Asking the AI. This can take up to a minute. Nothing is saved.', true);
+			api('POST', '/site/propose', { kind: kind, instruction: instruction }).then(function (data) {
+				ask.disabled = false;
+				var lines = [];
+				var changed = data.changed || [];
+				if (!changed.length) {
+					message(msg, 'The AI suggested no change.' + ((data.errors && data.errors.length) ? ' Some of what it tried was not allowed:' : ' Try wording it differently.'), false);
+					if (data.errors && data.errors.length) {
+						listInto(msg, data.errors);
+					}
+					return;
+				}
+				fillProposal(kind, data.values || {});
+				message(msg, 'The AI suggested ' + changed.length + ' change' + (changed.length === 1 ? '' : 's') + ': ' + changed.map(function (c) {
+					return c.label;
+				}).join(', ') + '. ' + t.done + ' Check every word before you save.', true);
+				if (data.errors && data.errors.length) {
+					listInto(msg, data.errors);
+				}
+				if (data.blocking && data.blocking.length) {
+					msg.appendChild(el('strong', { text: 'It cannot be saved as it stands, because this text would be hard to read:' }));
+					listInto(msg, data.blocking);
+				}
+			}, function (err) {
+				ask.disabled = false;
+				message(msg, err.message, false);
+			});
+		});
+		var undo = button('Undo the suggestion', 'secondary', function () {
+			undoProposal(kind);
+			message(msg, 'Back to what is saved.', true);
+		});
+		return el('div', { className: 'twd-sk-ed__card' }, [
+			el('label', { className: 'twd-sk-ed__label', 'for': id, text: t.title }),
+			el('p', { className: 'twd-sk-ed__help', text: t.help }),
+			box,
+			el('div', { className: 'twd-sk-ed__actions' }, [ask, undo]),
+			msg
+		]);
+	}
+
+	function aiBlocks(kinds) {
+		return kinds.map(aiBlock).filter(function (b) {
+			return b;
+		});
+	}
 
 	function buildSite(panel) {
 		buildStyleSection(panel);

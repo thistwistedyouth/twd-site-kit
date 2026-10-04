@@ -4,10 +4,11 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 
 ## Where we are (last updated at release 0.5.0)
 
-**Released and live in the update file:** 0.5.2. Sites update from Plugins, "Check for updates", "update now".
+**Released and live in the update file:** 0.5.3. Sites update from Plugins, "Check for updates", "update now".
 
 | Version | What it added |
 |---|---|
+| 0.5.3 | Ask the AI in the Site tab for the header, footer and style (structured values filled into the boxes, never saved by themselves, contrast still enforced) |
 | 0.5.2 | Practice facts (admin only master document) and drafting new pages from them (About, Contact, Home, service or topic, Q and A), by AI or with a prompt for an external AI |
 | 0.5.1 | Fix: a missing Site name no longer makes the header ignore the typed menu (it uses the WordPress site title) |
 | 0.5.0 | Ask the AI in the Edit this page tab (by section or whole page, preview before saving, testimonials and the safety notice locked), external AI copy and paste tucked under a toggle |
@@ -17,13 +18,13 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 | 0.3.0 | The Edit with AI pop-up: prompt, preview, apply, history |
 
 **Next, in order (agreed with the owner):**
-1. 0.5.3: header, footer and style proposals from the AI (structured values, never free HTML or CSS), reusing the site details check, the contrast check and the live preview.
-2. Later: Add a section (pick a type, say what it is for).
+1. Verify 0.4.0 to 0.5.3 on the pilot site (see the lists below) before building more.
+2. Later, only when asked: Add a section (pick a type, say what it is for).
 - Not planned, on purpose: rewriting every page at once, free CSS, free HTML for the header and footer.
 
 **Waiting on other projects (cross-project contract):**
 - The Articles & Resource Production plugin (`twd-article-publisher`, repo `therapy-web-designs`) must offer two filters before Ask the AI can appear: `twd_ai_is_configured` (true when a key is saved) and `twd_ai_complete( null, $system, $message, $max_tokens )` (returns text, a WP_Error, or null). Site Kit holds no key and calls no AI service. Status when last checked: not yet added (that plugin was at 1.33.0). The filter names were chosen here; if the other project picks different ones, change them in `class-twd-sk-ai.php`.
-- Nothing else is waiting.
+- Nothing else is waiting. Ask the AI, drafting pages with AI and the Site tab suggestions all need those two filters, so they stay hidden until the articles plugin offers them.
 
 **Not yet verified on a real site (needs a human):** importing the two Theme Builder templates on Elementor Pro 4.3.1 and their display condition, real Yoast behaviour (writing its fields, the schema graph filter), the media picker, how a page behaves if the plugin is deactivated, caching on the host, and Ask the AI with a real key. The test plan is in the release notes of each version in the conversation that built it; the 0.4.0 steps are in the section below.
 
