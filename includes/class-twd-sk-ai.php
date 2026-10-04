@@ -333,12 +333,18 @@ class TWD_SK_AI {
 		if ( is_wp_error( $in ) ) {
 			return $in;
 		}
+		if ( ! empty( $raw['page_id'] ) ) {
+			$target = get_post( (int) $raw['page_id'] );
+			if ( ! $target || 'page' !== $target->post_type || ! TWD_SK_Page::is_kit_page( (int) $raw['page_id'] ) ) {
+				return self::err( 'twd_sk_bad_input', 'That page was not found, or it does not use the kit.' );
+			}
+		}
 		$reply = apply_filters( 'twd_ai_complete', null, self::page_system_prompt(), self::page_message( $in ), self::TOKENS_PAGE );
 		if ( is_wp_error( $reply ) ) {
 			return $reply;
 		}
 		if ( ! is_string( $reply ) || '' === trim( $reply ) ) {
-			return self::err( 'twd_sk_ai_unavailable', 'The AI did not answer. No page was created. Try again in a moment.' );
+			return self::err( 'twd_sk_ai_unavailable', 'The AI did not answer. Nothing was saved. Try again in a moment.' );
 		}
 		$reply = self::strip_fence( $reply );
 		if ( strlen( $reply ) > TWD_SK_Store::MAX_BYTES ) {
@@ -350,11 +356,19 @@ class TWD_SK_AI {
 		}
 		$html = implode( "\n", $parts['sections'] );
 
-		$id = TWD_SK_Template::create_page( $in['title'], 'blank' );
-		if ( is_wp_error( $id ) ) {
-			return $id;
+		$existing = isset( $raw['page_id'] ) ? (int) $raw['page_id'] : 0;
+		$note     = 'AI draft from the practice facts (' . $in['type'] . ')';
+		if ( $existing > 0 ) {
+			// Fill a page that already exists (for example an outline made from a site brief) as a new version.
+			$id    = $existing;
+			$saved = TWD_SK_Store::save( $id, $html, array( 'base_version' => TWD_SK_Store::get_current_version_id( $id ), 'note' => $note ) );
+		} else {
+			$id = TWD_SK_Template::create_page( $in['title'], 'blank' );
+			if ( is_wp_error( $id ) ) {
+				return $id;
+			}
+			$saved = TWD_SK_Store::save( $id, $html, array( 'base_version' => 0, 'note' => $note ) );
 		}
-		$saved = TWD_SK_Store::save( $id, $html, array( 'base_version' => 0, 'note' => 'AI draft from the practice facts (' . $in['type'] . ')' ) );
 		if ( is_wp_error( $saved ) ) {
 			return $saved;
 		}

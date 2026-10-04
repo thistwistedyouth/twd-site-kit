@@ -547,6 +547,7 @@ require_once ABSPATH . 'includes/class-twd-sk-facts.php';
 require_once ABSPATH . 'includes/class-twd-sk-recipes.php';
 require_once ABSPATH . 'includes/class-twd-sk-ai.php';
 require_once ABSPATH . 'includes/class-twd-sk-proposals.php';
+require_once ABSPATH . 'includes/class-twd-sk-brief.php';
 require_once ABSPATH . 'includes/class-twd-sk-assets.php';
 require_once ABSPATH . 'includes/class-twd-sk-updater.php';
 require_once ABSPATH . 'includes/class-twd-sk-report.php';

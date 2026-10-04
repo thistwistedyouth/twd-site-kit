@@ -195,6 +195,21 @@ class TWD_SK_REST {
 				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 			),
 		) );
+		register_rest_route( self::ROUTE_NS, '/site/brief', array(
+			'methods'             => 'GET',
+			'callback'            => array( __CLASS__, 'get_site_brief' ),
+			'permission_callback' => array( __CLASS__, 'can_read_site' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/brief/plan', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_brief_plan' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/brief/apply', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_brief_apply' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
 		register_rest_route( self::ROUTE_NS, '/site/propose', array(
 			'methods'             => 'POST',
 			'callback'            => array( __CLASS__, 'post_site_propose' ),
@@ -462,6 +477,40 @@ class TWD_SK_REST {
 		return self::facts_payload();
 	}
 
+	// -- The site brief ---------------------------------------------------
+
+	/** The current site as a brief, the interview prompt, and the format. Read only. */
+	public static function get_site_brief( $request ) {
+		return array(
+			'brief'  => TWD_SK_Brief::export(),
+			'prompt' => TWD_SK_Brief::interview_prompt(),
+			'schema' => TWD_SK_Brief::SCHEMA,
+		);
+	}
+
+	/** What a pasted brief would do. Changes nothing. */
+	public static function post_site_brief_plan( $request ) {
+		$data = TWD_SK_Brief::parse( $request->get_param( 'brief' ) );
+		if ( is_wp_error( $data ) ) {
+			return self::error( $data->get_error_code(), $data->get_error_message(), 400 );
+		}
+		return TWD_SK_Brief::preview( $data, self::truthy( $request->get_param( 'overwrite' ) ) );
+	}
+
+	/** Apply a pasted brief. Needs confirm. Pages are created as drafts only. */
+	public static function post_site_brief_apply( $request ) {
+		if ( ! self::truthy( $request->get_param( 'confirm' ) ) ) {
+			return self::error( 'twd_sk_confirm_needed', 'Please confirm first.', 400 );
+		}
+		$data = TWD_SK_Brief::parse( $request->get_param( 'brief' ) );
+		if ( is_wp_error( $data ) ) {
+			return self::error( $data->get_error_code(), $data->get_error_message(), 400 );
+		}
+		$out                = TWD_SK_Brief::apply( $data, array( 'overwrite' => self::truthy( $request->get_param( 'overwrite' ) ), 'build_pages' => self::truthy( $request->get_param( 'build_pages' ) ) ) );
+		$out['profile_state'] = self::profile_payload();
+		return $out;
+	}
+
 	/** Ask the AI to suggest header, footer or style values. Saves nothing. */
 	public static function post_site_propose( $request ) {
 		$result = TWD_SK_Proposals::propose( $request->get_param( 'kind' ), $request->get_param( 'instruction' ) );
@@ -476,7 +525,12 @@ class TWD_SK_REST {
 
 	/** Draft a new page from the practice facts. Creates a DRAFT only. */
 	public static function post_generate( $request ) {
+		$page_id = $request->get_param( 'page_id' );
+		if ( null !== $page_id && '' !== $page_id && ( ! is_numeric( $page_id ) || (int) $page_id <= 0 || ! current_user_can( 'edit_post', (int) $page_id ) ) ) {
+			return self::error( 'twd_sk_forbidden', 'You do not have permission to edit that page.', 403 );
+		}
 		$result = TWD_SK_AI::generate_page( array(
+			'page_id' => is_numeric( $page_id ) ? (int) $page_id : 0,
 			'type'  => $request->get_param( 'type' ),
 			'title' => $request->get_param( 'title' ),
 			'topic' => $request->get_param( 'topic' ),

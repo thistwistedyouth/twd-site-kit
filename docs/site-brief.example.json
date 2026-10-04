@@ -1,0 +1,41 @@
+{
+  "schema": "twd-site-brief/1",
+  "site": {
+    "name": "Example Practice",
+    "person_name": "Alex Example",
+    "person_job": "Counsellor",
+    "phone": "",
+    "email": "hello@example.com",
+    "address": [],
+    "area_served": "Online",
+    "registration": [],
+    "same_as": []
+  },
+  "header": {
+    "menu": [
+      { "label": "Home", "url": "/", "children": [] },
+      { "label": "About", "url": "/about", "children": [] },
+      { "label": "Working with anxiety", "url": "/working-with-anxiety", "children": [] },
+      { "label": "Contact", "url": "/contact", "children": [] }
+    ],
+    "cta_label": "Get in touch",
+    "cta_url": "/contact",
+    "layout": "bar",
+    "sticky": false,
+    "show_button": true,
+    "show_strip": false
+  },
+  "footer": {
+    "text": "Counselling for adults, online.",
+    "legal": [ { "label": "Privacy policy", "url": "/privacy-policy" } ],
+    "layout": "columns",
+    "columns": 2
+  },
+  "style": { "pack": "sage", "tokens": {} },
+  "facts": "WHO I AM\nAlex Example, a counsellor.\n\nWHO I HELP\nAdults who feel overwhelmed.\n\nWHAT I OFFER\nOne to one counselling online.\n\nHOW TO CONTACT ME\nEmail: hello@example.com\n",
+  "pages": [
+    { "type": "about", "title": "About", "topic": "", "notes": "", "seo": { "title": "About Alex Example", "description": "Online counselling for adults." } },
+    { "type": "contact", "title": "Contact", "topic": "", "notes": "" },
+    { "type": "service", "title": "", "topic": "Working with anxiety", "notes": "Keep it gentle." }
+  ]
+}
