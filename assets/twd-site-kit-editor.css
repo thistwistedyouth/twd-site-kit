@@ -380,6 +380,10 @@
   min-height: 88px;
   height: 96px;
 }
+.twd-sk-ed .twd-sk-ed__textarea.twd-sk-ed__textarea.twd-sk-ed__tall.twd-sk-ed__tall {
+  min-height: 320px;
+  height: 420px;
+}
 .twd-sk-ed .twd-sk-ed__disclose.twd-sk-ed__disclose {
   display: block;
   min-height: 44px;

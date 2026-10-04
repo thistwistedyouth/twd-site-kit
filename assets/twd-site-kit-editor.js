@@ -363,7 +363,8 @@
 		['Simpler words', 'Use simpler words.'],
 		['More professional', 'Make the tone more professional.'],
 		['Stronger first line', 'Write a stronger first line.'],
-		['Fix links and headings', 'Fix link wording and heading order.']
+		['Fix links and headings', 'Fix link wording and heading order.'],
+		['Update from my practice facts', 'Update this so it matches my practice facts. Keep the layout.']
 	];
 
 	function buildRemixStep(panel) {
@@ -799,6 +800,116 @@
 			ui.newMsg,
 			el('p', {}, [ui.newLink])
 		]));
+		buildFactsPageSection(panel);
+	}
+
+	/* ---- a new page drafted from the practice facts ---- */
+
+	function buildFactsPageSection(panel) {
+		var recipes = cfg.recipes || {};
+		if (!Object.keys(recipes).length) {
+			return;
+		}
+		ui.fpType = el('select', { id: 'twd-sk-ed-fptype', className: 'twd-sk-ed__select' });
+		Object.keys(recipes).forEach(function (key) {
+			ui.fpType.appendChild(el('option', { value: key, text: recipes[key] }));
+		});
+		ui.fpType.addEventListener('change', syncFactsPage);
+		ui.fpTopic = el('input', { id: 'twd-sk-ed-fptopic', className: 'twd-sk-ed__input', type: 'text', maxlength: '120', autocomplete: 'off' });
+		ui.fpTopicBox = el('div', { className: 'twd-sk-ed__field' }, [
+			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-fptopic', text: 'What is the page about?' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'For example: Working with anxiety. This becomes the page title.' }),
+			ui.fpTopic
+		]);
+		ui.fpTitle = el('input', { id: 'twd-sk-ed-fptitle', className: 'twd-sk-ed__input', type: 'text', maxlength: String(cfg.maxTitle || 120), autocomplete: 'off' });
+		ui.fpNotes = el('textarea', { id: 'twd-sk-ed-fpnotes', className: 'twd-sk-ed__textarea twd-sk-ed__short', maxlength: '1500', spellcheck: 'true' });
+		ui.fpMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		ui.fpLink = el('a', { className: 'twd-sk-ed__link', text: 'Open the new draft page', hidden: '' });
+		ui.fpPromptBox = el('textarea', { className: 'twd-sk-ed__textarea', readonly: '', 'aria-label': 'The prompt, selected so you can copy it', hidden: '' });
+		ui.fpCreate = button('Create a draft with AI', 'primary', doFactsPage);
+		ui.fpCopy = button('Copy prompt for external AI', cfg.aiAvailable ? 'secondary' : 'primary', doFactsPrompt);
+		show(ui.fpCreate, !!cfg.aiAvailable);
+		var kids = [
+			el('p', { className: 'twd-sk-ed__help', text: 'Draft a new page from the practice facts about the person. It is saved as a draft and nothing is published. Wherever the facts do not say what is needed, you will see a [PLACEHOLDER] to replace before it can be published.' })
+		];
+		if (!cfg.factsSaved) {
+			kids.push(el('p', { className: 'twd-sk-ed__banner', role: 'status', text: 'No practice facts are saved yet, so the draft will be mostly placeholders.' + (cfg.canManage ? '' : ' An administrator can add them in the Site tab.') }));
+		}
+		kids.push(
+			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-fptype', text: 'Page type' }),
+			ui.fpType,
+			ui.fpTopicBox,
+			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-fptitle', text: 'Page title (optional)' }),
+			ui.fpTitle,
+			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-fpnotes', text: 'Anything to add? (optional)' }),
+			ui.fpNotes,
+			el('div', { className: 'twd-sk-ed__actions' }, [ui.fpCreate, ui.fpCopy]),
+			ui.fpMsg,
+			ui.fpPromptBox,
+			el('p', {}, [ui.fpLink])
+		);
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [el('h3', { className: 'twd-sk-ed__step-title', text: 'New page from your practice facts' })].concat(kids)));
+		syncFactsPage();
+	}
+
+	function syncFactsPage() {
+		show(ui.fpTopicBox, ui.fpType.value === 'service');
+	}
+
+	function factsBody() {
+		return { type: ui.fpType.value, topic: ui.fpTopic.value, title: ui.fpTitle.value, notes: ui.fpNotes.value };
+	}
+
+	function doFactsPage() {
+		var body = factsBody();
+		if (body.type === 'service' && !body.topic.trim()) {
+			message(ui.fpMsg, 'Say what the page is about first.', false);
+			ui.fpTopic.focus();
+			return;
+		}
+		ui.fpCreate.disabled = true;
+		show(ui.fpLink, false);
+		message(ui.fpMsg, 'Asking the AI. This can take up to a minute. No page is created until it answers.', true);
+		api('POST', '/pages/generate', body).then(function (data) {
+			ui.fpCreate.disabled = false;
+			var text = 'Draft "' + data.title + '" created with ' + data.sections + ' sections. It is not published.';
+			if (data.must_count) {
+				text += ' ' + data.must_count + ' placeholder or example items still need replacing before it can be published.';
+			}
+			message(ui.fpMsg, text + ' Check every fact before you publish.', true);
+			if (typeof data.url === 'string' && (data.url.indexOf(window.location.origin + '/') === 0 || data.url.charAt(0) === '/')) {
+				ui.fpLink.setAttribute('href', data.url);
+				show(ui.fpLink, true);
+			}
+		}, function (err) {
+			ui.fpCreate.disabled = false;
+			message(ui.fpMsg, err.message, false);
+		});
+	}
+
+	function doFactsPrompt() {
+		var body = factsBody();
+		message(ui.fpMsg, 'Preparing the prompt...', true);
+		api('POST', '/pages/recipe-prompt', body).then(function (data) {
+			var copied = false;
+			ui.fpPromptBox.value = data.prompt;
+			show(ui.fpPromptBox, true);
+			try {
+				if (navigator.clipboard && navigator.clipboard.writeText) {
+					navigator.clipboard.writeText(data.prompt);
+					copied = true;
+				}
+			} catch (e) {
+				copied = false;
+			}
+			if (!copied) {
+				ui.fpPromptBox.focus();
+				ui.fpPromptBox.select();
+			}
+			message(ui.fpMsg, (copied ? 'Copied. ' : 'The text is selected below. Press Ctrl+C (Cmd+C on a Mac) to copy it. ') + 'Paste it into your AI chat. When you have the page HTML, create a blank draft above and paste the result in with Edit this page.', copied);
+		}, function (err) {
+			message(ui.fpMsg, err.message, false);
+		});
 	}
 
 	function loadInfo() {

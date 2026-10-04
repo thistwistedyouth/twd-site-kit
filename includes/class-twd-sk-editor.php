@@ -86,6 +86,7 @@ class TWD_SK_Editor {
 			'aiAvailable'    => TWD_SK_AI::available(),
 			'recipes'        => TWD_SK_Recipes::labels(),
 			'canManage'      => current_user_can( 'manage_options' ),
+			'factsSaved'     => '' !== TWD_SK_Facts::get(),
 		) );
 		wp_enqueue_script( self::HANDLE );
 

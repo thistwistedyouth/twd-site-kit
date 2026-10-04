@@ -44,7 +44,7 @@ twd_sk_test( 'unsaved prompt js: every way to close goes through the guard, with
 } );
 
 twd_sk_test( 'unsaved prompt js: each tab with its own form registers a check and a way to put things back', function () {
-	foreach ( array( 'twd-site-kit-editor-site.js' => 3, 'twd-site-kit-editor-seo.js' => 1 ) as $file => $count ) {
+	foreach ( array( 'twd-site-kit-editor-site.js' => 4, 'twd-site-kit-editor-seo.js' => 1 ) as $file => $count ) {
 		$js = file_get_contents( ABSPATH . 'assets/' . $file );
 		twd_sk_eq( $count, substr_count( $js, 'ED.addDirtyCheck(' ), $file . ' registers its checks' );
 	}

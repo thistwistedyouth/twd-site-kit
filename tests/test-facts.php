@@ -196,3 +196,38 @@ twd_sk_test( 'facts: nothing in the new classes calls out to the web, and no lon
 		}
 	}
 } );
+
+twd_sk_test( 'facts js: the editor sends only through its api, offers the outline, warns when none are saved, and holds no addresses or injection', function () {
+	$main = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' );
+	$site = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' );
+	twd_sk_has( "api('POST', '/pages/generate', body)", $main );
+	twd_sk_has( "api('POST', '/pages/recipe-prompt', body)", $main );
+	twd_sk_has( 'No practice facts are saved yet', $main );
+	twd_sk_has( 'Create a draft with AI', $main );
+	twd_sk_has( 'Update from my practice facts', $main );
+	twd_sk_has( "api('GET', '/site/facts')", $site );
+	twd_sk_has( "api('POST', '/site/facts'", $site );
+	twd_sk_has( 'Start from the outline', $site );
+	twd_sk_has( 'Only administrators can see it. It is never shown on the site.', $site );
+	foreach ( array( $main, $site ) as $js ) {
+		twd_sk_hasnt( 'innerHTML', $js );
+		twd_sk_hasnt( 'eval(', $js );
+		twd_sk_true( 1 !== preg_match( '#https?://#i', $js ), 'no web addresses' );
+		twd_sk_true( 1 !== preg_match( '/(^|[^.\w])(alert|confirm|prompt)\s*\(/m', $js ), 'no native dialogs' );
+	}
+} );
+
+twd_sk_test( 'facts: the editor is told whether facts are saved (never their text), what types exist, and whether the user can manage', function () {
+	twd_sk_ed_setup( array( 'edit_pages', 'edit_post:12', 'manage_options' ) );
+	$GLOBALS['twd_stub']['hooks'] = array();
+	TWD_SK_Facts::save( 'SECRET-FACT-MARKER' );
+	twd_sk_true( twd_sk_ed_loaded() );
+	$d = $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data'];
+	twd_sk_eq( true, $d['factsSaved'] );
+	twd_sk_eq( true, $d['canManage'] );
+	twd_sk_eq( array( 'about', 'contact', 'home', 'service', 'faq' ), array_keys( $d['recipes'] ) );
+	twd_sk_hasnt( 'SECRET-FACT-MARKER', json_encode( $d ), 'the text is never handed to the browser through the page' );
+	twd_sk_ed_setup( array( 'edit_pages', 'edit_post:12' ) );
+	twd_sk_ed_loaded();
+	twd_sk_eq( false, $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['canManage'] );
+} );

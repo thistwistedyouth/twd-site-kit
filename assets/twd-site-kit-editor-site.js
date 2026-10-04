@@ -953,9 +953,78 @@
 
 	ED.onOpen.push(addPills);
 
+	/* ---- practice facts (the master document) ---- */
+
+	var fui = { data: null, snap: null };
+
+	function updateFactsCount() {
+		var n = fui.text.value.length;
+		var max = fui.data ? fui.data.max : 20000;
+		fui.count.textContent = n + ' of ' + max + ' characters.' + (n > max ? ' Too long to save.' : '');
+		fui.saveBtn.disabled = n > max;
+		show(fui.templateBtn, fui.text.value.trim() === '');
+	}
+
+	function fillFacts() {
+		fui.text.value = fui.data.text || '';
+		fui.snap = fui.text.value;
+		updateFactsCount();
+		fui.updated.textContent = fui.data.updated ? 'Last saved ' + fui.data.updated + ' (UTC).' : 'Not saved yet.';
+	}
+
+	function saveFacts() {
+		message(fui.msg, 'Saving...', true);
+		api('POST', '/site/facts', { text: fui.text.value }).then(function (data) {
+			fui.data = data;
+			fillFacts();
+			message(fui.msg, 'Saved. Long dashes and tags are removed on saving.', true);
+		}, function (err) {
+			message(fui.msg, err.message, false);
+		});
+	}
+
+	function buildFactsSection(panel) {
+		fui.text = el('textarea', { id: 'twd-sk-facts', className: 'twd-sk-ed__textarea twd-sk-ed__tall', spellcheck: 'true' });
+		fui.text.addEventListener('input', updateFactsCount);
+		fui.count = el('p', { className: 'twd-sk-ed__help', 'aria-live': 'polite' });
+		fui.updated = el('p', { className: 'twd-sk-ed__help' });
+		fui.msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		fui.saveBtn = button('Save practice facts', 'primary', saveFacts);
+		fui.templateBtn = button('Start from the outline', 'secondary', function () {
+			fui.text.value = fui.data ? fui.data.template : '';
+			updateFactsCount();
+			fui.text.focus();
+		});
+		show(fui.templateBtn, false);
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Practice facts' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'One master document about the person and their practice: who they are, who they help, what they offer, their approach, qualifications and registrations in exactly the wording they supplied, fees, where and when, questions people ask, and words they like or never use. The AI uses only this, and the site details above, for anything new it writes. Only administrators can see it. It is never shown on the site. Write about the practice only, never about the people they work with.' }),
+			field('Practice facts', fui.text),
+			fui.count,
+			fui.updated,
+			el('div', { className: 'twd-sk-ed__actions' }, [fui.saveBtn, fui.templateBtn]),
+			fui.msg
+		]));
+		api('GET', '/site/facts').then(function (data) {
+			fui.data = data;
+			fillFacts();
+		}, function (err) {
+			message(fui.msg, err.message, false);
+		});
+	}
+
+	ED.addDirtyCheck(function () {
+		return (fui.data && fui.snap !== null && fui.text.value !== fui.snap) ? 'practice facts' : '';
+	}, function () {
+		if (fui.data) {
+			fillFacts();
+		}
+	});
+
 	function buildSite(panel) {
 		buildStyleSection(panel);
 		buildProfileSection(panel);
+		buildFactsSection(panel);
 		buildChromeSection(panel);
 		buildSetupSection(panel);
 	}

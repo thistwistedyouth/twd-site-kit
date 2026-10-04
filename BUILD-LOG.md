@@ -4,10 +4,11 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 
 ## Where we are (last updated at release 0.5.0)
 
-**Released and live in the update file:** 0.5.1. Sites update from Plugins, "Check for updates", "update now".
+**Released and live in the update file:** 0.5.2. Sites update from Plugins, "Check for updates", "update now".
 
 | Version | What it added |
 |---|---|
+| 0.5.2 | Practice facts (admin only master document) and drafting new pages from them (About, Contact, Home, service or topic, Q and A), by AI or with a prompt for an external AI |
 | 0.5.1 | Fix: a missing Site name no longer makes the header ignore the typed menu (it uses the WordPress site title) |
 | 0.5.0 | Ask the AI in the Edit this page tab (by section or whole page, preview before saving, testimonials and the safety notice locked), external AI copy and paste tucked under a toggle |
 | 0.4.1 | Edit header and Edit footer pills (after Edit with AI is opened), prompt before closing with unsaved changes |
@@ -16,8 +17,8 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 | 0.3.0 | The Edit with AI pop-up: prompt, preview, apply, history |
 
 **Next, in order (agreed with the owner):**
-1. 0.5.1: header, footer and style proposals from the AI (structured values, never free HTML or CSS), reusing the site details check, the contrast check and the live preview.
-2. 0.5.2: a Voice and facts note in the Site tab (administrators only), added to every AI request; and Add a section.
+1. 0.5.3: header, footer and style proposals from the AI (structured values, never free HTML or CSS), reusing the site details check, the contrast check and the live preview.
+2. Later: Add a section (pick a type, say what it is for).
 - Not planned, on purpose: rewriting every page at once, free CSS, free HTML for the header and footer.
 
 **Waiting on other projects (cross-project contract):**

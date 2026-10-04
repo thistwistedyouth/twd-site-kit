@@ -127,6 +127,7 @@
 }
 .twd-sk-ed__chip:hover, .twd-sk-ed__chip:focus-visible { background-color: $color-primary-hover; border-color: $color-primary-hover; color: $color-on-primary; }
 .twd-sk-ed__textarea.twd-sk-ed__short { min-height: 88px; height: 96px; }
+.twd-sk-ed__textarea.twd-sk-ed__tall { min-height: 320px; height: 420px; }
 .twd-sk-ed__disclose {
   display: block; min-height: 44px; margin: 0; padding: 10px 0; border: 0; background: none; color: $color-accent-text;
   font-family: $font-body; font-size: $size-small; text-decoration: underline; cursor: pointer;

@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.5.1
+Stable tag: 0.5.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,11 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.5.2 =
+* New: Practice facts. One master document about the person and their practice, in the Site tab (administrators only, never shown on the site). The AI uses only this and the site details for anything new it writes.
+* New: New page from your practice facts (Pages tab). Draft an About, Contact, Home, service or topic page (for example Working with anxiety) or questions and answers page. It is saved as a draft, nothing is published, and anything the facts do not say stays a visible placeholder. Without an AI key it copies a prompt for an external AI instead.
+* New: a quick option to update an existing page from the practice facts.
 
 = 0.5.1 =
 * Fixed: the header no longer drops your typed menu when the Site name box is empty. It uses the WordPress site title instead. The footer likewise.

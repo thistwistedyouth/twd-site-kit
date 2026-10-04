@@ -17,6 +17,15 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.5.2 (practice facts and pages from them)
+
+- **One master document, not many prompts.** Facts about a person arrived in chat messages and had to be re-pasted into every AI request. They now live once, in the site, and every AI request carries them. The AI may use only those facts and the real site details for anything new, and writes a visible placeholder where they are silent. This is how the kit avoids invented qualifications, fees and claims.
+- **Administrators only, never published.** The document may hold fee and registration wording the person has not yet approved for the site, so it is not exposed to editors or visitors, and its text never goes to the browser through the page. Editors can still use it indirectly (the server adds it to their AI requests), which is the point.
+- **Recipes are outlines, not prompts alone.** A page type is a list of kit components built from the registry skeletons, so a drafted page cannot use a component or class that does not exist, and every sample word is a placeholder until replaced.
+- **A page is created only after the AI has answered with something usable,** so a failed request leaves no empty draft behind, and the draft is saved through the one write path as version 1.
+- **The external AI route stays.** Without a key the same button copies a prompt (recipe plus facts for an administrator). Editors get the recipe without the facts.
+- **0.5.1 fix:** a missing Site name used to make the header ignore the typed menu and list published pages instead, which looked like the menu not saving. It now uses the WordPress site title.
+
 ## v0.5.0 (Ask the AI)
 
 - **Keyless on purpose.** The articles plugin already holds the client's key (its generator is article specific and its key lookup and Anthropic call are private). Site Kit asks for text through a filter, so the key lives in one place and Site Kit stays free of any AI service address. The two plugins agree on two filter names only.
