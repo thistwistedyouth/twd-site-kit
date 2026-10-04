@@ -17,6 +17,13 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.6.2 (the site report)
+
+- **Problems were being diagnosed from descriptions and screenshots.** The report states the facts instead: versions, safe mode, the Theme Builder templates and their display conditions (the thing most often wrong on a new site), which pages use the kit and what is left to fix, and the pictures with their alt text.
+- **Paste-safe by construction.** It prints whether something is filled in, never what it says, and every value is stripped of markup and control characters, so a page title or a file name cannot break the layout or carry code. A test checks that no email, phone, address, registration line, fact text or key can appear.
+- **The command line version works in safe mode,** because safe mode is when it is most needed. The Site tab button follows the rest of the Site tab and is off in safe mode.
+- **Site Kit reports the articles plugin through the active plugin list,** not by reading its constants, so the rule that this plugin never references that plugin's code still holds.
+
 ## v0.6.1 (the site brief)
 
 - **The builder makes the first version, the client tweaks.** The initial site is built by the designer, from a conversation with the therapist, and the client (an editor) only adjusts afterwards. So the heavy input is one file, made outside the plugin, rather than a wizard clients would see.

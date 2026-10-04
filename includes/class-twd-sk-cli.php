@@ -278,6 +278,21 @@ class TWD_SK_CLI {
 	}
 
 	/**
+	 * Print a plain-text report of the site's state, safe to paste into a message: versions, safe mode,
+	 * style, front page, Theme Builder header and footer templates and their display conditions, which
+	 * pages use the kit and what is left to fix, which details are filled in (never their contents), and
+	 * the pictures in the Media Library with their alt text. Read only. Works in safe mode.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk doctor
+	 *     wp twd-sk doctor > report.txt
+	 */
+	public function doctor( $args, $assoc_args ) {
+		WP_CLI::line( rtrim( TWD_SK_Doctor::report() ) );
+	}
+
+	/**
 	 * Write the two Elementor Theme Builder templates (a header and a footer, each one Shortcode
 	 * widget) as JSON files for importing into a base site. After importing, set each template's
 	 * display condition to the entire site.

@@ -406,6 +406,10 @@ function attachment_url_to_postid( $url ) {
 	return isset( $GLOBALS['twd_stub']['media_urls'][ $url ] ) ? (int) $GLOBALS['twd_stub']['media_urls'][ $url ] : 0;
 }
 function wp_get_attachment_metadata( $id ) {
+	$a = isset( $GLOBALS['twd_stub']['attachments'][ (int) $id ] ) ? $GLOBALS['twd_stub']['attachments'][ (int) $id ] : null;
+	if ( $a && ! empty( $a['w'] ) ) {
+		return array( 'width' => $a['w'], 'height' => $a['h'] );
+	}
 	return isset( $GLOBALS['twd_stub']['media_meta'][ (int) $id ] ) ? $GLOBALS['twd_stub']['media_meta'][ (int) $id ] : false;
 }
 function esc_attr( $text ) {
@@ -433,6 +437,24 @@ function wp_get_attachment_image_url( $id, $size = 'thumbnail' ) {
 function sanitize_title( $title ) {
 	$t = strtolower( trim( preg_replace( '/[^a-z0-9]+/i', '-', (string) $title ), '-' ) );
 	return $t;
+}
+function wp_get_attachment_url( $id ) {
+	$a = isset( $GLOBALS['twd_stub']['attachments'][ (int) $id ] ) ? $GLOBALS['twd_stub']['attachments'][ (int) $id ] : null;
+	return $a ? $a['url'] : false;
+}
+function get_attached_file( $id ) {
+	$a = isset( $GLOBALS['twd_stub']['attachments'][ (int) $id ] ) ? $GLOBALS['twd_stub']['attachments'][ (int) $id ] : null;
+	return $a && isset( $a['file'] ) ? $a['file'] : '';
+}
+function get_plugins() {
+	return isset( $GLOBALS['twd_stub']['plugins'] ) ? $GLOBALS['twd_stub']['plugins'] : array();
+}
+function wp_get_theme() {
+	return new class() {
+		public function get( $k ) {
+			return 'Name' === $k ? 'Test Theme' : '1.2.3';
+		}
+	};
 }
 function get_privacy_policy_url() {
 	return isset( $GLOBALS['twd_stub']['privacy_url'] ) ? $GLOBALS['twd_stub']['privacy_url'] : '';
@@ -548,6 +570,7 @@ require_once ABSPATH . 'includes/class-twd-sk-recipes.php';
 require_once ABSPATH . 'includes/class-twd-sk-ai.php';
 require_once ABSPATH . 'includes/class-twd-sk-proposals.php';
 require_once ABSPATH . 'includes/class-twd-sk-brief.php';
+require_once ABSPATH . 'includes/class-twd-sk-doctor.php';
 require_once ABSPATH . 'includes/class-twd-sk-assets.php';
 require_once ABSPATH . 'includes/class-twd-sk-updater.php';
 require_once ABSPATH . 'includes/class-twd-sk-report.php';

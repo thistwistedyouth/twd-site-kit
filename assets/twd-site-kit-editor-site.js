@@ -1419,6 +1419,39 @@
 		}
 	});
 
+	/* ---- the site report (the doctor) ---- */
+
+	function buildDoctorSection(panel) {
+		var msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		var box = el('textarea', { id: 'twd-sk-doctor', className: 'twd-sk-ed__textarea twd-sk-ed__tall', readonly: '', 'aria-label': 'The site report', spellcheck: 'false', hidden: '' });
+		var copyBtn = button('Copy the report', 'secondary', function () {
+			copyText(box.value, box, msg, 'Copied. Paste it into a message.');
+			show(box, true);
+		});
+		show(copyBtn, false);
+		var showBtn = button('Show the site report', 'primary', function () {
+			message(msg, 'Reading the site...', true);
+			showBtn.disabled = true;
+			api('GET', '/site/doctor').then(function (data) {
+				showBtn.disabled = false;
+				box.value = data.report;
+				show(box, true);
+				show(copyBtn, true);
+				message(msg, 'This is a plain-text report of the site. It holds no keys or passwords and none of the text of your practice facts.', true);
+			}, function (err) {
+				showBtn.disabled = false;
+				message(msg, err.message, false);
+			});
+		});
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Site report' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'A plain-text report of how the site stands: versions, safe mode, the header and footer templates, which pages use the kit and what is left to fix, what is filled in (never its contents), and the pictures with their alt text. Paste it into a message when something looks wrong. It changes nothing.' }),
+			el('div', { className: 'twd-sk-ed__actions' }, [showBtn, copyBtn]),
+			msg,
+			box
+		]));
+	}
+
 	function buildSite(panel) {
 		buildBriefSection(panel);
 		buildStyleSection(panel);
@@ -1426,13 +1459,15 @@
 		buildFactsSection(panel);
 		buildChromeSection(panel);
 		buildSetupSection(panel);
+		buildDoctorSection(panel);
 		var summaries = {
 			'Site brief': 'Build or update the whole site from one file',
 			'Style': 'Pick a look, colours, fonts and corners',
 			'Site details': 'Name, menu, contact lines, footer text',
 			'Practice facts': 'The master document the AI writes from',
 			'Header and footer': 'Layout, fixed header, Elementor templates',
-			'Set up a new site': 'Create the starter pages'
+			'Set up a new site': 'Create the starter pages',
+			'Site report': 'A plain-text report to paste when something looks wrong'
 		};
 		Array.prototype.forEach.call(panel.querySelectorAll('.twd-sk-ed__step'), function (sec) {
 			var t = sec.querySelector('.twd-sk-ed__step-title');

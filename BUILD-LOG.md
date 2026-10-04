@@ -2,12 +2,13 @@
 
 The one place to see where this project is. Newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md. Update this file at the end of every piece of work, in the same commit.
 
-## Where we are (last updated at release 0.6.1, 4 Oct 2026)
+## Where we are (last updated at release 0.6.2, 4 Oct 2026)
 
-**Released and live in the update file:** 0.6.1. Sites update from Plugins, "Check for updates", "update now".
+**Released and live in the update file:** 0.6.2. Sites update from Plugins, "Check for updates", "update now".
 
 | Version | What it added |
 |---|---|
+| 0.6.2 | `wp twd-sk doctor` and the Site tab's Site report: a plain-text, paste-safe report of the site's state |
 | 0.6.1 | Site brief: one JSON file for a whole site, interview prompt for a Claude chat, check then apply, draft outline pages with Fill with AI |
 | 0.6.0 | A simpler pop-up: Site tab sections, history, extras and the external AI route are closed fold-outs, the Edit screen is one clear step |
 | 0.5.3 | Ask the AI in the Site tab for the header, footer and style (structured values filled into the boxes, never saved by themselves, contrast still enforced) |
@@ -19,8 +20,13 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 | 0.3.1 | Kit page template, Pages tab (new page, publish, switch template), two-level leftover check |
 | 0.3.0 | The Edit with AI pop-up: prompt, preview, apply, history |
 
-**Next, in order (agreed with the owner):**
-1. Verify 0.4.0 to 0.6.1 on the pilot site (see the lists below) before building more, including Ask the AI now that the articles plugin has its filters.
+**Next, in order (agreed with the owner, 4 Oct 2026):** items 2 to 5 below are PLANNED, not approved. Do not build them until the owner approves the plan.
+1. DONE in 0.6.2: the doctor report.
+2. Site brief v2: image slots, and a source tag on every fact and registration line (the publish check counts unverified registration lines as must fix).
+3. Interview prompt v2 (transcript in; facts, brief, gaps and questions out, with a quote behind each fact), a client confirmation sheet, and a typed-details form.
+4. Generic client-folder template in docs/.
+5. Plan only: base site and provisioning.
+6. Verify 0.4.0 to 0.6.1 on the pilot site (see the lists below) before building more, including Ask the AI now that the articles plugin has its filters.
 2. Later, only when asked: Add a section (pick a type, say what it is for).
 - Not planned, on purpose: rewriting every page at once, free CSS, free HTML for the header and footer.
 

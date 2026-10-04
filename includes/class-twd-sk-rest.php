@@ -215,6 +215,11 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_site_propose' ),
 			'permission_callback' => array( __CLASS__, 'can_propose_site' ),
 		) );
+		register_rest_route( self::ROUTE_NS, '/site/doctor', array(
+			'methods'             => 'GET',
+			'callback'            => array( __CLASS__, 'get_site_doctor' ),
+			'permission_callback' => array( __CLASS__, 'can_read_site' ),
+		) );
 		register_rest_route( self::ROUTE_NS, '/site/templates', array(
 			'methods'             => 'GET',
 			'callback'            => array( __CLASS__, 'get_site_templates' ),
@@ -509,6 +514,11 @@ class TWD_SK_REST {
 		$out                = TWD_SK_Brief::apply( $data, array( 'overwrite' => self::truthy( $request->get_param( 'overwrite' ) ), 'build_pages' => self::truthy( $request->get_param( 'build_pages' ) ) ) );
 		$out['profile_state'] = self::profile_payload();
 		return $out;
+	}
+
+	/** The plain-text site report. Read only. */
+	public static function get_site_doctor( $request ) {
+		return array( 'report' => TWD_SK_Doctor::report() );
 	}
 
 	/** Ask the AI to suggest header, footer or style values. Saves nothing. */
