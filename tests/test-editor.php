@@ -231,7 +231,7 @@ twd_sk_test( 'editor js: the behaviour the owner asked for is present', function
 		'Apply and save as a new version' => 'apply',
 		'Undo the last change' => 'undo',
 		'Restore this version' => 'restore',
-		'History (the last 10 versions)' => 'history',
+		'History and undo (the last 10 versions)' => 'history',
 		"e.key === 'Escape'" => 'Esc closes',
 		"e.key !== 'Tab'" => 'focus trap',
 		"role: 'dialog'" => 'dialog role',

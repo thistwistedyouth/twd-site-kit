@@ -264,6 +264,62 @@
 		}
 	}
 
+	/* ---- fold-outs: keep the screen simple, with the detail one click away ---- */
+
+	var foldCount = 0;
+	var foldSetters = {};
+
+	// Turn a step section (an h3 title then content) into a closed fold-out with the same title.
+	function foldSection(section, opts) {
+		opts = opts || {};
+		var h = section.querySelector('.twd-sk-ed__step-title');
+		var title = opts.title || (h ? h.textContent : 'More');
+		var id = 'twd-sk-fold-' + (++foldCount);
+		var body = el('div', { id: id, className: 'twd-sk-ed__foldbody', 'data-twd-fold': '1' });
+		if (h) {
+			while (h.nextSibling) {
+				body.appendChild(h.nextSibling);
+			}
+		} else {
+			while (section.firstChild) {
+				body.appendChild(section.firstChild);
+			}
+		}
+		var kids = [el('span', { className: 'twd-sk-ed__foldtitle', text: title })];
+		if (opts.summary) {
+			kids.push(el('span', { className: 'twd-sk-ed__foldsummary', text: opts.summary }));
+		}
+		var btn = el('button', { type: 'button', className: 'twd-sk-ed__fold', 'aria-expanded': 'false', 'aria-controls': id }, kids);
+		function setOpen(on) {
+			btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+			show(body, on);
+		}
+		btn.addEventListener('click', function () {
+			setOpen(btn.getAttribute('aria-expanded') !== 'true');
+		});
+		if (h) {
+			section.replaceChild(btn, h);
+		} else {
+			section.appendChild(btn);
+		}
+		section.appendChild(body);
+		section.className += ' twd-sk-ed__step--fold';
+		foldSetters[id] = setOpen;
+		setOpen(!!opts.open);
+		return { button: btn, body: body, setOpen: setOpen };
+	}
+
+	// Open any closed fold-out around a node, so it can be seen and focused.
+	function revealFold(node) {
+		var n = node;
+		while (n && n.nodeType === 1) {
+			if (n.getAttribute('data-twd-fold') === '1' && n.hasAttribute('hidden') && foldSetters[n.id]) {
+				foldSetters[n.id](true);
+			}
+			n = n.parentNode;
+		}
+	}
+
 	function step(titleText, kids) {
 		var all = [];
 		if (titleText) {
@@ -311,14 +367,6 @@
 			// The discard button lives with the preview, not inside the tucked-away external section.
 			pasteKids[2] = el('div', { className: 'twd-sk-ed__actions' }, [ui.previewBtn]);
 			outKids.unshift(el('div', { className: 'twd-sk-ed__actions' }, [ui.discardBtn]));
-			ui.external = el('div', { id: 'twd-sk-ed-external', className: 'twd-sk-ed__external', hidden: '' }, copyKids.concat(pasteKids));
-			ui.externalBtn = el('button', { type: 'button', className: 'twd-sk-ed__disclose', 'aria-expanded': 'false', 'aria-controls': 'twd-sk-ed-external', text: 'Use an external AI instead' });
-			ui.externalBtn.addEventListener('click', function () {
-				var open = ui.externalBtn.getAttribute('aria-expanded') === 'true';
-				ui.externalBtn.setAttribute('aria-expanded', open ? 'false' : 'true');
-				show(ui.external, !open);
-			});
-			panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [ui.externalBtn, ui.external]));
 			panel.appendChild(step('2. Preview it', outKids));
 		} else {
 			panel.appendChild(step('1. Copy the prompt', copyKids));
@@ -334,25 +382,43 @@
 			window.location.reload();
 		});
 		show(ui.reloadBtn, false);
-		panel.appendChild(step('3. Save it', [
+		var noteKids = [
 			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-note', text: 'Where did these facts come from?' }),
 			el('p', { className: 'twd-sk-ed__help', text: 'For example: the therapist told me on a call, or their old website. This is saved with the version so you can see it later.' }),
-			ui.note,
-			el('div', { className: 'twd-sk-ed__actions' }, [ui.applyBtn, ui.reloadBtn]),
-			ui.applyMsg
-		]));
+			ui.note
+		];
+		if (ai) {
+			panel.appendChild(step('3. Save it', [
+				el('div', { className: 'twd-sk-ed__actions' }, [ui.applyBtn, ui.reloadBtn]),
+				ui.applyMsg
+			]));
+			// Everything else is one click away.
+			var more = step('More options', ui.factsKids.concat(noteKids));
+			panel.appendChild(more);
+			foldSection(more, { summary: 'Extra facts for this change, and the note saved with it' });
+			var ext = step('Use an external AI instead', copyKids.concat(pasteKids));
+			panel.appendChild(ext);
+			foldSection(ext);
+		} else {
+			panel.appendChild(step('3. Save it', noteKids.concat([
+				el('div', { className: 'twd-sk-ed__actions' }, [ui.applyBtn, ui.reloadBtn]),
+				ui.applyMsg
+			])));
+		}
 
 		/* History */
 		ui.undoBtn = button('Undo the last change', 'secondary', doUndo);
 		ui.undoBtn.disabled = true;
 		ui.historyMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
 		ui.versions = el('ol', { className: 'twd-sk-ed__versions' });
-		panel.appendChild(step('4. History (the last 10 versions)', [
+		var hist = step('History and undo (the last 10 versions)', [
 			el('p', { className: 'twd-sk-ed__help', text: 'Undo and Restore never delete anything. They save a new version, so you can always go back again.' }),
 			el('div', { className: 'twd-sk-ed__actions' }, [ui.undoBtn]),
 			ui.historyMsg,
 			ui.versions
-		]));
+		]);
+		panel.appendChild(hist);
+		foldSection(hist, { summary: 'Undo, or go back to an earlier version' });
 	}
 
 	/* ---- step 1 (when the site has an AI key): ask the AI ---- */
@@ -390,6 +456,11 @@
 			chips.appendChild(chip);
 		});
 		ui.facts = el('textarea', { id: 'twd-sk-ed-facts', className: 'twd-sk-ed__textarea twd-sk-ed__short', maxlength: '3000', spellcheck: 'true' });
+		ui.factsKids = [
+			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-facts', text: 'Extra facts for this change (optional)' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'The AI may use only these, the practice facts and the site details for anything new. Leave it empty to keep to what is already there.' }),
+			ui.facts
+		];
 		ui.remixBtn = button('Ask the AI', 'primary', doRemix);
 		ui.remixMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
 
@@ -400,9 +471,6 @@
 			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-instruction', text: 'What do you want changed?' }),
 			chips,
 			ui.instruction,
-			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-facts', text: 'Facts the therapist gave you (optional)' }),
-			el('p', { className: 'twd-sk-ed__help', text: 'The AI may use only these for anything new. Leave it empty to keep to what is already on the page.' }),
-			ui.facts,
 			el('p', { className: 'twd-sk-ed__help', text: 'The AI writes drafts. Check every fact and every claim before you apply.' }),
 			el('div', { className: 'twd-sk-ed__actions' }, [ui.remixBtn]),
 			ui.remixMsg
@@ -801,6 +869,14 @@
 			el('p', {}, [ui.newLink])
 		]));
 		buildFactsPageSection(panel);
+		Array.prototype.forEach.call(panel.querySelectorAll('.twd-sk-ed__step'), function (sec) {
+			var t = sec.querySelector('.twd-sk-ed__step-title');
+			if (t && t.textContent === 'New page') {
+				foldSection(sec, { summary: 'Make an empty draft page' });
+			} else if (t && t.textContent === 'New page from your practice facts') {
+				foldSection(sec, { summary: 'Draft an About, Contact or topic page from the facts' });
+			}
+		});
 	}
 
 	/* ---- a new page drafted from the practice facts ---- */
@@ -1278,6 +1354,7 @@
 		if (fieldId) {
 			var target = document.getElementById(fieldId);
 			if (target) {
+				revealFold(target);
 				if (target.scrollIntoView) {
 					target.scrollIntoView({ block: 'center' });
 				}
@@ -1327,6 +1404,8 @@
 			this.dirtyChecks.push({ test: test, discard: discard });
 		},
 		openAt: openAt,
+		foldSection: foldSection,
+		revealFold: revealFold,
 		addTab: function (name, label, build) {
 			this.extraTabs.push({ name: name, label: label, build: build });
 		}

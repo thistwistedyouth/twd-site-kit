@@ -57,3 +57,22 @@ twd_sk_test( 'unsaved prompt js: each tab with its own form registers a check an
 		}
 	}
 } );
+
+twd_sk_test( 'fold-outs: the Site tab sections, history, extras and the external AI are closed fold-outs that open for keyboard and for edit pills', function () {
+	$main = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' );
+	$site = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' );
+	twd_sk_has( "'aria-expanded', 'false'", $main );
+	twd_sk_has( "'aria-controls': id", $main );
+	twd_sk_has( 'function foldSection(', $main );
+	twd_sk_has( 'function revealFold(', $main );
+	twd_sk_has( 'revealFold(target);', $main, 'a pill or any focus request opens the fold-out first' );
+	twd_sk_has( "foldSection(hist, { summary: 'Undo, or go back to an earlier version' })", $main );
+	twd_sk_has( 'Use an external AI instead', $main );
+	twd_sk_has( 'ED.foldSection(sec', $site );
+	foreach ( array( 'Pick a look, colours, fonts and corners', 'The master document the AI writes from' ) as $s ) {
+		twd_sk_has( $s, $site );
+	}
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.css' );
+	twd_sk_has( '.twd-sk-ed__fold', $css );
+	twd_sk_true( 1 === preg_match( '/\.twd-sk-ed__fold\s*\{[^}]*min-height:\s*56px/', $css ), 'a big enough target' );
+} );

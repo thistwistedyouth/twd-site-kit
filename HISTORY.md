@@ -17,6 +17,12 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.6.0 (a simpler pop-up)
+
+- **The pop-up grew feature by feature and showed all of it to everyone.** The client (an editor) needs three things: change this page, make a page, set its search details. The builder (an administrator) needs the rest once. Detail is now folded away rather than removed, so nothing was deleted and nothing needs a new permission.
+- **Fold-outs, not modes.** A Simple and Builder switch was proposed and dropped: the client is an editor, who already never sees the Site tab, so a mode switch would add a control without removing anything the client sees. The remaining clutter (history, save note, extra facts, the external AI route) is folded instead.
+- **The save note moved into More options,** and a remix pre-fills it, so a client applies a change with one button. The builder can still say where the facts came from.
+
 ## v0.5.3 (AI suggestions for header, footer and style)
 
 - **Structured values, not markup.** Header, footer and style are settings, not free content. Asking the AI for HTML or CSS here would risk the mobile menu, the legal links and readable contrast for no gain, so it answers with the same fields the Site tab edits and each one is validated by the code that saves it.

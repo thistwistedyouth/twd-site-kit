@@ -113,6 +113,20 @@
 .twd-sk-ed__check { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; margin: 8px 0 0; color: $color-title; font-size: $size-small; cursor: pointer; }
 .twd-sk-ed__check input { flex: 0 0 auto; width: 22px; height: 22px; margin: 2px 0 0; }
 
+/* ---- fold-outs ---- */
+.twd-sk-ed__step--fold { padding: 0; }
+.twd-sk-ed__fold {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-height: 56px; margin: 0; padding: 12px 40px 12px 14px;
+  position: relative; border: 1px solid $color-border; border-radius: $radius-card; background-color: $color-surface; color: $color-title;
+  font-family: $font-heading; font-size: $size-body; font-weight: $title-weight; font-style: $title-style; text-align: left; cursor: pointer;
+}
+.twd-sk-ed__fold::after { content: "+"; position: absolute; right: 16px; top: 14px; font-family: $font-body; font-size: $size-title; line-height: 1.2; font-style: normal; }
+.twd-sk-ed__fold[aria-expanded="true"]::after { content: "-"; }
+.twd-sk-ed__fold:hover, .twd-sk-ed__fold:focus-visible { background-color: $color-tint; }
+.twd-sk-ed__fold:focus-visible { outline: 2px solid $color-accent-text; outline-offset: 2px; }
+.twd-sk-ed__foldsummary { font-family: $font-body; font-size: $size-small; font-weight: 400; font-style: normal; color: $color-body; }
+.twd-sk-ed__foldbody { padding: 12px 4px 4px; }
+
 /* ---- ask the AI: modes, sections, chips, the external AI toggle ---- */
 .twd-sk-ed__modes { margin: 0 0 8px; }
 .twd-sk-ed__seclist { margin: 0 0 12px; padding: 4px 12px; border: 1px solid $color-border; border-radius: $radius-field; background-color: $color-surface; }

@@ -327,6 +327,62 @@
   height: 22px;
   margin: 2px 0 0 !important;
 }
+/* ---- fold-outs ---- */
+.twd-sk-ed .twd-sk-ed__step--fold.twd-sk-ed__step--fold {
+  padding: 0 !important;
+}
+.twd-sk-ed .twd-sk-ed__fold.twd-sk-ed__fold {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-height: 56px;
+  margin: 0 !important;
+  padding: 12px 40px 12px 14px !important;
+  position: relative;
+  border: 1px solid var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-card) !important;
+  background-color: var(--twd-site-color-surface) !important;
+  color: var(--twd-site-color-title) !important;
+  font-family: var(--twd-site-font-heading) !important;
+  font-size: var(--twd-site-size-body) !important;
+  font-weight: var(--twd-site-title-weight) !important;
+  font-style: var(--twd-site-title-style) !important;
+  text-align: left !important;
+  cursor: pointer;
+}
+.twd-sk-ed .twd-sk-ed__fold.twd-sk-ed__fold::after {
+  content: "+";
+  position: absolute;
+  right: 16px;
+  top: 14px;
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-title) !important;
+  line-height: 1.2 !important;
+  font-style: normal !important;
+}
+.twd-sk-ed .twd-sk-ed__fold.twd-sk-ed__fold[aria-expanded="true"]::after {
+  content: "-";
+}
+.twd-sk-ed .twd-sk-ed__fold.twd-sk-ed__fold:hover,
+.twd-sk-ed .twd-sk-ed__fold.twd-sk-ed__fold:focus-visible {
+  background-color: var(--twd-site-color-tint) !important;
+}
+.twd-sk-ed .twd-sk-ed__fold.twd-sk-ed__fold:focus-visible {
+  outline: 2px solid var(--twd-site-color-accent-text);
+  outline-offset: 2px;
+}
+.twd-sk-ed .twd-sk-ed__foldsummary.twd-sk-ed__foldsummary {
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+  color: var(--twd-site-color-body) !important;
+}
+.twd-sk-ed .twd-sk-ed__foldbody.twd-sk-ed__foldbody {
+  padding: 12px 4px 4px !important;
+}
 /* ---- ask the AI: modes, sections, chips, the external AI toggle ---- */
 .twd-sk-ed .twd-sk-ed__modes.twd-sk-ed__modes {
   margin: 0 0 8px !important;

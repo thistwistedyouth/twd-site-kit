@@ -1176,6 +1176,17 @@
 		buildFactsSection(panel);
 		buildChromeSection(panel);
 		buildSetupSection(panel);
+		var summaries = {
+			'Style': 'Pick a look, colours, fonts and corners',
+			'Site details': 'Name, menu, contact lines, footer text',
+			'Practice facts': 'The master document the AI writes from',
+			'Header and footer': 'Layout, fixed header, Elementor templates',
+			'Set up a new site': 'Create the starter pages'
+		};
+		Array.prototype.forEach.call(panel.querySelectorAll('.twd-sk-ed__step'), function (sec) {
+			var t = sec.querySelector('.twd-sk-ed__step-title');
+			ED.foldSection(sec, { summary: t && summaries[t.textContent] ? summaries[t.textContent] : '' });
+		});
 	}
 
 	ED.addTab('site', 'Site', buildSite);
