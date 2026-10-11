@@ -20,18 +20,19 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 | 0.3.1 | Kit page template, Pages tab (new page, publish, switch template), two-level leftover check |
 | 0.3.0 | The Edit with AI pop-up: prompt, preview, apply, history |
 
-**Next, in order (agreed with the owner, 4 Oct 2026):** items 2 to 5 below are PLANNED, not approved. Do not build them until the owner approves the plan.
+**Next, in order (agreed with the owner, 4 Oct 2026):**
 1. DONE in 0.6.2: the doctor report.
-2. Site brief v2: image slots, and a source tag on every fact and registration line (the publish check counts unverified registration lines as must fix).
-3. Interview prompt v2 (transcript in; facts, brief, gaps and questions out, with a quote behind each fact), a client confirmation sheet, and a typed-details form.
-4. Generic client-folder template in docs/.
-5. Plan only: base site and provisioning.
-6. Verify 0.4.0 to 0.6.1 on the pilot site (see the lists below) before building more, including Ask the AI now that the articles plugin has its filters.
-2. Later, only when asked: Add a section (pick a type, say what it is for).
+2. Owner approves the plans for items 3 to 6 below, answering the seven decisions in the 4 Oct plan (verified registration definition, inline fact tags, publish blocking scope, image matching, typed-details form, confirmation sheet, hosting SSH). PLANNED, NOT APPROVED: do not build them until the owner says so.
+3. Site brief v2 (0.7.0): image slots, and a source tag on every fact and registration line; the publish check counts unverified registration lines as must fix.
+4. Interview prompt v2 (0.7.1): transcript in; facts, brief, gaps and questions out, with a quote behind each fact; a client confirmation sheet; a typed-details form.
+5. Generic client-folder template in docs/ (no release).
+6. Plan only, until a second-site timing test: base site and provisioning.
+7. In parallel, owner: verify 0.4.0 to 0.6.2 on the pilot site (lists below), including Ask the AI now that the articles plugin has its filters.
+- Parked until asked: Add a section.
 - Not planned, on purpose: rewriting every page at once, free CSS, free HTML for the header and footer.
 
 **Waiting on other projects (cross-project contract):**
-- Nothing. The Articles & Resource Production plugin (`twd-article-publisher`, repo `therapy-web-designs`) now offers the two filters Site Kit uses, from its version 1.34.0 (checked 4 Oct 2026): `twd_ai_is_configured` (true when a key is saved) and `twd_ai_complete( null, $system, $message, $max_tokens )` (returns text, a WP_Error, or null; max tokens clamped to 256 to 8000). The names match what Site Kit calls. Site Kit holds no key and calls no AI service. Ask the AI, drafting pages with AI, Fill with AI and the Site tab suggestions appear on a site only when that plugin is at 1.34.0 or later with a key saved.
+- Nothing. The Articles & Resource Production plugin (`twd-article-publisher`, repo `therapy-web-designs`) now offers the two filters Site Kit uses, from its version 1.34.0 (checked 4 Oct 2026; re-checked 11 Oct 2026, the filters are unchanged, that plugin is now at 1.37.1 on a branch not yet merged to its main): `twd_ai_is_configured` (true when a key is saved) and `twd_ai_complete( null, $system, $message, $max_tokens )` (returns text, a WP_Error, or null; max tokens clamped to 256 to 8000). The names match what Site Kit calls. Site Kit holds no key and calls no AI service. Ask the AI, drafting pages with AI, Fill with AI and the Site tab suggestions appear on a site only when that plugin is at 1.34.0 or later with a key saved.
 
 **Not yet verified on a real site (needs a human):** importing the two Theme Builder templates on Elementor Pro 4.3.1 and their display condition, real Yoast behaviour (writing its fields, the schema graph filter), the media picker, how a page behaves if the plugin is deactivated, caching on the host, Ask the AI, drafting pages and the Site tab suggestions with a real key (the articles plugin side is now in place), importing a real site brief, and the fold-outs on a real phone. The test plan is in the release notes of each version in the conversation that built it; the 0.4.0 steps are in the section below.
 
