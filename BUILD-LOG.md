@@ -25,7 +25,7 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 2. Owner approves the plans for items 3 to 6 below, answering the seven decisions in the 4 Oct plan (verified registration definition, inline fact tags, publish blocking scope, image matching, typed-details form, confirmation sheet, hosting SSH). PLANNED, NOT APPROVED: do not build them until the owner says so.
 3. Site brief v2 (0.7.0): image slots, and a source tag on every fact and registration line; the publish check counts unverified registration lines as must fix.
 4. Interview prompt v2 (0.7.1): transcript in; facts, brief, gaps and questions out, with a quote behind each fact; a client confirmation sheet; a typed-details form.
-5. Generic client-folder template in docs/ (no release).
+5. DONE (no release): generic client-folder template in `docs/client-folder/` (layout, client brief template, intake form field list for ONE Elementor Pro form on one page with steps, call questions, 30 minute run sheet, photo shot list, recording and privacy notes). The owner chose one form, not a form per stage; Elementor forms cannot save and resume, so the form is kept short and photos are optional. Interview prompt v2 (item 4) will read the form export plus the transcript, which removes the separate typed-details form from its plan.
 6. Plan only, until a second-site timing test: base site and provisioning.
 7. In parallel, owner: verify 0.4.0 to 0.6.2 on the pilot site (lists below), including Ask the AI now that the articles plugin has its filters.
 - Parked until asked: Add a section.
