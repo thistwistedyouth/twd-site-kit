@@ -58,24 +58,39 @@
   border-color: var(--twd-site-color-title) !important;
   color: var(--twd-site-color-surface) !important;
 }
-/* ---- the in-place editing toolbar (pinned to the bottom of the screen) ---- */
+/* ---- the in-place editing card (0.10.2: bottom left, where the floating buttons sit, clear of other
+   plugins' buttons on the right; full width on a phone, above them while editing) ---- */
 .twd-sk-ed .twd-sk-ed__inlinebar.twd-sk-ed__inlinebar {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 99995;
+  left: 24px;
+  bottom: 24px;
+  z-index: 99999;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px !important;
+  width: 460px;
+  max-width: calc(100% - 48px);
+  max-height: calc(100% - 48px);
+  overflow-y: auto;
+  padding: 12px !important;
   background-color: var(--twd-site-color-surface) !important;
-  border-top: 3px solid var(--twd-site-color-primary) !important;
+  border: 1px solid var(--twd-site-color-border) !important;
+  border-top: 4px solid var(--twd-site-color-primary) !important;
+  border-radius: var(--twd-site-radius-card) !important;
   box-shadow: var(--twd-site-shadow-card) !important;
 }
 .twd-sk-ed .twd-sk-ed__inlinebar.twd-sk-ed__inlinebar .twd-sk-ed__btn.twd-sk-ed__btn {
   margin: 0 !important;
+}
+.twd-sk-ed .twd-sk-ed__inlinetools.twd-sk-ed__inlinetools,
+.twd-sk-ed .twd-sk-ed__inlineactions.twd-sk-ed__inlineactions {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+.twd-sk-ed .twd-sk-ed__inlineactions.twd-sk-ed__inlineactions {
+  margin-left: auto !important;
 }
 .twd-sk-ed .twd-sk-ed__tool.twd-sk-ed__tool {
   min-width: 44px;
@@ -100,11 +115,13 @@
   outline-offset: 2px;
 }
 .twd-sk-ed .twd-sk-ed__inlinestatus.twd-sk-ed__inlinestatus {
-  flex: 1 1 220px;
+  order: 1;
+  flex: 1 1 100%;
   font-size: var(--twd-site-size-small) !important;
   color: var(--twd-site-color-title) !important;
 }
 .twd-sk-ed .twd-sk-ed__inlinepanel.twd-sk-ed__inlinepanel {
+  order: 2;
   flex: 1 1 100%;
   display: flex;
   flex-wrap: wrap;
@@ -775,6 +792,14 @@
   }
   .twd-sk-ed .twd-sk-ed__open--text.twd-sk-ed__open--text {
     bottom: 72px;
+  }
+  .twd-sk-ed .twd-sk-ed__inlinebar.twd-sk-ed__inlinebar {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+    max-width: none;
+    max-height: 70%;
   }
   .twd-sk-ed .twd-sk-ed__inlinebar.twd-sk-ed__inlinebar .twd-sk-ed__btn.twd-sk-ed__btn {
     width: auto;

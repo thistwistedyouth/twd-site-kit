@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.10.1
+Stable tag: 0.10.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,10 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.10.2 =
+* Changed: the Edit text toolbar is now a compact card at the bottom left, so it no longer covers buttons from other plugins at the bottom right (such as New Article). On a phone it spans the screen.
+* New: the WordPress admin bar has Edit text, which becomes Save changes and Cancel while you edit.
 
 = 0.10.1 =
 * New: in Edit text, a place the AI marked for a picture (such as [PLACEHOLDER: image needed]) shows as an Add a picture box. Click it to put a picture there.

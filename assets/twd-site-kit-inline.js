@@ -83,6 +83,51 @@
 		var n = changedCount();
 		status(n ? n + ' change' + (n === 1 ? '' : 's') + ' not saved yet.' : 'Click any words to change them. Click a picture to change it' + (S.spots.length ? ', or a dashed Add a picture box to put one there.' : '.'));
 		ui.save.disabled = !n || S.saving || S.uploading;
+		adminBar();
+	}
+
+	/* ---- the WordPress admin bar (0.10.2): Edit text, then Save changes and Cancel while editing ---- */
+
+	function adminItem(list, id, onClick) {
+		var a = el('a', { className: 'ab-item', href: '#', role: 'button' });
+		a.addEventListener('click', function (e) {
+			e.preventDefault();
+			onClick();
+		});
+		var li = el('li', { id: 'wp-admin-bar-' + id }, [a]);
+		list.appendChild(li);
+		return { li: li, a: a };
+	}
+
+	function buildAdminBar() {
+		var list = document.getElementById('wp-admin-bar-root-default');
+		if (!list) {
+			return;
+		}
+		ui.abMain = adminItem(list, 'twd-sk-text', function () {
+			if (S.on) {
+				save();
+			} else {
+				start();
+			}
+		});
+		ui.abCancel = adminItem(list, 'twd-sk-text-cancel', function () {
+			if (S.on) {
+				cancel();
+			}
+		});
+		adminBar();
+	}
+
+	function adminBar() {
+		if (!ui.abMain) {
+			return;
+		}
+		var n = S.on ? changedCount() : 0;
+		ui.abMain.a.textContent = S.on ? (n ? 'Save changes (' + n + ')' : 'Save changes') : 'Edit text';
+		ui.abMain.a.setAttribute('aria-disabled', S.on && (!n || S.saving || S.uploading) ? 'true' : 'false');
+		ui.abCancel.a.textContent = 'Cancel';
+		ui.abCancel.li.style.display = S.on ? '' : 'none';
 	}
 
 	function markChanged(t) {
@@ -110,6 +155,7 @@
 	function buildBar() {
 		ui.status = el('span', { className: 'twd-sk-ed__inlinestatus', role: 'status', 'aria-live': 'polite' });
 		ui.save = ED.button('Save changes', 'primary', save);
+		ui.save.className += ' twd-sk-ed__inlinesave';
 		ui.cancel = ED.button('Cancel', 'secondary', cancel);
 		ui.bold = toolButton('B', 'Bold', function () {
 			format('bold');
@@ -146,7 +192,9 @@
 		]);
 		ui.confirm = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' });
 		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar', role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '' }, [
-			ui.bold, ui.italic, ui.link, ui.status, ui.save, ui.cancel, ui.linkPanel, ui.altPanel, ui.picPanel, ui.confirm
+			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.bold, ui.italic, ui.link]),
+			el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.save, ui.cancel]),
+			ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.confirm
 		]);
 		root.appendChild(ui.bar);
 	}
@@ -637,6 +685,7 @@
 			spot.removeAttribute('role');
 		});
 		document.body.classList.remove('twd-sk-inline-on');
+		adminBar();
 		show(ui.bar, false);
 		show(ui.open, true);
 		show(document.getElementById('twd-sk-ed-open'), true);
@@ -693,6 +742,9 @@
 	}
 
 	function save() {
+		if (S.saving) {
+			return;
+		}
 		if (S.uploading) {
 			status('Wait for the picture to finish uploading.');
 			return;
@@ -720,6 +772,7 @@
 		}
 		S.saving = true;
 		ui.save.disabled = true;
+		adminBar();
 		status('Saving...');
 		ED.api('POST', '/pages/' + cfg.pageId + '/inline', body).then(function (data) {
 			status('Saved as version ' + data.version + '. Reloading so you see the page as visitors will.');
@@ -729,6 +782,7 @@
 		}, function (err) {
 			S.saving = false;
 			ui.save.disabled = false;
+			adminBar();
 			status(err.status === 409 ? err.message + ' Your changes are still on screen: copy any you need, then reload.' : err.message);
 		});
 	}
@@ -736,6 +790,7 @@
 	/* ---- set up ---- */
 
 	buildBar();
+	buildAdminBar();
 	ui.open = el('button', { type: 'button', id: 'twd-sk-ed-text', className: 'twd-sk-ed__open twd-sk-ed__open--text', text: 'Edit text' });
 	ui.open.addEventListener('click', start);
 	root.appendChild(ui.open);

@@ -162,6 +162,21 @@ twd_sk_test( 'inline js: never builds or writes HTML from text, talks only to it
 	twd_sk_has( 'PICTURE_TYPES.test(', $js, 'only picture files are uploaded' );
 } );
 
+twd_sk_test( 'inline 0.10.2: the editing card sits bottom left as a compact card; the admin bar can start, save and cancel', function () {
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
+	twd_sk_has( "getElementById('wp-admin-bar-root-default')", $js, 'only adds to the admin bar when there is one' );
+	twd_sk_has( "'twd-sk-text'", $js );
+	twd_sk_has( "'twd-sk-text-cancel'", $js );
+	twd_sk_has( "'Save changes (' + n + ')'", $js );
+	twd_sk_has( 'if (S.saving) {', $js, 'a second press of Save does nothing while saving' );
+	$css = file_get_contents( ABSPATH . 'tools/editor.src.css' );
+	preg_match( '/\.twd-sk-ed__inlinebar \{([^}]*)\}/', $css, $m );
+	twd_sk_true( isset( $m[1] ) );
+	twd_sk_has( 'left: 24px; bottom: 24px;', $m[1], 'bottom left, clear of buttons on the right' );
+	twd_sk_has( 'width: 460px;', $m[1] );
+	twd_sk_hasnt( 'right: 0', $m[1], 'no longer the full width of the screen on a computer' );
+} );
+
 twd_sk_test( 'inline css: every rule applies only while editing', function () {
 	$rules = twd_sk_css_parse( file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.css' ) );
 	twd_sk_true( count( $rules ) >= 5 );

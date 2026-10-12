@@ -17,6 +17,11 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.10.2 (the Edit text card)
+
+- **The toolbar clashed with the Articles plugin's New Article button**, which sits bottom right. The full-width bar became a compact card at the bottom left, where the Edit text and Edit with AI buttons already are (they hide while it is open). On a phone there is no room for both, so the card spans the screen and sits above other floating buttons while editing.
+- **The admin bar too**, as the owner suggested: Edit text there starts editing, then the same item becomes Save changes with a count, next to Cancel. On a computer, saving is always at the top of the screen whatever else sits at the bottom. WordPress hides these items on phones, where the card does the job.
+
 ## v0.10.1 (pictures in Edit text)
 
 - **The owner found a spot the AI had marked "[PLACEHOLDER: image needed]"** on a page and could not put a picture there with Edit text, since it was words, not a picture. Markers like that now show as Add a picture boxes while editing, and choosing a picture puts a real one in its place with the look of the section's other pictures. Caption and description markers stay as words to type over.
