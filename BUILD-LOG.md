@@ -20,7 +20,12 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 | 0.3.1 | Kit page template, Pages tab (new page, publish, switch template), two-level leftover check |
 | 0.3.0 | The Edit with AI pop-up: prompt, preview, apply, history |
 
-**Next, in order (agreed with the owner, 4 Oct 2026):**
+**Next, in order (agreed with the owner, 12 Oct 2026; full spec in `docs/plan-modes-and-setup.md`):**
+- A. 0.7.0: therapy and business mode (`TWD_SK_Mode`, option `twd_sk_mode`, default therapy, one word list per mode).
+- B. 0.7.1: the setup page (Settings > Set up site), the admin-only front-page button on a fresh install, picture slots and named custom pictures, one build engine (`TWD_SK_Build`) shared with `wp twd-sk build`, all pages as drafts.
+- C. After that, each needing the owner's go: 0.7.2 plan step (sitemap and section outline before build), 0.7.3 add a section by asking, 0.8.x more section types, brand from logo, picture help, starter sets per business type, 0.9.0 launch check.
+
+**Earlier list (4 Oct 2026), still standing after A and B:**
 1. DONE in 0.6.2: the doctor report.
 2. Owner approves the plans for items 3 to 6 below, answering the seven decisions in the 4 Oct plan (verified registration definition, inline fact tags, publish blocking scope, image matching, typed-details form, confirmation sheet, hosting SSH). PLANNED, NOT APPROVED: do not build them until the owner says so.
 3. Site brief v2 (0.7.0): image slots, and a source tag on every fact and registration line; the publish check counts unverified registration lines as must fix.
