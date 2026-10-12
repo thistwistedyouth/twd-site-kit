@@ -89,6 +89,7 @@ class TWD_SK_Editor {
 			'factsSaved'     => '' !== TWD_SK_Facts::get(),
 			'words'          => TWD_SK_Mode::js_words(),
 			'components'     => (bool) $context['is_kit_page'] ? TWD_SK_Recipes::parts_menu() : array(),
+			'setupUrl'       => current_user_can( 'manage_options' ) ? esc_url_raw( TWD_SK_Build::admin_url() ) : '',
 		) );
 		wp_enqueue_script( self::HANDLE );
 

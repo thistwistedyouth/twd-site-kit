@@ -2,12 +2,13 @@
 
 The one place to see where this project is. Newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md. Update this file at the end of every piece of work, in the same commit.
 
-## Where we are (last updated at release 0.8.4, 12 Oct 2026)
+## Where we are (last updated at release 0.9.0, 12 Oct 2026)
 
-**Released and live in the update file:** 0.8.4. Sites update from Plugins, "Check for updates", "update now".
+**Released and live in the update file:** 0.9.0. Everything from 0.7.0 to 0.9.0 was built on 12 Oct 2026 at the owner's request (beta) and is NOT yet tried on a real site: work through `docs/test-script-0.7-0.9.md` on a fresh install first. Sites update from Plugins, "Check for updates", "update now".
 
 | Version | What it added |
 |---|---|
+| 0.9.0 | The launch check: every page and the site-wide things to fix or look at before going live, with publishing of ready pages (setup page Launch step, Site tab, `wp twd-sk launch-check`) |
 | 0.8.4 | Starter sets: a starting point per kind of site (counselling, coaching, mobile hire, trades, studio or classes), chosen on the setup page or with `wp twd-sk build --set` |
 | 0.8.3 | Keep in view: choose which part of each picture stays visible when a page crops it (media library or setup page) |
 | 0.8.2 | Colours from the logo: a Site tab button (previewed until saved), a setup page tick box, and `wp twd-sk brand`; every colour checked for contrast |
@@ -32,7 +33,8 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 **Next, in order (agreed with the owner, 12 Oct 2026; full spec in `docs/plan-modes-and-setup.md`):**
 - A. DONE in 0.7.0: therapy and business mode (`TWD_SK_Mode`, option `twd_sk_mode`, default therapy, one word list per mode).
 - B. DONE in 0.7.1: the setup page (Settings > Set up site), the admin-only front-page button on a fresh install, picture slots and named custom pictures, one build engine (`TWD_SK_Build`) shared with `wp twd-sk build`, all pages as drafts.
-- C. After that (the owner said on 12 Oct: build all of these now, beta stage, test afterwards): DONE in 0.7.2 the plan step (sitemap and section outline before build), DONE in 0.7.3 add a section by asking, 0.8.x more section types, brand from logo, picture help, starter sets per business type, 0.9.0 launch check.
+- C. After that (the owner said on 12 Oct: build all of these now, beta stage, test afterwards): DONE in 0.7.2 the plan step (sitemap and section outline before build), DONE in 0.7.3 add a section by asking, 0.8.x more section types, brand from logo, picture help, starter sets per business type, 0.9.0 launch check. ALL DONE (0.8.0 sections, 0.8.1 enquiry form, 0.8.2 colours from the logo, 0.8.3 keep in view, 0.8.4 starter sets, 0.9.0 launch check).
+- D. Next: the owner tests 0.7.0 to 0.9.0 on a fresh install (`docs/test-script-0.7-0.9.md`); fixes from that come first. Then the earlier list below.
 
 **Earlier list (4 Oct 2026), still standing after A and B:**
 1. DONE in 0.6.2: the doctor report.

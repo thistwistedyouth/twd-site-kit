@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.8.4
+Stable tag: 0.9.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.9.0 =
+* New: the launch check. One list of everything worth checking before a site goes live: example text still to replace on each page, search wording, the front page, the privacy policy, the site details, the enquiry form, search engines allowed, https, the header and footer, and the support lines to check by hand. Each item says Fix, Look or OK. The setup page's new Launch step publishes the pages that are ready (never one with anything left to replace). Also in the Site tab, in the site report, and as wp twd-sk launch-check.
 
 = 0.8.4 =
 * New: starting points for the setup page. On the first step, choose the kind of site (for example counselling, coaching, mobile hire, trades, or a studio with classes) to start from a ready list of pages and sections. A brief that lists its own pages still wins, and the Pages step can change everything before building. Also wp twd-sk build --set=<name>.

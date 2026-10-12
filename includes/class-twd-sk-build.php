@@ -34,7 +34,7 @@ class TWD_SK_Build {
 	const HANDLE    = 'twd-site-kit-setup';
 
 	public static function steps() {
-		return array( 'type', 'style', 'brief', 'pictures', 'build' );
+		return array( 'type', 'style', 'brief', 'pages', 'pictures', 'build', 'launch' );
 	}
 
 	public static function init() {

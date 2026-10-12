@@ -16,6 +16,7 @@
  *   wp twd-sk pack [<slug>]             list style packs, or switch to one
  *   wp twd-sk mode [<mode>]             show the site type (therapy or business), or switch it
  *   wp twd-sk brand [<picture-id>] [--apply]  colours from the logo, checked for contrast; --apply saves them
+ *   wp twd-sk launch-check [--publish]  check the whole site before launch; --publish publishes the pages that are ready
  *   wp twd-sk build [<brief-file>] [--mode=<mode>] [--set=<slug>] [--pack=<slug>] [--pictures=<file>] [--no-ai] [--dry-run]
  *                                        set the whole site up from a brief, every page a draft
  */
@@ -434,6 +435,52 @@ class TWD_SK_CLI {
 				return;
 			}
 			WP_CLI::success( 'Saved. Reset the style in the Site tab to undo.' );
+		}
+	}
+
+	/**
+	 * Check the whole site before launch: example text still to replace, search wording, the front page,
+	 * the privacy policy, the site details, search engine visibility, https and more. Read only, unless
+	 * --publish is given, which publishes the pages with nothing left to replace.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--publish]
+	 * : Publish every kit page that is ready.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk launch-check
+	 *     wp twd-sk launch-check --publish
+	 *
+	 * @subcommand launch-check
+	 */
+	public function launch_check( $args, $assoc_args ) {
+		$check = TWD_SK_Launch::check();
+		foreach ( TWD_SK_Launch::lines( $check ) as $line ) {
+			WP_CLI::log( $line );
+		}
+		foreach ( $check['pages'] as $p ) {
+			WP_CLI::log( '  ' . ( $p['ready'] ? 'ready    ' : 'not ready' ) . ' ' . $p['status'] . ' "' . $p['title'] . '"' . ( $p['ready'] ? '' : ': ' . $p['reason'] ) );
+		}
+		if ( isset( $assoc_args['publish'] ) ) {
+			$ready = array();
+			foreach ( $check['pages'] as $p ) {
+				if ( $p['ready'] && 'publish' !== $p['status'] ) {
+					$ready[] = $p['id'];
+				}
+			}
+			if ( ! $ready ) {
+				WP_CLI::log( 'Nothing to publish.' );
+				return;
+			}
+			$out = TWD_SK_Launch::publish( $ready );
+			foreach ( $out['published'] as $p ) {
+				WP_CLI::success( 'Published "' . $p['title'] . '".' );
+			}
+			foreach ( $out['refused'] as $p ) {
+				WP_CLI::warning( '"' . $p['title'] . '" was not published: ' . $p['reason'] );
+			}
 		}
 	}
 

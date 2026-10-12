@@ -1,6 +1,6 @@
 # Plan: therapy and business mode, the setup page, and what comes after
 
-Status: agreed with the owner on 12 Oct 2026. Build in the order below. Nothing here holds client data.
+Status: agreed with the owner on 12 Oct 2026, and ALL BUILT on 12 Oct 2026 as releases 0.7.0 to 0.9.0 (beta, not yet tried on a real site; see `docs/test-script-0.7-0.9.md`). The version numbers in section 5 shifted slightly in the build: 0.8.0 sections, 0.8.1 enquiry form, 0.8.2 colours from the logo, 0.8.3 keep in view, 0.8.4 starter sets, 0.9.0 launch check. No team component (kept in image_text) and no AI alt text yet (needs a picture-capable AI filter in the Articles plugin). Nothing here holds client data.
 
 ---
 

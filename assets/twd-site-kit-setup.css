@@ -37,7 +37,13 @@
 .twd-sk-setup__sections { margin: 4px 0 8px 22px; }
 .twd-sk-setup__sections li { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
 .twd-sk-setup__sections select { max-width: 220px; }
+.twd-sk-setup__checks { margin: 8px 0 16px; padding: 0; list-style: none; }
+.twd-sk-setup__checks li { margin: 0; padding: 10px 0; border-bottom: 1px solid #dcdcde; }
+.twd-sk-setup__checks .twd-sk-setup__state { margin: 0 6px 0 0; min-width: 44px; text-align: center; }
+.twd-sk-setup__checks p { margin: 4px 0 0 56px; }
+.twd-sk-setup__summaryline { font-weight: 600; }
 @media (max-width: 600px) {
+  .twd-sk-setup__checks p { margin-left: 0; }
   .twd-sk-setup__pagefields { grid-template-columns: 1fr; }
   .twd-sk-setup__body { padding: 8px 12px 12px; }
   .twd-sk-setup__pic { grid-template-columns: 1fr; }

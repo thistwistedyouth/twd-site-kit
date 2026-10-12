@@ -214,6 +214,16 @@ class TWD_SK_REST {
 				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 			),
 		) );
+		register_rest_route( self::ROUTE_NS, '/site/launch', array(
+			'methods'             => 'GET',
+			'callback'            => array( __CLASS__, 'get_site_launch' ),
+			'permission_callback' => array( __CLASS__, 'can_read_site' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/launch/publish', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_launch_publish' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
 		register_rest_route( self::ROUTE_NS, '/site/brand', array(
 			'methods'             => 'GET',
 			'callback'            => array( __CLASS__, 'get_site_brand' ),
@@ -562,6 +572,26 @@ class TWD_SK_REST {
 			return self::error( 'twd_sk_bad_input', $saved->get_error_message(), 400 );
 		}
 		return self::mode_payload();
+	}
+
+	// -- The launch check ---------------------------------------------------
+
+	public static function get_site_launch( $request ) {
+		return TWD_SK_Launch::check();
+	}
+
+	/** Publish the chosen pages that are ready. Needs confirm. Pages with anything to replace are refused. */
+	public static function post_site_launch_publish( $request ) {
+		if ( ! self::truthy( $request->get_param( 'confirm' ) ) ) {
+			return self::error( 'twd_sk_confirm_needed', 'Please confirm first.', 400 );
+		}
+		$ids = $request->get_param( 'ids' );
+		if ( ! is_array( $ids ) || ! $ids ) {
+			return self::error( 'twd_sk_bad_input', 'Choose at least one page to publish.', 400 );
+		}
+		$out          = TWD_SK_Launch::publish( array_slice( $ids, 0, TWD_SK_Launch::MAX_PAGES ) );
+		$out['check'] = TWD_SK_Launch::check();
+		return $out;
 	}
 
 	// -- Colours from the logo -----------------------------------------------

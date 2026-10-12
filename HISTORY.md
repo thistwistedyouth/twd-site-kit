@@ -17,6 +17,13 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.9.0 (the launch check)
+
+- **One place to see if a site is ready.** The checks already existed in pieces (leftovers, quality, search wording, the site report); the launch check gathers them with the site-wide things people forget: a privacy policy, the front page, "discourage search engines" left on, https, the header and footer templates, and the support lines.
+- **Fix, look or fine.** Only things that would embarrass or break a launch are "fix"; reminders that need a person (send a test enquiry, check the support lines) are "look".
+- **Publishing stays strict.** The launch step only publishes pages with nothing left to replace, through the same rule as the Pages tab; there is no override here. The confirmation is inline, never a browser pop-up.
+- **The whole roadmap was built in one day at the owner's request (beta).** None of 0.7.0 to 0.9.0 has been tried on a real site; `docs/test-script-0.7-0.9.md` lists what to try, riskiest first.
+
 ## v0.8.4 (starter sets)
 
 - **Different kinds of business need different first pages.** A hire business needs prices, areas and booking; a trade needs accreditations and a quote form; a counsellor needs fees and questions. A starter set is a ready list of pages and sections for one kind of site.

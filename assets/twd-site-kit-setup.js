@@ -1,6 +1,7 @@
 /* TWD Site Kit: the setup page (Settings > Set up site). Vanilla JS, no build step.
  *
- * Six steps: site type, style, brief, pages (the list of pages and the sections on each), pictures, build. Each Next saves the choices on the server
+ * Seven steps: site type, style, brief, pages (the list of pages and the sections on each), pictures, build,
+ * and launch (the launch check, and publishing the pages that are ready). Each Next saves the choices on the server
  * (so leaving and coming back resumes), and the build runs one request per step so nothing runs
  * long. Every page is made as a draft. Pictures are chosen with the WordPress media library; only
  * their IDs are sent. Text is set as text only, and there are no browser pop-up dialogs. */
@@ -19,7 +20,8 @@
 		{ id: 'brief', label: 'Brief' },
 		{ id: 'pages', label: 'Pages' },
 		{ id: 'pictures', label: 'Pictures' },
-		{ id: 'build', label: 'Build' }
+		{ id: 'build', label: 'Build' },
+		{ id: 'launch', label: 'Launch' }
 	];
 	var S = { data: null, step: 'type', building: false, results: null };
 	var ui = {};
@@ -185,6 +187,10 @@
 		api('GET', '/site/build').then(function (data) {
 			S.data = data;
 			S.step = data.draft.step || 'type';
+			// A link straight to the launch check (from the Site tab) opens that step.
+			if (/[?&]step=launch(&|$)/.test(window.location.search)) {
+				S.step = 'launch';
+			}
 			render();
 		}, function (err) {
 			clear(root);
@@ -270,7 +276,7 @@
 		if (S.data.done) {
 			body.appendChild(el('div', { className: 'notice notice-info inline' }, [el('p', { text: 'This site was last built on ' + S.data.done + ' (UTC). Building again makes new versions of the pages it made; it never touches other pages.' })]));
 		}
-		var builders = { type: buildType, style: buildStyle, brief: buildBrief, pages: buildPages, pictures: buildPictures, build: buildBuild };
+		var builders = { type: buildType, style: buildStyle, brief: buildBrief, pages: buildPages, pictures: buildPictures, build: buildBuild, launch: buildLaunch };
 		builders[S.step](body);
 
 		var idx = 0;
@@ -886,6 +892,94 @@
 			results.appendChild(el('p', { text: 'Open a page and use Edit with AI to change it, replace anything marked [PLACEHOLDER], then publish it from the Pages tab. ' }, [el('a', { href: cfg.homeUrl, text: 'Open the site' })]));
 			message('Built. Every page is a draft.', true);
 		}
+	}
+
+	/* 7. Launch: the launch check, and publishing the pages that are ready */
+	var MARK = { fail: 'Fix', warn: 'Look', ok: 'OK' };
+
+	function buildLaunch(body) {
+		heading(body, 'Launch check', 'Everything worth checking before the site goes live, read from the site as it is now. Nothing changes until you publish.');
+		var host = el('div', { className: 'twd-sk-setup__launch' });
+		var again = button('Check again', false, function () {
+			runCheck();
+		});
+		body.appendChild(el('p', {}, [again]));
+		body.appendChild(host);
+
+		function runCheck() {
+			clear(host);
+			host.appendChild(el('p', { text: 'Checking the site...' }));
+			api('GET', '/site/launch').then(draw, function (err) {
+				clear(host);
+				message(err.message, false);
+			});
+		}
+
+		function draw(check) {
+			clear(host);
+			host.appendChild(el('p', { className: 'twd-sk-setup__summaryline', text: check.counts.fail + ' to fix, ' + check.counts.warn + ' to look at, ' + check.counts.ok + ' fine.' }));
+			var ul = el('ul', { className: 'twd-sk-setup__checks' });
+			check.items.forEach(function (it) {
+				var li = el('li', { className: 'is-' + it.status }, [
+					el('span', { className: 'twd-sk-setup__state is-' + (it.status === 'ok' ? 'done' : (it.status === 'fail' ? 'failed' : 'working')), text: MARK[it.status] }),
+					el('strong', { text: ' ' + it.label })
+				]);
+				if (it.detail && it.status !== 'ok') {
+					li.appendChild(el('p', { className: 'description', text: it.detail }));
+				}
+				ul.appendChild(li);
+			});
+			host.appendChild(ul);
+
+			host.appendChild(el('h3', { text: 'Pages' }));
+			if (!check.pages.length) {
+				host.appendChild(el('p', { text: 'No pages use the kit yet. Build the site first.' }));
+				return;
+			}
+			var boxes = [];
+			var list = el('ul', { className: 'twd-sk-setup__list twd-sk-setup__pagelist' });
+			check.pages.forEach(function (p) {
+				var id = 'twd-sk-setup-pub-' + p.id;
+				var box = el('input', { type: 'checkbox', id: id, value: String(p.id) });
+				var published = p.status === 'publish';
+				box.checked = p.ready && !published;
+				box.disabled = !p.ready || published;
+				boxes.push(box);
+				var note = published ? ' (published)' : (p.ready ? ' (draft, ready)' : ' (draft, not ready: ' + p.reason + ')');
+				list.appendChild(el('li', {}, [el('label', { 'for': id }, [box, el('span', { text: ' ' + p.title + note })]), el('span', { text: ' ' }), el('a', { href: p.url, text: 'View' })]));
+			});
+			host.appendChild(list);
+			var pub = button('Publish the ticked pages', true, function () {
+				var ids = boxes.filter(function (b) {
+					return b.checked && !b.disabled;
+				}).map(function (b) {
+					return parseInt(b.value, 10);
+				});
+				if (!ids.length) {
+					message('Tick at least one page that is ready.', false);
+					return;
+				}
+				confirmInline(host, 'Publish ' + ids.length + ' page' + (ids.length === 1 ? '' : 's') + '? Visitors will see ' + (ids.length === 1 ? 'it' : 'them') + ' straight away.', 'Yes, publish', function () {
+					pub.disabled = true;
+					api('POST', '/site/launch/publish', { ids: ids, confirm: true }).then(function (out) {
+						pub.disabled = false;
+						draw(out.check);
+						var text = out.published.length + ' page' + (out.published.length === 1 ? '' : 's') + ' published.';
+						if (out.refused.length) {
+							text += ' Not published: ' + out.refused.map(function (r) {
+								return r.title + ' (' + r.reason + ')';
+							}).join('; ');
+						}
+						message(text, !out.refused.length);
+					}, function (err) {
+						pub.disabled = false;
+						message(err.message, false);
+					});
+				});
+			});
+			host.appendChild(el('p', { className: 'twd-sk-setup__actions' }, [pub]));
+		}
+		runCheck();
 	}
 
 	load();

@@ -74,6 +74,7 @@ class TWD_SK_Doctor {
 			array( 'Elementor Theme Builder', array( __CLASS__, 'theme_builder' ) ),
 			array( 'Site details and ' . TWD_SK_Mode::w( 'facts' ), array( __CLASS__, 'details' ) ),
 			array( 'Site setup', array( __CLASS__, 'setup' ) ),
+			array( 'Launch check', array( 'TWD_SK_Launch', 'lines' ) ),
 			array( 'Pages', array( __CLASS__, 'pages' ) ),
 			array( 'Pictures in the Media Library', array( __CLASS__, 'pictures' ) ),
 		);

@@ -1507,6 +1507,42 @@
 		]));
 	}
 
+	/* ---- the launch check ---- */
+
+	function buildLaunchSection(panel) {
+		var msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		var out = el('div', { className: 'twd-sk-ed__launch' });
+		var marks = { fail: 'Fix: ', warn: 'Look: ', ok: 'OK: ' };
+		var run = button('Run the launch check', 'primary', function () {
+			run.disabled = true;
+			message(msg, 'Checking the site...', true);
+			api('GET', '/site/launch').then(function (check) {
+				run.disabled = false;
+				clear(out);
+				message(msg, check.counts.fail + ' to fix, ' + check.counts.warn + ' to look at, ' + check.counts.ok + ' fine.', !check.counts.fail);
+				var ul = el('ul', { className: 'twd-sk-ed__list' });
+				check.items.forEach(function (it) {
+					ul.appendChild(el('li', { text: marks[it.status] + it.label + (it.detail && it.status !== 'ok' ? '. ' + it.detail : '') }));
+				});
+				out.appendChild(ul);
+				var setup = ED.cfg.setupUrl;
+				if (setup) {
+					out.appendChild(el('p', {}, [el('a', { className: 'twd-sk-ed__link', href: setup + (setup.indexOf('?') === -1 ? '?' : '&') + 'step=launch', text: 'Publish the pages that are ready (opens the setup page)' })]));
+				}
+			}, function (err) {
+				run.disabled = false;
+				message(msg, err.message, false);
+			});
+		});
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Launch check' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'Everything worth checking before the site goes live: example text still to replace, search wording, the front page, the privacy policy, the site details and more. It changes nothing.' }),
+			el('div', { className: 'twd-sk-ed__actions' }, [run]),
+			msg,
+			out
+		]));
+	}
+
 	/* ---- site type: therapy or business ---- */
 
 	function buildModeSection(panel) {
@@ -1572,6 +1608,7 @@
 		buildFactsSection(panel);
 		buildChromeSection(panel);
 		buildSetupSection(panel);
+		buildLaunchSection(panel);
 		buildDoctorSection(panel);
 		var summaries = {
 			'Site type': 'Now: ' + ((WORDS.modes && WORDS.modes[WORDS.mode]) ? WORDS.modes[WORDS.mode].label : 'Therapy'),
@@ -1580,6 +1617,7 @@
 			'Site details': 'Name, menu, contact lines, footer text',
 			'Header and footer': 'Layout, fixed header, Elementor templates',
 			'Set up a new site': 'Create the starter pages',
+			'Launch check': 'Everything to check before going live',
 			'Site report': 'A plain-text report to paste when something looks wrong'
 		};
 		summaries[FACTS_TITLE] = 'The master document the AI writes from';
