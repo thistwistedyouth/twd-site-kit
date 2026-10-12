@@ -256,8 +256,12 @@ class TWD_SK_AI {
 
 	// -- A new page from the practice facts ------------------------------------
 
-	/** System text for drafting a whole new page. */
-	public static function page_system_prompt() {
+	/**
+	 * System text for drafting a whole new page.
+	 *
+	 * @param bool $with_pictures True when the request lists pictures the AI may place (the setup build).
+	 */
+	public static function page_system_prompt( $with_pictures = false ) {
 		$out   = array();
 		$out[] = 'You write one new page for a ' . TWD_SK_Mode::w( 'persons' ) . ' website. The page is HTML made from a fixed set of components.';
 		$out[] = '';
@@ -267,7 +271,11 @@ class TWD_SK_AI {
 		$out[] = '## Rules';
 		$rules = self::rules();
 		$rules[] = 'Follow the outline: keep its components and their order. Replace every [PLACEHOLDER] in the outline with real wording written from the ' . TWD_SK_Mode::w( 'facts' ) . ', in the ' . TWD_SK_Mode::w( 'persons' ) . ' own voice. Where the facts do not say what is needed, keep a [PLACEHOLDER: what is needed] there.';
-		$rules[] = 'Keep every image address in the outline exactly as it is. The ' . TWD_SK_Mode::w( 'person' ) . ' adds real pictures later. Never invent an image file name.';
+		if ( $with_pictures ) {
+			$rules[] = 'Pictures: where the outline has a picture, you may use one of the pictures listed in the request by writing its address exactly as given (for example pic:front-view), with alt text that says what it shows. Use each picture once at most. Where none fits, keep the outline\'s picture address exactly as it is. Never invent a picture or a file name.';
+		} else {
+			$rules[] = 'Keep every image address in the outline exactly as it is. The ' . TWD_SK_Mode::w( 'person' ) . ' adds real pictures later. Never invent an image file name.';
+		}
 		$rules[] = 'Use the contact details and registration wording exactly as given in the facts and site details. If they are not given, leave a [PLACEHOLDER].';
 		foreach ( $rules as $i => $rule ) {
 			$out[] = ( $i + 1 ) . '. ' . $rule;
@@ -278,8 +286,8 @@ class TWD_SK_AI {
 		return implode( "\n", $out ) . "\n";
 	}
 
-	/** The request text for drafting a new page of a type. */
-	public static function page_message( $in ) {
+	/** The request text for drafting a new page of a type, with an optional list of pictures it may place. */
+	public static function page_message( $in, $pictures_block = '' ) {
 		$r     = TWD_SK_Recipes::get( $in['type'] );
 		$out   = array();
 		$out[] = 'Write this page: ' . $r['intent'];
@@ -297,6 +305,10 @@ class TWD_SK_AI {
 		}
 		if ( '' === TWD_SK_Facts::get() ) {
 			$out[] = 'No ' . TWD_SK_Mode::w( 'facts' ) . ' have been saved yet. Do not invent any. Keep a [PLACEHOLDER: what is needed] wherever a fact is needed.';
+		}
+		if ( '' !== $pictures_block ) {
+			$out[] = '';
+			$out[] = $pictures_block;
 		}
 		$out[]  = '';
 		$out[]  = 'The outline to follow (replace the placeholders, keep the components and their order):';
@@ -320,6 +332,37 @@ class TWD_SK_AI {
 	}
 
 	/**
+	 * Ask the AI for one page's HTML. Saves nothing: the caller saves it (through the store, so the
+	 * sanitiser always runs). The build passes a pictures block; the reply may then hold pic: names,
+	 * which TWD_SK_Pictures::place() turns into real addresses before saving.
+	 *
+	 * @param array  $in             Checked inputs from TWD_SK_Recipes::inputs().
+	 * @param string $pictures_block From TWD_SK_Pictures::prompt_block(), or ''.
+	 * @return string|WP_Error The page's sections, one after another.
+	 */
+	public static function draft_page_html( $in, $pictures_block = '' ) {
+		if ( ! self::available() ) {
+			return self::err( 'twd_sk_ai_unavailable', 'AI is not set up on this site. Use the copy and paste way, or ask your web designer to add a key.' );
+		}
+		$reply = apply_filters( 'twd_ai_complete', null, self::page_system_prompt( '' !== $pictures_block ), self::page_message( $in, $pictures_block ), self::TOKENS_PAGE );
+		if ( is_wp_error( $reply ) ) {
+			return $reply;
+		}
+		if ( ! is_string( $reply ) || '' === trim( $reply ) ) {
+			return self::err( 'twd_sk_ai_unavailable', 'The AI did not answer. Nothing was saved. Try again in a moment.' );
+		}
+		$reply = self::strip_fence( $reply );
+		if ( strlen( $reply ) > TWD_SK_Store::MAX_BYTES ) {
+			return self::err( 'twd_sk_ai_bad_result', 'The AI sent back more than a page can hold. No page was created. Try again with shorter notes.' );
+		}
+		$parts = TWD_SK_Sections::split( $reply );
+		if ( ! $parts['sections'] ) {
+			return self::err( 'twd_sk_ai_bad_result', 'The AI did not send back a page. No page was created. Try again.' );
+		}
+		return implode( "\n", $parts['sections'] );
+	}
+
+	/**
 	 * Draft a new page from the practice facts and save it as a DRAFT page set up for the kit.
 	 * The page is created only after the AI has answered with something usable.
 	 *
@@ -339,22 +382,10 @@ class TWD_SK_AI {
 				return self::err( 'twd_sk_bad_input', 'That page was not found, or it does not use the kit.' );
 			}
 		}
-		$reply = apply_filters( 'twd_ai_complete', null, self::page_system_prompt(), self::page_message( $in ), self::TOKENS_PAGE );
-		if ( is_wp_error( $reply ) ) {
-			return $reply;
+		$html = self::draft_page_html( $in );
+		if ( is_wp_error( $html ) ) {
+			return $html;
 		}
-		if ( ! is_string( $reply ) || '' === trim( $reply ) ) {
-			return self::err( 'twd_sk_ai_unavailable', 'The AI did not answer. Nothing was saved. Try again in a moment.' );
-		}
-		$reply = self::strip_fence( $reply );
-		if ( strlen( $reply ) > TWD_SK_Store::MAX_BYTES ) {
-			return self::err( 'twd_sk_ai_bad_result', 'The AI sent back more than a page can hold. No page was created. Try again with shorter notes.' );
-		}
-		$parts = TWD_SK_Sections::split( $reply );
-		if ( ! $parts['sections'] ) {
-			return self::err( 'twd_sk_ai_bad_result', 'The AI did not send back a page. No page was created. Try again.' );
-		}
-		$html = implode( "\n", $parts['sections'] );
 
 		$existing = isset( $raw['page_id'] ) ? (int) $raw['page_id'] : 0;
 		$note     = 'AI draft from the ' . TWD_SK_Mode::w( 'facts' ) . ' (' . $in['type'] . ')';

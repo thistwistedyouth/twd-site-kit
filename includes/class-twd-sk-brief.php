@@ -434,6 +434,59 @@ class TWD_SK_Brief {
 		return array( 'applied' => $applied, 'skipped' => $skipped, 'errors' => $errors, 'ignored' => $plan['ignored'], 'pages' => $made );
 	}
 
+	// -- A brief from plain notes (needs the AI) ---------------------------------
+
+	const MAX_NOTES  = 30 * 1000;
+	const TOKENS_NOTES = 6000;
+
+	/** System text for turning plain notes into a brief. Built from the same schema text as the interview. */
+	public static function notes_system_prompt() {
+		$out   = array();
+		$out[] = 'You turn a web designer\'s notes about a ' . TWD_SK_Mode::w( 'practice' ) . ' into ONE site brief JSON object. Reply with the JSON object only: no code fence, no commentary.';
+		$out[] = '';
+		$out[] = '## Rules';
+		$out[] = '- Use only what the notes say. Never invent anything: no names, qualifications, registrations, prices, fees, policies, contact details, reviews or testimonials that are not in the notes. Leave anything unknown as an empty string or an empty list.';
+		$out[] = '- Phone numbers, email addresses, postal addresses and registration lines are copied exactly as written in the notes, or left empty.';
+		$out[] = '- The facts are written in plain sentences under the headings below, in the owner\'s own words where the notes give them.';
+		$out[] = '- If the notes do not list pages, plan Home, About and Contact, plus one page for each main ' . TWD_SK_Mode::w( 'service_kind' ) . ' the notes describe (up to six), and a questions and answers page if the notes give questions.';
+		$out[] = '- Draft a short search title and description for each page from the notes. Never use em dashes or en dashes. UK spelling.';
+		$out[] = '- ' . trim( substr( TWD_SK_Mode::w( 'interview_privacy' ), 1 ) );
+		$out[] = '';
+		$out[] = '## The shape';
+		$out[] = self::schema_text();
+		return implode( "\n", $out ) . "\n";
+	}
+
+	/**
+	 * Turn plain notes into a brief with the AI. Saves nothing: the person checks the result first.
+	 *
+	 * @return array|WP_Error { brief (array), json (pretty text) }
+	 */
+	public static function from_notes( $notes ) {
+		if ( ! TWD_SK_AI::available() ) {
+			return new WP_Error( 'twd_sk_ai_unavailable', 'AI is not set up on this site, so notes cannot be turned into a brief here. Use the interview prompt in a Claude conversation, then paste the JSON it gives you.' );
+		}
+		if ( ! is_string( $notes ) || '' === trim( $notes ) ) {
+			return new WP_Error( 'twd_sk_bad_brief', 'Write or paste some notes first.' );
+		}
+		if ( strlen( $notes ) > self::MAX_NOTES ) {
+			return new WP_Error( 'twd_sk_bad_brief', 'Those notes are too long (the limit is ' . (int) ( self::MAX_NOTES / 1000 ) . ' thousand characters). Shorten them and try again.' );
+		}
+		$reply = apply_filters( 'twd_ai_complete', null, self::notes_system_prompt(), "The notes:\n" . TWD_SK_Facts::clean( $notes ) . "\n", self::TOKENS_NOTES );
+		if ( is_wp_error( $reply ) ) {
+			return $reply;
+		}
+		if ( ! is_string( $reply ) || '' === trim( $reply ) ) {
+			return new WP_Error( 'twd_sk_ai_unavailable', 'The AI did not answer. Nothing was saved. Try again in a moment.' );
+		}
+		$data = self::parse( $reply );
+		if ( is_wp_error( $data ) ) {
+			return new WP_Error( 'twd_sk_ai_bad_result', 'The AI did not send back a brief that could be read. Try again, or shorten the notes. (' . $data->get_error_message() . ')' );
+		}
+		$flags = JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
+		return array( 'brief' => $data, 'json' => function_exists( 'wp_json_encode' ) ? wp_json_encode( $data, $flags ) : json_encode( $data, $flags ) );
+	}
+
 	// -- The interview prompt -----------------------------------------------------
 
 	public static function schema_text() {

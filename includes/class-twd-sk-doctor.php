@@ -73,6 +73,7 @@ class TWD_SK_Doctor {
 			array( 'Front page', array( __CLASS__, 'front_page' ) ),
 			array( 'Elementor Theme Builder', array( __CLASS__, 'theme_builder' ) ),
 			array( 'Site details and ' . TWD_SK_Mode::w( 'facts' ), array( __CLASS__, 'details' ) ),
+			array( 'Site setup', array( __CLASS__, 'setup' ) ),
 			array( 'Pages', array( __CLASS__, 'pages' ) ),
 			array( 'Pictures in the Media Library', array( __CLASS__, 'pictures' ) ),
 		);
@@ -211,6 +212,23 @@ class TWD_SK_Doctor {
 		$l[]   = TWD_SK_Mode::w( 'Facts' ) . ': ' . ( '' === $facts ? 'empty' : 'filled (' . $len . ' characters' . ( '' !== $when ? ', saved ' . self::t( $when, 30 ) : '' ) . ')' );
 		$left  = TWD_SK_Profile::leftovers( $p );
 		$l[]   = 'Example text still in the site details: must fix ' . TWD_SK_Report::leftover_total( $left['must'] ) . ', check ' . TWD_SK_Report::leftover_total( $left['check'] );
+		return $l;
+	}
+
+	/** The setup page's state and the newest lines of the build log (what each build did). */
+	public static function setup() {
+		$l     = array();
+		$done  = (string) get_option( TWD_SK_Build::DONE, '' );
+		$draft = TWD_SK_Build::draft();
+		$l[]   = 'Set up: ' . ( '' !== $done ? 'yes, last build finished ' . self::t( $done, 30 ) . ' UTC' : 'not yet (the front page shows a Set this site up link to administrators)' );
+		$l[]   = 'Setup page step: ' . self::t( $draft['step'], 20 ) . '; type ' . self::t( $draft['mode'], 20 ) . '; style ' . self::t( $draft['pack'], 30 ) . '; brief ' . ( '' === trim( $draft['brief_text'] ) ? 'empty' : 'filled (' . strlen( $draft['brief_text'] ) . ' characters)' ) . '; pictures: ' . count( $draft['pictures']['slots'] ) . ' in slots, ' . count( $draft['pictures']['custom'] ) . ' named; pages made by setup: ' . count( $draft['built'] );
+		$log = TWD_SK_Build::log_lines( 25 );
+		if ( $log ) {
+			$l[] = 'Build log (newest last):';
+			foreach ( $log as $line ) {
+				$l[] = '  ' . self::t( $line, 300 );
+			}
+		}
 		return $l;
 	}
 

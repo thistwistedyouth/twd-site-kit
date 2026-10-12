@@ -17,6 +17,16 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.7.1 (the setup page)
+
+- **A normal WordPress admin page, not a front-end pop-up.** The media uploader works best there, it looks like the rest of WordPress so there is nothing to style per site, and leaving the page loses nothing because each step is saved. The front page only carries a small link to it, for administrators, until the site is set up.
+- **One request per step.** A whole site in one request would time out on shared hosting as soon as AI writes the pages. Each page is its own request, one failure never stops the others, and any step can be run again: the page ID is recorded the moment it is made, so a repeat gives a new version instead of a second page.
+- **Pictures by name, placed before cleaning.** The AI cannot know media library addresses and must not invent them, so it is given short names (`pic:front-view`) and the real addresses are put in by code. That has to happen before the sanitiser, which rightly drops an unknown address scheme. A name that is not on the list is never trusted.
+- **Notes to a brief, shown before saving.** Typing JSON is not reasonable for most people, so notes can be turned into a brief by the AI, with the same never-invent rules as the interview. The result goes back into the box to be read and corrected; nothing is saved until Check and Build.
+- **A basic menu and button when there are none.** A fresh site needs navigation to be usable at all; it is built from the planned pages and never replaces a menu that exists.
+- **The build log in the site report.** When something goes wrong on a client site, the report shows what each step did without anyone describing it.
+- **WordPress's `.button` beats the `hidden` attribute,** so the setup stylesheet hides `[hidden]` explicitly. Found in the browser check.
+
 ## v0.7.0 (therapy or business mode)
 
 - **The plugin is now used for non-therapy sites too.** Rather than a fork or a second plugin, one setting picks the words. Therapy stays the default and its wording is byte-for-byte what it was (checked by diffing every prompt before and after), so no existing site changes.

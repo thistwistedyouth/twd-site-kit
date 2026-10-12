@@ -2,12 +2,13 @@
 
 The one place to see where this project is. Newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md. Update this file at the end of every piece of work, in the same commit.
 
-## Where we are (last updated at release 0.7.0, 12 Oct 2026)
+## Where we are (last updated at release 0.7.1, 12 Oct 2026)
 
-**Released and live in the update file:** 0.7.0. Sites update from Plugins, "Check for updates", "update now".
+**Released and live in the update file:** 0.7.1. Sites update from Plugins, "Check for updates", "update now".
 
 | Version | What it added |
 |---|---|
+| 0.7.1 | The setup page (Settings > Set up site, and a Set this site up link on a fresh site's front page): site type, style, brief or plain notes, pictures (slots and named pictures the AI can place), then a step-by-step build of every page as a draft. `wp twd-sk build` runs the same build. The build log shows in the site report |
 | 0.7.0 | Therapy or business mode: one admin switch (Site tab, `wp twd-sk mode`, or `mode` in a site brief) that changes the editor and AI wording, the facts outline, page types, the interview prompt and the search details type. Therapy wording unchanged |
 | 0.6.2 | `wp twd-sk doctor` and the Site tab's Site report: a plain-text, paste-safe report of the site's state |
 | 0.6.1 | Site brief: one JSON file for a whole site, interview prompt for a Claude chat, check then apply, draft outline pages with Fill with AI |
@@ -23,7 +24,7 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 
 **Next, in order (agreed with the owner, 12 Oct 2026; full spec in `docs/plan-modes-and-setup.md`):**
 - A. DONE in 0.7.0: therapy and business mode (`TWD_SK_Mode`, option `twd_sk_mode`, default therapy, one word list per mode).
-- B. 0.7.1: the setup page (Settings > Set up site), the admin-only front-page button on a fresh install, picture slots and named custom pictures, one build engine (`TWD_SK_Build`) shared with `wp twd-sk build`, all pages as drafts.
+- B. DONE in 0.7.1: the setup page (Settings > Set up site), the admin-only front-page button on a fresh install, picture slots and named custom pictures, one build engine (`TWD_SK_Build`) shared with `wp twd-sk build`, all pages as drafts.
 - C. After that (the owner said on 12 Oct: build all of these now, beta stage, test afterwards): 0.7.2 plan step (sitemap and section outline before build), 0.7.3 add a section by asking, 0.8.x more section types, brand from logo, picture help, starter sets per business type, 0.9.0 launch check.
 
 **Earlier list (4 Oct 2026), still standing after A and B:**
@@ -40,7 +41,7 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 **Waiting on other projects (cross-project contract):**
 - Nothing. The Articles & Resource Production plugin (`twd-article-publisher`, repo `therapy-web-designs`) now offers the two filters Site Kit uses, from its version 1.34.0 (checked 4 Oct 2026; re-checked 11 Oct 2026, the filters are unchanged, that plugin is now at 1.37.1 on a branch not yet merged to its main): `twd_ai_is_configured` (true when a key is saved) and `twd_ai_complete( null, $system, $message, $max_tokens )` (returns text, a WP_Error, or null; max tokens clamped to 256 to 8000). The names match what Site Kit calls. Site Kit holds no key and calls no AI service. Ask the AI, drafting pages with AI, Fill with AI and the Site tab suggestions appear on a site only when that plugin is at 1.34.0 or later with a key saved.
 
-**Not yet verified on a real site (needs a human):** importing the two Theme Builder templates on Elementor Pro 4.3.1 and their display condition, real Yoast behaviour (writing its fields, the schema graph filter), the media picker, how a page behaves if the plugin is deactivated, caching on the host, Ask the AI, drafting pages and the Site tab suggestions with a real key (the articles plugin side is now in place), importing a real site brief, the fold-outs on a real phone, and (0.7.0) switching a fresh site to business mode and checking the Site tab labels, a drafted page's wording and the LocalBusiness search details. The test plan is in the release notes of each version in the conversation that built it; the 0.4.0 steps are in the section below.
+**Not yet verified on a real site (needs a human):** importing the two Theme Builder templates on Elementor Pro 4.3.1 and their display condition, real Yoast behaviour (writing its fields, the schema graph filter), the media picker, how a page behaves if the plugin is deactivated, caching on the host, Ask the AI, drafting pages and the Site tab suggestions with a real key (the articles plugin side is now in place), importing a real site brief, the fold-outs on a real phone, (0.7.0) switching a fresh site to business mode and checking the Site tab labels, a drafted page's wording and the LocalBusiness search details, and (0.7.1) the whole setup page on a fresh install: the front-page link, the real media library picker and uploads, notes to a brief and a full build with a real key, the pictures landing where expected, the menu links working once the pages are published, and `wp twd-sk build` over SSH. The test plan is in the release notes of each version in the conversation that built it; the 0.4.0 steps are in the section below.
 
 **Known limitation:** a page that still uses the old `[twd_page]` shortcode cannot be mirrored into its content for site search until its content is cleared once after switching it to the kit template.
 

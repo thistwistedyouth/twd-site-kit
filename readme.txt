@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.7.0
+Stable tag: 0.7.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,11 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.7.1 =
+* New: the setup page. On a fresh site an administrator sees a Set this site up link on the front page, which opens Settings, Set up site: choose the site type and style, paste a site brief or plain notes (the AI can turn notes into a brief for you to check), choose pictures from the media library (logo, Home picture, About photo, and named pictures the AI can place where they fit), then build. Every page is made one at a time as a draft, written by AI when a key is available or as an outline otherwise. Safe to run again.
+* New: wp twd-sk build runs the same build from the command line, with a dry run.
+* The site report now shows the setup state and what the last build did.
 
 = 0.7.0 =
 * New: therapy or business mode. One switch for administrators (Site tab, Site type; or wp twd-sk mode business; or "mode" in a site brief) that changes the wording the editor and the AI use, the facts outline, the page types, the interview prompt and the search engine details (LocalBusiness instead of a therapy practice). Therapy stays the default and its wording is unchanged. Switching never rewrites a page that is already written.

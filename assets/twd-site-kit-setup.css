@@ -1,0 +1,34 @@
+/* TWD Site Kit: the setup page (Settings > Set up site). Plain admin styles on top of WordPress's own. */
+.twd-sk-setup { max-width: 960px; }
+/* WordPress gives .button a display value, which would beat the hidden attribute. */
+.twd-sk-setup [hidden] { display: none !important; }
+.twd-sk-setup__steps { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; padding: 0; list-style: none; }
+.twd-sk-setup__steps li { margin: 0; }
+.twd-sk-setup__stepbtn { min-height: 40px; padding: 8px 14px; border: 1px solid #c3c4c7; border-radius: 4px; background: #fff; color: #1d2327; font-size: 14px; cursor: pointer; }
+.twd-sk-setup__stepbtn[aria-current="step"] { border-color: #2271b1; background: #2271b1; color: #fff; font-weight: 600; }
+.twd-sk-setup__stepbtn:focus-visible { outline: 2px solid #2271b1; outline-offset: 2px; }
+.twd-sk-setup__body { padding: 8px 24px 16px; border: 1px solid #c3c4c7; border-radius: 4px; background: #fff; }
+.twd-sk-setup__radios { margin: 12px 0; padding: 0; border: 0; }
+.twd-sk-setup__radio { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: start; margin: 0 0 12px; padding: 12px; border: 1px solid #dcdcde; border-radius: 4px; cursor: pointer; }
+.twd-sk-setup__radio input { margin-top: 3px; grid-row: span 2; }
+.twd-sk-setup__radio span { color: #50575e; }
+.twd-sk-setup__actions .button, .twd-sk-setup__nav .button { margin: 0 8px 8px 0; }
+.twd-sk-setup__nav { margin-top: 24px; padding-top: 16px; border-top: 1px solid #dcdcde; }
+.twd-sk-setup__pics { display: grid; gap: 12px; }
+.twd-sk-setup__pic { display: grid; grid-template-columns: 112px 1fr; gap: 12px; padding: 12px; border: 1px solid #dcdcde; border-radius: 4px; }
+.twd-sk-setup__pic label { display: block; margin-top: 8px; font-weight: 600; }
+.twd-sk-setup__pic input[type="text"], .twd-sk-setup__pic select { width: 100%; max-width: 420px; }
+.twd-sk-setup__thumb { display: block; width: 112px; height: 112px; object-fit: cover; border-radius: 4px; background: #f0f0f1; }
+.twd-sk-setup__thumb--empty { display: flex; align-items: center; justify-content: center; color: #50575e; font-size: 13px; }
+.twd-sk-setup__run li { margin-bottom: 12px; }
+.twd-sk-setup__state { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: #f0f0f1; color: #1d2327; font-size: 13px; }
+.twd-sk-setup__state.is-working { background: #fcf9e8; }
+.twd-sk-setup__state.is-done { background: #edfaef; color: #00450c; }
+.twd-sk-setup__state.is-failed { background: #fcf0f1; color: #8a2424; }
+.twd-sk-setup__detail ul { margin: 6px 0 0 18px; list-style: disc; }
+.twd-sk-setup__list { margin-left: 18px; list-style: disc; }
+.twd-sk-setup__msg { margin-top: 12px; }
+@media (max-width: 600px) {
+  .twd-sk-setup__body { padding: 8px 12px 12px; }
+  .twd-sk-setup__pic { grid-template-columns: 1fr; }
+}

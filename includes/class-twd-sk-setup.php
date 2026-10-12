@@ -48,7 +48,7 @@ class TWD_SK_Setup {
 	}
 
 	/** True when a published page is already the static front page. */
-	private static function front_page_blocked() {
+	public static function front_page_blocked() {
 		if ( 'page' !== get_option( 'show_on_front' ) ) {
 			return false;
 		}

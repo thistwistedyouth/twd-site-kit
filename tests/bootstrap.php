@@ -286,6 +286,10 @@ function wp_delete_file( $path ) {
 function wp_nonce_url( $url, $action ) {
 	return $url . '&_wpnonce=NONCE_' . $action;
 }
+function add_options_page( $page_title, $menu_title, $cap, $slug, $cb ) {
+	$GLOBALS['twd_stub']['options_pages'][] = array( 'title' => $page_title, 'cap' => $cap, 'slug' => $slug, 'cb' => $cb );
+	return 'settings_page_' . $slug;
+}
 function admin_url( $path = '' ) {
 	return 'https://example.test/wp-admin/' . $path;
 }
@@ -572,6 +576,8 @@ require_once ABSPATH . 'includes/class-twd-sk-ai.php';
 require_once ABSPATH . 'includes/class-twd-sk-proposals.php';
 require_once ABSPATH . 'includes/class-twd-sk-brief.php';
 require_once ABSPATH . 'includes/class-twd-sk-doctor.php';
+require_once ABSPATH . 'includes/class-twd-sk-pictures.php';
+require_once ABSPATH . 'includes/class-twd-sk-build.php';
 require_once ABSPATH . 'includes/class-twd-sk-assets.php';
 require_once ABSPATH . 'includes/class-twd-sk-updater.php';
 require_once ABSPATH . 'includes/class-twd-sk-report.php';

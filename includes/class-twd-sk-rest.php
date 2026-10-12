@@ -30,6 +30,8 @@ class TWD_SK_REST {
 			'write'   => array( 30, 60 ),
 			'create'  => array( 10, 3600 ),
 			'ai'      => array( 10, 600 ),
+			// The site setup build: one request per page, each may spend the key once.
+			'build'   => array( 60, 600 ),
 		);
 	}
 
@@ -207,6 +209,31 @@ class TWD_SK_REST {
 				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 			),
 		) );
+		register_rest_route( self::ROUTE_NS, '/site/build', array(
+			'methods'             => 'GET',
+			'callback'            => array( __CLASS__, 'get_site_build' ),
+			'permission_callback' => array( __CLASS__, 'can_read_site' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/build/draft', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_build_draft' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/build/reset', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_build_reset' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/build/notes', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_build_notes' ),
+			'permission_callback' => array( __CLASS__, 'can_propose_site' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/build/step', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_build_step' ),
+			'permission_callback' => array( __CLASS__, 'can_build_site' ),
+		) );
 		register_rest_route( self::ROUTE_NS, '/site/brief', array(
 			'methods'             => 'GET',
 			'callback'            => array( __CLASS__, 'get_site_brief' ),
@@ -275,6 +302,11 @@ class TWD_SK_REST {
 	/** Site settings need manage_options (administrators), and no page ID. */
 	public static function can_manage_site( $request ) {
 		return self::guard( $request, 'write', false, 'manage_options' );
+	}
+
+	/** One build step: administrators only, with its own limit (a step may spend the key once). */
+	public static function can_build_site( $request ) {
+		return self::guard( $request, 'build', false, 'manage_options' );
 	}
 
 	public static function can_read_site( $request ) {
@@ -515,6 +547,87 @@ class TWD_SK_REST {
 			return self::error( 'twd_sk_bad_input', $saved->get_error_message(), 400 );
 		}
 		return self::mode_payload();
+	}
+
+	// -- The site setup build ------------------------------------------------
+
+	private static function build_payload( $errors = array() ) {
+		$draft = TWD_SK_Build::draft();
+		$packs = array();
+		foreach ( TWD_SK_Packs::packs() as $slug => $p ) {
+			$packs[ $slug ] = array( 'name' => $p['name'], 'description' => $p['description'] );
+		}
+		$pics = array( 'slots' => array(), 'custom' => array() );
+		foreach ( $draft['pictures']['slots'] as $slot => $p ) {
+			$pics['slots'][ $slot ] = $p + array( 'url' => TWD_SK_Pictures::url( $p['id'] ) );
+		}
+		foreach ( $draft['pictures']['custom'] as $p ) {
+			$pics['custom'][] = $p + array( 'url' => TWD_SK_Pictures::url( $p['id'] ) );
+		}
+		$draft['pictures'] = $pics;
+		return array(
+			'draft'    => $draft,
+			'plan'     => TWD_SK_Build::plan(),
+			'errors'   => $errors,
+			'modes'    => TWD_SK_Mode::modes(),
+			'packs'    => $packs,
+			'slots'    => TWD_SK_Pictures::slots(),
+			'ai'       => TWD_SK_AI::available(),
+			'done'     => (string) get_option( TWD_SK_Build::DONE, '' ),
+			'safe'     => TWD_SK_Safe::on(),
+			'max_pictures' => TWD_SK_Pictures::MAX_CUSTOM,
+		);
+	}
+
+	public static function get_site_build( $request ) {
+		return self::build_payload();
+	}
+
+	/** Save some of the setup page's choices. Good values are kept even when another is refused. */
+	public static function post_site_build_draft( $request ) {
+		$in = array();
+		foreach ( array( 'step', 'mode', 'pack', 'brief_text', 'pictures' ) as $k ) {
+			$v = $request->get_param( $k );
+			if ( null !== $v ) {
+				$in[ $k ] = $v;
+			}
+		}
+		$out = TWD_SK_Build::save_draft( $in );
+		return self::build_payload( $out['errors'] );
+	}
+
+	/** Forget the setup page's choices. Pages already made stay, as drafts. */
+	public static function post_site_build_reset( $request ) {
+		if ( ! self::truthy( $request->get_param( 'confirm' ) ) ) {
+			return self::error( 'twd_sk_confirm_needed', 'Please confirm first.', 400 );
+		}
+		TWD_SK_Build::reset_draft();
+		return self::build_payload();
+	}
+
+	/** Turn plain notes into a brief with the AI. Saves nothing: the person checks it first. */
+	public static function post_site_build_notes( $request ) {
+		$out = TWD_SK_Brief::from_notes( $request->get_param( 'notes' ) );
+		if ( is_wp_error( $out ) ) {
+			$map    = array( 'twd_sk_bad_brief' => 400, 'twd_sk_ai_unavailable' => 503 );
+			$code   = $out->get_error_code();
+			$status = isset( $map[ $code ] ) ? $map[ $code ] : 502;
+			return self::error( $code, $out->get_error_message(), $status );
+		}
+		return array( 'json' => $out['json'] );
+	}
+
+	/** Run one build step. Pages are drafts only. */
+	public static function post_site_build_step( $request ) {
+		$step = $request->get_param( 'step' );
+		$out  = TWD_SK_Build::run_step( is_string( $step ) ? $step : '', (int) $request->get_param( 'index' ), array( 'ai' => null === $request->get_param( 'ai' ) ? true : self::truthy( $request->get_param( 'ai' ) ) ) );
+		if ( is_wp_error( $out ) ) {
+			$map    = array( 'twd_sk_bad_input' => 400, 'twd_sk_contrast' => 422 );
+			$code   = $out->get_error_code();
+			$status = isset( $map[ $code ] ) ? $map[ $code ] : 500;
+			return self::error( $code, $out->get_error_message(), $status );
+		}
+		return $out;
 	}
 
 	// -- The site brief ---------------------------------------------------

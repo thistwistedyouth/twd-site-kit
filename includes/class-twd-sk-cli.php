@@ -15,6 +15,8 @@
  *   wp twd-sk safe-mode [on|off|status]  switch the newest features off, or back on
  *   wp twd-sk pack [<slug>]             list style packs, or switch to one
  *   wp twd-sk mode [<mode>]             show the site type (therapy or business), or switch it
+ *   wp twd-sk build [<brief-file>] [--mode=<mode>] [--pack=<slug>] [--pictures=<file>] [--no-ai] [--dry-run]
+ *                                        set the whole site up from a brief, every page a draft
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -276,6 +278,114 @@ class TWD_SK_CLI {
 		} else {
 			WP_CLI::success( 'Safe mode is OFF.' );
 		}
+	}
+
+	/**
+	 * Set the whole site up from a site brief: type, style, details, menu, facts, logo, then each page
+	 * (written by AI when a key is available, otherwise an outline), the front page, and a check of
+	 * every page. The same engine as Settings > Set up site. Every page is a draft. Safe to run again:
+	 * a page this build made gets a new version; a page with the same title made some other way is
+	 * left alone.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [<brief-file>]
+	 * : A site brief JSON file, or - for stdin. Leave out to build Home, About and Contact from what
+	 *   the setup page already holds.
+	 *
+	 * [--mode=<mode>]
+	 * : therapy or business.
+	 *
+	 * [--pack=<slug>]
+	 * : Style pack (see wp twd-sk pack).
+	 *
+	 * [--pictures=<file>]
+	 * : A JSON file: {"slots":{"logo":{"id":12},"home_main":{"id":13,"description":"..."}},
+	 *   "custom":[{"name":"front-view","id":14,"description":"...","use_on":"any"}]}. IDs are media library pictures.
+	 *
+	 * [--no-ai]
+	 * : Make outlines only, even when AI is available.
+	 *
+	 * [--dry-run]
+	 * : Show the plan and stop. Nothing is changed.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk build brief.json --mode=business --pack=grove --dry-run
+	 *     wp twd-sk build brief.json --pictures=pictures.json
+	 */
+	public function build( $args, $assoc_args ) {
+		$in = array();
+		if ( isset( $args[0] ) ) {
+			$file = (string) $args[0];
+			$text = '-' === $file ? stream_get_contents( STDIN ) : ( is_readable( $file ) ? file_get_contents( $file ) : false );
+			if ( false === $text ) {
+				WP_CLI::error( 'Could not read ' . $file . '.' );
+				return;
+			}
+			$in['brief_text'] = $text;
+		}
+		foreach ( array( 'mode', 'pack' ) as $k ) {
+			if ( isset( $assoc_args[ $k ] ) ) {
+				$in[ $k ] = (string) $assoc_args[ $k ];
+			}
+		}
+		if ( isset( $assoc_args['pictures'] ) ) {
+			$raw  = is_readable( (string) $assoc_args['pictures'] ) ? file_get_contents( (string) $assoc_args['pictures'] ) : false;
+			$pics = false === $raw ? null : json_decode( $raw, true );
+			if ( ! is_array( $pics ) ) {
+				WP_CLI::error( 'Could not read the pictures file as JSON.' );
+				return;
+			}
+			$in['pictures'] = $pics;
+		}
+		if ( $in ) {
+			$saved = TWD_SK_Build::save_draft( $in );
+			foreach ( $saved['errors'] as $e ) {
+				WP_CLI::warning( $e );
+			}
+			if ( isset( $in['mode'] ) && $saved['draft']['mode'] !== $in['mode'] || isset( $in['pack'] ) && $saved['draft']['pack'] !== $in['pack'] ) {
+				WP_CLI::error( 'Fix the type or style first. Nothing was built.' );
+				return;
+			}
+		}
+		$plan = TWD_SK_Build::plan();
+		foreach ( $plan['errors'] as $e ) {
+			WP_CLI::warning( $e );
+		}
+		foreach ( $plan['blocking'] as $b ) {
+			WP_CLI::warning( 'Hard to read: ' . $b );
+		}
+		$ai = $plan['ai'] && ! isset( $assoc_args['no-ai'] );
+		WP_CLI::log( 'Plan (' . ( $ai ? 'pages written by AI' : 'outlines only' ) . '):' );
+		foreach ( $plan['steps'] as $s ) {
+			WP_CLI::log( '  - ' . $s['label'] );
+		}
+		if ( isset( $assoc_args['dry-run'] ) ) {
+			WP_CLI::success( 'Dry run: nothing was changed.' );
+			return;
+		}
+		$failed = 0;
+		foreach ( $plan['steps'] as $s ) {
+			$r = TWD_SK_Build::run_step( $s['id'], $s['index'], array( 'ai' => $ai ) );
+			if ( is_wp_error( $r ) ) {
+				$failed++;
+				WP_CLI::warning( $s['label'] . ': ' . $r->get_error_message() );
+				if ( 'settings' === $s['id'] ) {
+					WP_CLI::error( 'The settings step failed, so no pages were made.' );
+					return;
+				}
+				continue;
+			}
+			foreach ( $r['report'] as $line ) {
+				WP_CLI::log( '    ' . $line );
+			}
+		}
+		if ( $failed ) {
+			WP_CLI::warning( $failed . ' step' . ( 1 === $failed ? '' : 's' ) . ' failed. Run the command again; it is safe to repeat.' );
+			return;
+		}
+		WP_CLI::success( 'Built. Every page is a draft. Check each one, replace any [PLACEHOLDER], then publish.' );
 	}
 
 	/**

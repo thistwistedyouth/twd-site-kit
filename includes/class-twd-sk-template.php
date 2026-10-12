@@ -64,7 +64,7 @@ class TWD_SK_Template {
 	 *
 	 * @return int|WP_Error The new page ID.
 	 */
-	public static function create_page( $title, $starter ) {
+	public static function create_page( $title, $starter, $slug = '' ) {
 		$title = trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( (string) $title ) ) );
 		if ( '' === $title ) {
 			return new WP_Error( 'twd_sk_bad_input', 'Give the page a title.' );
@@ -77,14 +77,20 @@ class TWD_SK_Template {
 			return new WP_Error( 'twd_sk_bad_input', 'Choose one of the starting layouts on offer.' );
 		}
 
-		$id = wp_insert_post( array(
+		$args = array(
 			'post_type'     => 'page',
 			'post_status'   => 'draft',
 			'post_title'    => $title,
 			'post_content'  => '',
 			'post_author'   => (int) get_current_user_id(),
 			'page_template' => self::SLUG,
-		), true );
+		);
+		// A chosen address (the site setup uses it so the menu links match before publishing).
+		$slug = is_string( $slug ) ? strtolower( preg_replace( '/[^a-z0-9-]+/i', '', $slug ) ) : '';
+		if ( '' !== $slug ) {
+			$args['post_name'] = $slug;
+		}
+		$id = wp_insert_post( $args, true );
 		if ( is_wp_error( $id ) ) {
 			return $id;
 		}

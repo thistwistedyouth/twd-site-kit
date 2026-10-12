@@ -182,6 +182,7 @@ class TWD_SK_Mode {
 				'recipe_faq'         => 'A questions and answers page. The questions people ask most, answered in the therapist\'s own words, using only the facts.',
 				'recipe_service_label' => 'Service or topic page (for example Working with anxiety)',
 				'topic_example'      => 'Working with anxiety',
+				'service_kind'       => 'kind of work or topic',
 				// The facts outline.
 				'facts_template'     => array(
 					'WHO I AM',
@@ -261,6 +262,7 @@ class TWD_SK_Mode {
 				'recipe_faq'         => 'A questions and answers page. The questions customers ask most, answered in the business owner\'s own words, using only the facts.',
 				'recipe_service_label' => 'Product or service page (for example Weekend hire)',
 				'topic_example'      => 'Weekend hire',
+				'service_kind'       => 'product or service',
 				'facts_template'     => array(
 					'WHO WE ARE',
 					'The business name, who is behind it, and how it started, in a few lines.',
