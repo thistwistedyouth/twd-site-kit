@@ -16,7 +16,7 @@
  *   wp twd-sk pack [<slug>]             list style packs, or switch to one
  *   wp twd-sk mode [<mode>]             show the site type (therapy or business), or switch it
  *   wp twd-sk brand [<picture-id>] [--apply]  colours from the logo, checked for contrast; --apply saves them
- *   wp twd-sk build [<brief-file>] [--mode=<mode>] [--pack=<slug>] [--pictures=<file>] [--no-ai] [--dry-run]
+ *   wp twd-sk build [<brief-file>] [--mode=<mode>] [--set=<slug>] [--pack=<slug>] [--pictures=<file>] [--no-ai] [--dry-run]
  *                                        set the whole site up from a brief, every page a draft
  */
 
@@ -300,6 +300,9 @@ class TWD_SK_CLI {
 	 * [--pack=<slug>]
 	 * : Style pack (see wp twd-sk pack).
 	 *
+	 * [--set=<slug>]
+	 * : A starting point from starters/sets (for example mobile-hire or counselling). Used when the brief lists no pages.
+	 *
 	 * [--pictures=<file>]
 	 * : A JSON file: {"slots":{"logo":{"id":12},"home_main":{"id":13,"description":"..."}},
 	 *   "custom":[{"name":"front-view","id":14,"description":"...","use_on":"any"}]}. IDs are media library pictures.
@@ -326,7 +329,7 @@ class TWD_SK_CLI {
 			}
 			$in['brief_text'] = $text;
 		}
-		foreach ( array( 'mode', 'pack' ) as $k ) {
+		foreach ( array( 'mode', 'pack', 'set' ) as $k ) {
 			if ( isset( $assoc_args[ $k ] ) ) {
 				$in[ $k ] = (string) $assoc_args[ $k ];
 			}
@@ -345,8 +348,8 @@ class TWD_SK_CLI {
 			foreach ( $saved['errors'] as $e ) {
 				WP_CLI::warning( $e );
 			}
-			if ( isset( $in['mode'] ) && $saved['draft']['mode'] !== $in['mode'] || isset( $in['pack'] ) && $saved['draft']['pack'] !== $in['pack'] ) {
-				WP_CLI::error( 'Fix the type or style first. Nothing was built.' );
+			if ( isset( $in['mode'] ) && $saved['draft']['mode'] !== $in['mode'] || isset( $in['pack'] ) && $saved['draft']['pack'] !== $in['pack'] || isset( $in['set'] ) && $saved['draft']['set'] !== $in['set'] ) {
+				WP_CLI::error( 'Fix the type, starting point or style first. Nothing was built.' );
 				return;
 			}
 		}

@@ -1,0 +1,70 @@
+{
+ "schema": "twd-starter-set/1",
+ "slug": "counselling",
+ "name": "Counselling or psychotherapy practice",
+ "mode": "therapy",
+ "description": "A calm practice site: who you are, how you work, fees and questions, and a gentle way to get in touch.",
+ "pages": [
+  {
+   "type": "home",
+   "title": "Home"
+  },
+  {
+   "type": "about",
+   "title": "About"
+  },
+  {
+   "type": "service",
+   "title": "How I work",
+   "topic": "How I work",
+   "sections": [
+    {
+     "component": "hero",
+     "variant": "twd-sk-hero--compact"
+    },
+    {
+     "component": "text",
+     "variant": ""
+    },
+    {
+     "component": "steps",
+     "variant": ""
+    },
+    {
+     "component": "pricing",
+     "variant": "twd-sk-pricing--list"
+    },
+    {
+     "component": "cta",
+     "variant": "twd-sk-cta--strip"
+    }
+   ]
+  },
+  {
+   "type": "faq",
+   "title": "Questions and answers"
+  },
+  {
+   "type": "contact",
+   "title": "Contact",
+   "sections": [
+    {
+     "component": "hero",
+     "variant": "twd-sk-hero--compact"
+    },
+    {
+     "component": "contact",
+     "variant": "twd-sk-contact--split"
+    },
+    {
+     "component": "enquiry",
+     "variant": ""
+    },
+    {
+     "component": "notice",
+     "variant": ""
+    }
+   ]
+  }
+ ]
+}

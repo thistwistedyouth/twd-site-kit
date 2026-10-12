@@ -411,7 +411,7 @@ twd_sk_test( 'build cli: a dry run changes nothing; a real run makes the drafts;
 	twd_sk_has( 'Built. Every page is a draft.', WP_CLI::all() );
 	twd_sk_eq( 4, count( TWD_SK_Build::draft()['built'] ) );
 	twd_sk_eq( 'business', TWD_SK_Mode::get() );
-	twd_sk_has( 'Fix the type or style first', twd_sk_cli_fails( function () use ( $cli, $brief ) {
+	twd_sk_has( 'Fix the type, starting point or style first', twd_sk_cli_fails( function () use ( $cli, $brief ) {
 		$cli->build( array( $brief ), array( 'mode' => 'shop' ) );
 	} ) );
 	twd_sk_has( 'Could not read', twd_sk_cli_fails( function () use ( $cli ) {

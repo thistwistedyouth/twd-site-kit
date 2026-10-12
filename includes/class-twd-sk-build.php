@@ -64,6 +64,7 @@ class TWD_SK_Build {
 			'built'      => $built,
 			'used'       => isset( $d['used'] ) && is_array( $d['used'] ) ? array_values( array_filter( $d['used'], 'is_string' ) ) : array(),
 			'brand'      => ! empty( $d['brand'] ),
+			'set'        => isset( $d['set'] ) && is_string( $d['set'] ) && TWD_SK_Sets::get( $d['set'] ) ? $d['set'] : '',
 			// The page list from the Pages step, or null to follow the brief.
 			'pages'      => isset( $d['pages'] ) && is_array( $d['pages'] ) ? $d['pages'] : null,
 			'updated'    => isset( $d['updated'] ) && is_string( $d['updated'] ) ? $d['updated'] : '',
@@ -107,6 +108,13 @@ class TWD_SK_Build {
 				$errors[] = 'That brief is too long to keep (' . (int) ( TWD_SK_Brief::MAX_BYTES / 1000 ) . ' KB at most).';
 			} else {
 				$d['brief_text'] = $in['brief_text'];
+			}
+		}
+		if ( isset( $in['set'] ) ) {
+			if ( '' === $in['set'] || ( is_string( $in['set'] ) && TWD_SK_Sets::get( $in['set'] ) ) ) {
+				$d['set'] = $in['set'];
+			} else {
+				$errors[] = 'Choose one of the starting points on offer.';
 			}
 		}
 		if ( array_key_exists( 'brand', $in ) ) {
@@ -228,6 +236,12 @@ class TWD_SK_Build {
 		$errors = array_merge( $errors, $bp['errors'] );
 		$pages  = $bp['changes']['pages'];
 		$source = 'brief';
+		// No pages in the brief: the chosen starter set's pages, if one was chosen.
+		if ( ! $pages && '' !== $draft['set'] ) {
+			$set    = TWD_SK_Sets::get( $draft['set'] );
+			$pages  = $set ? $set['pages'] : array();
+			$source = $set ? 'set' : 'brief';
+		}
 		if ( null !== $draft['pages'] ) {
 			// The Pages step's list wins over the brief's, checked again in case the rules changed.
 			$edited = self::clean_pages( $draft['pages'] );

@@ -1,0 +1,92 @@
+{
+ "schema": "twd-starter-set/1",
+ "slug": "studio-classes",
+ "name": "Studio or classes",
+ "mode": "business",
+ "description": "For classes or a studio: the timetable, prices, what to expect at a first class, and a way to book or ask.",
+ "pages": [
+  {
+   "type": "home",
+   "title": "Home",
+   "sections": [
+    {
+     "component": "hero",
+     "variant": "twd-sk-hero--image"
+    },
+    {
+     "component": "services",
+     "variant": "twd-sk-services--cards"
+    },
+    {
+     "component": "image_text",
+     "variant": ""
+    },
+    {
+     "component": "quote",
+     "variant": "twd-sk-quote--cards"
+    },
+    {
+     "component": "cta",
+     "variant": "twd-sk-cta--band"
+    }
+   ]
+  },
+  {
+   "type": "service",
+   "title": "Classes",
+   "topic": "Classes and timetable",
+   "sections": [
+    {
+     "component": "hero",
+     "variant": "twd-sk-hero--compact"
+    },
+    {
+     "component": "text",
+     "variant": ""
+    },
+    {
+     "component": "hours",
+     "variant": ""
+    },
+    {
+     "component": "pricing",
+     "variant": "twd-sk-pricing--list"
+    },
+    {
+     "component": "faq",
+     "variant": ""
+    },
+    {
+     "component": "cta",
+     "variant": "twd-sk-cta--strip"
+    }
+   ]
+  },
+  {
+   "type": "about",
+   "title": "About"
+  },
+  {
+   "type": "contact",
+   "title": "Contact",
+   "sections": [
+    {
+     "component": "hero",
+     "variant": "twd-sk-hero--compact"
+    },
+    {
+     "component": "contact",
+     "variant": ""
+    },
+    {
+     "component": "areas",
+     "variant": ""
+    },
+    {
+     "component": "enquiry",
+     "variant": ""
+    }
+   ]
+  }
+ ]
+}

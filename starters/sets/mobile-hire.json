@@ -1,0 +1,100 @@
+{
+ "schema": "twd-starter-set/1",
+ "slug": "mobile-hire",
+ "name": "Mobile hire business",
+ "mode": "business",
+ "description": "For hiring something out by the day or weekend: what you hire, prices, the area you cover, how booking works, and an enquiry form.",
+ "pages": [
+  {
+   "type": "home",
+   "title": "Home",
+   "sections": [
+    {
+     "component": "hero",
+     "variant": "twd-sk-hero--split"
+    },
+    {
+     "component": "services",
+     "variant": "twd-sk-services--cards"
+    },
+    {
+     "component": "pictures",
+     "variant": ""
+    },
+    {
+     "component": "quote",
+     "variant": "twd-sk-quote--cards"
+    },
+    {
+     "component": "areas",
+     "variant": ""
+    },
+    {
+     "component": "cta",
+     "variant": "twd-sk-cta--band"
+    }
+   ]
+  },
+  {
+   "type": "service",
+   "title": "Hire and prices",
+   "topic": "Hire options and prices",
+   "sections": [
+    {
+     "component": "hero",
+     "variant": "twd-sk-hero--compact"
+    },
+    {
+     "component": "text",
+     "variant": ""
+    },
+    {
+     "component": "pricing",
+     "variant": ""
+    },
+    {
+     "component": "steps",
+     "variant": ""
+    },
+    {
+     "component": "faq",
+     "variant": ""
+    },
+    {
+     "component": "cta",
+     "variant": "twd-sk-cta--strip"
+    }
+   ]
+  },
+  {
+   "type": "about",
+   "title": "About us"
+  },
+  {
+   "type": "faq",
+   "title": "Questions and answers"
+  },
+  {
+   "type": "contact",
+   "title": "Book or ask",
+   "sections": [
+    {
+     "component": "hero",
+     "variant": "twd-sk-hero--compact"
+    },
+    {
+     "component": "contact",
+     "variant": ""
+    },
+    {
+     "component": "hours",
+     "variant": ""
+    },
+    {
+     "component": "enquiry",
+     "variant": ""
+    }
+   ]
+  }
+ ]
+}

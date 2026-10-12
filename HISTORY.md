@@ -17,6 +17,12 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.8.4 (starter sets)
+
+- **Different kinds of business need different first pages.** A hire business needs prices, areas and booking; a trade needs accreditations and a quote form; a counsellor needs fees and questions. A starter set is a ready list of pages and sections for one kind of site.
+- **Data, not code.** Each set is one JSON file checked like a brief, so a new kind of site is a new file. A broken file is skipped and named in the site report rather than half used.
+- **The brief still wins.** A set is only a starting point when the brief does not list pages, and the Pages step can change everything before building.
+
 ## v0.8.3 (keep in view)
 
 - **Crops were cutting off faces.** Hero, picture grid and image-and-text layouts crop to fill their space; a person's head near the top of a portrait got cut. A choice of nine positions per picture, stored with the picture rather than in each page, fixes every page that uses it.

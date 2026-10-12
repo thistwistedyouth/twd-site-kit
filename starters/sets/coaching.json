@@ -1,0 +1,88 @@
+{
+ "schema": "twd-starter-set/1",
+ "slug": "coaching",
+ "name": "Coaching practice",
+ "mode": "therapy",
+ "description": "For a coach: what coaching with you is like, packages and prices, and an enquiry form.",
+ "pages": [
+  {
+   "type": "home",
+   "title": "Home",
+   "sections": [
+    {
+     "component": "hero",
+     "variant": "twd-sk-hero--split"
+    },
+    {
+     "component": "services",
+     "variant": "twd-sk-services--cards"
+    },
+    {
+     "component": "image_text",
+     "variant": ""
+    },
+    {
+     "component": "quote",
+     "variant": "twd-sk-quote--cards"
+    },
+    {
+     "component": "cta",
+     "variant": "twd-sk-cta--band"
+    }
+   ]
+  },
+  {
+   "type": "about",
+   "title": "About"
+  },
+  {
+   "type": "service",
+   "title": "Coaching",
+   "topic": "Coaching sessions",
+   "sections": [
+    {
+     "component": "hero",
+     "variant": "twd-sk-hero--compact"
+    },
+    {
+     "component": "text",
+     "variant": ""
+    },
+    {
+     "component": "steps",
+     "variant": ""
+    },
+    {
+     "component": "pricing",
+     "variant": ""
+    },
+    {
+     "component": "faq",
+     "variant": ""
+    },
+    {
+     "component": "cta",
+     "variant": "twd-sk-cta--strip"
+    }
+   ]
+  },
+  {
+   "type": "contact",
+   "title": "Contact",
+   "sections": [
+    {
+     "component": "hero",
+     "variant": "twd-sk-hero--compact"
+    },
+    {
+     "component": "contact",
+     "variant": ""
+    },
+    {
+     "component": "enquiry",
+     "variant": ""
+    }
+   ]
+  }
+ ]
+}

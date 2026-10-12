@@ -225,6 +225,7 @@ class TWD_SK_Doctor {
 		$draft = TWD_SK_Build::draft();
 		$l[]   = 'Set up: ' . ( '' !== $done ? 'yes, last build finished ' . self::t( $done, 30 ) . ' UTC' : 'not yet (the front page shows a Set this site up link to administrators)' );
 		$l[]   = 'Setup page step: ' . self::t( $draft['step'], 20 ) . '; type ' . self::t( $draft['mode'], 20 ) . '; style ' . self::t( $draft['pack'], 30 ) . '; brief ' . ( '' === trim( $draft['brief_text'] ) ? 'empty' : 'filled (' . strlen( $draft['brief_text'] ) . ' characters)' ) . '; pictures: ' . count( $draft['pictures']['slots'] ) . ' in slots, ' . count( $draft['pictures']['custom'] ) . ' named; pages made by setup: ' . count( $draft['built'] );
+		$l[] = 'Starting point: ' . ( '' !== $draft['set'] ? self::t( $draft['set'], 40 ) : 'none' ) . '; starter sets available: ' . count( TWD_SK_Sets::all() ) . ( TWD_SK_Sets::errors() ? '; set files with problems: ' . self::t( implode( ' | ', TWD_SK_Sets::errors() ), 300 ) : '' );
 		$log = TWD_SK_Build::log_lines( 25 );
 		if ( $log ) {
 			$l[] = 'Build log (newest last):';

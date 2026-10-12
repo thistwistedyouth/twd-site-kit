@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.8.3
+Stable tag: 0.8.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.8.4 =
+* New: starting points for the setup page. On the first step, choose the kind of site (for example counselling, coaching, mobile hire, trades, or a studio with classes) to start from a ready list of pages and sections. A brief that lists its own pages still wins, and the Pages step can change everything before building. Also wp twd-sk build --set=<name>.
 
 = 0.8.3 =
 * New: keep in view. Choose which part of a picture stays visible when a kit page crops it (for example Top for a face), in the media library's edit screen or on the setup page's Pictures step. It applies to every page that uses the picture.

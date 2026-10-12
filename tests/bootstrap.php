@@ -590,6 +590,7 @@ require_once ABSPATH . 'includes/class-twd-sk-pictures.php';
 require_once ABSPATH . 'includes/class-twd-sk-build.php';
 require_once ABSPATH . 'includes/class-twd-sk-enquiry.php';
 require_once ABSPATH . 'includes/class-twd-sk-brand.php';
+require_once ABSPATH . 'includes/class-twd-sk-sets.php';
 require_once ABSPATH . 'includes/class-twd-sk-assets.php';
 require_once ABSPATH . 'includes/class-twd-sk-updater.php';
 require_once ABSPATH . 'includes/class-twd-sk-report.php';

@@ -207,7 +207,7 @@
 	/* What each step sends when leaving it. */
 	function valuesOf(step) {
 		if (step === 'type') {
-			return { mode: checked('mode') };
+			return { mode: checked('mode'), set: ui.set ? ui.set.value : '' };
 		}
 		if (step === 'style') {
 			return { pack: checked('pack'), brand: !!(ui.brand && ui.brand.checked) };
@@ -306,6 +306,38 @@
 		body.appendChild(radios('mode', S.data.modes, S.data.draft.mode, function (m) {
 			return { title: m.label, help: m.help };
 		}));
+		// A starting point: a ready list of pages and sections for this kind of site.
+		var sets = S.data.sets || {};
+		ui.set = el('select', { id: 'twd-sk-setup-set' });
+		ui.setHelp = el('p', { className: 'description' });
+		function fillSets() {
+			var mode = checked('mode') || S.data.draft.mode;
+			var keep = ui.set.value || S.data.draft.set || '';
+			clear(ui.set);
+			ui.set.appendChild(el('option', { value: '', text: 'None: a simple Home, About and Contact' }));
+			Object.keys(sets).forEach(function (slug) {
+				if (sets[slug].mode === mode) {
+					ui.set.appendChild(el('option', { value: slug, text: sets[slug].name }));
+				}
+			});
+			ui.set.value = keep;
+			if (ui.set.value !== keep) {
+				ui.set.value = '';
+			}
+			describeSet();
+		}
+		function describeSet() {
+			var s = sets[ui.set.value];
+			ui.setHelp.textContent = s ? s.description + ' Pages: ' + s.pages.join(', ') + '. A brief that lists its own pages wins over this.' : 'Choose a starting point to get a ready list of pages and sections, or none.';
+		}
+		ui.set.addEventListener('change', describeSet);
+		Array.prototype.forEach.call(root.querySelectorAll('input[name="twd-sk-setup-mode"]'), function (r) {
+			r.addEventListener('change', fillSets);
+		});
+		body.appendChild(el('h3', { text: 'Starting point (optional)' }));
+		body.appendChild(el('p', {}, [el('label', { 'for': 'twd-sk-setup-set', text: 'Kind of site ' }), ui.set]));
+		body.appendChild(ui.setHelp);
+		fillSets();
 	}
 
 	/* 2. Style */

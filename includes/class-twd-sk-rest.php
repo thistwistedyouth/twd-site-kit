@@ -622,6 +622,7 @@ class TWD_SK_REST {
 			'done'     => (string) get_option( TWD_SK_Build::DONE, '' ),
 			'safe'     => TWD_SK_Safe::on(),
 			'max_pictures' => TWD_SK_Pictures::MAX_CUSTOM,
+			'sets'         => TWD_SK_Sets::summary(),
 			'focal_points' => array_map( function ( $p ) {
 				return $p[0];
 			}, TWD_SK_Images::focal_points() ),
@@ -635,7 +636,7 @@ class TWD_SK_REST {
 	/** Save some of the setup page's choices. Good values are kept even when another is refused. */
 	public static function post_site_build_draft( $request ) {
 		$in = array();
-		foreach ( array( 'step', 'mode', 'pack', 'brand', 'brief_text', 'pictures', 'pages', 'reset_pages' ) as $k ) {
+		foreach ( array( 'step', 'mode', 'set', 'pack', 'brand', 'brief_text', 'pictures', 'pages', 'reset_pages' ) as $k ) {
 			$v = $request->get_param( $k );
 			if ( null !== $v ) {
 				$in[ $k ] = $v;

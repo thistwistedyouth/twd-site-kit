@@ -1,0 +1,122 @@
+{
+ "schema": "twd-starter-set/1",
+ "slug": "trades",
+ "name": "Trades and home services",
+ "mode": "business",
+ "description": "For a trade or home service: your services, accreditations, the areas you cover, reviews, and a quote request form.",
+ "pages": [
+  {
+   "type": "home",
+   "title": "Home",
+   "sections": [
+    {
+     "component": "hero",
+     "variant": "twd-sk-hero--split"
+    },
+    {
+     "component": "services",
+     "variant": "twd-sk-services--cards"
+    },
+    {
+     "component": "logos",
+     "variant": ""
+    },
+    {
+     "component": "quote",
+     "variant": "twd-sk-quote--cards"
+    },
+    {
+     "component": "areas",
+     "variant": ""
+    },
+    {
+     "component": "cta",
+     "variant": "twd-sk-cta--band"
+    }
+   ]
+  },
+  {
+   "type": "service",
+   "title": "Services",
+   "topic": "Our services",
+   "sections": [
+    {
+     "component": "hero",
+     "variant": "twd-sk-hero--compact"
+    },
+    {
+     "component": "text",
+     "variant": ""
+    },
+    {
+     "component": "services",
+     "variant": "twd-sk-services--cards"
+    },
+    {
+     "component": "steps",
+     "variant": ""
+    },
+    {
+     "component": "pictures",
+     "variant": ""
+    },
+    {
+     "component": "cta",
+     "variant": "twd-sk-cta--strip"
+    }
+   ]
+  },
+  {
+   "type": "about",
+   "title": "About us",
+   "sections": [
+    {
+     "component": "hero",
+     "variant": "twd-sk-hero--compact"
+    },
+    {
+     "component": "image_text",
+     "variant": ""
+    },
+    {
+     "component": "text",
+     "variant": ""
+    },
+    {
+     "component": "logos",
+     "variant": ""
+    },
+    {
+     "component": "cta",
+     "variant": "twd-sk-cta--strip"
+    }
+   ]
+  },
+  {
+   "type": "contact",
+   "title": "Get a quote",
+   "sections": [
+    {
+     "component": "hero",
+     "variant": "twd-sk-hero--compact"
+    },
+    {
+     "component": "contact",
+     "variant": "twd-sk-contact--split"
+    },
+    {
+     "component": "hours",
+     "variant": ""
+    },
+    {
+     "component": "areas",
+     "variant": ""
+    },
+    {
+     "component": "enquiry",
+     "variant": ""
+    }
+   ]
+  }
+ ]
+}
