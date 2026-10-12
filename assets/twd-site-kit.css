@@ -123,7 +123,11 @@
 .twd-sk-page .twd-sk-steps.twd-sk-steps,
 .twd-sk-page .twd-sk-contact.twd-sk-contact,
 .twd-sk-page .twd-sk-notice.twd-sk-notice,
-.twd-sk-page .twd-sk-resources.twd-sk-resources {
+.twd-sk-page .twd-sk-resources.twd-sk-resources,
+.twd-sk-page .twd-sk-pictures.twd-sk-pictures,
+.twd-sk-page .twd-sk-pricing.twd-sk-pricing,
+.twd-sk-page .twd-sk-hours.twd-sk-hours,
+.twd-sk-page .twd-sk-areas.twd-sk-areas {
   padding-top: var(--twd-site-section-y) !important;
   padding-bottom: var(--twd-site-section-y) !important;
 }
@@ -1035,6 +1039,167 @@
   color: var(--twd-site-color-primary) !important;
   text-decoration: underline !important;
 }
+/* ---- pictures (0.8.0) ---- */
+.twd-sk-page .twd-sk-pictures__grid.twd-sk-pictures__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--twd-site-gap-sm);
+  margin-top: 32px !important;
+}
+.twd-sk-page .twd-sk-pictures--two.twd-sk-pictures--two .twd-sk-pictures__grid.twd-sk-pictures__grid {
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--twd-site-gap-md);
+}
+.twd-sk-page .twd-sk-pictures__item.twd-sk-pictures__item {
+  margin: 0 !important;
+  min-width: 0;
+}
+.twd-sk-page .twd-sk-pictures__img.twd-sk-pictures__img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  object-fit: cover;
+  object-position: var(--twd-site-image-position);
+  border-radius: var(--twd-site-radius-image) !important;
+  box-shadow: var(--twd-site-shadow-image) !important;
+}
+.twd-sk-page .twd-sk-pictures__caption.twd-sk-pictures__caption {
+  margin-top: 10px !important;
+  font-size: var(--twd-site-size-small) !important;
+  color: var(--twd-site-color-muted) !important;
+}
+/* ---- logos strip (0.8.0) ---- */
+.twd-sk-page .twd-sk-logos.twd-sk-logos {
+  padding-top: var(--twd-site-section-y-sm) !important;
+  padding-bottom: var(--twd-site-section-y-sm) !important;
+}
+.twd-sk-page .twd-sk-logos.twd-sk-logos .twd-sk-eyebrow.twd-sk-eyebrow {
+  text-align: center !important;
+}
+.twd-sk-page .twd-sk-logos__list.twd-sk-logos__list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--twd-site-gap-md);
+  margin-top: 16px !important;
+}
+.twd-sk-page .twd-sk-logos__item.twd-sk-logos__item {
+  display: block;
+}
+.twd-sk-page .twd-sk-logos__img.twd-sk-logos__img {
+  width: auto;
+  max-width: 160px;
+  height: 64px;
+  object-fit: contain;
+}
+/* ---- prices (0.8.0) ---- */
+.twd-sk-page .twd-sk-pricing__grid.twd-sk-pricing__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--twd-site-gap-sm);
+  margin-top: 32px !important;
+  align-items: stretch;
+}
+.twd-sk-page .twd-sk-pricing__card.twd-sk-pricing__card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.twd-sk-page .twd-sk-pricing__card.twd-sk-pricing__card .twd-sk-card__title.twd-sk-card__title {
+  margin-bottom: 0 !important;
+}
+.twd-sk-page .twd-sk-pricing__card.twd-sk-pricing__card .twd-sk-btn.twd-sk-btn {
+  margin-top: auto !important;
+  align-self: flex-start;
+}
+.twd-sk-page .twd-sk-pricing__price.twd-sk-pricing__price {
+  font-family: var(--twd-site-font-heading) !important;
+  font-size: var(--twd-site-size-h3) !important;
+  font-weight: var(--twd-site-heading-weight) !important;
+  line-height: var(--twd-site-line-heading) !important;
+  color: var(--twd-site-color-primary) !important;
+}
+.twd-sk-page .twd-sk-pricing__note.twd-sk-pricing__note {
+  margin-top: 24px !important;
+  font-size: var(--twd-site-size-small) !important;
+  color: var(--twd-site-color-muted) !important;
+}
+.twd-sk-page .twd-sk-pricing--list.twd-sk-pricing--list .twd-sk-pricing__list.twd-sk-pricing__list {
+  margin-top: 16px !important;
+}
+.twd-sk-page .twd-sk-pricing__list.twd-sk-pricing__list {
+  margin-top: 24px !important;
+}
+.twd-sk-page .twd-sk-pricing__row.twd-sk-pricing__row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 16px;
+  padding: 14px 0 !important;
+  border-bottom: 1px solid var(--twd-site-color-border) !important;
+}
+.twd-sk-page .twd-sk-pricing__name.twd-sk-pricing__name {
+  margin: 0 !important;
+  font-weight: 600 !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-sk-pricing__amount.twd-sk-pricing__amount {
+  margin: 0 !important;
+  font-family: var(--twd-site-font-heading) !important;
+  font-size: var(--twd-site-size-title) !important;
+  color: var(--twd-site-color-primary) !important;
+}
+/* ---- opening hours (0.8.0) ---- */
+.twd-sk-page .twd-sk-hours__list.twd-sk-hours__list {
+  margin-top: 24px !important;
+}
+.twd-sk-page .twd-sk-hours__row.twd-sk-hours__row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding: 12px 0 !important;
+  border-bottom: 1px solid var(--twd-site-color-border) !important;
+}
+.twd-sk-page .twd-sk-hours__day.twd-sk-hours__day {
+  margin: 0 !important;
+  font-weight: 600 !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-sk-hours__time.twd-sk-hours__time {
+  margin: 0 !important;
+  color: var(--twd-site-color-body) !important;
+}
+.twd-sk-page .twd-sk-hours__note.twd-sk-hours__note {
+  margin-top: 20px !important;
+  font-size: var(--twd-site-size-small) !important;
+  color: var(--twd-site-color-muted) !important;
+}
+/* ---- areas covered (0.8.0) ---- */
+.twd-sk-page .twd-sk-areas__list.twd-sk-areas__list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 12px;
+  margin-top: 8px !important;
+}
+.twd-sk-page .twd-sk-areas__item.twd-sk-areas__item {
+  padding: 10px 20px !important;
+  background-color: var(--twd-site-color-surface) !important;
+  border: 1px solid var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-pill) !important;
+  font-size: var(--twd-site-size-small) !important;
+  font-weight: var(--twd-site-btn-weight) !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-sk-areas__actions.twd-sk-areas__actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 28px !important;
+}
 /* ---- form skin ----
    A contact form is an Elementor widget, not part of the page HTML. Give the
    Elementor container that holds it the CSS class twd-sk-page and these rules
@@ -1496,9 +1661,21 @@
   .twd-sk-page .twd-sk-steps.twd-sk-steps,
   .twd-sk-page .twd-sk-contact.twd-sk-contact,
   .twd-sk-page .twd-sk-notice.twd-sk-notice,
-  .twd-sk-page .twd-sk-resources.twd-sk-resources {
+  .twd-sk-page .twd-sk-resources.twd-sk-resources,
+  .twd-sk-page .twd-sk-pictures.twd-sk-pictures,
+  .twd-sk-page .twd-sk-pricing.twd-sk-pricing,
+  .twd-sk-page .twd-sk-hours.twd-sk-hours,
+  .twd-sk-page .twd-sk-areas.twd-sk-areas {
     padding-top: var(--twd-site-section-y-sm) !important;
     padding-bottom: var(--twd-site-section-y-sm) !important;
+  }
+  .twd-sk-page .twd-sk-pictures__grid.twd-sk-pictures__grid,
+  .twd-sk-page .twd-sk-pricing__grid.twd-sk-pricing__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .twd-sk-page .twd-sk-logos__img.twd-sk-logos__img {
+    max-width: 120px;
+    height: 48px;
   }
   .twd-sk-page .twd-sk-hero--compact.twd-sk-hero--compact {
     padding-bottom: var(--twd-site-gap-sm) !important;
@@ -1573,7 +1750,10 @@
   }
 }
 @media (max-width: 500px) {
-  .twd-sk-page .twd-sk-services__list.twd-sk-services__list {
+  .twd-sk-page .twd-sk-services__list.twd-sk-services__list,
+  .twd-sk-page .twd-sk-pictures__grid.twd-sk-pictures__grid,
+  .twd-sk-page .twd-sk-pictures--two.twd-sk-pictures--two .twd-sk-pictures__grid.twd-sk-pictures__grid,
+  .twd-sk-page .twd-sk-pricing__grid.twd-sk-pricing__grid {
     grid-template-columns: 1fr;
   }
 }

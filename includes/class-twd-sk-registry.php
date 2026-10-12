@@ -486,6 +486,166 @@ class TWD_SK_Registry {
 		) );
 	}
 
+	/**
+	 * A grid of pictures with short captions (0.8.0).
+	 *
+	 * @param string $variant '' for three across, 'two' for two large pictures across.
+	 */
+	private static function pictures( $variant ) {
+		$root  = 'twd-sk-pictures' . ( 'two' === $variant ? ' twd-sk-pictures--two' : '' ) . ' twd-sk-tone-base';
+		$count = 'two' === $variant ? 2 : 3;
+		$items = array();
+		for ( $i = 0; $i < $count; $i++ ) {
+			$items[] = '<figure class="twd-sk-pictures__item">';
+			$items[] = '<img class="twd-sk-pictures__img" src="/wp-content/uploads/your-image.jpg" alt="Describe the image">';
+			$items[] = '<figcaption class="twd-sk-pictures__caption">Caption here</figcaption>';
+			$items[] = '</figure>';
+		}
+		return self::lines( array_merge(
+			array(
+				'<section class="' . $root . '">',
+				'<div class="twd-sk-inner">',
+				'<h2 class="twd-sk-title">Heading here</h2>',
+				'<div class="twd-sk-pictures__grid">',
+			),
+			$items,
+			array(
+				'</div>',
+				'</div>',
+				'</section>',
+			)
+		) );
+	}
+
+	/** A strip of small logos: accreditations, memberships, partners (0.8.0). */
+	private static function logos() {
+		$items = array();
+		for ( $i = 0; $i < 4; $i++ ) {
+			$items[] = '<li class="twd-sk-logos__item"><img class="twd-sk-logos__img" src="/wp-content/uploads/your-logo.png" alt="Describe the logo"></li>';
+		}
+		return self::lines( array_merge(
+			array(
+				'<section class="twd-sk-logos twd-sk-tone-surface">',
+				'<div class="twd-sk-inner">',
+				'<span class="twd-sk-eyebrow">Short label here</span>',
+				'<ul class="twd-sk-logos__list">',
+			),
+			$items,
+			array(
+				'</ul>',
+				'</div>',
+				'</section>',
+			)
+		) );
+	}
+
+	/**
+	 * Prices (0.8.0).
+	 *
+	 * @param string $variant '' for cards, 'list' for a simple list of names and prices.
+	 */
+	private static function pricing( $variant ) {
+		if ( 'list' === $variant ) {
+			$rows = array();
+			for ( $i = 0; $i < 3; $i++ ) {
+				$rows[] = '<div class="twd-sk-pricing__row"><dt class="twd-sk-pricing__name">Service name here</dt><dd class="twd-sk-pricing__amount">Price here</dd></div>';
+			}
+			return self::lines( array_merge(
+				array(
+					'<section class="twd-sk-pricing twd-sk-pricing--list twd-sk-tone-surface">',
+					'<div class="twd-sk-inner twd-sk-inner--narrow">',
+					'<h2 class="twd-sk-title">Heading here</h2>',
+					'<dl class="twd-sk-pricing__list">',
+				),
+				$rows,
+				array(
+					'</dl>',
+					'<p class="twd-sk-pricing__note">Short note here.</p>',
+					'</div>',
+					'</section>',
+				)
+			) );
+		}
+		$cards = array();
+		for ( $i = 0; $i < 3; $i++ ) {
+			$cards[] = '<div class="twd-sk-card' . ( 1 === $i ? ' twd-sk-card--accent' : '' ) . ' twd-sk-pricing__card">';
+			$cards[] = '<h3 class="twd-sk-card__title">Service name here</h3>';
+			$cards[] = '<p class="twd-sk-pricing__price">Price here</p>';
+			$cards[] = '<p>Short description here.</p>';
+			$cards[] = '<ul class="twd-sk-list">';
+			$cards[] = '<li>First point</li>';
+			$cards[] = '<li>Second point</li>';
+			$cards[] = '</ul>';
+			$cards[] = '<a class="twd-sk-btn twd-sk-btn--outline" href="/contact">Ask about this</a>';
+			$cards[] = '</div>';
+		}
+		return self::lines( array_merge(
+			array(
+				'<section class="twd-sk-pricing twd-sk-tone-surface">',
+				'<div class="twd-sk-inner">',
+				'<span class="twd-sk-eyebrow">Short label here</span>',
+				'<h2 class="twd-sk-title">Heading here</h2>',
+				'<div class="twd-sk-pricing__grid">',
+			),
+			$cards,
+			array(
+				'</div>',
+				'<p class="twd-sk-pricing__note">Short note here.</p>',
+				'</div>',
+				'</section>',
+			)
+		) );
+	}
+
+	/** Opening hours as day and time rows (0.8.0). */
+	private static function hours() {
+		$rows = array();
+		for ( $i = 0; $i < 3; $i++ ) {
+			$rows[] = '<div class="twd-sk-hours__row"><dt class="twd-sk-hours__day">Day here</dt><dd class="twd-sk-hours__time">Times here</dd></div>';
+		}
+		return self::lines( array_merge(
+			array(
+				'<section class="twd-sk-hours twd-sk-tone-base">',
+				'<div class="twd-sk-inner twd-sk-inner--narrow">',
+				'<h2 class="twd-sk-title">Heading here</h2>',
+				'<dl class="twd-sk-hours__list">',
+			),
+			$rows,
+			array(
+				'</dl>',
+				'<p class="twd-sk-hours__note">Short note here.</p>',
+				'</div>',
+				'</section>',
+			)
+		) );
+	}
+
+	/** Areas covered, with a link to a map (no embedded map: no iframes) (0.8.0). */
+	private static function areas() {
+		$items = array();
+		for ( $i = 0; $i < 4; $i++ ) {
+			$items[] = '<li class="twd-sk-areas__item">Area name here</li>';
+		}
+		return self::lines( array_merge(
+			array(
+				'<section class="twd-sk-areas twd-sk-tone-tint">',
+				'<div class="twd-sk-inner">',
+				'<h2 class="twd-sk-title">Heading here</h2>',
+				'<p class="twd-sk-lead">Short introduction here.</p>',
+				'<ul class="twd-sk-areas__list">',
+			),
+			$items,
+			array(
+				'</ul>',
+				'<div class="twd-sk-areas__actions">',
+				'<a class="twd-sk-btn twd-sk-btn--outline" href="https://www.example.com/map">See the area on a map</a>',
+				'</div>',
+				'</div>',
+				'</section>',
+			)
+		) );
+	}
+
 	private static function resources() {
 		return self::lines( array(
 			'<section class="twd-sk-resources twd-sk-tone-base">',
@@ -614,6 +774,28 @@ class TWD_SK_Registry {
 				'shortcodes'  => array(),
 			),
 
+			'pictures'   => array(
+				'id'          => 'pictures',
+				'label'       => 'Pictures',
+				'description' => 'A grid of pictures, each with a short caption. Every picture needs alt text that says what it shows.',
+				'skeleton'    => self::pictures( '' ),
+				'variants'    => array(
+					'twd-sk-pictures--two' => array(
+						'label'    => 'Two: two large pictures across',
+						'skeleton' => self::pictures( 'two' ),
+					),
+				),
+				'classes'     => array(
+					'twd-sk-pictures',
+					'twd-sk-pictures--two',
+					'twd-sk-pictures__grid',
+					'twd-sk-pictures__item',
+					'twd-sk-pictures__img',
+					'twd-sk-pictures__caption',
+				),
+				'shortcodes'  => array(),
+			),
+
 			'quote'      => array(
 				'id'          => 'quote',
 				'label'       => 'Quote or testimonial',
@@ -639,6 +821,21 @@ class TWD_SK_Registry {
 					'twd-sk-quote__cite',
 					'twd-sk-quote__note',
 					'twd-sk-quote__pullout',
+				),
+				'shortcodes'  => array(),
+			),
+
+			'logos'      => array(
+				'id'          => 'logos',
+				'label'       => 'Logos strip',
+				'description' => 'A row of small logos, for example accreditations, memberships or partners. Use only logos you are entitled to show, each with alt text naming it.',
+				'skeleton'    => self::logos(),
+				'variants'    => array(),
+				'classes'     => array(
+					'twd-sk-logos',
+					'twd-sk-logos__list',
+					'twd-sk-logos__item',
+					'twd-sk-logos__img',
 				),
 				'shortcodes'  => array(),
 			),
@@ -684,6 +881,32 @@ class TWD_SK_Registry {
 					'twd-sk-services__desc',
 					'twd-sk-services__pills',
 					'twd-sk-services__pill',
+				),
+				'shortcodes'  => array(),
+			),
+
+			'pricing'    => array(
+				'id'          => 'pricing',
+				'label'       => 'Prices',
+				'description' => 'Prices as cards (a name, the price, a short description, what is included and a button) or as a simple list of names and prices. Only prices that have been supplied, never invented.',
+				'skeleton'    => self::pricing( '' ),
+				'variants'    => array(
+					'twd-sk-pricing--list' => array(
+						'label'    => 'List: names and prices in rows',
+						'skeleton' => self::pricing( 'list' ),
+					),
+				),
+				'classes'     => array(
+					'twd-sk-pricing',
+					'twd-sk-pricing--list',
+					'twd-sk-pricing__grid',
+					'twd-sk-pricing__card',
+					'twd-sk-pricing__price',
+					'twd-sk-pricing__note',
+					'twd-sk-pricing__list',
+					'twd-sk-pricing__row',
+					'twd-sk-pricing__name',
+					'twd-sk-pricing__amount',
 				),
 				'shortcodes'  => array(),
 			),
@@ -759,6 +982,38 @@ class TWD_SK_Registry {
 					'twd-sk-contact__media',
 					'twd-sk-contact__img',
 					'twd-sk-contact__address',
+				),
+				'shortcodes'  => array(),
+			),
+
+			'hours'      => array(
+				'id'          => 'hours',
+				'label'       => 'Opening hours',
+				'description' => 'Days and times as rows, with a short note underneath, for example about bank holidays.',
+				'skeleton'    => self::hours(),
+				'variants'    => array(),
+				'classes'     => array(
+					'twd-sk-hours',
+					'twd-sk-hours__list',
+					'twd-sk-hours__row',
+					'twd-sk-hours__day',
+					'twd-sk-hours__time',
+					'twd-sk-hours__note',
+				),
+				'shortcodes'  => array(),
+			),
+
+			'areas'      => array(
+				'id'          => 'areas',
+				'label'       => 'Areas covered',
+				'description' => 'The towns or areas served as a list, with a button that opens a map in a new page. No map is embedded in the page.',
+				'skeleton'    => self::areas(),
+				'variants'    => array(),
+				'classes'     => array(
+					'twd-sk-areas',
+					'twd-sk-areas__list',
+					'twd-sk-areas__item',
+					'twd-sk-areas__actions',
 				),
 				'shortcodes'  => array(),
 			),

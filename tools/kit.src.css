@@ -37,7 +37,7 @@
 /* section spacing */
 .twd-sk-hero--split, .twd-sk-hero--compact, .twd-sk-text, .twd-sk-image-text, .twd-sk-quote,
 .twd-sk-faq, .twd-sk-services, .twd-sk-steps, .twd-sk-contact, .twd-sk-notice,
-.twd-sk-resources {
+.twd-sk-resources, .twd-sk-pictures, .twd-sk-pricing, .twd-sk-hours, .twd-sk-areas {
   padding-top: $section-y; padding-bottom: $section-y;
 }
 .twd-sk-hero--compact { padding-bottom: $gap-sm; }
@@ -371,6 +371,58 @@
 }
 .twd-sk-modal__item a { font-weight: 600; color: $color-primary; text-decoration: underline; }
 
+/* ---- pictures (0.8.0) ---- */
+.twd-sk-pictures__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: $gap-sm; margin-top: 32px; }
+.twd-sk-pictures--two .twd-sk-pictures__grid { grid-template-columns: repeat(2, 1fr); gap: $gap-md; }
+.twd-sk-pictures__item { margin: 0; min-width: 0; }
+.twd-sk-pictures__img {
+  width: 100%; aspect-ratio: 4 / 3; height: auto; object-fit: cover; object-position: $image-position;
+  border-radius: $radius-image; box-shadow: $shadow-image;
+}
+.twd-sk-pictures__caption { margin-top: 10px; font-size: $size-small; color: $color-muted; }
+
+/* ---- logos strip (0.8.0) ---- */
+.twd-sk-logos { padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
+.twd-sk-logos .twd-sk-eyebrow { text-align: center; }
+.twd-sk-logos__list { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: $gap-md; margin-top: 16px; }
+.twd-sk-logos__item { display: block; }
+.twd-sk-logos__img { width: auto; max-width: 160px; height: 64px; object-fit: contain; }
+
+/* ---- prices (0.8.0) ---- */
+.twd-sk-pricing__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: $gap-sm; margin-top: 32px; align-items: stretch; }
+.twd-sk-pricing__card { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.twd-sk-pricing__card .twd-sk-card__title { margin-bottom: 0; }
+.twd-sk-pricing__card .twd-sk-btn { margin-top: auto; align-self: flex-start; }
+.twd-sk-pricing__price {
+  font-family: $font-heading; font-size: $size-h3; font-weight: $heading-weight; line-height: $line-heading; color: $color-primary;
+}
+.twd-sk-pricing__note { margin-top: 24px; font-size: $size-small; color: $color-muted; }
+.twd-sk-pricing--list .twd-sk-pricing__list { margin-top: 16px; }
+.twd-sk-pricing__list { margin-top: 24px; }
+.twd-sk-pricing__row {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px;
+  padding: 14px 0; border-bottom: 1px solid $color-border;
+}
+.twd-sk-pricing__name { margin: 0; font-weight: 600; color: $color-title; }
+.twd-sk-pricing__amount { margin: 0; font-family: $font-heading; font-size: $size-title; color: $color-primary; }
+
+/* ---- opening hours (0.8.0) ---- */
+.twd-sk-hours__list { margin-top: 24px; }
+.twd-sk-hours__row {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding: 12px 0; border-bottom: 1px solid $color-border;
+}
+.twd-sk-hours__day { margin: 0; font-weight: 600; color: $color-title; }
+.twd-sk-hours__time { margin: 0; color: $color-body; }
+.twd-sk-hours__note { margin-top: 20px; font-size: $size-small; color: $color-muted; }
+
+/* ---- areas covered (0.8.0) ---- */
+.twd-sk-areas__list { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 12px; margin-top: 8px; }
+.twd-sk-areas__item {
+  padding: 10px 20px; background-color: $color-surface; border: 1px solid $color-border;
+  border-radius: $radius-pill; font-size: $size-small; font-weight: $btn-weight; color: $color-title;
+}
+.twd-sk-areas__actions { display: flex; justify-content: flex-start; margin-top: 28px; }
+
 /* ---- form skin ----
    A contact form is an Elementor widget, not part of the page HTML. Give the
    Elementor container that holds it the CSS class twd-sk-page and these rules
@@ -497,7 +549,9 @@
   & > :not(section):not(.twd-sk-inner):not(.twd-sk-gallery-label):not(.twd-sk-header):not(.twd-sk-footer) { padding-left: $gutter-sm; padding-right: $gutter-sm; }
   .twd-sk-hero--split, .twd-sk-hero--compact, .twd-sk-text, .twd-sk-image-text, .twd-sk-quote,
   .twd-sk-faq, .twd-sk-services, .twd-sk-steps, .twd-sk-contact, .twd-sk-notice,
-  .twd-sk-resources { padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
+  .twd-sk-resources, .twd-sk-pictures, .twd-sk-pricing, .twd-sk-hours, .twd-sk-areas { padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
+  .twd-sk-pictures__grid, .twd-sk-pricing__grid { grid-template-columns: 1fr 1fr; }
+  .twd-sk-logos__img { max-width: 120px; height: 48px; }
   .twd-sk-hero--compact { padding-bottom: $gap-sm; }
   .twd-sk-image-text--band { padding-top: 0; padding-bottom: 0; height: 180px; }
   .twd-sk-cta--band { padding-top: calc(#{$section-y-sm} * 1.4); padding-bottom: calc(#{$section-y-sm} * 1.4); }
@@ -519,7 +573,7 @@
   .twd-sk-modal__content { padding: 28px 22px; }
 }
 @media (max-width: 500px) {
-  .twd-sk-services__list { grid-template-columns: 1fr; }
+  .twd-sk-services__list, .twd-sk-pictures__grid, .twd-sk-pictures--two .twd-sk-pictures__grid, .twd-sk-pricing__grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 900px) {

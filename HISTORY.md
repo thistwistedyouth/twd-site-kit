@@ -17,6 +17,15 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.8.0 (five new sections)
+
+- **What business sites (and many therapy sites) were missing:** a picture grid, a strip of accreditation or partner logos, prices, opening hours, and the areas covered. They are ordinary registry components, so the sanitiser, the AI style guide, the Pages step, Add a section and the gallery all pick them up with no other change.
+- **A map is a link, not an embed.** Iframes stay banned; the areas section has a button to a map instead.
+- **No team component.** Kept folded into image_text, as decided in 0.2.0.
+- **Every new sample word is a leftover marker,** so a price, a day, a time or an area that was never replaced blocks publishing ("Price here" is described as "never use an invented one"). The two sample button texts are "check" level, like the others.
+- **The enquiry form is its own release (0.8.1)** because it sends email and needs its own protections.
+- **Headings follow the style's alignment,** so the area chips and the price note line up with the heading rather than being centred under a left-aligned one. Seen in the screenshots.
+
 ## v0.7.3 (add a section)
 
 - **Parked since 0.6.0, now built on the same rails as everything else.** A new section is a candidate page that goes through the same preview, apply and history as a pasted or remixed one, so there is no new way to save anything.

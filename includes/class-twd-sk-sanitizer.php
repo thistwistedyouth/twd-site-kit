@@ -171,6 +171,15 @@ class TWD_SK_Sanitizer {
 			'A short statement in your own words' => null,
 			'your-image'                        => null,
 			'your-badge'                        => null,
+			// Sample wording in the 0.8.0 sections.
+			'your-logo'                         => null,
+			'Describe the logo'                 => null,
+			'Caption here'                      => null,
+			'Price here'                        => null,
+			'Short note here'                   => null,
+			'Day here'                          => null,
+			'Times here'                        => null,
+			'Area name here'                    => null,
 			'/service-N'                        => '#href\s*=\s*["\']/service-\d+["\'/?\#]#i',
 			'[PLACEHOLDER'                      => null,
 			// The example link texts in the style guide. Real links need the therapist's own words.
@@ -178,6 +187,8 @@ class TWD_SK_Sanitizer {
 			'Find out about my services'        => null,
 			'Read more about this approach'     => null,
 			'Call me to arrange a first session' => null,
+			'Ask about this'                    => null,
+			'See the area on a map'             => null,
 		);
 	}
 
@@ -192,6 +203,8 @@ class TWD_SK_Sanitizer {
 			'Find out about my services',
 			'Read more about this approach',
 			'Call me to arrange a first session',
+			'Ask about this',
+			'See the area on a map',
 		);
 	}
 

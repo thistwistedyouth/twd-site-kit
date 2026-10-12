@@ -64,8 +64,8 @@ function twd_sk_build_gallery() {
  */
 function twd_sk_gallery_placeholders( $skeleton ) {
 	return str_replace(
-		array( '/wp-content/uploads/your-image.jpg', '/wp-content/uploads/your-badge.png' ),
-		array( '/wp-content/plugins/twd-site-kit/assets/placeholder-image.svg', '/wp-content/plugins/twd-site-kit/assets/placeholder-badge.svg' ),
+		array( '/wp-content/uploads/your-image.jpg', '/wp-content/uploads/your-badge.png', '/wp-content/uploads/your-logo.png' ),
+		array( '/wp-content/plugins/twd-site-kit/assets/placeholder-image.svg', '/wp-content/plugins/twd-site-kit/assets/placeholder-badge.svg', '/wp-content/plugins/twd-site-kit/assets/placeholder-badge.svg' ),
 		$skeleton
 	);
 }

@@ -1,9 +1,9 @@
 <?php
 // Registry tests: the components as data, keyed on IDs, with variants.
 
-twd_sk_test( 'registry: exactly the eleven expected component IDs, in page order', function () {
+twd_sk_test( 'registry: exactly the sixteen expected component IDs, in page order', function () {
 	twd_sk_eq(
-		array( 'hero', 'text', 'image_text', 'quote', 'faq', 'services', 'steps', 'cta', 'contact', 'notice', 'resources' ),
+		array( 'hero', 'text', 'image_text', 'pictures', 'quote', 'logos', 'faq', 'services', 'pricing', 'steps', 'cta', 'contact', 'hours', 'areas', 'notice', 'resources' ),
 		TWD_SK_Registry::ids()
 	);
 } );

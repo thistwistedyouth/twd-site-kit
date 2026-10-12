@@ -2,12 +2,13 @@
 
 The one place to see where this project is. Newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md. Update this file at the end of every piece of work, in the same commit.
 
-## Where we are (last updated at release 0.7.3, 12 Oct 2026)
+## Where we are (last updated at release 0.8.0, 12 Oct 2026)
 
-**Released and live in the update file:** 0.7.3. Sites update from Plugins, "Check for updates", "update now".
+**Released and live in the update file:** 0.8.0. Sites update from Plugins, "Check for updates", "update now".
 
 | Version | What it added |
 |---|---|
+| 0.8.0 | Five new sections: Pictures (a grid with captions), Logos strip, Prices (cards or a list), Opening hours, Areas covered (with a map link) |
 | 0.7.3 | Add a section in the Edit with AI pop-up: choose where, the kind and layout, and (with a key) let the AI write it from the facts; preview, then apply |
 | 0.7.2 | The Pages step in the setup page: the list of pages and the sections on each, changed before anything is built; `sections` in a brief's pages |
 | 0.7.1 | The setup page (Settings > Set up site, and a Set this site up link on a fresh site's front page): site type, style, brief or plain notes, pictures (slots and named pictures the AI can place), then a step-by-step build of every page as a draft. `wp twd-sk build` runs the same build. The build log shows in the site report |

@@ -512,7 +512,8 @@ twd_sk_test( 'leftovers: every example marker is found, case-insensitively, and 
 		. '<img src="/wp-content/uploads/your-image.jpg" alt="Describe the image"><img src="/wp-content/uploads/your-badge.png" alt="x"><a href="/service-2">s</a>'
 		. '<a href="/contact">CONTACT me about a first session</a><a href="/s">Find out about my services</a><a href="/a">Read more about this approach</a><a href="tel:1">Call me to arrange a first session</a>'
 		. '<p>Question here?</p><p>Answer here.</p><p>Topic one</p><p>Short description here.</p><p>Short introduction here.</p><h3>Service name here</h3><p>A short statement in your own words.</p>'
-		. '<p>[PLACEHOLDER: fee]</p><p>[PLACEHOLDER]</p>';
+		. '<p>[PLACEHOLDER: fee]</p><p>[PLACEHOLDER]</p>'
+		. '<img src="/wp-content/uploads/your-logo.png" alt="Describe the logo"><p>Caption here</p><p>Price here</p><p>Short note here.</p><p>Day here</p><p>Times here</p><p>Area name here</p><a href="/c">Ask about this</a><a href="/m">See the area on a map</a>';
 	$found = TWD_SK_Sanitizer::find_leftovers( $html );
 	foreach ( TWD_SK_Sanitizer::leftover_markers() as $marker ) {
 		twd_sk_true( isset( $found[ $marker ] ), 'marker not found: ' . $marker );
@@ -581,8 +582,8 @@ twd_sk_test( 'leftovers: the whole gallery carries example text, so it warns, an
 	twd_sk_true( count( $rep['report']['leftovers'] ) >= 5, 'gallery warns about its example text' );
 } );
 
-twd_sk_test( 'leftover levels: only the four example link texts are "check"; every other marker is "must fix"', function () {
-	$check = array( 'Contact me about a first session', 'Find out about my services', 'Read more about this approach', 'Call me to arrange a first session' );
+twd_sk_test( 'leftover levels: only the example link texts are "check"; every other marker is "must fix"', function () {
+	$check = array( 'Contact me about a first session', 'Find out about my services', 'Read more about this approach', 'Call me to arrange a first session', 'Ask about this', 'See the area on a map' );
 	foreach ( TWD_SK_Sanitizer::leftover_markers() as $marker ) {
 		twd_sk_eq( in_array( $marker, $check, true ) ? 'check' : 'must', TWD_SK_Sanitizer::leftover_level( $marker ), $marker );
 	}
