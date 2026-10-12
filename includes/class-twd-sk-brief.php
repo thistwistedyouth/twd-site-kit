@@ -83,14 +83,138 @@ class TWD_SK_Brief {
 		if ( false === $start || false === $end || $end <= $start ) {
 			return new WP_Error( 'twd_sk_bad_brief', 'That does not look like a site brief. It should be one JSON object.' );
 		}
-		$data = json_decode( substr( $text, $start, $end - $start + 1 ), true );
+		$json = substr( $text, $start, $end - $start + 1 );
+		$data = json_decode( $json, true );
 		if ( ! is_array( $data ) ) {
-			return new WP_Error( 'twd_sk_bad_brief', 'The site brief is not valid JSON. Check for a missing comma or quote, or ask the AI to produce it again.' );
+			return new WP_Error( 'twd_sk_bad_brief', 'The site brief is not valid JSON. ' . self::json_problem( substr( $text, $start ) ) );
 		}
 		if ( ! isset( $data['schema'] ) || self::SCHEMA !== $data['schema'] ) {
 			return new WP_Error( 'twd_sk_bad_brief', 'This is not a site brief file (the "schema" line should say ' . self::SCHEMA . ').' );
 		}
+		// The facts may be a list of lines (0.9.3): easier to read, edit and copy than one very long line.
+		if ( isset( $data['facts'] ) && is_array( $data['facts'] ) && array_values( $data['facts'] ) === $data['facts'] ) {
+			$lines = array();
+			foreach ( $data['facts'] as $line ) {
+				if ( ! is_string( $line ) ) {
+					$lines = null;
+					break;
+				}
+				$lines[] = $line;
+			}
+			if ( null !== $lines ) {
+				$data['facts'] = implode( "\n", $lines );
+			}
+		}
 		return $data;
+	}
+
+	/**
+	 * Where a brief that is not valid JSON goes wrong, in plain words: the line and the text there,
+	 * or that it ends early (only part of it was pasted). A small JSON reader that stops at the first fault.
+	 */
+	public static function json_problem( $text ) {
+		$at = self::json_fault( $text );
+		if ( null === $at ) {
+			return 'Check for a missing comma or quote, or ask the AI to produce it again.';
+		}
+		if ( $at >= strlen( rtrim( $text ) ) ) {
+			return 'It ends too early, so only part of it was pasted. Copy the whole file again, or use Choose the brief file.';
+		}
+		$line   = substr_count( substr( $text, 0, $at ), "\n" ) + 1;
+		$near   = preg_replace( '/\s+/', ' ', substr( $text, max( 0, $at - 30 ), 60 ) );
+		$curly  = 1 === preg_match( '/\x{201C}|\x{201D}|\x{2018}|\x{2019}/u', substr( $text, max( 0, $at - 4 ), 8 ) );
+		$prefix = 'The problem is on line ' . $line . ', near: ' . TWD_SK_Profile::text( $near, 80 ) . '. ';
+		if ( $curly ) {
+			return $prefix . 'It has curly quotes there (from Word or a phone). Use straight quotes, or use Choose the brief file.';
+		}
+		return $prefix . 'Check for a missing comma or quote there. If the brief was copied, use Choose the brief file instead.';
+	}
+
+	/** Byte offset of the first fault in $s read as JSON, or null when it reads cleanly. */
+	private static function json_fault( $s ) {
+		$n  = strlen( $s );
+		$i  = 0;
+		$ws = function () use ( &$i, $s, $n ) {
+			while ( $i < $n && false !== strpos( " \t\r\n", $s[ $i ] ) ) {
+				$i++;
+			}
+		};
+		$str = function () use ( &$i, $s, $n ) {
+			if ( $i >= $n || '"' !== $s[ $i ] ) {
+				return false;
+			}
+			$i++;
+			while ( $i < $n ) {
+				$c = $s[ $i ];
+				if ( '"' === $c ) {
+					$i++;
+					return true;
+				}
+				if ( '\\' === $c ) {
+					$i += 2;
+					continue;
+				}
+				if ( ord( $c ) < 0x20 ) {
+					return false;
+				}
+				$i++;
+			}
+			return false;
+		};
+		$value = null;
+		$value = function ( $depth ) use ( &$value, &$i, $s, $n, $ws, $str ) {
+			$ws();
+			if ( $i >= $n || $depth > 64 ) {
+				return false;
+			}
+			$c = $s[ $i ];
+			if ( '{' === $c || '[' === $c ) {
+				$close = '{' === $c ? '}' : ']';
+				$i++;
+				$ws();
+				if ( $i < $n && $close === $s[ $i ] ) {
+					$i++;
+					return true;
+				}
+				while ( true ) {
+					if ( '}' === $close ) {
+						$ws();
+						if ( ! $str() ) {
+							return false;
+						}
+						$ws();
+						if ( $i >= $n || ':' !== $s[ $i ] ) {
+							return false;
+						}
+						$i++;
+					}
+					if ( ! $value( $depth + 1 ) ) {
+						return false;
+					}
+					$ws();
+					if ( $i < $n && ',' === $s[ $i ] ) {
+						$i++;
+						continue;
+					}
+					if ( $i < $n && $close === $s[ $i ] ) {
+						$i++;
+						return true;
+					}
+					return false;
+				}
+			}
+			if ( '"' === $c ) {
+				return $str();
+			}
+			if ( preg_match( '/\G(?:-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|true|false|null)/', $s, $m, 0, $i ) ) {
+				$i += strlen( $m[0] );
+				return true;
+			}
+			return false;
+		};
+		$ok = $value( 0 );
+		$ws();
+		return $ok && $i >= $n ? null : $i;
 	}
 
 	private static function is_filled( $value ) {

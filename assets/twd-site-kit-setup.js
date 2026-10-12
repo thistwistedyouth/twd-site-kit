@@ -366,6 +366,11 @@
 	function planSummary(host) {
 		clear(host);
 		var plan = S.data.plan;
+		if (plan.brief_error) {
+			host.appendChild(el('h3', { text: 'The brief cannot be read' }));
+			host.appendChild(el('p', { text: plan.brief_error }));
+			return;
+		}
 		host.appendChild(el('h3', { text: 'What will be made' }));
 		var rows = plan.pages.map(function (p) {
 			var what = p.action === 'skip' ? 'already exists, left alone' : (p.action === 'rebuild' ? 'made again as a new version' : 'new draft');
@@ -396,6 +401,10 @@
 			message(before + 'Checking...', true);
 			save({ brief_text: ui.brief.value }).then(function () {
 				planSummary(summary);
+				if (S.data.plan.brief_error) {
+					message(before + 'The brief could not be read, so none of it would be used. ' + S.data.plan.brief_error, false);
+					return;
+				}
 				message(before + (S.data.plan.errors.length ? 'Checked. Some parts need a look (listed below); everything else is fine.' : 'Checked. Nothing is saved to the site until you build it.'), !S.data.plan.errors.length);
 			}, function (err) {
 				message(err.message, false);
@@ -435,7 +444,35 @@
 				message(err.message, false);
 			});
 		});
-		body.appendChild(el('p', { className: 'twd-sk-setup__actions' }, [check, notes, prompt]));
+		// Reading the file itself avoids copy and paste, which can cut a long brief short.
+		var fileInput = el('input', { type: 'file', accept: '.json,.txt,application/json,text/plain', hidden: '', id: 'twd-sk-setup-brief-file' });
+		fileInput.addEventListener('change', function () {
+			var file = fileInput.files && fileInput.files[0];
+			if (!file) {
+				return;
+			}
+			if (file.size > 200000) {
+				message('That file is too big to be a site brief.', false);
+				fileInput.value = '';
+				return;
+			}
+			var reader = new FileReader();
+			reader.addEventListener('load', function () {
+				ui.brief.value = String(reader.result || '');
+				fileInput.value = '';
+				runCheck('Read ' + file.name + '. ');
+			});
+			reader.addEventListener('error', function () {
+				fileInput.value = '';
+				message('That file could not be read. Try again, or paste the brief instead.', false);
+			});
+			reader.readAsText(file);
+		});
+		var choose = button('Choose the brief file', false, function () {
+			fileInput.click();
+		});
+		body.appendChild(fileInput);
+		body.appendChild(el('p', { className: 'twd-sk-setup__actions' }, [check, choose, notes, prompt]));
 		body.appendChild(promptBox);
 		body.appendChild(summary);
 		if (S.data.draft.brief_text) {
@@ -658,8 +695,9 @@
 		frame.open();
 	}
 
-	function thumb(url) {
-		return url ? el('img', { className: 'twd-sk-setup__thumb', src: url, alt: '' }) : el('span', { className: 'twd-sk-setup__thumb twd-sk-setup__thumb--empty', text: 'No picture' });
+	// A logo is shown whole (never cropped to a square), as it will look in the header.
+	function thumb(url, whole) {
+		return url ? el('img', { className: 'twd-sk-setup__thumb' + (whole ? ' twd-sk-setup__thumb--whole' : ''), src: url, alt: '' }) : el('span', { className: 'twd-sk-setup__thumb twd-sk-setup__thumb--empty', text: 'No picture' });
 	}
 
 	function slugify(text) {
@@ -691,7 +729,8 @@
 			var info = S.data.slots[slot];
 			var have = saved.slots[slot] || null;
 			var row = { slot: slot, id: have ? have.id : 0 };
-			var holder = el('div', { className: 'twd-sk-setup__thumbbox' }, [thumb(have ? have.url : '')]);
+			var whole = slot === 'logo';
+			var holder = el('div', { className: 'twd-sk-setup__thumbbox' }, [thumb(have ? have.url : '', whole)]);
 			row.desc = el('input', { type: 'text', className: 'regular-text', maxlength: '200', id: 'twd-sk-setup-slot-' + slot, value: have ? have.description : '' });
 			row.focal = select('twd-sk-setup-slot-focal-' + slot, S.data.focal_points, have && have.focal ? have.focal : 'center');
 			var pick = button(have ? 'Change' : 'Choose picture', false, function () {
@@ -701,7 +740,9 @@
 					}
 					row.id = sel[0].id;
 					clear(holder);
-					holder.appendChild(thumb(sel[0].sizes && sel[0].sizes.thumbnail ? sel[0].sizes.thumbnail.url : sel[0].url));
+					// WordPress's thumbnail size is cropped square, so a logo uses the medium size (never cropped).
+					var size = whole ? 'medium' : 'thumbnail';
+					holder.appendChild(thumb(sel[0].sizes && sel[0].sizes[size] ? sel[0].sizes[size].url : sel[0].url, whole));
 					if (!row.desc.value) {
 						row.desc.value = sel[0].alt || '';
 					}
@@ -797,7 +838,15 @@
 	function buildBuild(body) {
 		var plan = S.data.plan;
 		heading(body, 'Build the site', 'Each step runs on its own, so a slow answer never stops the rest. Every page is made as a draft and nothing is published. You can run it again: pages this setup made get a new version, other pages are never touched.');
-		if (plan.errors.length || plan.blocking.length) {
+		if (plan.brief_error) {
+			// Building without the brief would make the wrong pages with no facts, so it waits until the brief reads.
+			body.appendChild(el('div', { className: 'notice notice-error inline' }, [
+				el('p', { text: 'The brief cannot be read, so building is switched off until it is fixed. ' + plan.brief_error }),
+				el('p', {}, [button('Go to the Brief step', false, function () {
+					go('brief');
+				})])
+			]));
+		} else if (plan.errors.length || plan.blocking.length) {
 			body.appendChild(el('div', { className: 'notice notice-warning inline' }, [el('p', { text: 'The brief has parts that will be skipped:' }), list(plan.errors.concat(plan.blocking))]));
 		}
 		var aiId = 'twd-sk-setup-ai';
@@ -826,6 +875,7 @@
 		var buildBtn = button('Build the site', true, function () {
 			runFrom(0, false);
 		});
+		buildBtn.disabled = !!plan.brief_error;
 		var reset = button('Start again', false, function () {
 			confirmInline(body, 'Forget the choices on this page (type, style, brief and pictures)? Pages already made stay as drafts.', 'Yes, start again', function () {
 				api('POST', '/site/build/reset', { confirm: true }).then(function (data) {

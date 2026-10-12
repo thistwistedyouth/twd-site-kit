@@ -702,7 +702,7 @@ class TWD_SK_REST {
 		$step = $request->get_param( 'step' );
 		$out  = TWD_SK_Build::run_step( is_string( $step ) ? $step : '', (int) $request->get_param( 'index' ), array( 'ai' => null === $request->get_param( 'ai' ) ? true : self::truthy( $request->get_param( 'ai' ) ) ) );
 		if ( is_wp_error( $out ) ) {
-			$map    = array( 'twd_sk_bad_input' => 400, 'twd_sk_contrast' => 422 );
+			$map    = array( 'twd_sk_bad_input' => 400, 'twd_sk_contrast' => 422, 'twd_sk_bad_brief' => 422 );
 			$code   = $out->get_error_code();
 			$status = isset( $map[ $code ] ) ? $map[ $code ] : 500;
 			return self::error( $code, $out->get_error_message(), $status );

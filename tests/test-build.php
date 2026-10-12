@@ -633,3 +633,135 @@ twd_sk_test( 'ask the AI: a reply that runs out of room changes nothing and says
 	twd_sk_has( 'Choose fewer sections', $r->get_error_message() );
 	twd_sk_eq( $before, TWD_SK_Store::get_current( 40 ) );
 } );
+
+// -- Reading the brief, and building again after a bad brief (0.9.3) -------------------------
+
+twd_sk_test( 'brief: the facts may be a list of short lines, which is easier to copy than one long line', function () {
+	$data = TWD_SK_Brief::parse( json_encode( array( 'schema' => 'twd-site-brief/1', 'facts' => array( 'WHO WE ARE', 'A small hire company.', '', 'HOW TO BOOK', 'Use the form.' ) ) ) );
+	twd_sk_eq( "WHO WE ARE\nA small hire company.\n\nHOW TO BOOK\nUse the form.", $data['facts'] );
+	$p = TWD_SK_Brief::plan( $data, false );
+	twd_sk_eq( array(), $p['errors'] );
+	twd_sk_eq( 'set', $p['changes']['facts'] ? 'set' : '' );
+	$bad = TWD_SK_Brief::parse( json_encode( array( 'schema' => 'twd-site-brief/1', 'facts' => array( 'One line', 7 ) ) ) );
+	twd_sk_true( is_array( $bad['facts'] ), 'a list with a non-text item is left as it is' );
+	twd_sk_true( (bool) TWD_SK_Brief::plan( $bad, false )['errors'], 'and refused by the checks' );
+} );
+
+twd_sk_test( 'brief: a brief that is not valid JSON says where, or that it was cut short, or that it has curly quotes', function () {
+	$good = json_encode( array( 'schema' => 'twd-site-brief/1', 'site' => array( 'name' => 'Example Hire', 'email' => 'hello@example.com' ), 'facts' => 'A small hire company.' ), JSON_PRETTY_PRINT );
+	twd_sk_true( is_array( TWD_SK_Brief::parse( $good ) ) );
+	$e = TWD_SK_Brief::parse( str_replace( '"Example Hire",', '"Example Hire"', $good ) );
+	twd_sk_has( 'line 5', $e->get_error_message() );
+	twd_sk_has( 'missing comma or quote', $e->get_error_message() );
+	twd_sk_has( 'ends too early', TWD_SK_Brief::parse( substr( $good, 0, 80 ) . '}' )->get_error_message() );
+	twd_sk_has( 'ends too early', TWD_SK_Brief::parse( substr( $good, 0, -3 ) )->get_error_message() );
+	$curly = str_replace( '"Example Hire"', "\xE2\x80\x9CExample Hire\xE2\x80\x9D", $good );
+	twd_sk_has( 'curly quotes', TWD_SK_Brief::parse( $curly )->get_error_message() );
+} );
+
+twd_sk_test( 'build: a brief that cannot be read stops every step before anything changes', function () {
+	twd_sk_build_media();
+	$GLOBALS['twd_stub']['caps'] = true;
+	TWD_SK_Build::save_draft( array( 'mode' => 'business', 'pack' => 'grove', 'set' => 'mobile-hire', 'brief_text' => substr( twd_sk_build_brief(), 0, 200 ) ) );
+	$plan = TWD_SK_Build::plan();
+	twd_sk_has( 'ends too early', $plan['brief_error'] );
+	foreach ( array( 'settings', 'page', 'finish' ) as $step ) {
+		twd_sk_is_error( 'twd_sk_bad_brief', TWD_SK_Build::run_step( $step, 0 ), $step );
+	}
+	twd_sk_eq( '', TWD_SK_Profile::get()['site_name'], 'nothing saved' );
+	twd_sk_eq( 0, count( get_posts( array( 'post_type' => 'page' ) ) ), 'no pages made' );
+	$err = TWD_SK_REST::post_site_build_step( twd_sk_rest_req( array( 'step' => 'settings' ) ) );
+	twd_sk_eq( 422, $err->get_error_data()['status'] );
+	TWD_SK_Build::save_draft( array( 'brief_text' => '' ) );
+	twd_sk_eq( '', TWD_SK_Build::plan()['brief_error'], 'an empty box is fine: no brief' );
+} );
+
+twd_sk_test( 'build: building again with the right brief brings the menu, header button and about link up to date and lists the old pages', function () {
+	twd_sk_build_media();
+	$GLOBALS['twd_stub']['caps'] = true;
+	// The first build ran without a readable brief (before 0.9.3), from the starter set's pages.
+	TWD_SK_Build::save_draft( array( 'mode' => 'business', 'pack' => 'grove', 'set' => 'mobile-hire', 'brief_text' => '' ) );
+	twd_sk_build_all();
+	$first = TWD_SK_Profile::get();
+	twd_sk_eq( '/book-or-ask', $first['cta_url'] );
+	$home = twd_sk_build_page_id( 'home' );
+	$old_about = twd_sk_build_page_id( 'about-us' );
+	twd_sk_eq( $old_about, $first['about_page_id'] );
+	// Forget the fingerprints, as a build made by 0.9.2 would have none.
+	$d = get_option( TWD_SK_Build::DRAFT );
+	unset( $d['auto'] );
+	update_option( TWD_SK_Build::DRAFT, $d );
+
+	TWD_SK_Build::save_draft( array( 'brief_text' => json_encode( array(
+		'schema' => 'twd-site-brief/1',
+		'site'   => array( 'name' => 'Example Hire' ),
+		'facts'  => array( 'WHO WE ARE', 'A small hire company.' ),
+		'pages'  => array(
+			array( 'type' => 'home', 'title' => 'Home' ),
+			array( 'type' => 'service', 'title' => 'Hire and prices', 'topic' => 'Hire and prices' ),
+			array( 'type' => 'about', 'title' => 'Our story' ),
+			array( 'type' => 'contact', 'title' => 'Book' ),
+		),
+	) ) ) );
+	$out    = twd_sk_build_all();
+	$after  = TWD_SK_Profile::get();
+	$labels = array_map( function ( $m ) {
+		return $m['label'];
+	}, $after['menu'] );
+	twd_sk_eq( array( 'Home', 'Hire and prices', 'Our story', 'Book' ), $labels, 'the menu follows the new pages' );
+	twd_sk_eq( '/book', $after['cta_url'] );
+	twd_sk_eq( 'Example Hire', $after['site_name'] );
+	twd_sk_eq( $home, twd_sk_build_page_id( 'home' ), 'Home made again in the same page' );
+	twd_sk_eq( twd_sk_build_page_id( 'our-story' ), $after['about_page_id'], 'the about link moves to the new about page' );
+	$finish = implode( ' ', end( $out )['report'] );
+	twd_sk_has( 'no longer in the plan: "About us", "Questions and answers", "Book or ask"', $finish );
+	twd_sk_has( 'were not changed', $finish );
+	twd_sk_true( null !== get_post( $old_about ), 'old pages are never deleted' );
+} );
+
+twd_sk_test( 'build: a menu or header button a person typed or changed is never replaced', function () {
+	twd_sk_build_setup();
+	TWD_SK_Profile::save( array( 'menu' => array( array( 'label' => 'Start', 'url' => '/', 'children' => array() ) ) ) );
+	twd_sk_build_all();
+	twd_sk_eq( 'Start', TWD_SK_Profile::get()['menu'][0]['label'], 'typed before the build: kept' );
+
+	twd_sk_build_setup();
+	TWD_SK_Profile::save( array( 'menu' => array() ) );
+	twd_sk_build_all();
+	twd_sk_true( count( TWD_SK_Profile::get()['menu'] ) > 1, 'the build made a menu' );
+	$menu = TWD_SK_Profile::get()['menu'];
+	$menu = array_reverse( $menu );
+	TWD_SK_Profile::save( array( 'menu' => $menu, 'cta_label' => 'Book now' ) );
+	twd_sk_build_all();
+	twd_sk_eq( $menu, TWD_SK_Profile::get()['menu'], 'reordered by a person: kept' );
+	twd_sk_eq( 'Book now', TWD_SK_Profile::get()['cta_label'] );
+} );
+
+twd_sk_test( 'build: a page an earlier build made that is now in the bin is made again, never rebuilt in the bin', function () {
+	twd_sk_build_setup();
+	twd_sk_build_all();
+	$id = twd_sk_build_page_id( 'about-us' );
+	$GLOBALS['twd_stub']['posts'][ $id ]->post_status = 'trash';
+	$plan = TWD_SK_Build::plan();
+	foreach ( $plan['pages'] as $pg ) {
+		if ( 'about-us' === $pg['slug'] ) {
+			twd_sk_true( 'rebuild' !== $pg['action'], 'not rebuilt in the bin: ' . $pg['action'] );
+		}
+	}
+} );
+
+twd_sk_test( 'setup js: the brief can be read from a file, and building waits while the brief cannot be read', function () {
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-setup.js' );
+	foreach ( array( "'Choose the brief file'", 'new FileReader()', 'readAsText(file)', "accept: '.json,.txt,application/json,text/plain'", 'file.size > 200000', 'plan.brief_error', 'buildBtn.disabled = !!plan.brief_error', "go('brief')" ) as $needle ) {
+		twd_sk_has( $needle, $js );
+	}
+} );
+
+twd_sk_test( 'setup page: the logo slot says it is the header and footer logo, and its preview shows the whole logo', function () {
+	twd_sk_has( 'header and footer', TWD_SK_Pictures::slots()['logo']['label'] );
+	twd_sk_has( 'not a banner photo', TWD_SK_Pictures::slots()['logo']['help'] );
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-setup.js' );
+	twd_sk_has( "var whole = slot === 'logo';", $js );
+	twd_sk_has( "var size = whole ? 'medium' : 'thumbnail';", $js );
+	twd_sk_has( '.twd-sk-setup__thumb--whole { object-fit: contain;', file_get_contents( ABSPATH . 'assets/twd-site-kit-setup.css' ) );
+} );

@@ -17,6 +17,15 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.9.3 (reading the brief reliably, and building again)
+
+- **A copied brief arrived broken and the build went ahead anyway.** The brief's facts were one line of over 12,000 characters; copying the file from a viewer most likely cut that line, so the JSON no longer read. The build only warned, then made the starter set's pages with no facts, a menu and a button for them.
+- **Facts can be a list of lines**, so no line is long enough to be cut, and the brief is easier to read and edit by hand. A single string still works.
+- **Choose the brief file** reads the file itself: no copy and paste at all.
+- **An unreadable brief says where**: the line and the text there, that it ends too early, or that it has curly quotes. And the build refuses to run until it reads, because building without it does more harm than good.
+- **Building again puts things right.** The menu and header button the setup filled in itself are filled in again from the new plan; anything a person typed or changed is kept (a fingerprint from now on, and a careful match for earlier builds). Pages from the earlier plan are listed, never deleted, and the about link moves to the new about page. A page moved to the bin is made again rather than rebuilt in the bin.
+- **The logo slot** now says it is the header and footer logo, not a banner photo, and its preview shows the whole logo instead of a square crop.
+
 ## v0.9.2 (no page or brief too long for the AI)
 
 - **The first real brief hit the ceiling.** Pasting the first real client brief and pressing "Turn my notes into a brief (AI)" sent the whole 24 KB brief to the AI to retype, and the Articles plugin stops every reply at 8000 tokens ("The AI ran out of room before finishing"). The owner asked for no limit on admin.

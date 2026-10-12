@@ -19,6 +19,7 @@
 .twd-sk-setup__pic label { display: block; margin-top: 8px; font-weight: 600; }
 .twd-sk-setup__pic input[type="text"], .twd-sk-setup__pic select { width: 100%; max-width: 420px; }
 .twd-sk-setup__thumb { display: block; width: 112px; height: 112px; object-fit: cover; border-radius: 4px; background: #f0f0f1; }
+.twd-sk-setup__thumb--whole { object-fit: contain; padding: 6px; box-sizing: border-box; background: #fff; border: 1px solid #dcdcde; }
 .twd-sk-setup__thumb--empty { display: flex; align-items: center; justify-content: center; color: #50575e; font-size: 13px; }
 .twd-sk-setup__run li { margin-bottom: 12px; }
 .twd-sk-setup__state { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: #f0f0f1; color: #1d2327; font-size: 13px; }

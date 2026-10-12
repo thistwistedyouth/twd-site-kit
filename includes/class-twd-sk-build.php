@@ -67,6 +67,8 @@ class TWD_SK_Build {
 			'set'        => isset( $d['set'] ) && is_string( $d['set'] ) && TWD_SK_Sets::get( $d['set'] ) ? $d['set'] : '',
 			// The page list from the Pages step, or null to follow the brief.
 			'pages'      => isset( $d['pages'] ) && is_array( $d['pages'] ) ? $d['pages'] : null,
+			// Fingerprints of the menu and header button this setup filled in itself (0.9.3).
+			'auto'       => isset( $d['auto'] ) && is_array( $d['auto'] ) ? array_filter( $d['auto'], 'is_string' ) : array(),
 			'updated'    => isset( $d['updated'] ) && is_string( $d['updated'] ) ? $d['updated'] : '',
 		);
 	}
@@ -275,7 +277,7 @@ class TWD_SK_Build {
 		$out   = array();
 		foreach ( $pages as $pg ) {
 			$slug   = self::unique_slug( $pg['title'], $taken );
-			$mine   = isset( $draft['built'][ $slug ] ) && get_post( $draft['built'][ $slug ] ) ? $draft['built'][ $slug ] : 0;
+			$mine   = isset( $draft['built'][ $slug ] ) && self::live( $draft['built'][ $slug ] ) ? $draft['built'][ $slug ] : 0;
 			$other  = $mine ? 0 : self::find_page( $pg['title'] );
 			$out[]  = array(
 				'type'   => $pg['type'],
@@ -298,8 +300,11 @@ class TWD_SK_Build {
 		}
 		$steps[] = array( 'id' => 'finish', 'index' => 0, 'label' => 'Set the front page and check every page' );
 
+		$raw = self::brief_data( $draft );
 		return array(
-			'pages'    => $out,
+			'pages'       => $out,
+			// Set when there is brief text that cannot be read: the build will not run until it is fixed.
+			'brief_error' => is_wp_error( $raw ) ? $raw->get_error_message() : '',
 			'source'   => $source,
 			'steps'    => $steps,
 			'items'    => $bp['items'],
@@ -309,6 +314,12 @@ class TWD_SK_Build {
 			'ai'       => $ai,
 			'pictures' => array( 'slots' => count( $draft['pictures']['slots'] ), 'custom' => count( $draft['pictures']['custom'] ) ),
 		);
+	}
+
+	/** True when the post exists and is not in the bin. */
+	private static function live( $id ) {
+		$post = $id ? get_post( (int) $id ) : null;
+		return $post && 'trash' !== $post->post_status;
 	}
 
 	/** A page with this title (any status), or 0. */
@@ -336,6 +347,9 @@ class TWD_SK_Build {
 	public static function run_step( $step, $index = 0, $opts = array() ) {
 		$draft = self::draft();
 		$plan  = self::plan( $draft );
+		if ( '' !== $plan['brief_error'] && in_array( $step, array( 'settings', 'page', 'finish' ), true ) ) {
+			return new WP_Error( 'twd_sk_bad_brief', 'The brief could not be read, so nothing was changed. Fix it on the Brief step (Choose the brief file is the safest way), or empty the brief box to build without one. ' . $plan['brief_error'] );
+		}
 		try {
 			if ( 'settings' === $step ) {
 				$out = self::step_settings( $draft, $plan );
@@ -360,12 +374,82 @@ class TWD_SK_Build {
 		return $out;
 	}
 
+	private static function fingerprint( $value ) {
+		return md5( (string) json_encode( $value ) );
+	}
+
+	/**
+	 * True when this profile field still holds what the setup filled in itself. A fingerprint is kept
+	 * from 0.9.3 on. Before that, a menu counts when every link is a page this setup made, labelled with
+	 * its title (or the home page), and a header button when it is the "Get in touch" one it adds.
+	 */
+	private static function setup_filled( $field, $profile, $draft ) {
+		$value = $profile[ $field ];
+		if ( 'menu' === $field ? ! $value : '' === trim( (string) $value ) ) {
+			return false;
+		}
+		if ( isset( $draft['auto'][ $field ] ) ) {
+			return self::fingerprint( $value ) === $draft['auto'][ $field ];
+		}
+		$built = $draft['built'];
+		if ( ! $built ) {
+			return false;
+		}
+		if ( 'menu' === $field ) {
+			$titles = array();
+			foreach ( $built as $id ) {
+				$post = get_post( $id );
+				if ( $post ) {
+					$titles[ trim( (string) $post->post_title ) ] = true;
+				}
+			}
+			foreach ( $value as $item ) {
+				if ( ! empty( $item['children'] ) ) {
+					return false;
+				}
+				$label = trim( (string) $item['label'] );
+				if ( '/' === $item['url'] ) {
+					// The home link the setup adds is labelled with its home page's title.
+					if ( ! isset( $titles[ $label ] ) ) {
+						return false;
+					}
+					continue;
+				}
+				$slug = substr( (string) $item['url'], 1 );
+				$post = isset( $built[ $slug ] ) ? get_post( $built[ $slug ] ) : null;
+				if ( ! $post || 0 !== strcmp( trim( (string) $post->post_title ), $label ) ) {
+					return false;
+				}
+			}
+			return true;
+		}
+		$url = (string) $profile['cta_url'];
+		return 'Get in touch' === $profile['cta_label'] && '/' === substr( $url, 0, 1 ) && isset( $built[ substr( $url, 1 ) ] );
+	}
+
 	private static function step_settings( $draft, $plan ) {
 		if ( $plan['blocking'] ) {
 			return new WP_Error( 'twd_sk_contrast', 'The style in the brief would make some text hard to read, so nothing was saved: ' . implode( '; ', $plan['blocking'] ) . '.' );
 		}
 		$errors = array();
 		$data   = self::effective_brief( $draft, $errors );
+		// The menu and header button this setup filled in itself, unchanged since, are filled in again,
+		// so building after a change to the brief or the page list keeps them right. Anything a person
+		// typed or changed in the Site tab is never touched.
+		$before  = TWD_SK_Profile::get();
+		$refresh = array();
+		if ( self::setup_filled( 'menu', $before, $draft ) ) {
+			$refresh['menu'] = array();
+		}
+		// The button's text and link go together: if a person changed either, both are kept.
+		if ( self::setup_filled( 'cta_label', $before, $draft ) && self::setup_filled( 'cta_url', $before, $draft ) ) {
+			$refresh['cta_label'] = '';
+			$refresh['cta_url']   = '';
+		}
+		if ( $refresh ) {
+			TWD_SK_Profile::save( $refresh );
+			$before = TWD_SK_Profile::get();
+		}
 		$r      = TWD_SK_Brief::apply( $data, array( 'overwrite' => false, 'build_pages' => false ) );
 		$report = array_merge( $r['applied'], $r['skipped'], $r['errors'], $errors );
 
@@ -425,6 +509,17 @@ class TWD_SK_Build {
 		$focals = TWD_SK_Pictures::save_focals( $draft['pictures'] );
 		if ( $focals ) {
 			$report[] = 'Saved where to keep ' . $focals . ' picture' . ( 1 === $focals ? '' : 's' ) . ' in view.';
+		}
+		$after = TWD_SK_Profile::get();
+		foreach ( array( 'menu', 'cta_label', 'cta_url' ) as $field ) {
+			$empty_before = 'menu' === $field ? ! $before[ $field ] : '' === trim( (string) $before[ $field ] );
+			$filled_now   = 'menu' === $field ? (bool) $after[ $field ] : '' !== trim( (string) $after[ $field ] );
+			if ( $empty_before && $filled_now ) {
+				$draft['auto'][ $field ] = self::fingerprint( $after[ $field ] );
+			}
+		}
+		if ( isset( $refresh['menu'] ) && $after['menu'] ) {
+			$report[] = 'Menu brought up to date with the pages.';
 		}
 		$draft['used'] = array();
 		self::write_draft( $draft );
@@ -513,7 +608,7 @@ class TWD_SK_Build {
 		$about  = 0;
 		foreach ( $plan['pages'] as $pg ) {
 			$id = isset( $draft['built'][ $pg['slug'] ] ) ? $draft['built'][ $pg['slug'] ] : 0;
-			if ( ! $id || ! get_post( $id ) ) {
+			if ( ! $id || ! self::live( $id ) ) {
 				continue;
 			}
 			if ( 'home' === $pg['type'] && ! $home ) {
@@ -533,7 +628,19 @@ class TWD_SK_Build {
 				$report[] = 'Home is now the front page. It is a draft, so visitors see nothing there until it is published.';
 			}
 		}
-		if ( $about && ! TWD_SK_Profile::get()['about_page_id'] ) {
+		// Pages an earlier build made that are no longer in the plan: listed, never deleted.
+		$planned = array();
+		foreach ( $plan['pages'] as $pg ) {
+			$planned[ $pg['slug'] ] = true;
+		}
+		$stale = array();
+		foreach ( $draft['built'] as $slug => $id ) {
+			if ( ! isset( $planned[ $slug ] ) && self::live( $id ) ) {
+				$stale[ (int) $id ] = (string) get_post( $id )->post_title;
+			}
+		}
+		$current_about = (int) TWD_SK_Profile::get()['about_page_id'];
+		if ( $about && ( ! $current_about || isset( $stale[ $current_about ] ) || ! self::live( $current_about ) ) ) {
 			TWD_SK_Profile::save( array( 'about_page_id' => $about ) );
 		}
 		update_option( self::DONE, gmdate( 'Y-m-d H:i:s' ) );
@@ -542,6 +649,9 @@ class TWD_SK_Build {
 			$must += $p['must'];
 		}
 		$report[] = count( $pages ) . ' draft page' . ( 1 === count( $pages ) ? '' : 's' ) . ' ready. ' . ( $must ? $must . ' thing' . ( 1 === $must ? '' : 's' ) . ' still to fix before they can be published (missing details marked [PLACEHOLDER]).' : 'Nothing is marked as missing.' );
+		if ( $stale ) {
+			$report[] = 'An earlier build also made these pages, which are no longer in the plan: "' . implode( '", "', $stale ) . '". They are still drafts and were not changed. Move them to the bin in Pages if you do not need them.';
+		}
 		$report[] = '--- Build finished ---';
 		return array( 'step' => 'finish', 'ok' => true, 'report' => $report, 'pages' => $pages );
 	}

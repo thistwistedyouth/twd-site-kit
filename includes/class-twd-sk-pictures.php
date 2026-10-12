@@ -31,7 +31,7 @@ class TWD_SK_Pictures {
 	/** slot => label, help, the page type it belongs to ('' for the logo, which goes in the site details). */
 	public static function slots() {
 		return array(
-			'logo'        => array( 'label' => 'Logo', 'help' => 'Shown in the header. A wide picture with a clear or plain background works best.', 'page' => '' ),
+			'logo'        => array( 'label' => 'Logo (header and footer)', 'help' => 'The small logo at the top and bottom of every page, not a banner photo. A wide logo with a see-through or plain background works best. The big photo at the top of the Home page is the next slot.', 'page' => '' ),
 			'home_main'   => array( 'label' => 'Home page main picture', 'help' => 'The first picture on the Home page.', 'page' => 'home' ),
 			'about_photo' => array( 'label' => 'About page photo', 'help' => 'Usually a friendly photo of the person behind the site.', 'page' => 'about' ),
 		);

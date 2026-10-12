@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.9.2
+Stable tag: 0.9.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,13 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.9.3 =
+* New: Choose the brief file on the setup page reads the .json file itself, so nothing is lost in copy and paste.
+* New: the facts in a brief can be a list of short lines.
+* Fixed: a brief that cannot be read now says where (the line, or that it was cut short, or curly quotes), and Build waits until it is fixed instead of building without it.
+* Fixed: building again updates the menu and header button the setup made itself (never ones you changed), moves the about link to the new about page, and lists pages from an earlier build that are no longer planned. Pages in the bin are made again.
+* The logo slot now says it is the header and footer logo, and shows the whole logo.
 
 = 0.9.2 =
 * Fixed: a long site brief or page no longer fails with "The AI ran out of room". Pages with more than six sections are written a few sections at a time, and any part that is still too long is split and tried again.
