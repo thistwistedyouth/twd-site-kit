@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.8.0
+Stable tag: 0.8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.8.1 =
+* New: an Enquiry form section. A simple form (name, email, optional phone, message and a consent tick) that emails the address in the site details, or the WordPress admin email. It has a hidden spam trap, a signed check that works with page caching, and limits per visitor and per day. Nothing about a message is stored on the site; the site report shows counts only. Add it with Add a section or in the setup page's Pages step.
 
 = 0.8.0 =
 * New sections: Pictures (a grid of pictures with captions, three or two across), Logos strip (accreditations, memberships or partners), Prices (cards, or a simple list of names and prices), Opening hours, and Areas covered (a list of areas with a button to a map). They can be chosen in the setup page's Pages step and with Add a section, and the AI can use them. Their sample wording is flagged until it is replaced.

@@ -646,6 +646,19 @@ class TWD_SK_Registry {
 		) );
 	}
 
+	/** An enquiry form: a heading, a line of introduction and the [twd_enquiry] shortcode (0.8.1). */
+	private static function enquiry() {
+		return self::lines( array(
+			'<section class="twd-sk-enquiry twd-sk-tone-surface">',
+			'<div class="twd-sk-inner twd-sk-inner--narrow">',
+			'<h2 class="twd-sk-title">Heading here</h2>',
+			'<p class="twd-sk-lead">Short introduction here.</p>',
+			'[twd_enquiry]',
+			'</div>',
+			'</section>',
+		) );
+	}
+
 	private static function resources() {
 		return self::lines( array(
 			'<section class="twd-sk-resources twd-sk-tone-base">',
@@ -960,7 +973,7 @@ class TWD_SK_Registry {
 			'contact'    => array(
 				'id'          => 'contact',
 				'label'       => 'Contact details',
-				'description' => 'Contact details as label and value rows. The split variant adds a side column with a picture and an address. A contact form is not part of this: a form stays an Elementor widget placed beside the page content.',
+				'description' => 'Contact details as label and value rows. The split variant adds a side column with a picture and an address. A contact form is not part of this: add the Enquiry form section, or keep an Elementor widget placed beside the page content.',
 				'skeleton'    => self::contact( '' ),
 				'variants'    => array(
 					'twd-sk-contact--split' => array(
@@ -1016,6 +1029,32 @@ class TWD_SK_Registry {
 					'twd-sk-areas__actions',
 				),
 				'shortcodes'  => array(),
+			),
+
+			'enquiry'    => array(
+				'id'          => 'enquiry',
+				'label'       => 'Enquiry form',
+				'description' => 'A short heading and introduction above a simple enquiry form (name, email, phone, message and consent). The form itself is the twd_enquiry shortcode: it is built by the plugin when the page is shown, sends an email to the site\'s address and stores nothing.',
+				'skeleton'    => self::enquiry(),
+				'variants'    => array(),
+				'classes'     => array(
+					'twd-sk-enquiry',
+					'twd-sk-form',
+					'twd-sk-form__field',
+					'twd-sk-form__label',
+					'twd-sk-form__input',
+					'twd-sk-form__textarea',
+					'twd-sk-form__check',
+					'twd-sk-form__hp',
+					'twd-sk-form__actions',
+					'twd-sk-form__status',
+					'twd-sk-form__status--ok',
+					'twd-sk-form__status--error',
+					'twd-sk-form__help',
+				),
+				'shortcodes'  => array(
+					'twd_enquiry' => array(),
+				),
 			),
 
 			'notice'     => array(

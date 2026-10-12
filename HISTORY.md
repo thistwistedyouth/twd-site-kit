@@ -17,6 +17,14 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.8.1 (the enquiry form)
+
+- **Forms stay out of page HTML.** Everything a person or an AI writes is still sanitised with forms banned; the form is built by the plugin from a shortcode at display time, so nobody can inject one.
+- **No JavaScript, cache-safe.** 20i caches pages, so a WordPress nonce in a cached page would go stale and break the form. A signed time-and-page token with a 30-day window does the same job (proves the form came from this site, slows bots with a 3-second minimum) and survives caching.
+- **Store nothing.** A submissions table would be personal data held on every client site, possibly special-category for therapists. The message goes by email only; the site keeps counts for the report.
+- **Limits per visitor and per site** so a bot cannot use the form to flood the owner's inbox, and a filled honeypot gets a fake success so it learns nothing.
+- **The help line follows the mode:** therapy sites say not to include anything urgent and point to 999 and the support lines; business sites say a reply is coming and not to include payment details.
+
 ## v0.8.0 (five new sections)
 
 - **What business sites (and many therapy sites) were missing:** a picture grid, a strip of accreditation or partner logos, prices, opening hours, and the areas covered. They are ordinary registry components, so the sanitiser, the AI style guide, the Pages step, Add a section and the gallery all pick them up with no other change.

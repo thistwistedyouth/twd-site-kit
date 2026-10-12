@@ -293,6 +293,16 @@ function add_options_page( $page_title, $menu_title, $cap, $slug, $cb ) {
 function admin_url( $path = '' ) {
 	return 'https://example.test/wp-admin/' . $path;
 }
+function is_email( $email ) {
+	return is_string( $email ) && 1 === preg_match( '/^[^@\s"<>,;]+@[^@\s"<>,;]+\.[a-z]{2,}$/i', $email ) ? $email : false;
+}
+function wp_salt( $scheme = 'auth' ) {
+	return 'test-salt-' . $scheme;
+}
+function wp_mail( $to, $subject, $message, $headers = '' ) {
+	$GLOBALS['twd_stub']['mails'][] = array( 'to' => $to, 'subject' => $subject, 'message' => $message, 'headers' => $headers );
+	return empty( $GLOBALS['twd_stub']['mail_fails'] );
+}
 function add_query_arg( $args, $url ) {
 	return $url . ( false === strpos( $url, '?' ) ? '?' : '&' ) . http_build_query( $args );
 }
@@ -578,6 +588,7 @@ require_once ABSPATH . 'includes/class-twd-sk-brief.php';
 require_once ABSPATH . 'includes/class-twd-sk-doctor.php';
 require_once ABSPATH . 'includes/class-twd-sk-pictures.php';
 require_once ABSPATH . 'includes/class-twd-sk-build.php';
+require_once ABSPATH . 'includes/class-twd-sk-enquiry.php';
 require_once ABSPATH . 'includes/class-twd-sk-assets.php';
 require_once ABSPATH . 'includes/class-twd-sk-updater.php';
 require_once ABSPATH . 'includes/class-twd-sk-report.php';

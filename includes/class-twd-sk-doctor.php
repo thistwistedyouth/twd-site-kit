@@ -210,6 +210,9 @@ class TWD_SK_Doctor {
 		$len   = function_exists( 'mb_strlen' ) ? mb_strlen( $facts, 'UTF-8' ) : strlen( $facts );
 		$when  = TWD_SK_Facts::updated();
 		$l[]   = TWD_SK_Mode::w( 'Facts' ) . ': ' . ( '' === $facts ? 'empty' : 'filled (' . $len . ' characters' . ( '' !== $when ? ', saved ' . self::t( $when, 30 ) : '' ) . ')' );
+		$to    = TWD_SK_Enquiry::recipient();
+		$st    = TWD_SK_Enquiry::stats();
+		$l[]   = 'Enquiry form emails go to: ' . ( '' === $to ? 'nowhere (no valid email address is set)' : ( $to === trim( (string) $p['email'] ) ? 'the email in the site details' : 'the WordPress admin email' ) ) . '; sent ' . ( isset( $st['sent'] ) ? (int) $st['sent'] : 0 ) . ', failed ' . ( isset( $st['failed'] ) ? (int) $st['failed'] : 0 ) . ', refused ' . ( isset( $st['refused'] ) ? (int) $st['refused'] : 0 ) . ( isset( $st['last'] ) ? ', last ' . self::t( $st['last'], 20 ) . ' UTC' : '' );
 		$left  = TWD_SK_Profile::leftovers( $p );
 		$l[]   = 'Example text still in the site details: must fix ' . TWD_SK_Report::leftover_total( $left['must'] ) . ', check ' . TWD_SK_Report::leftover_total( $left['check'] );
 		return $l;

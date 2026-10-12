@@ -2,12 +2,13 @@
 
 The one place to see where this project is. Newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md. Update this file at the end of every piece of work, in the same commit.
 
-## Where we are (last updated at release 0.8.0, 12 Oct 2026)
+## Where we are (last updated at release 0.8.1, 12 Oct 2026)
 
-**Released and live in the update file:** 0.8.0. Sites update from Plugins, "Check for updates", "update now".
+**Released and live in the update file:** 0.8.1. Sites update from Plugins, "Check for updates", "update now".
 
 | Version | What it added |
 |---|---|
+| 0.8.1 | The Enquiry form section: name, email, phone, message and consent, emailed to the site address; spam trap, signed token and limits; nothing stored |
 | 0.8.0 | Five new sections: Pictures (a grid with captions), Logos strip, Prices (cards or a list), Opening hours, Areas covered (with a map link) |
 | 0.7.3 | Add a section in the Edit with AI pop-up: choose where, the kind and layout, and (with a key) let the AI write it from the facts; preview, then apply |
 | 0.7.2 | The Pages step in the setup page: the list of pages and the sections on each, changed before anything is built; `sections` in a brief's pages |
@@ -43,7 +44,7 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 **Waiting on other projects (cross-project contract):**
 - Nothing. The Articles & Resource Production plugin (`twd-article-publisher`, repo `therapy-web-designs`) now offers the two filters Site Kit uses, from its version 1.34.0 (checked 4 Oct 2026; re-checked 11 Oct 2026, the filters are unchanged, that plugin is now at 1.37.1 on a branch not yet merged to its main): `twd_ai_is_configured` (true when a key is saved) and `twd_ai_complete( null, $system, $message, $max_tokens )` (returns text, a WP_Error, or null; max tokens clamped to 256 to 8000). The names match what Site Kit calls. Site Kit holds no key and calls no AI service. Ask the AI, drafting pages with AI, Fill with AI and the Site tab suggestions appear on a site only when that plugin is at 1.34.0 or later with a key saved.
 
-**Not yet verified on a real site (needs a human):** importing the two Theme Builder templates on Elementor Pro 4.3.1 and their display condition, real Yoast behaviour (writing its fields, the schema graph filter), the media picker, how a page behaves if the plugin is deactivated, caching on the host, Ask the AI, drafting pages and the Site tab suggestions with a real key (the articles plugin side is now in place), importing a real site brief, the fold-outs on a real phone, (0.7.0) switching a fresh site to business mode and checking the Site tab labels, a drafted page's wording and the LocalBusiness search details, and (0.7.1) the whole setup page on a fresh install: the front-page link, the real media library picker and uploads, notes to a brief and a full build with a real key, the pictures landing where expected, the menu links working once the pages are published, and `wp twd-sk build` over SSH. The test plan is in the release notes of each version in the conversation that built it; the 0.4.0 steps are in the section below.
+**Not yet verified on a real site (needs a human):** importing the two Theme Builder templates on Elementor Pro 4.3.1 and their display condition, real Yoast behaviour (writing its fields, the schema graph filter), the media picker, how a page behaves if the plugin is deactivated, caching on the host, Ask the AI, drafting pages and the Site tab suggestions with a real key (the articles plugin side is now in place), importing a real site brief, the fold-outs on a real phone, (0.7.0) switching a fresh site to business mode and checking the Site tab labels, a drafted page's wording and the LocalBusiness search details, and (0.7.1) the whole setup page on a fresh install: the front-page link, the real media library picker and uploads, notes to a brief and a full build with a real key, the pictures landing where expected, the menu links working once the pages are published, and `wp twd-sk build` over SSH, and (0.8.0/0.8.1) the new sections on a real theme and phone, and the enquiry form actually delivering email from 20i (check the spam folder, and set up an SMTP plugin if mail does not arrive). The test plan is in the release notes of each version in the conversation that built it; the 0.4.0 steps are in the section below.
 
 **Known limitation:** a page that still uses the old `[twd_page]` shortcode cannot be mirrored into its content for site search until its content is cleared once after switching it to the kit template.
 

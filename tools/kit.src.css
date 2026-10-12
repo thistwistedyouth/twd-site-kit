@@ -423,6 +423,29 @@
 }
 .twd-sk-areas__actions { display: flex; justify-content: flex-start; margin-top: 28px; }
 
+/* ---- enquiry form (0.8.1): rendered by the plugin from [twd_enquiry] ---- */
+.twd-sk-enquiry { padding-top: $section-y; padding-bottom: $section-y; }
+.twd-sk-form { margin-top: 8px; }
+.twd-sk-form__field { margin-bottom: 18px; }
+.twd-sk-form__label { display: block; margin-bottom: 6px; font-size: $size-small; font-weight: 600; color: $color-title; }
+.twd-sk-form__input, .twd-sk-form__textarea {
+  display: block; width: 100%; padding: 12px 14px; font-family: $font-body; font-size: $size-body; line-height: $line-body;
+  color: $color-body; background-color: $color-surface; border: 1px solid $color-border; border-radius: $radius-field;
+}
+.twd-sk-form__textarea { min-height: 150px; resize: vertical; }
+.twd-sk-form__input:focus-visible, .twd-sk-form__textarea:focus-visible, .twd-sk-form__check input:focus-visible { outline: 2px solid $color-accent; outline-offset: 2px; }
+.twd-sk-form__check { display: flex; align-items: flex-start; gap: 10px; }
+.twd-sk-form__check input { flex: 0 0 auto; width: 20px; height: 20px; margin-top: 3px; }
+.twd-sk-form__check label { font-size: $size-small; color: $color-body; }
+.twd-sk-form__check a { color: $color-primary; text-decoration: underline; }
+.twd-sk-form__actions { margin-top: 8px; }
+.twd-sk-form__help { margin-top: 16px; font-size: $size-small; color: $color-muted; }
+.twd-sk-form__status { margin: 0 0 20px; padding: 14px 16px; border-radius: $radius-card; border: 1px solid $color-border; color: $color-title; }
+.twd-sk-form__status--ok { border-left: $card-accent-width solid $color-primary; }
+.twd-sk-form__status--error { border-left: $card-accent-width solid $color-accent; }
+/* The honeypot: kept out of sight and out of the tab order; screen readers skip it (aria-hidden). */
+.twd-sk-form__hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: clip; }
+
 /* ---- form skin ----
    A contact form is an Elementor widget, not part of the page HTML. Give the
    Elementor container that holds it the CSS class twd-sk-page and these rules
@@ -549,7 +572,7 @@
   & > :not(section):not(.twd-sk-inner):not(.twd-sk-gallery-label):not(.twd-sk-header):not(.twd-sk-footer) { padding-left: $gutter-sm; padding-right: $gutter-sm; }
   .twd-sk-hero--split, .twd-sk-hero--compact, .twd-sk-text, .twd-sk-image-text, .twd-sk-quote,
   .twd-sk-faq, .twd-sk-services, .twd-sk-steps, .twd-sk-contact, .twd-sk-notice,
-  .twd-sk-resources, .twd-sk-pictures, .twd-sk-pricing, .twd-sk-hours, .twd-sk-areas { padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
+  .twd-sk-resources, .twd-sk-pictures, .twd-sk-pricing, .twd-sk-hours, .twd-sk-areas, .twd-sk-enquiry { padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
   .twd-sk-pictures__grid, .twd-sk-pricing__grid { grid-template-columns: 1fr 1fr; }
   .twd-sk-logos__img { max-width: 120px; height: 48px; }
   .twd-sk-hero--compact { padding-bottom: $gap-sm; }

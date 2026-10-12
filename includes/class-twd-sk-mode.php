@@ -183,6 +183,7 @@ class TWD_SK_Mode {
 				'recipe_service_label' => 'Service or topic page (for example Working with anxiety)',
 				'topic_example'      => 'Working with anxiety',
 				'service_kind'       => 'kind of work or topic',
+				'form_help'          => 'Please do not include anything private or urgent. If you need help now, call 999 in an emergency or use the support lines on this site.',
 				// The facts outline.
 				'facts_template'     => array(
 					'WHO I AM',
@@ -263,6 +264,7 @@ class TWD_SK_Mode {
 				'recipe_service_label' => 'Product or service page (for example Weekend hire)',
 				'topic_example'      => 'Weekend hire',
 				'service_kind'       => 'product or service',
+				'form_help'          => 'We will reply as soon as we can. Please do not include payment details.',
 				'facts_template'     => array(
 					'WHO WE ARE',
 					'The business name, who is behind it, and how it started, in a few lines.',

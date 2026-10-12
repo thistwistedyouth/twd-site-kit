@@ -1200,6 +1200,95 @@
   justify-content: flex-start;
   margin-top: 28px !important;
 }
+/* ---- enquiry form (0.8.1): rendered by the plugin from [twd_enquiry] ---- */
+.twd-sk-page .twd-sk-enquiry.twd-sk-enquiry {
+  padding-top: var(--twd-site-section-y) !important;
+  padding-bottom: var(--twd-site-section-y) !important;
+}
+.twd-sk-page .twd-sk-form.twd-sk-form {
+  margin-top: 8px !important;
+}
+.twd-sk-page .twd-sk-form__field.twd-sk-form__field {
+  margin-bottom: 18px !important;
+}
+.twd-sk-page .twd-sk-form__label.twd-sk-form__label {
+  display: block;
+  margin-bottom: 6px !important;
+  font-size: var(--twd-site-size-small) !important;
+  font-weight: 600 !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-sk-form__input.twd-sk-form__input,
+.twd-sk-page .twd-sk-form__textarea.twd-sk-form__textarea {
+  display: block;
+  width: 100%;
+  padding: 12px 14px !important;
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-body) !important;
+  line-height: var(--twd-site-line-body) !important;
+  color: var(--twd-site-color-body) !important;
+  background-color: var(--twd-site-color-surface) !important;
+  border: 1px solid var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-field) !important;
+}
+.twd-sk-page .twd-sk-form__textarea.twd-sk-form__textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+.twd-sk-page .twd-sk-form__input.twd-sk-form__input:focus-visible,
+.twd-sk-page .twd-sk-form__textarea.twd-sk-form__textarea:focus-visible,
+.twd-sk-page .twd-sk-form__check.twd-sk-form__check input:focus-visible {
+  outline: 2px solid var(--twd-site-color-accent);
+  outline-offset: 2px;
+}
+.twd-sk-page .twd-sk-form__check.twd-sk-form__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.twd-sk-page .twd-sk-form__check.twd-sk-form__check input {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-top: 3px !important;
+}
+.twd-sk-page .twd-sk-form__check.twd-sk-form__check label {
+  font-size: var(--twd-site-size-small) !important;
+  color: var(--twd-site-color-body) !important;
+}
+.twd-sk-page .twd-sk-form__check.twd-sk-form__check a {
+  color: var(--twd-site-color-primary) !important;
+  text-decoration: underline !important;
+}
+.twd-sk-page .twd-sk-form__actions.twd-sk-form__actions {
+  margin-top: 8px !important;
+}
+.twd-sk-page .twd-sk-form__help.twd-sk-form__help {
+  margin-top: 16px !important;
+  font-size: var(--twd-site-size-small) !important;
+  color: var(--twd-site-color-muted) !important;
+}
+.twd-sk-page .twd-sk-form__status.twd-sk-form__status {
+  margin: 0 0 20px !important;
+  padding: 14px 16px !important;
+  border-radius: var(--twd-site-radius-card) !important;
+  border: 1px solid var(--twd-site-color-border) !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-sk-form__status--ok.twd-sk-form__status--ok {
+  border-left: var(--twd-site-card-accent-width) solid var(--twd-site-color-primary) !important;
+}
+.twd-sk-page .twd-sk-form__status--error.twd-sk-form__status--error {
+  border-left: var(--twd-site-card-accent-width) solid var(--twd-site-color-accent) !important;
+}
+/* The honeypot: kept out of sight and out of the tab order; screen readers skip it (aria-hidden). */
+.twd-sk-page .twd-sk-form__hp.twd-sk-form__hp {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: clip;
+}
 /* ---- form skin ----
    A contact form is an Elementor widget, not part of the page HTML. Give the
    Elementor container that holds it the CSS class twd-sk-page and these rules
@@ -1665,7 +1754,8 @@
   .twd-sk-page .twd-sk-pictures.twd-sk-pictures,
   .twd-sk-page .twd-sk-pricing.twd-sk-pricing,
   .twd-sk-page .twd-sk-hours.twd-sk-hours,
-  .twd-sk-page .twd-sk-areas.twd-sk-areas {
+  .twd-sk-page .twd-sk-areas.twd-sk-areas,
+  .twd-sk-page .twd-sk-enquiry.twd-sk-enquiry {
     padding-top: var(--twd-site-section-y-sm) !important;
     padding-bottom: var(--twd-site-section-y-sm) !important;
   }
