@@ -931,6 +931,9 @@ class TWD_SK_REST {
 				'header_variants' => TWD_SK_Chrome::header_variants(),
 				'footer_variants' => TWD_SK_Chrome::footer_variants(),
 				'pack_defaults'   => TWD_SK_Packs::chrome_defaults(),
+				'placements'      => TWD_SK_Chrome::placements(),
+				'placed_by'       => TWD_SK_Chrome::placement_status(),
+				'hello'           => TWD_SK_Chrome::hello_active(),
 			),
 		);
 	}

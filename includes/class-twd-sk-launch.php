@@ -5,7 +5,7 @@
  * check() reads the whole site and changes nothing: every kit page (example text still to replace,
  * missing descriptions, heading order, link wording, search wording), the front page, the privacy
  * policy, the site details, whether the contact details appear on a page, whether search engines
- * may index the site, https, the search details, the Elementor header and footer, the enquiry form's
+ * may index the site, https, the search details, the header and footer, the enquiry form's
  * address, and the support lines to check by hand. Each item is ok, warn (worth a look) or fail
  * (fix before launch).
  *
@@ -166,8 +166,10 @@ class TWD_SK_Launch {
 		$items[] = 0 === strpos( $home, 'https://' ) ? self::item( 'https', 'ok', 'The site uses https' ) : self::item( 'https', 'warn', 'The site address does not start with https', 'Ask the host to turn on SSL, then change the site address in Settings, General.' );
 		$items[] = TWD_SK_Schema::nodes() ? self::item( 'schema', 'ok', 'Search engines get the ' . TWD_SK_Mode::w( 'practice' ) . ' details' ) : self::item( 'schema', 'warn', 'Search engines get no ' . TWD_SK_Mode::w( 'practice' ) . ' details', 'Fill in the site name in Site details.' );
 
-		// The header and footer templates (only when Elementor is there to check).
-		if ( defined( 'ELEMENTOR_VERSION' ) ) {
+		// The header and footer: Site Kit places them on the Hello theme (0.9.1), or Elementor Pro templates do.
+		if ( 'kit' === TWD_SK_Chrome::settings()['placement'] ) {
+			$items[] = TWD_SK_Chrome::hello_active() ? self::item( 'chrome', 'ok', 'Site Kit places the header and footer (Hello theme)' ) : self::item( 'chrome', 'warn', 'The kit header and footer are not showing', 'Site Kit places them only on the Hello theme. Switch to Hello in Appearance, Themes, or set Who places them to Elementor in the Site tab, Header and footer.' );
+		} elseif ( defined( 'ELEMENTOR_VERSION' ) ) {
 			$found = array( 'header' => false, 'footer' => false );
 			foreach ( (array) get_posts( array( 'post_type' => 'elementor_library', 'post_status' => 'any', 'numberposts' => 100, 'fields' => 'ids' ) ) as $tid ) {
 				$type = (string) get_post_meta( (int) $tid, '_elementor_template_type', true );
@@ -176,7 +178,7 @@ class TWD_SK_Launch {
 					$found[ $type ] = true;
 				}
 			}
-			$items[] = $found['header'] && $found['footer'] ? self::item( 'chrome', 'ok', 'The header and footer templates are in place' ) : self::item( 'chrome', 'warn', 'The kit header or footer template is missing', 'Import them from the Site tab, Header and footer, and set their display condition to the entire site.' );
+			$items[] = $found['header'] && $found['footer'] ? self::item( 'chrome', 'ok', 'The header and footer templates are in place' ) : self::item( 'chrome', 'warn', 'The kit header or footer template is missing', 'Import them from the Site tab, Header and footer, and set their display condition to the entire site. Or let Site Kit place them on the Hello theme.' );
 		}
 
 		$counts = array( 'fail' => 0, 'warn' => 0, 'ok' => 0 );

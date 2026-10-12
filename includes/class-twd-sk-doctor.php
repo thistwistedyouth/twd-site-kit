@@ -131,6 +131,7 @@ class TWD_SK_Doctor {
 			return self::t( $k, 30 );
 		}, array_keys( $o ) ) ) . ')' : '' );
 		$c   = TWD_SK_Chrome::effective();
+		$l[] = 'Header and footer placed by: ' . TWD_SK_Chrome::placement_status();
 		$l[] = 'Header layout: ' . $c['header'] . '; footer layout: ' . $c['footer'] . '; fixed header: ' . self::yes( $c['sticky'] ) . '; header button: ' . self::yes( $c['button'] ) . '; contact strip: ' . self::yes( $c['strip'] ) . '; footer columns: ' . (int) $c['columns'];
 		return $l;
 	}

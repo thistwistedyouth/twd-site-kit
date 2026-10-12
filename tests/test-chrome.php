@@ -402,3 +402,140 @@ twd_sk_test( 'chrome: a missing site name uses the WordPress site title and stil
 	twd_sk_has( 'Gentle therapy.', $f, 'the full footer' );
 	twd_sk_has( 'Title From WordPress', $f );
 } );
+
+// -- Placement on the Hello theme (0.9.1) ------------------------------------
+
+function twd_sk_chrome_print( $which ) {
+	TWD_SK_Chrome::reset_placed();
+	ob_start();
+	'header' === $which ? TWD_SK_Chrome::print_header() : TWD_SK_Chrome::print_footer();
+	return ob_get_clean();
+}
+
+twd_sk_test( 'placement: Site Kit places them by default, and the setting only takes kit or elementor', function () {
+	twd_sk_eq( 'kit', TWD_SK_Chrome::defaults()['placement'] );
+	twd_sk_eq( array( 'kit', 'elementor' ), array_keys( TWD_SK_Chrome::placements() ) );
+	twd_sk_true( ! is_wp_error( TWD_SK_Chrome::save_settings( array( 'placement' => 'elementor' ) ) ) );
+	twd_sk_eq( 'elementor', TWD_SK_Chrome::settings()['placement'] );
+	foreach ( array( 'theme', '', 1, true, array( 'kit' ), null ) as $bad ) {
+		twd_sk_is_error( 'twd_sk_bad_chrome', TWD_SK_Chrome::save_settings( array( 'placement' => $bad ) ), json_encode( $bad ) );
+	}
+	twd_sk_eq( 'elementor', TWD_SK_Chrome::settings()['placement'], 'refused values are not stored' );
+	$GLOBALS['twd_stub']['options'][ TWD_SK_Chrome::OPTION ] = array( 'placement' => 'wild' );
+	twd_sk_eq( 'kit', TWD_SK_Chrome::settings()['placement'], 'a bad stored value falls back to the default' );
+} );
+
+twd_sk_test( 'placement: init hooks Hello\'s header filter, the body open action and the footer action', function () {
+	TWD_SK_Chrome::init();
+	$hooks = $GLOBALS['twd_stub']['hooks'];
+	twd_sk_true( isset( $hooks['hello_elementor_header_footer'], $hooks['wp_body_open'], $hooks['get_footer'] ) );
+} );
+
+twd_sk_test( 'placement: on Hello, Hello\'s own header and footer are switched off and Site Kit prints its own once each', function () {
+	twd_sk_chrome_setup();
+	$GLOBALS['twd_stub']['admin'] = false;
+	twd_sk_true( false === TWD_SK_Chrome::filter_hello( true ) );
+	twd_sk_true( TWD_SK_Chrome::places_itself() );
+	$h = twd_sk_chrome_print( 'header' );
+	twd_sk_has( 'twd-sk-header', $h );
+	twd_sk_true( 0 === strpos( $h, '<div class="twd-sk-page twd-sk-chrome"><header class="twd-sk-header twd-sk-header--' ), 'inside the styled wrapper' );
+	twd_sk_true( strpos( $h, 'class="twd-sk-skip" href="#content"' ) < strpos( $h, 'twd-sk-header__logo' ), 'the skip link comes before the logo and menu' );
+	twd_sk_has( 'twd-sk-footer', twd_sk_chrome_print( 'footer' ) );
+	// A second call on the same request prints nothing.
+	TWD_SK_Chrome::reset_placed();
+	ob_start();
+	TWD_SK_Chrome::print_header();
+	TWD_SK_Chrome::print_footer();
+	twd_sk_true( '' !== ob_get_clean() );
+	ob_start();
+	TWD_SK_Chrome::print_header();
+	TWD_SK_Chrome::print_footer();
+	twd_sk_eq( '', ob_get_clean() );
+} );
+
+twd_sk_test( 'placement: the shortcodes for an Elementor template never carry the skip link (Hello prints its own there)', function () {
+	twd_sk_chrome_setup();
+	twd_sk_hasnt( 'twd-sk-skip', TWD_SK_Chrome::shortcode_header() );
+	twd_sk_hasnt( 'twd-sk-skip', TWD_SK_Chrome::render_minimal_header() );
+	twd_sk_has( 'twd-sk-skip', TWD_SK_Chrome::render_minimal_header( true ) );
+} );
+
+twd_sk_test( 'placement: Site Kit stands aside in admin, on another theme, when set to elementor, and on the blank Canvas template', function () {
+	twd_sk_chrome_setup();
+	twd_sk_eq( '', twd_sk_chrome_print( 'header' ), 'admin screens' );
+	$GLOBALS['twd_stub']['admin'] = false;
+
+	$GLOBALS['twd_stub']['template'] = 'twentytwentyfive';
+	twd_sk_eq( '', twd_sk_chrome_print( 'header' ), 'another theme' );
+	twd_sk_eq( '', twd_sk_chrome_print( 'footer' ) );
+	twd_sk_true( true === TWD_SK_Chrome::filter_hello( true ), 'the filter passes the value through' );
+	$GLOBALS['twd_stub']['template'] = 'hello-elementor';
+
+	TWD_SK_Chrome::save_settings( array( 'placement' => 'elementor' ) );
+	twd_sk_eq( '', twd_sk_chrome_print( 'header' ), 'left to Elementor' );
+	twd_sk_true( true === TWD_SK_Chrome::filter_hello( true ), 'Hello keeps its own header' );
+	TWD_SK_Chrome::save_settings( array( 'placement' => 'kit' ) );
+
+	twd_stub_add_post( 31, 'page' );
+	$GLOBALS['twd_stub']['queried'] = 31;
+	update_post_meta( 31, '_wp_page_template', 'elementor_canvas' );
+	twd_sk_eq( '', twd_sk_chrome_print( 'header' ), 'Canvas pages have no header by design' );
+	twd_sk_eq( '', twd_sk_chrome_print( 'footer' ) );
+	update_post_meta( 31, '_wp_page_template', 'elementor_header_footer' );
+	twd_sk_has( 'twd-sk-header', twd_sk_chrome_print( 'header' ), 'Elementor Full Width keeps the header' );
+} );
+
+twd_sk_test( 'placement: an Elementor Pro header or footer on this page wins, each on its own, and a fault there never breaks the page', function () {
+	twd_sk_chrome_setup();
+	$GLOBALS['twd_stub']['admin'] = false;
+	$GLOBALS['twd_stub']['elementor_location'] = array( 'header' => true );
+	twd_sk_eq( '', twd_sk_chrome_print( 'header' ) );
+	twd_sk_has( 'twd-sk-footer', twd_sk_chrome_print( 'footer' ), 'no footer template, so Site Kit prints the footer' );
+	$GLOBALS['twd_stub']['elementor_location'] = array( 'header' => 'throw', 'footer' => true );
+	twd_sk_has( 'twd-sk-header', twd_sk_chrome_print( 'header' ) );
+	twd_sk_eq( '', twd_sk_chrome_print( 'footer' ) );
+} );
+
+twd_sk_test( 'placement: safe mode brings Hello\'s own header and footer back and Site Kit prints nothing', function () {
+	twd_sk_chrome_setup();
+	$GLOBALS['twd_stub']['admin'] = false;
+	TWD_SK_Safe::set( true );
+	twd_sk_true( true === TWD_SK_Chrome::filter_hello( true ) );
+	twd_sk_eq( '', twd_sk_chrome_print( 'header' ) );
+	twd_sk_eq( '', twd_sk_chrome_print( 'footer' ) );
+	twd_sk_has( 'safe mode', TWD_SK_Chrome::placement_status() );
+} );
+
+twd_sk_test( 'placement: the status line says plainly who places them', function () {
+	twd_sk_eq( 'Site Kit, on the Hello theme', TWD_SK_Chrome::placement_status() );
+	$GLOBALS['twd_stub']['template'] = 'astra';
+	twd_sk_has( 'not Hello', TWD_SK_Chrome::placement_status() );
+	TWD_SK_Chrome::save_settings( array( 'placement' => 'elementor' ) );
+	twd_sk_has( 'Site Kit stands aside', TWD_SK_Chrome::placement_status() );
+} );
+
+twd_sk_test( 'placement: if the settings cannot be read, nothing throws, Site Kit stands aside and Hello keeps its own', function () {
+	twd_sk_chrome_setup();
+	$GLOBALS['twd_stub']['admin'] = false;
+	$GLOBALS['twd_stub']['option_throws'] = true;
+	twd_sk_eq( '', twd_sk_chrome_print( 'header' ) );
+	twd_sk_eq( '', twd_sk_chrome_print( 'footer' ) );
+	twd_sk_true( true === TWD_SK_Chrome::filter_hello( true ) );
+	twd_sk_has( 'unknown', TWD_SK_Chrome::placement_status() );
+} );
+
+twd_sk_test( 'placement: the site report, the build report and the launch check all say who places them', function () {
+	twd_sk_has( 'Header and footer placed by: Site Kit, on the Hello theme', implode( "\n", TWD_SK_Doctor::style() ) );
+	$items = TWD_SK_Launch::check()['items'];
+	$chrome = array_values( array_filter( $items, function ( $i ) {
+		return 'chrome' === $i['id'];
+	} ) );
+	twd_sk_eq( 1, count( $chrome ) );
+	twd_sk_eq( 'ok', $chrome[0]['status'] );
+	$GLOBALS['twd_stub']['template'] = 'astra';
+	$chrome = array_values( array_filter( TWD_SK_Launch::check()['items'], function ( $i ) {
+		return 'chrome' === $i['id'];
+	} ) );
+	twd_sk_eq( 'warn', $chrome[0]['status'] );
+	twd_sk_has( 'Hello', $chrome[0]['detail'] );
+} );

@@ -220,6 +220,8 @@ function twd_sk_stub_defaults() {
 		'updated'   => array(),
 		'insert_fails' => false,
 		'loop_reset' => true,
+		'template'  => 'hello-elementor',
+		'elementor_location' => array(),
 	);
 }
 
@@ -538,6 +540,17 @@ function get_footer() {
 }
 function get_page_template_slug() {
 	return get_post_meta( get_queried_object_id(), '_wp_page_template', true );
+}
+function get_template() {
+	return $GLOBALS['twd_stub']['template'];
+}
+// Elementor Pro's own (misspelt) name. 'throw' makes it fail, to test that a fault never breaks the page.
+function elementor_location_exits( $location, $check_match = false ) {
+	$v = isset( $GLOBALS['twd_stub']['elementor_location'][ $location ] ) ? $GLOBALS['twd_stub']['elementor_location'][ $location ] : false;
+	if ( 'throw' === $v ) {
+		throw new RuntimeException( 'stub' );
+	}
+	return $v;
 }
 
 function check_admin_referer( $action ) {

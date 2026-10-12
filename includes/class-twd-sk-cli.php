@@ -554,6 +554,7 @@ class TWD_SK_CLI {
 			WP_CLI::success( 'Wrote ' . $dir . '/' . $name );
 		}
 		WP_CLI::log( 'In Elementor: Templates, Theme Builder, import each file, then set its display condition to Entire Site.' );
+		WP_CLI::log( 'Only needed with Elementor Pro. On the Hello theme Site Kit places the header and footer itself (Site tab, Header and footer).' );
 	}
 
 	/**

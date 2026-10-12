@@ -17,6 +17,15 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.9.1 (Site Kit places the header and footer)
+
+- **Elementor Pro made optional.** The owner asked to keep setup as simple as possible and to keep Elementor Pro off unless needed. On the Hello theme Site Kit now switches off Hello's own header and footer and prints the kit ones itself, so a fresh site needs no Theme Builder import.
+- **Hello only, on purpose.** The hooks used (`hello_elementor_header_footer`, `wp_body_open`, `get_footer`) are Hello's; on another theme Site Kit does nothing and the launch check says so, rather than guessing where a header belongs.
+- **Elementor Pro still wins where it applies.** If a Theme Builder header or footer covers a page, Site Kit stands aside for that part, so an existing Pro site keeps working, and the setting can hand the job back to Elementor entirely.
+- **Fails towards Hello.** Safe mode, an unreadable setting or the Canvas template all leave Hello's own header and footer (or none on Canvas), never a broken page.
+- **A skip link comes first.** Printed inside our header so it is styled by the kit and is the first thing a keyboard user reaches. Hello's own skip link still prints after the header; two skip links do no harm and hiding Hello's would mean styling a theme class.
+- **Hook names used from memory.** `hello_elementor_header_footer` and `elementor_location_exits` were not checked against the current Hello and Elementor Pro code from here; the test script asks for a real-site check.
+
 ## v0.9.0 (the launch check)
 
 - **One place to see if a site is ready.** The checks already existed in pieces (leftovers, quality, search wording, the site report); the launch check gathers them with the site-wide things people forget: a privacy policy, the front page, "discourage search engines" left on, https, the header and footer templates, and the support lines.

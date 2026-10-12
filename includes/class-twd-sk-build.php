@@ -429,7 +429,9 @@ class TWD_SK_Build {
 		$draft['used'] = array();
 		self::write_draft( $draft );
 		self::log( '--- Build started (' . $draft['mode'] . ', ' . $draft['pack'] . ', ' . count( $plan['pages'] ) . ' pages) ---' );
-		return array( 'step' => 'settings', 'ok' => true, 'report' => $report ? $report : array( 'Settings saved.' ) );
+		$report   = $report ? $report : array( 'Settings saved.' );
+		$report[] = 'Header and footer placed by: ' . TWD_SK_Chrome::placement_status() . '.';
+		return array( 'step' => 'settings', 'ok' => true, 'report' => $report );
 	}
 
 	private static function step_page( $draft, $plan, $index, $use_ai ) {

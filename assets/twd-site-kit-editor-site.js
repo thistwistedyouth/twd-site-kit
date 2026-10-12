@@ -649,9 +649,27 @@
 		cui.sticky.checked = !!c.settings.sticky;
 		cui.button.checked = !!c.settings.show_button;
 		cui.strip.checked = !!c.settings.show_strip;
+		cui.placement.value = c.settings.placement;
 		var e = c.effective;
 		cui.snap = chromeSnap();
 		cui.note.textContent = 'Now showing: ' + c.header_variants[e.header] + ' (header), ' + c.footer_variants[e.footer] + ' (footer).' + (e.sticky_note ? ' The centred header cannot be fixed to the top, so that setting is ignored.' : '');
+		fillPlacementNote();
+	}
+
+	/* Who places the header and footer, and whether the Theme Builder download is needed at all. */
+	function fillPlacementNote() {
+		var c = P.data.chrome;
+		var kit = cui.placement.value === 'kit';
+		var text = 'Placed now by: ' + c.placed_by + '.';
+		if (kit && !c.hello) {
+			text += ' Switch the theme to Hello (Appearance, Themes) or choose the Elementor option below.';
+		} else if (kit) {
+			text += ' Nothing to set up in Elementor. An Elementor Pro header or footer template, if you ever add one, takes over on the pages it covers.';
+		} else {
+			text += ' Use the download below for Elementor Pro\'s Theme Builder.';
+		}
+		cui.placedNote.textContent = text;
+		show(cui.exportBtn, !kit);
 	}
 
 	function selectWith(id, options, emptyLabel) {
@@ -679,7 +697,8 @@
 				footer_columns: parseInt(cui.cols.value, 10),
 				sticky: cui.sticky.checked,
 				show_button: cui.button.checked,
-				show_strip: cui.strip.checked
+				show_strip: cui.strip.checked,
+				placement: cui.placement.value
 			}
 		}).then(function (data) {
 			P.data = data;
@@ -721,6 +740,13 @@
 		cui.sticky = sticky.input;
 		cui.button = btn.input;
 		cui.strip = strip.input;
+		cui.placement = selectWith('twd-sk-ch-placement', {}, '');
+		cui.placement.addEventListener('change', function () {
+			if (P.data) {
+				fillPlacementNote();
+			}
+		});
+		cui.placedNote = el('p', { className: 'twd-sk-ed__help' });
 		cui.note = el('p', { className: 'twd-sk-ed__help' });
 		cui.msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
 		cui.saveBtn = button('Save header and footer', 'primary', saveChrome);
@@ -731,8 +757,10 @@
 		cui.exportBtn = button('Download the Theme Builder templates', 'secondary', downloadTemplates);
 		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
 			el('h3', { className: 'twd-sk-ed__step-title', text: 'Header and footer' }),
-			el('p', { className: 'twd-sk-ed__help', text: 'The header and footer print from the site details above, through two shortcodes in the Elementor Theme Builder. Choose how they look here.' })
+			el('p', { className: 'twd-sk-ed__help', text: 'The header and footer print from the site details above. On the Hello theme Site Kit puts them on every page itself, so Elementor Pro is not needed. Choose how they look here.' })
 		].concat(aiBlocks(['header', 'footer'])).concat([
+			field('Who places them', cui.placement),
+			cui.placedNote,
 			cui.note,
 			el('div', { className: 'twd-sk-ed__grid' }, [
 				field('Header layout', cui.header),
@@ -751,6 +779,9 @@
 				return;
 			}
 			var c = P.data.chrome;
+			Object.keys(c.placements).forEach(function (k) {
+				cui.placement.appendChild(el('option', { value: k, text: c.placements[k] }));
+			});
 			Object.keys(c.header_variants).forEach(function (k) {
 				cui.header.appendChild(el('option', { value: k, text: c.header_variants[k] }));
 			});
@@ -873,7 +904,7 @@
 	}
 
 	function chromeSnap() {
-		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.sticky.checked, cui.button.checked, cui.strip.checked]);
+		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.sticky.checked, cui.button.checked, cui.strip.checked, cui.placement.value]);
 	}
 
 	ED.addDirtyCheck(function () {
@@ -1615,7 +1646,7 @@
 			'Site brief': 'Build or update the whole site from one file',
 			'Style': 'Pick a look, colours, fonts and corners',
 			'Site details': 'Name, menu, contact lines, footer text',
-			'Header and footer': 'Layout, fixed header, Elementor templates',
+			'Header and footer': 'Who places them, layout, fixed header',
 			'Set up a new site': 'Create the starter pages',
 			'Launch check': 'Everything to check before going live',
 			'Site report': 'A plain-text report to paste when something looks wrong'

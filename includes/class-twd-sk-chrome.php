@@ -9,6 +9,14 @@
  *
  * Header variants: bar, centered, split, minimal. Footer variants: columns, band, centered, simple.
  *
+ * Placement (0.9.1): on the Hello theme, Site Kit places the header and footer itself, with no
+ * Elementor Pro needed. It switches off Hello's own basic header and footer (the filter
+ * hello_elementor_header_footer), prints the header at wp_body_open with a skip link first, and
+ * the footer when the theme asks for its footer (get_footer). It stands aside on any page where an
+ * Elementor Pro Theme Builder header or footer applies, on Elementor's blank Canvas template, on any
+ * other theme, in safe mode (Hello's own header and footer come back), and when the setting says
+ * to leave it to Elementor or the theme. The shortcodes keep working for an Elementor template.
+ *
  * Safe by default: if safe mode is on, the profile is empty, or anything goes wrong, a plain
  * minimal header and footer print instead (the site name, a few pages, a copyright line) so
  * a Theme Builder template never shows a raw shortcode or an empty gap.
@@ -24,9 +32,105 @@ class TWD_SK_Chrome {
 	const HANDLE_JS  = 'twd-site-kit-header';
 	const NAV_ID     = 'twd-sk-nav';
 
+	private static $placed = array( 'header' => false, 'footer' => false );
+
 	public static function init() {
 		add_shortcode( 'twd_header', array( __CLASS__, 'shortcode_header' ) );
 		add_shortcode( 'twd_footer', array( __CLASS__, 'shortcode_footer' ) );
+		// Placing them on the Hello theme. Each callback decides for itself, so safe mode simply turns it off.
+		add_filter( 'hello_elementor_header_footer', array( __CLASS__, 'filter_hello' ), 20 );
+		add_action( 'wp_body_open', array( __CLASS__, 'print_header' ), 5 );
+		add_action( 'get_footer', array( __CLASS__, 'print_footer' ), 5 );
+	}
+
+	// -- Placement on the Hello theme (0.9.1) ---------------------------------
+
+	/** Who places the header and footer: placement key => label. */
+	public static function placements() {
+		return array(
+			'kit'       => 'Site Kit places them (Hello theme, no Elementor Pro needed)',
+			'elementor' => 'Leave them to Elementor Pro templates or the theme',
+		);
+	}
+
+	public static function hello_active() {
+		return function_exists( 'get_template' ) && 'hello-elementor' === get_template();
+	}
+
+	/** True when an Elementor Pro Theme Builder template covers this location on this page. */
+	public static function elementor_has( $location ) {
+		if ( ! function_exists( 'elementor_location_exits' ) ) {
+			return false;
+		}
+		try {
+			return (bool) elementor_location_exits( $location, true );
+		} catch ( \Throwable $e ) {
+			return false;
+		}
+	}
+
+	/**
+	 * The setting allows it, the theme is Hello and safe mode is off. Page-level checks come on top.
+	 * Never throws: if the settings cannot be read, Site Kit stands aside and Hello's own header shows.
+	 */
+	public static function places_itself() {
+		try {
+			return ! TWD_SK_Safe::on() && 'kit' === self::settings()['placement'] && self::hello_active();
+		} catch ( \Throwable $e ) {
+			return false;
+		}
+	}
+
+	private static function on_blank_template() {
+		return function_exists( 'get_page_template_slug' ) && in_array( (string) get_page_template_slug(), array( 'elementor_canvas' ), true );
+	}
+
+	/** Hello prints its own basic header and footer only when Site Kit does not. */
+	public static function filter_hello( $show ) {
+		return self::places_itself() ? false : $show;
+	}
+
+	public static function print_header() {
+		if ( is_admin() || self::$placed['header'] || ! self::places_itself() || self::on_blank_template() || self::elementor_has( 'header' ) ) {
+			return;
+		}
+		self::$placed['header'] = true;
+		// A skip link comes first, inside the header, so a keyboard user can jump past the menu.
+		try {
+			$html = self::render_header( true );
+		} catch ( \Throwable $e ) {
+			$html = self::render_minimal_header( true );
+		}
+		echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built and escaped by render_header().
+	}
+
+	public static function print_footer() {
+		if ( is_admin() || self::$placed['footer'] || ! self::places_itself() || self::on_blank_template() || self::elementor_has( 'footer' ) ) {
+			return;
+		}
+		self::$placed['footer'] = true;
+		echo self::shortcode_footer(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built and escaped by render_footer().
+	}
+
+	/** What is placing the header and footer, in plain words, for the site report and the launch check. */
+	public static function placement_status() {
+		try {
+			$s = self::settings()['placement'];
+		} catch ( \Throwable $e ) {
+			return 'unknown (the settings could not be read)';
+		}
+		if ( 'kit' === $s && self::hello_active() ) {
+			return TWD_SK_Safe::on() ? 'the Hello theme (safe mode is on, so its own basic header and footer show)' : 'Site Kit, on the Hello theme';
+		}
+		if ( 'kit' === $s ) {
+			return 'nothing yet: Site Kit is set to place them, but the active theme is not Hello';
+		}
+		return 'Elementor Pro templates or the theme (Site Kit stands aside)';
+	}
+
+	/** For tests: forget what has been printed on this request. */
+	public static function reset_placed() {
+		self::$placed = array( 'header' => false, 'footer' => false );
 	}
 
 	// -- Variants and settings -----------------------------------------------
@@ -62,7 +166,7 @@ class TWD_SK_Chrome {
 			'twd-sk-footer__main', 'twd-sk-footer__col', 'twd-sk-footer__logo-img', 'twd-sk-footer__name', 'twd-sk-footer__text',
 			'twd-sk-footer__heading', 'twd-sk-footer__links', 'twd-sk-footer__link', 'twd-sk-footer__contact',
 			'twd-sk-footer__reg', 'twd-sk-footer__reg-line', 'twd-sk-footer__bottom', 'twd-sk-footer__bottom-inner',
-			'twd-sk-footer__copy', 'twd-sk-footer__legal', 'twd-sk-footer__legal-link',
+			'twd-sk-footer__copy', 'twd-sk-footer__legal', 'twd-sk-footer__legal-link', 'twd-sk-skip',
 		);
 		foreach ( array_keys( self::header_variants() ) as $v ) {
 			$classes[] = 'twd-sk-header--' . $v;
@@ -81,6 +185,7 @@ class TWD_SK_Chrome {
 			'show_button'    => true,
 			'show_strip'     => false,
 			'footer_columns' => 3,
+			'placement'      => 'kit',
 		);
 	}
 
@@ -127,6 +232,13 @@ class TWD_SK_Chrome {
 						$out['valid'][ $key ] = (bool) $value;
 					} else {
 						$out['errors'][] = 'The ' . str_replace( '_', ' ', $key ) . ' setting must be on or off.';
+					}
+					break;
+				case 'placement':
+					if ( is_string( $value ) && isset( self::placements()[ $value ] ) ) {
+						$out['valid'][ $key ] = $value;
+					} else {
+						$out['errors'][] = 'Choose who places the header and footer.';
 					}
 					break;
 				case 'footer_columns':
@@ -265,18 +377,23 @@ class TWD_SK_Chrome {
 
 	// -- The header -------------------------------------------------------
 
-	public static function render_header() {
+	/** Hidden until focused. Hello's main content area has the id content. */
+	private static function skip_link() {
+		return '<a class="twd-sk-skip" href="#content">Skip to content</a>';
+	}
+
+	public static function render_header( $skip = false ) {
 		$profile = TWD_SK_Profile::get();
 		// The site name falls back to the WordPress site title, so a missing name never drops the menu.
 		if ( TWD_SK_Safe::on() || ! $profile['menu'] ) {
-			return self::render_minimal_header();
+			return self::render_minimal_header( $skip );
 		}
 		$eff   = self::effective();
 		$strip = $eff['strip'] && ( '' !== $profile['phone'] || '' !== $profile['email'] );
 		$wrap  = 'twd-sk-page twd-sk-chrome' . ( $eff['sticky'] ? ' twd-sk-chrome--sticky' : '' ) . ( $eff['sticky'] && $strip ? ' twd-sk-chrome--strip' : '' );
 		$cls   = 'twd-sk-header twd-sk-header--' . $eff['header'] . ( $eff['sticky'] ? ' twd-sk-header--sticky' : '' );
 
-		$out  = '<div class="' . $wrap . '"><header class="' . $cls . '">';
+		$out  = '<div class="' . $wrap . '"><header class="' . $cls . '">' . ( $skip ? self::skip_link() : '' );
 		if ( $strip ) {
 			$out .= '<div class="twd-sk-header__strip"><div class="twd-sk-inner twd-sk-header__strip-inner">'
 				. self::phone_html( $profile['phone'], 'twd-sk-header__strip-link' ) . self::email_html( $profile['email'], 'twd-sk-header__strip-link' )
@@ -312,7 +429,7 @@ class TWD_SK_Chrome {
 	}
 
 	/** Plain and always safe: the site name and a few pages. Used in safe mode and whenever the profile is empty. */
-	public static function render_minimal_header() {
+	public static function render_minimal_header( $skip = false ) {
 		$name  = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'name' ) : '';
 		$items = '';
 		if ( function_exists( 'get_pages' ) ) {
@@ -321,7 +438,7 @@ class TWD_SK_Chrome {
 				$items .= '<li class="twd-sk-header__item"><a class="twd-sk-header__link" href="' . self::url( get_permalink( $page->ID ) ) . '">' . self::esc( $page->post_title ) . '</a></li>';
 			}
 		}
-		return '<div class="twd-sk-page twd-sk-chrome"><header class="twd-sk-header twd-sk-header--bar"><div class="twd-sk-inner twd-sk-header__inner">'
+		return '<div class="twd-sk-page twd-sk-chrome"><header class="twd-sk-header twd-sk-header--bar">' . ( $skip ? self::skip_link() : '' ) . '<div class="twd-sk-inner twd-sk-header__inner">'
 			. '<a class="twd-sk-header__logo" href="' . self::url( self::home() ) . '"><span class="twd-sk-header__logo-text">' . self::esc( $name ) . '</span></a>'
 			. ( '' !== $items ? '<div class="twd-sk-header__panel"><nav class="twd-sk-header__nav" aria-label="Main"><ul class="twd-sk-header__menu">' . $items . '</ul></nav></div>' : '' )
 			. '</div></header></div>';

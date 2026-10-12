@@ -1376,6 +1376,34 @@
   color: var(--twd-site-color-on-band) !important;
   text-decoration: underline !important;
 }
+/* Skip link: printed only when Site Kit places the header itself. Hidden until a keyboard user reaches it. */
+.twd-sk-page .twd-sk-skip.twd-sk-skip {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 1000;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  overflow: clip;
+  padding: 10px 16px !important;
+  background-color: var(--twd-site-color-surface) !important;
+  color: var(--twd-site-color-title) !important;
+  border: 2px solid var(--twd-site-color-title) !important;
+  border-radius: var(--twd-site-radius-btn) !important;
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  font-weight: 600 !important;
+  text-decoration: underline !important;
+}
+.twd-sk-page .twd-sk-skip.twd-sk-skip:focus,
+.twd-sk-page .twd-sk-skip.twd-sk-skip:focus-visible {
+  width: auto;
+  height: auto;
+  clip-path: none;
+  overflow: visible;
+}
 .twd-sk-page .twd-sk-header__inner.twd-sk-header__inner {
   display: flex;
   align-items: center;

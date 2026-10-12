@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.9.0
+Stable tag: 0.9.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,12 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.9.1 =
+* New: on the Hello theme Site Kit places the header and footer itself, so Elementor Pro is not needed. Hello's own basic header and footer are switched off, and a Skip to content link comes first.
+* New: Site tab, Header and footer, Who places them: Site Kit (default) or Elementor Pro templates. An Elementor Pro header or footer template still takes over on the pages it covers.
+* Safe: in safe mode, on another theme, on Elementor Canvas pages, or if the setting cannot be read, Site Kit stands aside and Hello's own header and footer show.
+* The launch check, the site report and the build report say who places the header and footer.
 
 = 0.9.0 =
 * New: the launch check. One list of everything worth checking before a site goes live: example text still to replace on each page, search wording, the front page, the privacy policy, the site details, the enquiry form, search engines allowed, https, the header and footer, and the support lines to check by hand. Each item says Fix, Look or OK. The setup page's new Launch step publishes the pages that are ready (never one with anything left to replace). Also in the Site tab, in the site report, and as wp twd-sk launch-check.
