@@ -28,7 +28,17 @@
 .twd-sk-setup__detail ul { margin: 6px 0 0 18px; list-style: disc; }
 .twd-sk-setup__list { margin-left: 18px; list-style: disc; }
 .twd-sk-setup__msg { margin-top: 12px; }
+.twd-sk-setup__page { margin: 0 0 16px; padding: 12px 16px; border: 1px solid #dcdcde; border-radius: 4px; }
+.twd-sk-setup__page legend { padding: 0 6px; font-weight: 600; }
+.twd-sk-setup__pagefields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+.twd-sk-setup__pagefields label { display: block; font-weight: 600; }
+.twd-sk-setup__pagefields input[type="text"], .twd-sk-setup__pagefields select { width: 100%; }
+.twd-sk-setup__pagefields > div:last-child { grid-column: 1 / -1; }
+.twd-sk-setup__sections { margin: 4px 0 8px 22px; }
+.twd-sk-setup__sections li { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
+.twd-sk-setup__sections select { max-width: 220px; }
 @media (max-width: 600px) {
+  .twd-sk-setup__pagefields { grid-template-columns: 1fr; }
   .twd-sk-setup__body { padding: 8px 12px 12px; }
   .twd-sk-setup__pic { grid-template-columns: 1fr; }
 }

@@ -418,3 +418,83 @@ twd_sk_test( 'build cli: a dry run changes nothing; a real run makes the drafts;
 		$cli->build( array( '/no/such/file.json' ), array() );
 	} ) );
 } );
+
+// -- The Pages step (0.7.2): the page list and the sections on each --------------------
+
+twd_sk_test( 'sections: a page outline is a list of real sections, starting with a hero, up to twelve', function () {
+	$ok = TWD_SK_Recipes::clean_parts( array( array( 'hero', 'twd-sk-hero--compact' ), array( 'component' => 'faq', 'variant' => '' ), 'text' ) );
+	twd_sk_eq( array( array( 'hero', 'twd-sk-hero--compact' ), array( 'faq', '' ), array( 'text', '' ) ), $ok );
+	twd_sk_has( 'starts with a hero', TWD_SK_Recipes::clean_parts( array( 'text', 'hero' ) )->get_error_message() );
+	twd_sk_has( 'not one of the kit', TWD_SK_Recipes::clean_parts( array( 'hero', 'carousel' ) )->get_error_message() );
+	twd_sk_has( 'does not have that layout', TWD_SK_Recipes::clean_parts( array( 'hero', array( 'text', 'twd-sk-made-up' ) ) )->get_error_message() );
+	twd_sk_has( 'up to 12', TWD_SK_Recipes::clean_parts( array_merge( array( 'hero' ), array_fill( 0, 12, 'text' ) ) )->get_error_message() );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Recipes::clean_parts( array() ) );
+	$menu = TWD_SK_Recipes::parts_menu();
+	twd_sk_eq( TWD_SK_Registry::ids(), array_keys( $menu ) );
+	twd_sk_eq( 'Standard', $menu['hero']['variants'][''] );
+} );
+
+twd_sk_test( 'sections: a brief page can name its sections; the outline and the AI request follow them; the page type gives the default', function () {
+	$in = TWD_SK_Recipes::inputs( array( 'type' => 'about', 'sections' => array( array( 'component' => 'hero' ), array( 'component' => 'faq' ) ) ) );
+	twd_sk_eq( array( array( 'hero', '' ), array( 'faq', '' ) ), $in['parts'] );
+	$html = TWD_SK_Recipes::skeleton_for( $in );
+	twd_sk_has( 'twd-sk-faq', $html );
+	twd_sk_hasnt( 'twd-sk-steps', $html );
+	twd_sk_has( '<h1', $html, 'the hero title is the one h1' );
+	twd_sk_has( 'twd-sk-faq', TWD_SK_AI::page_message( $in ) );
+	twd_sk_eq( TWD_SK_Recipes::get( 'about' )['parts'], TWD_SK_Recipes::inputs( array( 'type' => 'about' ) )['parts'] );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Recipes::inputs( array( 'type' => 'about', 'sections' => array( 'faq' ) ) ) );
+	twd_sk_has( 'pages[].sections: optional', TWD_SK_Brief::schema_text() );
+	$p = TWD_SK_Brief::plan( array( 'schema' => 'twd-site-brief/1', 'pages' => array( array( 'type' => 'about', 'title' => 'About', 'sections' => array( 'text' ) ) ) ), false );
+	twd_sk_has( 'Page 1: A page starts with a hero', implode( ' ', $p['errors'] ) );
+} );
+
+twd_sk_test( 'pages step: an edited page list replaces the brief\'s until reset; a bad list is refused and nothing changes', function () {
+	twd_sk_build_setup();
+	$edited = array(
+		array( 'type' => 'home', 'title' => 'Home', 'parts' => array( array( 'component' => 'hero', 'variant' => 'twd-sk-hero--split' ), array( 'component' => 'faq', 'variant' => '' ) ) ),
+		array( 'type' => 'contact', 'title' => 'Book', 'parts' => array( array( 'component' => 'hero', 'variant' => '' ), array( 'component' => 'contact', 'variant' => '' ) ) ),
+	);
+	$r = TWD_SK_Build::save_draft( array( 'pages' => $edited ) );
+	twd_sk_eq( array(), $r['errors'] );
+	$p = TWD_SK_Build::plan();
+	twd_sk_eq( 'edited', $p['source'] );
+	twd_sk_eq( array( 'Home', 'Book' ), array_map( function ( $x ) {
+		return $x['title'];
+	}, $p['pages'] ) );
+	$bad = TWD_SK_Build::save_draft( array( 'pages' => array( array( 'type' => 'about', 'title' => 'About', 'parts' => array( array( 'component' => 'text' ) ) ) ) ) );
+	twd_sk_has( 'Page 1: A page starts with a hero', implode( ' ', $bad['errors'] ) );
+	twd_sk_eq( 'edited', TWD_SK_Build::plan()['source'] );
+	twd_sk_eq( 2, count( TWD_SK_Build::plan()['pages'] ), 'the good list is kept' );
+	twd_sk_has( 'at least one page', implode( ' ', TWD_SK_Build::save_draft( array( 'pages' => array() ) )['errors'] ) );
+
+	$results = twd_sk_build_all( false );
+	$home    = TWD_SK_Store::get_current( twd_sk_build_page_id( 'home' ) );
+	twd_sk_has( 'twd-sk-hero--split', $home );
+	twd_sk_has( 'twd-sk-faq', $home );
+	twd_sk_hasnt( 'twd-sk-quote', $home, 'built from the edited sections, not the home default' );
+	twd_sk_eq( '/book', TWD_SK_Profile::get()['cta_url'] );
+
+	TWD_SK_Build::save_draft( array( 'reset_pages' => true ) );
+	twd_sk_eq( 'brief', TWD_SK_Build::plan()['source'] );
+	twd_sk_eq( 4, count( TWD_SK_Build::plan()['pages'] ) );
+} );
+
+twd_sk_test( 'pages step rest: the browser gets the sections, the page types and the limits, never the raw saved list', function () {
+	twd_sk_site_caps();
+	$s = TWD_SK_REST::get_site_build( twd_sk_rest_req() );
+	twd_sk_eq( TWD_SK_Recipes::MAX_SECTIONS, $s['max_sections'] );
+	twd_sk_true( isset( $s['components']['hero']['variants'] ) );
+	twd_sk_true( isset( $s['recipes']['service']['needs_topic'] ) && $s['recipes']['service']['needs_topic'] );
+	twd_sk_eq( array( 'component' => 'hero', 'variant' => 'twd-sk-hero--split' ), $s['plan']['pages'][0]['parts'][0] );
+	twd_sk_true( ! array_key_exists( 'pages', $s['draft'] ) );
+	$s = TWD_SK_REST::post_site_build_draft( twd_sk_rest_req( array( 'pages' => array( array( 'type' => 'about', 'title' => 'Our story' ) ) ) ) );
+	twd_sk_eq( 'edited', $s['plan']['source'] );
+	twd_sk_eq( 'Home', $s['plan']['pages'][0]['title'], 'Home is still added first' );
+	$s = TWD_SK_REST::post_site_build_draft( twd_sk_rest_req( array( 'reset_pages' => true ) ) );
+	twd_sk_eq( 'brief', $s['plan']['source'] );
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-setup.js' );
+	twd_sk_has( "{ id: 'pages', label: 'Pages' }", $js );
+	twd_sk_has( 'return { pages: ui.pages };', $js );
+	twd_sk_has( 'save({ reset_pages: true })', $js );
+} );

@@ -17,6 +17,13 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.7.2 (the Pages step)
+
+- **Fix the plan before spending anything.** The best idea in the AI site builders looked at (Elementor's Site Planner) is a sitemap and section outline you can change before anything is generated. Here that is a page list with sections, before Pictures (so picture "use on" lists the final pages) and before Build.
+- **Sections are data, checked like everything else.** Only real components and layouts, the first a hero (the one h1 rule), at most twelve. The same check runs whether the list came from the setup page or from `sections` in a brief, and again at build time in case the rules changed.
+- **An edited list replaces the brief's, explicitly.** Mixing the two would be confusing; a notice says the edited list is in use and one button goes back to the brief's.
+- **Pages are only sent when changed,** so walking through the step without touching it never freezes the brief's list.
+
 ## v0.7.1 (the setup page)
 
 - **A normal WordPress admin page, not a front-end pop-up.** The media uploader works best there, it looks like the rest of WordPress so there is nothing to style per site, and leaving the page loses nothing because each step is saved. The front page only carries a small link to it, for administrators, until the site is set up.

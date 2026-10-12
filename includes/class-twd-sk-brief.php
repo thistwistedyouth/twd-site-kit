@@ -414,7 +414,7 @@ class TWD_SK_Brief {
 					$errors[] = 'Page "' . $pg['title'] . '": ' . $id->get_error_message();
 					continue;
 				}
-				$saved = TWD_SK_Store::save( $id, TWD_SK_Recipes::skeleton( $pg['type'] ), array( 'base_version' => 0, 'note' => 'Outline from the site brief (' . $pg['type'] . ')' ) );
+				$saved = TWD_SK_Store::save( $id, TWD_SK_Recipes::skeleton_for( $pg ), array( 'base_version' => 0, 'note' => 'Outline from the site brief (' . $pg['type'] . ')' ) );
 				if ( is_wp_error( $saved ) ) {
 					$errors[] = 'Page "' . $pg['title'] . '": ' . $saved->get_error_message();
 				}
@@ -512,6 +512,7 @@ class TWD_SK_Brief {
 		$out[]  = '- style.pack: ' . $packs . ' (or empty). Leave style.tokens empty unless the person asked for specific colours.';
 		$out[]  = '- mode: ' . implode( ', ', array_keys( TWD_SK_Mode::modes() ) ) . '. Keep it as given.';
 		$out[]  = '- pages[].type: ' . $types . '. A "service" page needs a topic, for example "' . TWD_SK_Mode::w( 'topic_example' ) . '".';
+		$out[]  = '- pages[].sections: optional. The sections in order, each { "component": "", "variant": "" }, the first a hero. Leave it out to use the page type\'s own. Components: ' . implode( ', ', TWD_SK_Registry::ids() ) . '.';
 		$out[]  = '- menu: up to ' . TWD_SK_Profile::MAX_MENU . ' items, one level of children. Links are page paths such as "/about", "/" for home, or full https addresses.';
 		$out[]  = '- facts: plain text with these headings in capitals, each followed by the person\'s own words: ' . implode( ', ', TWD_SK_Mode::facts_headings() ) . '.';
 		$out[]  = '- Leave anything unknown as an empty string or empty list. Do not guess.';

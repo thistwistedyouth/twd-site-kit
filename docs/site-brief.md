@@ -16,6 +16,8 @@ The format is `twd-site-brief/1`. See `site-brief.example.json` for a complete e
 
 On a fresh site, an administrator sees a **Set this site up** link on the front page. It opens **Settings > Set up site**: choose the site type and style, paste the brief (or plain notes, which the AI turns into a brief for you to check), choose pictures, then press **Build the site**. Each page is made one at a time as a draft, written by AI when a key is available, otherwise as an outline. The same build runs from the command line with `wp twd-sk build brief.json`.
 
+Before pictures, the **Pages** step shows every page that will be made: change the order and titles, add or remove pages, and choose the sections on each page (add, remove, reorder, pick a layout). Once changed, that list is used instead of the brief's until you choose to use the brief's pages again.
+
 Pictures are chosen from the media library. The logo, the Home page's main picture and the About photo go to fixed places. Named pictures (a short name such as `front-view`, a description used as alt text, and the page they may go on) are offered to the AI, which places them where they fit.
 
 ## Rules
@@ -37,4 +39,4 @@ Pictures are chosen from the media library. The logo, the Home page's main pictu
 | `footer` | `text`, `legal` (list of `label`, `url`), `layout`, `columns` (1 to 3) | |
 | `style` | `pack`, `tokens` | Leave `tokens` empty unless colours were asked for |
 | `facts` | text with capital-letter headings | The practice facts, up to 20000 characters |
-| `pages` | list of `type`, `title`, `topic`, `notes`, `seo` (`title`, `description`) | Types: about, contact, home, service, faq. A service page needs a `topic` |
+| `pages` | list of `type`, `title`, `topic`, `notes`, `seo` (`title`, `description`), and optionally `sections` | Types: about, contact, home, service, faq. A service page needs a `topic`. `sections` is the outline in order, each `{ "component": "hero", "variant": "" }`, the first a hero, up to 12; leave it out to use the page type's own |

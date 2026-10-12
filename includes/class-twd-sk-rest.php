@@ -565,9 +565,22 @@ class TWD_SK_REST {
 			$pics['custom'][] = $p + array( 'url' => TWD_SK_Pictures::url( $p['id'] ) );
 		}
 		$draft['pictures'] = $pics;
+		$plan = TWD_SK_Build::plan();
+		foreach ( $plan['pages'] as $i => $pg ) {
+			$plan['pages'][ $i ]['parts'] = TWD_SK_Recipes::parts_data( $pg['parts'] );
+		}
+		$recipes = array();
+		foreach ( TWD_SK_Recipes::types() as $type => $r ) {
+			$recipes[ $type ] = array( 'label' => $r['label'], 'title' => $r['title'], 'needs_topic' => $r['needs_topic'], 'parts' => TWD_SK_Recipes::parts_data( $r['parts'] ) );
+		}
+		unset( $draft['pages'] );
 		return array(
 			'draft'    => $draft,
-			'plan'     => TWD_SK_Build::plan(),
+			'plan'     => $plan,
+			'components'   => TWD_SK_Recipes::parts_menu(),
+			'recipes'      => $recipes,
+			'max_sections' => TWD_SK_Recipes::MAX_SECTIONS,
+			'max_pages'    => TWD_SK_Brief::MAX_PAGES,
 			'errors'   => $errors,
 			'modes'    => TWD_SK_Mode::modes(),
 			'packs'    => $packs,
@@ -586,7 +599,7 @@ class TWD_SK_REST {
 	/** Save some of the setup page's choices. Good values are kept even when another is refused. */
 	public static function post_site_build_draft( $request ) {
 		$in = array();
-		foreach ( array( 'step', 'mode', 'pack', 'brief_text', 'pictures' ) as $k ) {
+		foreach ( array( 'step', 'mode', 'pack', 'brief_text', 'pictures', 'pages', 'reset_pages' ) as $k ) {
 			$v = $request->get_param( $k );
 			if ( null !== $v ) {
 				$in[ $k ] = $v;

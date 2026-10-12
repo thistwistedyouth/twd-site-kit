@@ -1,6 +1,6 @@
 /* TWD Site Kit: the setup page (Settings > Set up site). Vanilla JS, no build step.
  *
- * Five steps: site type, style, brief, pictures, build. Each Next saves the choices on the server
+ * Six steps: site type, style, brief, pages (the list of pages and the sections on each), pictures, build. Each Next saves the choices on the server
  * (so leaving and coming back resumes), and the build runs one request per step so nothing runs
  * long. Every page is made as a draft. Pictures are chosen with the WordPress media library; only
  * their IDs are sent. Text is set as text only, and there are no browser pop-up dialogs. */
@@ -17,6 +17,7 @@
 		{ id: 'type', label: 'Site type' },
 		{ id: 'style', label: 'Style' },
 		{ id: 'brief', label: 'Brief' },
+		{ id: 'pages', label: 'Pages' },
 		{ id: 'pictures', label: 'Pictures' },
 		{ id: 'build', label: 'Build' }
 	];
@@ -217,6 +218,9 @@
 		if (step === 'pictures') {
 			return { pictures: picturesValue() };
 		}
+		if (step === 'pages' && ui.pagesDirty) {
+			return { pages: ui.pages };
+		}
 		return {};
 	}
 
@@ -266,7 +270,7 @@
 		if (S.data.done) {
 			body.appendChild(el('div', { className: 'notice notice-info inline' }, [el('p', { text: 'This site was last built on ' + S.data.done + ' (UTC). Building again makes new versions of the pages it made; it never touches other pages.' })]));
 		}
-		var builders = { type: buildType, style: buildStyle, brief: buildBrief, pictures: buildPictures, build: buildBuild };
+		var builders = { type: buildType, style: buildStyle, brief: buildBrief, pages: buildPages, pictures: buildPictures, build: buildBuild };
 		builders[S.step](body);
 
 		var idx = 0;
@@ -389,7 +393,209 @@
 		}
 	}
 
-	/* 4. Pictures */
+	/* 4. Pages: the list of pages and the sections on each */
+	function copyPages(list) {
+		return list.map(function (p) {
+			return {
+				type: p.type,
+				title: p.title,
+				topic: p.topic || '',
+				notes: p.notes || '',
+				seo: p.seo || {},
+				parts: (p.parts || []).map(function (s) {
+					return { component: s.component, variant: s.variant || '' };
+				})
+			};
+		});
+	}
+
+	function select(id, options, value, label) {
+		var s = el('select', { id: id, 'aria-label': label || '' });
+		Object.keys(options).forEach(function (k) {
+			s.appendChild(el('option', { value: k, text: options[k] }));
+		});
+		s.value = value;
+		return s;
+	}
+
+	function move(list, i, by) {
+		var j = i + by;
+		if (j < 0 || j >= list.length) {
+			return false;
+		}
+		var t = list[i];
+		list[i] = list[j];
+		list[j] = t;
+		return true;
+	}
+
+	function buildPages(body) {
+		heading(body, 'Pages', 'These pages will be made, in this order. Change their titles and the sections on each page before anything is built. Every page starts with a hero section, which holds its main heading.');
+		ui.pages = copyPages(S.data.plan.pages);
+		ui.pagesDirty = false;
+		ui.addPage = null;
+		if (S.data.plan.source === 'edited') {
+			body.appendChild(el('div', { className: 'notice notice-info inline' }, [el('p', { text: 'You have changed the page list, so it is used instead of the brief\'s. ' }, [button('Use the brief\'s pages again', false, function () {
+				message('Saving...', true);
+				save({ reset_pages: true }).then(function () {
+					render();
+					message('The brief\'s pages are used again.', true);
+				}, function (err) {
+					message(err.message, false);
+				});
+			})])]));
+		}
+		var types = {};
+		Object.keys(S.data.recipes).forEach(function (k) {
+			types[k] = S.data.recipes[k].label;
+		});
+		var compLabels = {};
+		Object.keys(S.data.components).forEach(function (k) {
+			compLabels[k] = S.data.components[k].label;
+		});
+		var host = el('div', { className: 'twd-sk-setup__pages' });
+		body.appendChild(host);
+
+		function changed() {
+			ui.pagesDirty = true;
+		}
+
+		function draw() {
+			clear(host);
+			ui.pages.forEach(function (pg, i) {
+				var n = i + 1;
+				var card = el('fieldset', { className: 'twd-sk-setup__page' });
+				card.appendChild(el('legend', { text: 'Page ' + n + ': ' + (pg.title || 'untitled') }));
+				var title = el('input', { type: 'text', className: 'regular-text', id: 'twd-sk-setup-page-title-' + n, maxlength: '120', value: pg.title });
+				title.addEventListener('input', function () {
+					pg.title = title.value;
+					changed();
+				});
+				var type = select('twd-sk-setup-page-type-' + n, types, pg.type);
+				type.addEventListener('change', function () {
+					var r = S.data.recipes[type.value];
+					pg.type = type.value;
+					pg.parts = r.parts.map(function (s) {
+						return { component: s.component, variant: s.variant };
+					});
+					if (!pg.title && r.title) {
+						pg.title = r.title;
+					}
+					changed();
+					draw();
+				});
+				var topic = el('input', { type: 'text', className: 'regular-text', id: 'twd-sk-setup-page-topic-' + n, maxlength: '120', value: pg.topic });
+				topic.addEventListener('input', function () {
+					pg.topic = topic.value;
+					changed();
+				});
+				var topicBox = el('div', {}, [el('label', { 'for': topic.id, text: 'What is the page about?' }), topic]);
+				show(topicBox, !!S.data.recipes[pg.type].needs_topic);
+				var notes = el('textarea', { id: 'twd-sk-setup-page-notes-' + n, className: 'large-text', rows: '2', maxlength: '1500' });
+				notes.value = pg.notes;
+				notes.addEventListener('input', function () {
+					pg.notes = notes.value;
+					changed();
+				});
+				card.appendChild(el('div', { className: 'twd-sk-setup__pagefields' }, [
+					el('div', {}, [el('label', { 'for': title.id, text: 'Title' }), title]),
+					el('div', {}, [el('label', { 'for': type.id, text: 'Type' }), type]),
+					topicBox,
+					el('div', {}, [el('label', { 'for': notes.id, text: 'Notes for this page (optional)' }), notes])
+				]));
+
+				var ol = el('ol', { className: 'twd-sk-setup__sections' });
+				pg.parts.forEach(function (part, j) {
+					var m = j + 1;
+					var comp = select('twd-sk-setup-sec-' + n + '-' + m, compLabels, part.component, 'Section ' + m + ' of page ' + n);
+					var variants = S.data.components[part.component] ? S.data.components[part.component].variants : { '': 'Standard' };
+					var variant = select('twd-sk-setup-var-' + n + '-' + m, variants, part.variant, 'Layout of section ' + m + ' of page ' + n);
+					comp.addEventListener('change', function () {
+						part.component = comp.value;
+						part.variant = '';
+						changed();
+						draw();
+					});
+					variant.addEventListener('change', function () {
+						part.variant = variant.value;
+						changed();
+					});
+					var up = button('Up', false, function () {
+						if (move(pg.parts, j, -1)) {
+							changed();
+							draw();
+						}
+					});
+					var down = button('Down', false, function () {
+						if (move(pg.parts, j, 1)) {
+							changed();
+							draw();
+						}
+					});
+					var del = button('Remove', false, function () {
+						pg.parts.splice(j, 1);
+						changed();
+						draw();
+					});
+					up.disabled = j === 0;
+					down.disabled = j === pg.parts.length - 1;
+					del.disabled = pg.parts.length <= 1;
+					ol.appendChild(el('li', {}, [comp, variant, up, down, del]));
+				});
+				card.appendChild(el('p', { className: 'description', text: 'Sections, top to bottom:' }));
+				card.appendChild(ol);
+				var addSec = button('Add a section', false, function () {
+					pg.parts.push({ component: 'text', variant: '' });
+					changed();
+					draw();
+				});
+				addSec.disabled = pg.parts.length >= S.data.max_sections;
+				var pUp = button('Move page up', false, function () {
+					if (move(ui.pages, i, -1)) {
+						changed();
+						draw();
+					}
+				});
+				var pDown = button('Move page down', false, function () {
+					if (move(ui.pages, i, 1)) {
+						changed();
+						draw();
+					}
+				});
+				var pDel = button('Remove page', false, function () {
+					ui.pages.splice(i, 1);
+					changed();
+					draw();
+				});
+				pUp.disabled = i === 0;
+				pDown.disabled = i === ui.pages.length - 1;
+				pDel.disabled = ui.pages.length <= 1;
+				card.appendChild(el('p', { className: 'twd-sk-setup__actions' }, [addSec, pUp, pDown, pDel]));
+				host.appendChild(card);
+			});
+			if (ui.addPage) {
+				ui.addPage.disabled = ui.pages.length >= S.data.max_pages;
+			}
+		}
+		draw();
+		var addPage = button('Add a page', false, function () {
+			var r = S.data.recipes.service || S.data.recipes[Object.keys(S.data.recipes)[0]];
+			ui.pages.push({ type: S.data.recipes.service ? 'service' : Object.keys(S.data.recipes)[0], title: '', topic: '', notes: '', seo: {}, parts: r.parts.map(function (s) {
+				return { component: s.component, variant: s.variant };
+			}) });
+			changed();
+			draw();
+			var last = host.querySelector('#twd-sk-setup-page-title-' + ui.pages.length);
+			if (last) {
+				last.focus();
+			}
+		});
+		ui.addPage = addPage;
+		addPage.disabled = ui.pages.length >= S.data.max_pages;
+		body.appendChild(el('p', {}, [addPage]));
+	}
+
+	/* 5. Pictures */
 	function media(multiple, done) {
 		if (!(window.wp && window.wp.media)) {
 			message('The media library is not available on this page. Reload and try again.', false);
@@ -532,7 +738,7 @@
 		})]));
 	}
 
-	/* 5. Build */
+	/* 6. Build */
 	function buildBuild(body) {
 		var plan = S.data.plan;
 		heading(body, 'Build the site', 'Each step runs on its own, so a slow answer never stops the rest. Every page is made as a draft and nothing is published. You can run it again: pages this setup made get a new version, other pages are never touched.');

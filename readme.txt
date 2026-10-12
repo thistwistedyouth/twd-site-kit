@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.7.1
+Stable tag: 0.7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,10 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.7.2 =
+* New: a Pages step in the setup page, before pictures and building. See every page that will be made, change the order and titles, add or remove pages, and choose the sections on each page (add, remove, reorder, pick a layout). Nothing is spent or made until you build.
+* New: a site brief's pages can list their own sections.
 
 = 0.7.1 =
 * New: the setup page. On a fresh site an administrator sees a Set this site up link on the front page, which opens Settings, Set up site: choose the site type and style, paste a site brief or plain notes (the AI can turn notes into a brief for you to check), choose pictures from the media library (logo, Home picture, About photo, and named pictures the AI can place where they fit), then build. Every page is made one at a time as a draft, written by AI when a key is available or as an outline otherwise. Safe to run again.

@@ -2,12 +2,13 @@
 
 The one place to see where this project is. Newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md. Update this file at the end of every piece of work, in the same commit.
 
-## Where we are (last updated at release 0.7.1, 12 Oct 2026)
+## Where we are (last updated at release 0.7.2, 12 Oct 2026)
 
-**Released and live in the update file:** 0.7.1. Sites update from Plugins, "Check for updates", "update now".
+**Released and live in the update file:** 0.7.2. Sites update from Plugins, "Check for updates", "update now".
 
 | Version | What it added |
 |---|---|
+| 0.7.2 | The Pages step in the setup page: the list of pages and the sections on each, changed before anything is built; `sections` in a brief's pages |
 | 0.7.1 | The setup page (Settings > Set up site, and a Set this site up link on a fresh site's front page): site type, style, brief or plain notes, pictures (slots and named pictures the AI can place), then a step-by-step build of every page as a draft. `wp twd-sk build` runs the same build. The build log shows in the site report |
 | 0.7.0 | Therapy or business mode: one admin switch (Site tab, `wp twd-sk mode`, or `mode` in a site brief) that changes the editor and AI wording, the facts outline, page types, the interview prompt and the search details type. Therapy wording unchanged |
 | 0.6.2 | `wp twd-sk doctor` and the Site tab's Site report: a plain-text, paste-safe report of the site's state |
@@ -25,7 +26,7 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 **Next, in order (agreed with the owner, 12 Oct 2026; full spec in `docs/plan-modes-and-setup.md`):**
 - A. DONE in 0.7.0: therapy and business mode (`TWD_SK_Mode`, option `twd_sk_mode`, default therapy, one word list per mode).
 - B. DONE in 0.7.1: the setup page (Settings > Set up site), the admin-only front-page button on a fresh install, picture slots and named custom pictures, one build engine (`TWD_SK_Build`) shared with `wp twd-sk build`, all pages as drafts.
-- C. After that (the owner said on 12 Oct: build all of these now, beta stage, test afterwards): 0.7.2 plan step (sitemap and section outline before build), 0.7.3 add a section by asking, 0.8.x more section types, brand from logo, picture help, starter sets per business type, 0.9.0 launch check.
+- C. After that (the owner said on 12 Oct: build all of these now, beta stage, test afterwards): DONE in 0.7.2 the plan step (sitemap and section outline before build), 0.7.3 add a section by asking, 0.8.x more section types, brand from logo, picture help, starter sets per business type, 0.9.0 launch check.
 
 **Earlier list (4 Oct 2026), still standing after A and B:**
 1. DONE in 0.6.2: the doctor report.

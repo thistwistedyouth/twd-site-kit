@@ -63,6 +63,8 @@ class TWD_SK_Build {
 			'pictures'   => TWD_SK_Pictures::validate( isset( $d['pictures'] ) ? $d['pictures'] : array() )['valid'],
 			'built'      => $built,
 			'used'       => isset( $d['used'] ) && is_array( $d['used'] ) ? array_values( array_filter( $d['used'], 'is_string' ) ) : array(),
+			// The page list from the Pages step, or null to follow the brief.
+			'pages'      => isset( $d['pages'] ) && is_array( $d['pages'] ) ? $d['pages'] : null,
 			'updated'    => isset( $d['updated'] ) && is_string( $d['updated'] ) ? $d['updated'] : '',
 		);
 	}
@@ -106,6 +108,16 @@ class TWD_SK_Build {
 				$d['brief_text'] = $in['brief_text'];
 			}
 		}
+		if ( ! empty( $in['reset_pages'] ) ) {
+			$d['pages'] = null;
+		} elseif ( array_key_exists( 'pages', $in ) && null !== $in['pages'] ) {
+			$pages = self::clean_pages( $in['pages'] );
+			if ( is_wp_error( $pages ) ) {
+				$errors[] = $pages->get_error_message();
+			} else {
+				$d['pages'] = $pages;
+			}
+		}
 		if ( array_key_exists( 'pictures', $in ) ) {
 			$p               = TWD_SK_Pictures::validate( $in['pictures'] );
 			$d['pictures']   = $p['valid'];
@@ -116,6 +128,41 @@ class TWD_SK_Build {
 			$d['step'] = $in['step'];
 		}
 		return array( 'draft' => self::write_draft( $d ), 'errors' => $errors );
+	}
+
+	/**
+	 * Check an edited page list (the Pages step). Each page goes through the same checks as a brief's.
+	 *
+	 * @return array|WP_Error
+	 */
+	public static function clean_pages( $list ) {
+		if ( ! is_array( $list ) || ! $list ) {
+			return new WP_Error( 'twd_sk_bad_input', 'The site needs at least one page.' );
+		}
+		if ( count( $list ) > TWD_SK_Brief::MAX_PAGES ) {
+			return new WP_Error( 'twd_sk_bad_input', 'A site can be built with up to ' . TWD_SK_Brief::MAX_PAGES . ' pages at a time.' );
+		}
+		$out = array();
+		foreach ( array_values( $list ) as $i => $pg ) {
+			if ( ! is_array( $pg ) ) {
+				return new WP_Error( 'twd_sk_bad_input', 'Page ' . ( $i + 1 ) . ' was not understood.' );
+			}
+			$in = TWD_SK_Recipes::inputs( $pg );
+			if ( is_wp_error( $in ) ) {
+				return new WP_Error( 'twd_sk_bad_input', 'Page ' . ( $i + 1 ) . ': ' . $in->get_error_message() );
+			}
+			$seo = array();
+			if ( isset( $pg['seo'] ) && is_array( $pg['seo'] ) ) {
+				foreach ( array( 'title' => TWD_SK_Seo::MAX_TITLE, 'description' => TWD_SK_Seo::MAX_DESC ) as $k => $max ) {
+					if ( isset( $pg['seo'][ $k ] ) ) {
+						$seo[ $k ] = TWD_SK_Profile::text( $pg['seo'][ $k ], $max );
+					}
+				}
+			}
+			$in['seo'] = array_filter( $seo, 'strlen' );
+			$out[]     = $in;
+		}
+		return $out;
 	}
 
 	/** Start again: forget the choices (pages already made stay, as drafts). */
@@ -176,6 +223,17 @@ class TWD_SK_Build {
 		$bp     = TWD_SK_Brief::plan( $data, false );
 		$errors = array_merge( $errors, $bp['errors'] );
 		$pages  = $bp['changes']['pages'];
+		$source = 'brief';
+		if ( null !== $draft['pages'] ) {
+			// The Pages step's list wins over the brief's, checked again in case the rules changed.
+			$edited = self::clean_pages( $draft['pages'] );
+			if ( is_wp_error( $edited ) ) {
+				$errors[] = 'The page list: ' . $edited->get_error_message() . ' The brief\'s pages are used instead.';
+			} else {
+				$pages  = $edited;
+				$source = 'edited';
+			}
+		}
 		if ( ! $pages ) {
 			foreach ( array( 'home', 'about', 'contact' ) as $type ) {
 				$in = TWD_SK_Recipes::inputs( array( 'type' => $type ) );
@@ -206,6 +264,7 @@ class TWD_SK_Build {
 				'title'  => $pg['title'],
 				'topic'  => $pg['topic'],
 				'notes'  => $pg['notes'],
+				'parts'  => isset( $pg['parts'] ) ? $pg['parts'] : TWD_SK_Recipes::get( $pg['type'] )['parts'],
 				'seo'    => isset( $pg['seo'] ) ? $pg['seo'] : array(),
 				'slug'   => $slug,
 				'id'     => $mine ? $mine : $other,
@@ -223,6 +282,7 @@ class TWD_SK_Build {
 
 		return array(
 			'pages'    => $out,
+			'source'   => $source,
 			'steps'    => $steps,
 			'items'    => $bp['items'],
 			'errors'   => $errors,
@@ -348,7 +408,7 @@ class TWD_SK_Build {
 		if ( 'skip' === $pg['action'] ) {
 			return array( 'step' => 'page', 'ok' => true, 'report' => array( '"' . $pg['title'] . '" already exists, so it was left alone.' ), 'page' => self::page_summary( $pg['id'], false ) );
 		}
-		$in     = array( 'type' => $pg['type'], 'title' => $pg['title'], 'topic' => $pg['topic'], 'notes' => $pg['notes'] );
+		$in     = array( 'type' => $pg['type'], 'title' => $pg['title'], 'topic' => $pg['topic'], 'notes' => $pg['notes'], 'parts' => $pg['parts'] );
 		$report = array();
 		$ai     = $use_ai && TWD_SK_AI::available();
 		$html   = '';
@@ -360,7 +420,7 @@ class TWD_SK_Build {
 			}
 		}
 		if ( ! $ai ) {
-			$html = TWD_SK_Recipes::skeleton( $pg['type'] );
+			$html = TWD_SK_Recipes::skeleton_for( $in );
 		}
 		$used   = $draft['used'];
 		$placed = TWD_SK_Pictures::place( $html, $draft['pictures'], $pg['slug'], $pg['type'], $used );

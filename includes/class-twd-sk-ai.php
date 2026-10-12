@@ -312,7 +312,7 @@ class TWD_SK_AI {
 		}
 		$out[]  = '';
 		$out[]  = 'The outline to follow (replace the placeholders, keep the components and their order):';
-		$out[]  = TWD_SK_Recipes::skeleton( $in['type'] );
+		$out[]  = TWD_SK_Recipes::skeleton_for( $in );
 		return implode( "\n", $out ) . "\n";
 	}
 
