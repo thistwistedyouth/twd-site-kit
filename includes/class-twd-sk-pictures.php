@@ -75,6 +75,7 @@ class TWD_SK_Pictures {
 				}
 				$id   = is_array( $pic ) && isset( $pic['id'] ) ? (int) $pic['id'] : (int) $pic;
 				$desc = is_array( $pic ) && isset( $pic['description'] ) ? TWD_SK_Profile::text( $pic['description'], self::MAX_DESC ) : '';
+				$foc  = is_array( $pic ) ? self::focal( $pic ) : 'center';
 				if ( 0 === $id ) {
 					continue;
 				}
@@ -82,7 +83,7 @@ class TWD_SK_Pictures {
 					$errors[] = $slots[ $slot ]['label'] . ': that is not a picture in the media library.';
 					continue;
 				}
-				$out['slots'][ $slot ] = array( 'id' => $id, 'description' => $desc );
+				$out['slots'][ $slot ] = array( 'id' => $id, 'description' => $desc, 'focal' => $foc );
 			}
 		}
 		if ( isset( $in['custom'] ) && is_array( $in['custom'] ) ) {
@@ -118,10 +119,29 @@ class TWD_SK_Pictures {
 					'id'          => $id,
 					'description' => isset( $pic['description'] ) ? TWD_SK_Profile::text( $pic['description'], self::MAX_DESC ) : '',
 					'use_on'      => '' === $use ? 'any' : $use,
+					'focal'       => self::focal( $pic ),
 				);
 			}
 		}
 		return array( 'valid' => $out, 'errors' => $errors );
+	}
+
+	/** A "keep in view" choice from input, or centre. */
+	private static function focal( $pic ) {
+		$f = isset( $pic['focal'] ) && is_string( $pic['focal'] ) ? $pic['focal'] : 'center';
+		return isset( TWD_SK_Images::focal_points()[ $f ] ) ? $f : 'center';
+	}
+
+	/** Save each picture's "keep in view" choice to the media library (only when it is not the centre). */
+	public static function save_focals( $set ) {
+		$n = 0;
+		foreach ( array_merge( array_values( (array) $set['slots'] ), (array) $set['custom'] ) as $pic ) {
+			if ( isset( $pic['focal'] ) && 'center' !== $pic['focal'] && TWD_SK_Images::get_focal( $pic['id'] ) !== $pic['focal'] ) {
+				TWD_SK_Images::set_focal( $pic['id'], $pic['focal'] );
+				$n++;
+			}
+		}
+		return $n;
 	}
 
 	/** The address of a picture, or ''. */

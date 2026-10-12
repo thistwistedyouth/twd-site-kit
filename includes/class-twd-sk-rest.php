@@ -622,6 +622,9 @@ class TWD_SK_REST {
 			'done'     => (string) get_option( TWD_SK_Build::DONE, '' ),
 			'safe'     => TWD_SK_Safe::on(),
 			'max_pictures' => TWD_SK_Pictures::MAX_CUSTOM,
+			'focal_points' => array_map( function ( $p ) {
+				return $p[0];
+			}, TWD_SK_Images::focal_points() ),
 		);
 	}
 

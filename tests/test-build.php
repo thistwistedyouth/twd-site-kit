@@ -63,7 +63,7 @@ twd_sk_test( 'pictures: only real images, short unique names, plain descriptions
 			'junk',
 		),
 	) );
-	twd_sk_eq( array( 'logo' => array( 'id' => 31, 'description' => '' ) ), $r['valid']['slots'] );
+	twd_sk_eq( array( 'logo' => array( 'id' => 31, 'description' => '', 'focal' => 'center' ) ), $r['valid']['slots'] );
 	twd_sk_eq( 1, count( $r['valid']['custom'] ) );
 	twd_sk_eq( 'Front view', $r['valid']['custom'][0]['description'], 'tags removed' );
 	twd_sk_eq( 'weekend-hire', $r['valid']['custom'][0]['use_on'] );
@@ -497,4 +497,16 @@ twd_sk_test( 'pages step rest: the browser gets the sections, the page types and
 	twd_sk_has( "{ id: 'pages', label: 'Pages' }", $js );
 	twd_sk_has( 'return { pages: ui.pages };', $js );
 	twd_sk_has( 'save({ reset_pages: true })', $js );
+} );
+
+twd_sk_test( 'pictures: a "keep in view" choice is checked, and the build saves it to the media library', function () {
+	twd_sk_build_media();
+	$v = TWD_SK_Pictures::validate( array( 'slots' => array( 'home_main' => array( 'id' => 32, 'focal' => 'top' ) ), 'custom' => array( array( 'name' => 'a', 'id' => 34, 'focal' => 'sideways' ) ) ) )['valid'];
+	twd_sk_eq( 'top', $v['slots']['home_main']['focal'] );
+	twd_sk_eq( 'center', $v['custom'][0]['focal'], 'an unknown choice falls back to the centre' );
+	TWD_SK_Build::save_draft( array( 'pictures' => array( 'slots' => array( 'home_main' => array( 'id' => 32, 'focal' => 'top' ) ) ) ) );
+	$r = TWD_SK_Build::run_step( 'settings' );
+	twd_sk_eq( 'top', TWD_SK_Images::get_focal( 32 ) );
+	twd_sk_has( 'Saved where to keep 1 picture in view.', implode( ' ', $r['report'] ) );
+	twd_sk_has( "S.data.focal_points", file_get_contents( ABSPATH . 'assets/twd-site-kit-setup.js' ) );
 } );

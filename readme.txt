@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.8.2
+Stable tag: 0.8.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.8.3 =
+* New: keep in view. Choose which part of a picture stays visible when a kit page crops it (for example Top for a face), in the media library's edit screen or on the setup page's Pictures step. It applies to every page that uses the picture.
 
 = 0.8.2 =
 * New: colours from the logo. In the Site tab's Style section, Take colours from the logo previews the buttons, headings, bands and accents in the logo's main colours. Nothing is kept until you press Save style. The setup page has a matching tick box, and wp twd-sk brand does the same from the command line. Every colour is checked so text stays easy to read; any that would not be is left as the style's own.

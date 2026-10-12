@@ -80,12 +80,12 @@ twd_sk_test( 'images: the size lookup is remembered, including "not in the libra
 	$GLOBALS['twd_stub']['media_urls']['https://example.test/wp-content/uploads/a.jpg'] = 92;
 	$GLOBALS['twd_stub']['media_meta'][92] = array( 'width' => 100, 'height' => 50 );
 	twd_sk_eq( array( 100, 50 ), TWD_SK_Images::dimensions( '/wp-content/uploads/a.jpg' ) );
-	$key = 'twd_sk_dim_' . md5( 'https://example.test/wp-content/uploads/a.jpg' );
+	$key = 'twd_sk_img_' . md5( 'https://example.test/wp-content/uploads/a.jpg|0' );
 	twd_sk_eq( TWD_SK_Images::DIM_TTL, $GLOBALS['twd_stub']['transients'][ $key ]['seconds'] );
 	unset( $GLOBALS['twd_stub']['media_meta'][92] );
 	twd_sk_eq( array( 100, 50 ), TWD_SK_Images::dimensions( '/wp-content/uploads/a.jpg' ), 'second call uses the memory' );
 	twd_sk_eq( null, TWD_SK_Images::dimensions( '/wp-content/uploads/nope.jpg' ) );
-	$nope = 'twd_sk_dim_' . md5( 'https://example.test/wp-content/uploads/nope.jpg' );
+	$nope = 'twd_sk_img_' . md5( 'https://example.test/wp-content/uploads/nope.jpg|0' );
 	twd_sk_eq( 3600, $GLOBALS['twd_stub']['transients'][ $nope ]['seconds'], 'a miss is remembered for an hour' );
 	twd_sk_eq( null, TWD_SK_Images::dimensions( '' ) );
 	twd_sk_eq( null, TWD_SK_Images::dimensions( array() ) );
@@ -117,4 +117,27 @@ twd_sk_test( 'images: the class makes no network call and holds no em dashes', f
 		twd_sk_hasnt( $bad, $src );
 	}
 	twd_sk_hasnt( "\xE2\x80\x94", $src );
+} );
+
+twd_sk_test( 'images: keep in view sets the crop position at display time, never in stored HTML; changing it takes effect at once', function () {
+	$GLOBALS['twd_stub']['media_urls']['https://example.test/wp-content/uploads/face.jpg'] = 93;
+	$GLOBALS['twd_stub']['media_meta'][93] = array( 'width' => 800, 'height' => 600 );
+	$GLOBALS['twd_stub']['attachments'][93] = array( 'is_image' => true, 'url' => 'https://example.test/wp-content/uploads/face.jpg' );
+	$tag = '<img class="twd-sk-hero__img" src="/wp-content/uploads/face.jpg" alt="A face">';
+	twd_sk_hasnt( 'style=', TWD_SK_Images::tag( $tag, false ), 'centre adds nothing' );
+	twd_sk_true( true === TWD_SK_Images::set_focal( 93, 'top' ) );
+	twd_sk_has( 'style="object-position: 50% 15%"', TWD_SK_Images::tag( $tag, false ), 'the cache is refreshed by the new version' );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Images::set_focal( 93, 'sideways' ) );
+	twd_sk_eq( 'top', TWD_SK_Images::get_focal( 93 ) );
+	$clean = TWD_SK_Sanitizer::clean( '<img src="/wp-content/uploads/face.jpg" alt="A face" style="object-position: 50% 15%">' );
+	twd_sk_hasnt( 'style', $clean, 'a style can never be stored' );
+	$fields = TWD_SK_Images::focal_field( array(), get_post( 93 ) ?: (object) array( 'ID' => 93 ) );
+	twd_sk_has( 'name="attachments[93][twd_sk_focal]"', $fields['twd_sk_focal']['html'] );
+	twd_sk_has( '<option value="top" selected>Top</option>', $fields['twd_sk_focal']['html'] );
+	$GLOBALS['twd_stub']['caps'] = array( 'edit_post:93' );
+	TWD_SK_Images::save_focal_field( array( 'ID' => 93 ), array( 'twd_sk_focal' => 'bottom' ) );
+	twd_sk_eq( 'bottom', TWD_SK_Images::get_focal( 93 ) );
+	$GLOBALS['twd_stub']['caps'] = array();
+	TWD_SK_Images::save_focal_field( array( 'ID' => 93 ), array( 'twd_sk_focal' => 'left' ) );
+	twd_sk_eq( 'bottom', TWD_SK_Images::get_focal( 93 ), 'only someone who can edit the picture' );
 } );

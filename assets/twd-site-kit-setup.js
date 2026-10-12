@@ -623,11 +623,11 @@
 		var out = { slots: {}, custom: [] };
 		(ui.slotRows || []).forEach(function (r) {
 			if (r.id) {
-				out.slots[r.slot] = { id: r.id, description: r.desc.value };
+				out.slots[r.slot] = { id: r.id, description: r.desc.value, focal: r.focal.value };
 			}
 		});
 		(ui.customRows || []).forEach(function (r) {
-			out.custom.push({ id: r.id, name: r.name.value.trim(), description: r.desc.value, use_on: r.use.value });
+			out.custom.push({ id: r.id, name: r.name.value.trim(), description: r.desc.value, use_on: r.use.value, focal: r.focal.value });
 		});
 		return out;
 	}
@@ -646,6 +646,7 @@
 			var row = { slot: slot, id: have ? have.id : 0 };
 			var holder = el('div', { className: 'twd-sk-setup__thumbbox' }, [thumb(have ? have.url : '')]);
 			row.desc = el('input', { type: 'text', className: 'regular-text', maxlength: '200', id: 'twd-sk-setup-slot-' + slot, value: have ? have.description : '' });
+			row.focal = select('twd-sk-setup-slot-focal-' + slot, S.data.focal_points, have && have.focal ? have.focal : 'center');
 			var pick = button(have ? 'Change' : 'Choose picture', false, function () {
 				media(false, function (sel) {
 					if (!sel.length) {
@@ -674,6 +675,8 @@
 					el('p', { className: 'description', text: info.help }),
 					el('label', { 'for': 'twd-sk-setup-slot-' + slot, text: 'Description (alt text)' }),
 					row.desc,
+					el('label', { 'for': row.focal.id, text: 'Keep in view when cropped' }),
+					row.focal,
 					el('p', {}, [pick, el('span', { text: ' ' }), remove])
 				])
 			]));
@@ -696,6 +699,7 @@
 			pages.forEach(function (pg) {
 				row.use.appendChild(el('option', { value: pg.slug, text: 'Only on ' + pg.title }));
 			});
+			row.focal = select('twd-sk-setup-pic-focal-' + n, S.data.focal_points, p.focal || 'center');
 			row.use.value = p.use_on || 'any';
 			if (row.use.value !== (p.use_on || 'any')) {
 				row.use.value = 'any';
@@ -712,6 +716,7 @@
 				el('label', { 'for': row.name.id, text: 'Name' }), row.name,
 				el('label', { 'for': row.desc.id, text: 'Description (alt text)' }), row.desc,
 				el('label', { 'for': row.use.id, text: 'Use on' }), row.use,
+				el('label', { 'for': row.focal.id, text: 'Keep in view when cropped' }), row.focal,
 				el('p', {}, [remove])
 			]));
 			ui.customRows.push(row);

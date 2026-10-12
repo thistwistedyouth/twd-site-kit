@@ -408,6 +408,10 @@ class TWD_SK_Build {
 				}
 			}
 		}
+		$focals = TWD_SK_Pictures::save_focals( $draft['pictures'] );
+		if ( $focals ) {
+			$report[] = 'Saved where to keep ' . $focals . ' picture' . ( 1 === $focals ? '' : 's' ) . ' in view.';
+		}
 		$draft['used'] = array();
 		self::write_draft( $draft );
 		self::log( '--- Build started (' . $draft['mode'] . ', ' . $draft['pack'] . ', ' . count( $plan['pages'] ) . ' pages) ---' );

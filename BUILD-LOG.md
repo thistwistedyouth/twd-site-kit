@@ -2,12 +2,13 @@
 
 The one place to see where this project is. Newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md. Update this file at the end of every piece of work, in the same commit.
 
-## Where we are (last updated at release 0.8.2, 12 Oct 2026)
+## Where we are (last updated at release 0.8.3, 12 Oct 2026)
 
-**Released and live in the update file:** 0.8.2. Sites update from Plugins, "Check for updates", "update now".
+**Released and live in the update file:** 0.8.3. Sites update from Plugins, "Check for updates", "update now".
 
 | Version | What it added |
 |---|---|
+| 0.8.3 | Keep in view: choose which part of each picture stays visible when a page crops it (media library or setup page) |
 | 0.8.2 | Colours from the logo: a Site tab button (previewed until saved), a setup page tick box, and `wp twd-sk brand`; every colour checked for contrast |
 | 0.8.1 | The Enquiry form section: name, email, phone, message and consent, emailed to the site address; spam trap, signed token and limits; nothing stored |
 | 0.8.0 | Five new sections: Pictures (a grid with captions), Logos strip, Prices (cards or a list), Opening hours, Areas covered (with a map link) |
@@ -41,6 +42,9 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 6. Plan only, until a second-site timing test: base site and provisioning.
 7. In parallel, owner: verify 0.4.0 to 0.6.2 on the pilot site (lists below), including Ask the AI now that the articles plugin has its filters.
 - Not planned, on purpose: rewriting every page at once, free CSS, free HTML for the header and footer.
+
+**Ideas that need another project (not started, owner to decide):**
+- AI alt text from the picture itself: the Articles plugin would need to offer a third filter that can send a picture to the AI (for example `twd_ai_describe_image( null, $attachment_id )` returning text or a WP_Error). Site Kit would then offer a suggestion beside each picture's description, shown for approval, never saved by itself.
 
 **Waiting on other projects (cross-project contract):**
 - Nothing. The Articles & Resource Production plugin (`twd-article-publisher`, repo `therapy-web-designs`) now offers the two filters Site Kit uses, from its version 1.34.0 (checked 4 Oct 2026; re-checked 11 Oct 2026, the filters are unchanged, that plugin is now at 1.37.1 on a branch not yet merged to its main): `twd_ai_is_configured` (true when a key is saved) and `twd_ai_complete( null, $system, $message, $max_tokens )` (returns text, a WP_Error, or null; max tokens clamped to 256 to 8000). The names match what Site Kit calls. Site Kit holds no key and calls no AI service. Ask the AI, drafting pages with AI, Fill with AI and the Site tab suggestions appear on a site only when that plugin is at 1.34.0 or later with a key saved.
