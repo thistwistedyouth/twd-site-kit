@@ -17,6 +17,15 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.7.0 (therapy or business mode)
+
+- **The plugin is now used for non-therapy sites too.** Rather than a fork or a second plugin, one setting picks the words. Therapy stays the default and its wording is byte-for-byte what it was (checked by diffing every prompt before and after), so no existing site changes.
+- **One word list, in one file.** Mode words were scattered through prompts, recipes, the facts outline, the brief and the Site tab. They now all come from `TWD_SK_Mode`, and a tokenizer test fails if another PHP file hard-codes therapist wording. Future modes (coach, trades) are data, not code.
+- **Registration lines stay in business mode, relabelled.** The plan said hide them; trades and many businesses have accreditation or trade body lines that matter just as much, so the field shows as accreditation lines instead. The job title is hidden because it rarely means anything for a business.
+- **Safe mode reads as therapy.** It is the wording every earlier release used, so it is the safest fallback. A database fault also falls back to therapy rather than stopping a page or the report.
+- **The schema id stays `#practice` in both modes.** It is only an identifier; keeping it means the Yoast duplicate check is unchanged.
+- **Built ahead of real-site checks, at the owner's request (beta stage).** 0.4.0 to 0.6.2 are still unverified on a real site; the owner asked for the whole roadmap to be built and tested afterwards.
+
 ## v0.6.2 (the site report)
 
 - **Problems were being diagnosed from descriptions and screenshots.** The report states the facts instead: versions, safe mode, the Theme Builder templates and their display conditions (the thing most often wrong on a new site), which pages use the kit and what is left to fix, and the pictures with their alt text.

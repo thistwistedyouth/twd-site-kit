@@ -2,7 +2,8 @@
 /**
  * TWD_SK_Schema: structured data (JSON-LD) for the front page, built from the site profile.
  *
- * It describes the practice (ProfessionalService) and the therapist (Person). Only real values
+ * It describes the practice (ProfessionalService) and the therapist (Person), or in business mode the
+ * business (LocalBusiness) on its own; the type comes from TWD_SK_Mode. Only real values
  * are used: anything empty, anything still holding a [PLACEHOLDER marker, an email that is not an
  * email, a link that is not a web address, is left out. Registration lines are never printed
  * here. Nothing is guessed.
@@ -41,7 +42,7 @@ class TWD_SK_Schema {
 	public static function nodes( $profile = null ) {
 		$p    = null === $profile ? TWD_SK_Profile::get() : $profile;
 		$home = function_exists( 'home_url' ) ? (string) home_url( '/' ) : '';
-		$org  = array( '@type' => 'ProfessionalService', '@id' => $home . '#practice' );
+		$org  = array( '@type' => TWD_SK_Mode::w( 'schema_type' ), '@id' => $home . '#practice' );
 
 		if ( self::real( $p['site_name'] ) ) {
 			$org['name'] = $p['site_name'];
@@ -88,7 +89,7 @@ class TWD_SK_Schema {
 		if ( isset( $org['name'] ) ) {
 			$nodes[] = $org;
 		}
-		if ( self::real( $p['person_name'] ) ) {
+		if ( TWD_SK_Mode::w( 'schema_person' ) && self::real( $p['person_name'] ) ) {
 			$person = array( '@type' => 'Person', '@id' => $home . '#therapist', 'name' => $p['person_name'] );
 			if ( self::real( $p['person_job'] ) ) {
 				$person['jobTitle'] = $p['person_job'];

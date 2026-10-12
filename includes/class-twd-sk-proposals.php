@@ -96,7 +96,7 @@ class TWD_SK_Proposals {
 
 	public static function system_prompt( $kind ) {
 		$out   = array();
-		$out[] = 'You suggest changes to part of a therapist\'s website settings. You do not write HTML or CSS. Reply with ONE JSON object and nothing else: no code fence, no commentary.';
+		$out[] = 'You suggest changes to part of a ' . TWD_SK_Mode::w( 'persons' ) . ' website settings. You do not write HTML or CSS. Reply with ONE JSON object and nothing else: no code fence, no commentary.';
 		$out[] = 'Include only the fields you change. Leave out every field you leave as it is.';
 		$out[] = '';
 		$out[] = '## Shape';
@@ -115,7 +115,7 @@ class TWD_SK_Proposals {
 		$rules = array(
 			'Change only what the instruction asks for.',
 			'Never invent a phone number, email, address, registration, qualification or any other fact. You cannot change those here.',
-			'Use only the practice facts and site details given. Do not use em dashes or en dashes.',
+			'Use only the ' . TWD_SK_Mode::w( 'facts' ) . ' and site details given. Do not use em dashes or en dashes.',
 		);
 		if ( 'style' !== $kind ) {
 			$rules[] = 'Links must be pages from the list given, "/" for the home page, a full https address, mailto: or tel:. Do not invent a page.';

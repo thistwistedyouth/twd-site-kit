@@ -343,7 +343,7 @@ class TWD_SK_Profile {
 	 */
 	public static function starter() {
 		return array(
-			'site_name'    => '[PLACEHOLDER: practice name]',
+			'site_name'    => TWD_SK_Mode::w( 'ph_site_name' ),
 			'logo_id'      => 0,
 			'menu'         => array(
 				array( 'label' => 'Home', 'url' => '/', 'children' => array() ),
@@ -354,14 +354,14 @@ class TWD_SK_Profile {
 			'cta_url'      => '/contact',
 			'phone'        => 'PHONE_NUMBER',
 			'email'        => 'you@example.com',
-			'address'      => array( '[PLACEHOLDER: address line, or delete for an online practice]' ),
+			'address'      => array( TWD_SK_Mode::w( 'ph_address' ) ),
 			'area_served'  => '[PLACEHOLDER: where you work, or Online]',
-			'footer_text'  => '[PLACEHOLDER: one or two sentences about your practice]',
+			'footer_text'  => TWD_SK_Mode::w( 'ph_footer_text' ),
 			'legal'        => array(
 				array( 'label' => '[PLACEHOLDER: privacy policy]', 'url' => '/privacy-policy' ),
 			),
-			'registration' => array( '[PLACEHOLDER: registration or membership line, supplied by the therapist]' ),
-			'person_name'  => '[PLACEHOLDER: therapist name]',
+			'registration' => array( TWD_SK_Mode::w( 'ph_registration' ) ),
+			'person_name'  => TWD_SK_Mode::w( 'ph_person_name' ),
 			'person_job'   => '[PLACEHOLDER: job title]',
 			'same_as'      => array(),
 			'about_page_id' => 0,

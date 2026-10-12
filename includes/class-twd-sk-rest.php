@@ -195,6 +195,18 @@ class TWD_SK_REST {
 				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 			),
 		) );
+		register_rest_route( self::ROUTE_NS, '/site/mode', array(
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'get_site_mode' ),
+				'permission_callback' => array( __CLASS__, 'can_read_site' ),
+			),
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_site_mode' ),
+				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+			),
+		) );
 		register_rest_route( self::ROUTE_NS, '/site/brief', array(
 			'methods'             => 'GET',
 			'callback'            => array( __CLASS__, 'get_site_brief' ),
@@ -459,7 +471,7 @@ class TWD_SK_REST {
 		return self::info_payload( $id );
 	}
 
-	// -- Practice facts and new pages from them -------------------------------
+	// -- The facts and new pages from them -------------------------------
 
 	private static function facts_payload() {
 		return array(
@@ -480,6 +492,29 @@ class TWD_SK_REST {
 			return self::error( $saved->get_error_code(), $saved->get_error_message(), 400 );
 		}
 		return self::facts_payload();
+	}
+
+	// -- Therapy or business mode -------------------------------------------
+
+	private static function mode_payload() {
+		return array(
+			'mode'  => TWD_SK_Mode::get(),
+			'modes' => TWD_SK_Mode::modes(),
+			'words' => TWD_SK_Mode::js_words(),
+		);
+	}
+
+	public static function get_site_mode( $request ) {
+		return self::mode_payload();
+	}
+
+	/** Changes wording, the search details type and which fields show. Never rewrites a page. */
+	public static function post_site_mode( $request ) {
+		$saved = TWD_SK_Mode::set( $request->get_param( 'mode' ) );
+		if ( is_wp_error( $saved ) ) {
+			return self::error( 'twd_sk_bad_input', $saved->get_error_message(), 400 );
+		}
+		return self::mode_payload();
 	}
 
 	// -- The site brief ---------------------------------------------------
@@ -533,7 +568,7 @@ class TWD_SK_REST {
 		return $result;
 	}
 
-	/** Draft a new page from the practice facts. Creates a DRAFT only. */
+	/** Draft a new page from the facts. Creates a DRAFT only. */
 	public static function post_generate( $request ) {
 		$page_id = $request->get_param( 'page_id' );
 		if ( null !== $page_id && '' !== $page_id && ( ! is_numeric( $page_id ) || (int) $page_id <= 0 || ! current_user_can( 'edit_post', (int) $page_id ) ) ) {

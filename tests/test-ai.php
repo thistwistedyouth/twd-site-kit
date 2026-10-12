@@ -236,7 +236,7 @@ twd_sk_test( 'ai js: the editor sends the version it started from, the unlock ch
 	twd_sk_has( 'Copy prompt for external AI', $js );
 	twd_sk_has( 'Use an external AI instead', $js );
 	twd_sk_has( 'Check every fact and every claim before you apply', $js );
-	twd_sk_has( 'Allow new wording (only words the therapist has given you)', $js );
+	twd_sk_has( "'Allow new wording (only words the ' + W('person', 'therapist') + ' has given you)'", $js );
 	twd_sk_has( 'if (cfg.ai)', $js );
 	twd_sk_hasnt( 'innerHTML', $js );
 	twd_sk_true( 1 !== preg_match( '#https?://#i', $js ), 'no web addresses' );

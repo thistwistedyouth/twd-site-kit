@@ -66,13 +66,13 @@ class TWD_SK_Doctor {
 		$out   = array();
 		$out[] = 'TWD Site Kit report';
 		$out[] = 'Made: ' . gmdate( 'Y-m-d H:i' ) . ' UTC';
-		$out[] = 'It holds no keys, no passwords and none of the text of the practice facts or site details. It is safe to paste into a message.';
+		$out[] = 'It holds no keys, no passwords and none of the text of the ' . TWD_SK_Mode::w( 'facts' ) . ' or site details. It is safe to paste into a message.';
 		$parts = array(
 			array( 'Plugin and site', array( __CLASS__, 'plugin' ) ),
 			array( 'Style', array( __CLASS__, 'style' ) ),
 			array( 'Front page', array( __CLASS__, 'front_page' ) ),
 			array( 'Elementor Theme Builder', array( __CLASS__, 'theme_builder' ) ),
-			array( 'Site details and practice facts', array( __CLASS__, 'details' ) ),
+			array( 'Site details and ' . TWD_SK_Mode::w( 'facts' ), array( __CLASS__, 'details' ) ),
 			array( 'Pages', array( __CLASS__, 'pages' ) ),
 			array( 'Pictures in the Media Library', array( __CLASS__, 'pictures' ) ),
 		);
@@ -88,6 +88,7 @@ class TWD_SK_Doctor {
 		$l   = array();
 		$l[] = 'Site Kit version: ' . ( defined( 'TWD_SK_VERSION' ) ? self::t( TWD_SK_VERSION, 20 ) : 'unknown' );
 		$l[] = 'Safe mode: ' . ( TWD_SK_Safe::on() ? 'ON (set by ' . TWD_SK_Safe::source() . ')' : 'off' );
+		$l[] = 'Site type: ' . self::t( TWD_SK_Mode::get(), 20 ) . ( TWD_SK_Mode::get() !== TWD_SK_Mode::stored() ? ' (saved as ' . self::t( TWD_SK_Mode::stored(), 20 ) . ', safe mode uses therapy)' : '' );
 		$l[] = 'AI available to Site Kit (another plugin offers the two AI filters and has a key saved): ' . self::yes( TWD_SK_AI::available() );
 		$seo = TWD_SK_Seo::detect();
 		$l[] = 'SEO plugin: ' . ( 'none' === $seo['mode'] ? 'none (Site Kit prints the search tags itself)' : self::t( $seo['name'], 40 ) . ( 'other' === $seo['mode'] ? ' (Site Kit does not write its fields)' : '' ) );
@@ -197,8 +198,8 @@ class TWD_SK_Doctor {
 		$l   = array();
 		$map = array(
 			'site_name' => 'Site name', 'menu' => 'Menu', 'cta_label' => 'Header button text', 'cta_url' => 'Header button link', 'phone' => 'Phone', 'email' => 'Email',
-			'address' => 'Address lines', 'area_served' => 'Where they work', 'footer_text' => 'Footer text', 'legal' => 'Legal links', 'registration' => 'Registration lines',
-			'person_name' => 'Therapist name', 'person_job' => 'Therapist job title', 'same_as' => 'Profile links',
+			'address' => 'Address lines', 'area_served' => TWD_SK_Mode::w( 'area_label' ), 'footer_text' => 'Footer text', 'legal' => 'Legal links', 'registration' => TWD_SK_Mode::w( 'registration_label' ),
+			'person_name' => TWD_SK_Mode::w( 'person_name_label' ), 'person_job' => TWD_SK_Mode::w( 'person_job_label' ), 'same_as' => 'Profile links',
 		);
 		foreach ( $map as $key => $label ) {
 			$l[] = $label . ': ' . self::filled( $p[ $key ] );
@@ -207,7 +208,7 @@ class TWD_SK_Doctor {
 		$facts = TWD_SK_Facts::get();
 		$len   = function_exists( 'mb_strlen' ) ? mb_strlen( $facts, 'UTF-8' ) : strlen( $facts );
 		$when  = TWD_SK_Facts::updated();
-		$l[]   = 'Practice facts: ' . ( '' === $facts ? 'empty' : 'filled (' . $len . ' characters' . ( '' !== $when ? ', saved ' . self::t( $when, 30 ) : '' ) . ')' );
+		$l[]   = TWD_SK_Mode::w( 'Facts' ) . ': ' . ( '' === $facts ? 'empty' : 'filled (' . $len . ' characters' . ( '' !== $when ? ', saved ' . self::t( $when, 30 ) : '' ) . ')' );
 		$left  = TWD_SK_Profile::leftovers( $p );
 		$l[]   = 'Example text still in the site details: must fix ' . TWD_SK_Report::leftover_total( $left['must'] ) . ', check ' . TWD_SK_Report::leftover_total( $left['check'] );
 		return $l;

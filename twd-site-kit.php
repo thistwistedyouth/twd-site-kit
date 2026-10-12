@@ -3,7 +3,7 @@
  * Plugin Name: TWD Site Kit
  * Plugin URI: https://therapywebdesigns.co.uk/
  * Description: Pages for therapist sites built from sanitised HTML and a fixed set of components, with version history, style packs and bundled fonts. Sibling to the Articles & Resource Production Plugin.
- * Version: 0.6.2
+ * Version: 0.7.0
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: Therapy Web Designs
@@ -18,11 +18,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TWD_SK_VERSION', '0.6.2' );
+define( 'TWD_SK_VERSION', '0.7.0' );
 define( 'TWD_SK_PATH', plugin_dir_path( __FILE__ ) );
 define( 'TWD_SK_URL', plugin_dir_url( __FILE__ ) );
 
 require_once TWD_SK_PATH . 'includes/class-twd-sk-safe.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-mode.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-registry.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-sanitizer.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-store.php';

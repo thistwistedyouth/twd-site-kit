@@ -14,6 +14,7 @@
  *   wp twd-sk export-templates [--dir=<path>]  write the two Elementor Theme Builder templates (header, footer) as JSON
  *   wp twd-sk safe-mode [on|off|status]  switch the newest features off, or back on
  *   wp twd-sk pack [<slug>]             list style packs, or switch to one
+ *   wp twd-sk mode [<mode>]             show the site type (therapy or business), or switch it
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -275,6 +276,36 @@ class TWD_SK_CLI {
 		} else {
 			WP_CLI::success( 'Safe mode is OFF.' );
 		}
+	}
+
+	/**
+	 * Show the site type, or switch it. Therapy is the default. The type changes wording, the AI
+	 * instructions, the search details type and which fields show. It never rewrites a page.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [<mode>]
+	 * : therapy or business. Leave out to show the current type.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk mode
+	 *     wp twd-sk mode business
+	 */
+	public function mode( $args, $assoc_args ) {
+		if ( isset( $args[0] ) ) {
+			$saved = TWD_SK_Mode::set( strtolower( (string) $args[0] ) );
+			if ( is_wp_error( $saved ) ) {
+				WP_CLI::error( $saved->get_error_message() );
+				return;
+			}
+			WP_CLI::success( 'Site type is now ' . $saved . '. Pages already written keep their wording.' );
+		}
+		$line = 'Site type: ' . TWD_SK_Mode::stored() . '.';
+		if ( TWD_SK_Mode::get() !== TWD_SK_Mode::stored() ) {
+			$line .= ' Safe mode is on, so therapy wording is used until it is turned off.';
+		}
+		WP_CLI::log( $line );
 	}
 
 	/**

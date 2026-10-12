@@ -22,7 +22,7 @@ class TWD_SK_Brief {
 	const MAX_BYTES = 200 * 1000;
 	const MAX_PAGES = 20;
 
-	private static $top = array( 'schema', 'site', 'header', 'footer', 'style', 'facts', 'pages', 'note' );
+	private static $top = array( 'schema', 'mode', 'site', 'header', 'footer', 'style', 'facts', 'pages', 'note' );
 
 	// -- Export ---------------------------------------------------------------
 
@@ -31,6 +31,7 @@ class TWD_SK_Brief {
 		$c = TWD_SK_Chrome::settings();
 		return array(
 			'schema' => self::SCHEMA,
+			'mode'   => TWD_SK_Mode::get(),
 			'site'   => array(
 				'name'         => $p['site_name'],
 				'person_name'  => $p['person_name'],
@@ -118,7 +119,7 @@ class TWD_SK_Brief {
 		$items   = array();
 		$errors  = array();
 		$ignored = array();
-		$changes = array( 'profile' => array(), 'chrome' => array(), 'style' => null, 'facts' => null, 'pages' => array() );
+		$changes = array( 'mode' => null, 'profile' => array(), 'chrome' => array(), 'style' => null, 'facts' => null, 'pages' => array() );
 		$profile = TWD_SK_Profile::get();
 		$chrome  = TWD_SK_Chrome::settings();
 
@@ -128,9 +129,24 @@ class TWD_SK_Brief {
 			}
 		}
 
+		// The mode comes first: it decides the wording of everything after it. It is a setting, so it is always applied.
+		$mode = TWD_SK_Mode::get();
+		if ( isset( $data['mode'] ) ) {
+			if ( is_string( $data['mode'] ) && isset( TWD_SK_Mode::modes()[ $data['mode'] ] ) ) {
+				if ( $data['mode'] !== TWD_SK_Mode::stored() ) {
+					$changes['mode'] = $data['mode'];
+					$items[]         = array( 'group' => 'mode', 'field' => 'mode', 'label' => 'Site type', 'before' => TWD_SK_Mode::stored(), 'after' => $data['mode'], 'action' => 'set' );
+				}
+				$mode = $data['mode'];
+			} else {
+				$errors[] = 'Site type: choose one of ' . implode( ', ', array_keys( TWD_SK_Mode::modes() ) ) . '. It was dropped.';
+			}
+		}
+		$facts_label = TWD_SK_Mode::w( 'Facts', $mode );
+
 		// Site, header and footer fields map onto the saved profile and header and footer settings.
 		$map = array(
-			'site'   => array( 'name' => array( 'profile', 'site_name', 'Site name' ), 'person_name' => array( 'profile', 'person_name', 'Therapist name' ), 'person_job' => array( 'profile', 'person_job', 'Therapist job title' ), 'phone' => array( 'profile', 'phone', 'Phone' ), 'email' => array( 'profile', 'email', 'Email' ), 'address' => array( 'profile', 'address', 'Address lines' ), 'area_served' => array( 'profile', 'area_served', 'Where they work' ), 'registration' => array( 'profile', 'registration', 'Registration lines' ), 'same_as' => array( 'profile', 'same_as', 'Profile links' ) ),
+			'site'   => array( 'name' => array( 'profile', 'site_name', 'Site name' ), 'person_name' => array( 'profile', 'person_name', TWD_SK_Mode::w( 'person_name_label', $mode ) ), 'person_job' => array( 'profile', 'person_job', TWD_SK_Mode::w( 'person_job_label', $mode ) ), 'phone' => array( 'profile', 'phone', 'Phone' ), 'email' => array( 'profile', 'email', 'Email' ), 'address' => array( 'profile', 'address', 'Address lines' ), 'area_served' => array( 'profile', 'area_served', TWD_SK_Mode::w( 'area_label', $mode ) ), 'registration' => array( 'profile', 'registration', TWD_SK_Mode::w( 'registration_label', $mode ) ), 'same_as' => array( 'profile', 'same_as', 'Profile links' ) ),
 			'header' => array( 'menu' => array( 'profile', 'menu', 'Menu' ), 'cta_label' => array( 'profile', 'cta_label', 'Header button text' ), 'cta_url' => array( 'profile', 'cta_url', 'Header button link' ), 'layout' => array( 'chrome', 'header_variant', 'Header layout' ), 'sticky' => array( 'chrome', 'sticky', 'Fixed header' ), 'show_button' => array( 'chrome', 'show_button', 'Show the header button' ), 'show_strip' => array( 'chrome', 'show_strip', 'Contact strip' ) ),
 			'footer' => array( 'text' => array( 'profile', 'footer_text', 'Footer text' ), 'legal' => array( 'profile', 'legal', 'Legal links' ), 'layout' => array( 'chrome', 'footer_variant', 'Footer layout' ), 'columns' => array( 'chrome', 'footer_columns', 'Footer columns' ) ),
 		);
@@ -216,18 +232,18 @@ class TWD_SK_Brief {
 			}
 		}
 
-		// Practice facts.
+		// The facts.
 		if ( isset( $data['facts'] ) ) {
 			if ( ! is_string( $data['facts'] ) ) {
-				$errors[] = 'Practice facts must be text.';
+				$errors[] = $facts_label . ' must be text.';
 			} else {
 				$clean = TWD_SK_Facts::clean( $data['facts'] );
 				$len   = function_exists( 'mb_strlen' ) ? mb_strlen( $clean, 'UTF-8' ) : strlen( $clean );
 				$have  = TWD_SK_Facts::get();
 				if ( $len > TWD_SK_Facts::MAX ) {
-					$errors[] = 'Practice facts are too long (' . $len . ' characters, the limit is ' . TWD_SK_Facts::MAX . '). They were dropped.';
+					$errors[] = $facts_label . ' are too long (' . $len . ' characters, the limit is ' . TWD_SK_Facts::MAX . '). They were dropped.';
 				} elseif ( $clean !== $have && '' !== $clean ) {
-					$item = array( 'group' => 'facts', 'field' => 'facts', 'label' => 'Practice facts', 'before' => '' === $have ? 'empty' : strlen( $have ) . ' characters', 'after' => $len . ' characters' );
+					$item = array( 'group' => 'facts', 'field' => 'facts', 'label' => $facts_label, 'before' => '' === $have ? 'empty' : strlen( $have ) . ' characters', 'after' => $len . ' characters' );
 					if ( '' !== $have && ! $overwrite ) {
 						$item['action'] = 'skip_filled';
 					} else {
@@ -336,6 +352,15 @@ class TWD_SK_Brief {
 		$skipped   = array();
 		$errors    = $plan['errors'];
 
+		if ( $ch['mode'] ) {
+			$r = TWD_SK_Mode::set( $ch['mode'] );
+			if ( is_wp_error( $r ) ) {
+				$errors[] = 'Site type: ' . $r->get_error_message();
+			} else {
+				$applied[] = 'Site type is now ' . TWD_SK_Mode::modes()[ $r ]['label'] . '.';
+			}
+		}
+
 		foreach ( $plan['items'] as $it ) {
 			if ( 'skip_filled' === $it['action'] ) {
 				$skipped[] = $it['label'] . ' was already filled in, so it was kept as it is.';
@@ -361,9 +386,9 @@ class TWD_SK_Brief {
 		if ( $ch['facts'] ) {
 			$r = TWD_SK_Facts::save( $ch['facts'] );
 			if ( is_wp_error( $r ) ) {
-				$errors[] = 'Practice facts: ' . $r->get_error_message();
+				$errors[] = TWD_SK_Mode::w( 'Facts' ) . ': ' . $r->get_error_message();
 			} else {
-				$applied[] = 'Practice facts saved.';
+				$applied[] = TWD_SK_Mode::w( 'Facts' ) . ' saved.';
 			}
 		}
 		if ( $ch['style'] ) {
@@ -419,6 +444,7 @@ class TWD_SK_Brief {
 		$out    = array();
 		$out[]  = '{';
 		$out[]  = '  "schema": "' . self::SCHEMA . '",';
+		$out[]  = '  "mode": "' . TWD_SK_Mode::get() . '",';
 		$out[]  = '  "site": { "name": "", "person_name": "", "person_job": "", "phone": "", "email": "", "address": [], "area_served": "", "registration": [], "same_as": [] },';
 		$out[]  = '  "header": { "menu": [ { "label": "", "url": "/", "children": [] } ], "cta_label": "", "cta_url": "", "layout": "", "sticky": false, "show_button": true, "show_strip": false },';
 		$out[]  = '  "footer": { "text": "", "legal": [ { "label": "Privacy policy", "url": "/privacy-policy" } ], "layout": "", "columns": 2 },';
@@ -431,22 +457,23 @@ class TWD_SK_Brief {
 		$out[]  = '- header.layout: ' . $hv . ' (or empty to use the style\'s own).';
 		$out[]  = '- footer.layout: ' . $fv . ' (or empty). footer.columns: 1, 2 or 3.';
 		$out[]  = '- style.pack: ' . $packs . ' (or empty). Leave style.tokens empty unless the person asked for specific colours.';
-		$out[]  = '- pages[].type: ' . $types . '. A "service" page needs a topic, for example "Working with anxiety".';
+		$out[]  = '- mode: ' . implode( ', ', array_keys( TWD_SK_Mode::modes() ) ) . '. Keep it as given.';
+		$out[]  = '- pages[].type: ' . $types . '. A "service" page needs a topic, for example "' . TWD_SK_Mode::w( 'topic_example' ) . '".';
 		$out[]  = '- menu: up to ' . TWD_SK_Profile::MAX_MENU . ' items, one level of children. Links are page paths such as "/about", "/" for home, or full https addresses.';
-		$out[]  = '- facts: plain text with these headings in capitals, each followed by the person\'s own words: WHO I AM, WHO I HELP, WHAT I OFFER, MY APPROACH, QUALIFICATIONS, REGISTRATIONS AND MEMBERSHIPS, FEES, SESSIONS AND HOW IT WORKS, WHERE AND WHEN, HOW TO CONTACT ME, QUESTIONS PEOPLE ASK, WORDS AND PHRASES I LIKE, THINGS I NEVER SAY OR PROMISE.';
+		$out[]  = '- facts: plain text with these headings in capitals, each followed by the person\'s own words: ' . implode( ', ', TWD_SK_Mode::facts_headings() ) . '.';
 		$out[]  = '- Leave anything unknown as an empty string or empty list. Do not guess.';
 		return implode( "\n", $out );
 	}
 
 	public static function interview_prompt() {
 		$out   = array();
-		$out[] = 'You are helping me gather everything needed to build a therapist\'s website. I am a web designer. You will interview the therapist (or me, answering for them), then produce ONE JSON file that I can paste into their website.';
+		$out[] = TWD_SK_Mode::w( 'interview_intro' );
 		$out[] = '';
 		$out[] = '## How to run the session';
 		$out[] = '- Ask in small groups of three or four questions, one topic at a time, in plain English. Wait for the answers before moving on.';
-		$out[] = '- Topics, in this order: (1) who they are and how they like to be described; (2) who they help; (3) what they offer; (4) how they work, in their own words; (5) qualifications, registrations and memberships: ask for the exact wording they want shown, and say it can be left empty; (6) fees, sessions and how a first session goes; (7) where and when they work, online or in person; (8) how people should contact them: phone, email, address only if it is public; (9) the questions people ask most, with their answers; (10) their voice: words they like, words they never use, anything they never promise; (11) the feel of the site, for example calm, earthy, bright, formal, and which pages they want in the menu; (12) which pages to create (About, Contact, Home, a page for each kind of work or topic, a questions and answers page), with a one line note for each; (13) a search title and short description for each page: offer to draft them from the answers for approval.';
-		$out[] = '- Never invent anything. If they do not know or do not want to say, leave it empty. Never guess a qualification, registration, fee, policy, contact detail or testimonial.';
-		$out[] = '- Practice and project facts only. Nothing about the people they treat. Never ask for or include passwords, keys or private client details.';
+		$out[] = TWD_SK_Mode::w( 'interview_topics' );
+		$out[] = TWD_SK_Mode::w( 'interview_invent' );
+		$out[] = TWD_SK_Mode::w( 'interview_privacy' );
 		$out[] = '- Never use em dashes or en dashes. Use a comma, a full stop or a hyphen. UK spelling.';
 		$out[] = '- When you have everything, read back a short summary and ask what to correct.';
 		$out[] = '- After they confirm, reply with ONE JSON object in a code block, and nothing else, in exactly this shape:';

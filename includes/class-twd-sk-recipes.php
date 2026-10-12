@@ -26,24 +26,24 @@ class TWD_SK_Recipes {
 				'title'       => 'About',
 				'needs_topic' => false,
 				'parts'       => $starters['about']['parts'],
-				'intent'      => 'An About page. Who the therapist is, their story and what drives their work, how they work, what working with them is like, and a clear next step. Warm and human, in their own voice.',
+				'intent'      => TWD_SK_Mode::w( 'recipe_about' ),
 			),
 			'contact' => array(
 				'label'       => 'Contact page',
 				'title'       => 'Contact',
 				'needs_topic' => false,
 				'parts'       => $starters['contact']['parts'],
-				'intent'      => 'A Contact page. How to get in touch, what to expect after getting in touch, where and when they work, and a few honest questions and answers. Use only contact details that appear in the facts.',
+				'intent'      => TWD_SK_Mode::w( 'recipe_contact' ),
 			),
 			'home'    => array(
 				'label'       => 'Home page',
 				'title'       => 'Home',
 				'needs_topic' => false,
 				'parts'       => $starters['home']['parts'],
-				'intent'      => 'The Home page. A clear opening that says who the therapist helps and how, what they offer, a short personal section, reassurance, and a clear next step.',
+				'intent'      => TWD_SK_Mode::w( 'recipe_home' ),
 			),
 			'service' => array(
-				'label'       => 'Service or topic page (for example Working with anxiety)',
+				'label'       => TWD_SK_Mode::w( 'recipe_service_label' ),
 				'title'       => '',
 				'needs_topic' => true,
 				'parts'       => array(
@@ -54,7 +54,7 @@ class TWD_SK_Recipes {
 					array( 'notice', '' ),
 					array( 'cta', 'twd-sk-cta--strip' ),
 				),
-				'intent'      => 'A page about working with one topic or kind of work (given below). What it is and how it can feel, how this therapist works with it, what a first session is like, common questions, and a clear next step. Never promise outcomes, never make clinical or health claims, never diagnose. Use only what the facts say about how this therapist works.',
+				'intent'      => TWD_SK_Mode::w( 'recipe_service' ),
 			),
 			'faq'     => array(
 				'label'       => 'Questions and answers page',
@@ -65,7 +65,7 @@ class TWD_SK_Recipes {
 					array( 'faq', '' ),
 					array( 'cta', 'twd-sk-cta--strip' ),
 				),
-				'intent'      => 'A questions and answers page. The questions people ask most, answered in the therapist\'s own words, using only the facts.',
+				'intent'      => TWD_SK_Mode::w( 'recipe_faq' ),
 			),
 		);
 	}
@@ -103,7 +103,7 @@ class TWD_SK_Recipes {
 		}
 		$topic = TWD_SK_Profile::text( isset( $in['topic'] ) ? $in['topic'] : '', self::MAX_TOPIC );
 		if ( $r['needs_topic'] && '' === $topic ) {
-			return new WP_Error( 'twd_sk_bad_input', 'Say what the page is about, for example "Working with anxiety".' );
+			return new WP_Error( 'twd_sk_bad_input', 'Say what the page is about, for example "' . TWD_SK_Mode::w( 'topic_example' ) . '".' );
 		}
 		$title = TWD_SK_Profile::text( isset( $in['title'] ) ? $in['title'] : '', TWD_SK_Template::MAX_TITLE );
 		if ( '' === $title ) {

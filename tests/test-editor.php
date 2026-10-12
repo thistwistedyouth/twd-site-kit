@@ -384,7 +384,7 @@ twd_sk_test( 'build: the committed stylesheets are exactly what tools/build-css.
 
 twd_sk_test( 'site js: the profile, header and footer sections use only the editor api, the media picker is optional, and downloads are built from Blobs', function () {
 	$js = twd_sk_ed_all_js()['site'];
-	foreach ( array( "api('GET', '/site/profile')", "api('POST', '/site/profile'", "api('POST', '/site/chrome'", "api('GET', '/site/templates')", 'new Blob(', 'createObjectURL', 'revokeObjectURL', 'window.wp.media', 'Each line needs a label, a bar and a link', 'must come under a menu line', 'Only add what the client has given you' ) as $needle ) {
+	foreach ( array( "api('GET', '/site/profile')", "api('POST', '/site/profile'", "api('POST', '/site/chrome'", "api('GET', '/site/templates')", 'new Blob(', 'createObjectURL', 'revokeObjectURL', 'window.wp.media', 'Each line needs a label, a bar and a link', 'must come under a menu line', "Only add what the ' + W('person', 'therapist') + ' has given you" ) as $needle ) {
 		twd_sk_has( $needle, $js );
 	}
 	twd_sk_has( "Download the Theme Builder templates", $js );

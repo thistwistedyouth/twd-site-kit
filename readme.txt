@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.6.2
+Stable tag: 0.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,10 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.7.0 =
+* New: therapy or business mode. One switch for administrators (Site tab, Site type; or wp twd-sk mode business; or "mode" in a site brief) that changes the wording the editor and the AI use, the facts outline, the page types, the interview prompt and the search engine details (LocalBusiness instead of a therapy practice). Therapy stays the default and its wording is unchanged. Switching never rewrites a page that is already written.
+* Safer: the release check now reads the list of plugin files from the plugin itself.
 
 = 0.6.2 =
 * New: wp twd-sk doctor, and a Site report in the Site tab. A plain-text report of how the site stands (versions, safe mode, style, front page, the Elementor header and footer templates and their display conditions, which pages use the kit and what is left to fix, which details are filled in, and the pictures with their alt text). It never shows keys, passwords or the contents of your details, so it is safe to paste into a message. It changes nothing.

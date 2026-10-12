@@ -557,6 +557,7 @@ require_once ABSPATH . 'includes/class-twd-sk-site.php';
 require_once ABSPATH . 'includes/class-twd-sk-profile.php';
 require_once ABSPATH . 'includes/class-twd-sk-chrome.php';
 require_once ABSPATH . 'includes/class-twd-sk-elementor.php';
+require_once ABSPATH . 'includes/class-twd-sk-mode.php';
 require_once ABSPATH . 'includes/class-twd-sk-starters.php';
 require_once ABSPATH . 'includes/class-twd-sk-setup.php';
 require_once ABSPATH . 'includes/class-twd-sk-mirror.php';

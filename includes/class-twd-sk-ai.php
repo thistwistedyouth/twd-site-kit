@@ -48,13 +48,13 @@ class TWD_SK_AI {
 			}
 		}
 		$out[] = 'Change only what the instruction asks for. Keep every other word, link and image as it is.';
-		$out[] = 'Use only the facts in the page, the practice facts and the site details the therapist supplied. Where you need a fact you do not have, write [PLACEHOLDER: what is needed]. Never invent a qualification, registration, fee, policy, contact detail, testimonial or claim.';
+		$out[] = 'Use only the facts in the page, the ' . TWD_SK_Mode::w( 'facts' ) . ' and the site details the ' . TWD_SK_Mode::w( 'person' ) . ' supplied. Where you need a fact you do not have, write [PLACEHOLDER: what is needed]. Never invent a ' . TWD_SK_Mode::w( 'invent_list' ) . '.';
 		return $out;
 	}
 
 	public static function system_prompt( $mode ) {
 		$out   = array();
-		$out[] = 'You edit part of one page of a therapist\'s website. The page is HTML made from a fixed set of components.';
+		$out[] = 'You edit part of one page of a ' . TWD_SK_Mode::w( 'persons' ) . ' website. The page is HTML made from a fixed set of components.';
 		$out[] = '';
 		$out[] = '## Output';
 		if ( 'sections' === $mode ) {
@@ -92,7 +92,7 @@ class TWD_SK_AI {
 		}
 		if ( '' !== $facts ) {
 			$out[] = '';
-			$out[] = 'Extra facts the therapist supplied for this change (the only other new facts you may use):';
+			$out[] = 'Extra facts the ' . TWD_SK_Mode::w( 'person' ) . ' supplied for this change (the only other new facts you may use):';
 			$out[] = $facts;
 		}
 		$out[] = '';
@@ -259,15 +259,15 @@ class TWD_SK_AI {
 	/** System text for drafting a whole new page. */
 	public static function page_system_prompt() {
 		$out   = array();
-		$out[] = 'You write one new page for a therapist\'s website. The page is HTML made from a fixed set of components.';
+		$out[] = 'You write one new page for a ' . TWD_SK_Mode::w( 'persons' ) . ' website. The page is HTML made from a fixed set of components.';
 		$out[] = '';
 		$out[] = '## Output';
 		$out[] = 'Reply with the full page as raw HTML: a list of section elements that follows the outline you are given. Nothing before, nothing after, no code fence, no commentary.';
 		$out[] = '';
 		$out[] = '## Rules';
 		$rules = self::rules();
-		$rules[] = 'Follow the outline: keep its components and their order. Replace every [PLACEHOLDER] in the outline with real wording written from the practice facts, in the therapist\'s own voice. Where the facts do not say what is needed, keep a [PLACEHOLDER: what is needed] there.';
-		$rules[] = 'Keep every image address in the outline exactly as it is. The therapist adds real pictures later. Never invent an image file name.';
+		$rules[] = 'Follow the outline: keep its components and their order. Replace every [PLACEHOLDER] in the outline with real wording written from the ' . TWD_SK_Mode::w( 'facts' ) . ', in the ' . TWD_SK_Mode::w( 'persons' ) . ' own voice. Where the facts do not say what is needed, keep a [PLACEHOLDER: what is needed] there.';
+		$rules[] = 'Keep every image address in the outline exactly as it is. The ' . TWD_SK_Mode::w( 'person' ) . ' adds real pictures later. Never invent an image file name.';
 		$rules[] = 'Use the contact details and registration wording exactly as given in the facts and site details. If they are not given, leave a [PLACEHOLDER].';
 		foreach ( $rules as $i => $rule ) {
 			$out[] = ( $i + 1 ) . '. ' . $rule;
@@ -296,7 +296,7 @@ class TWD_SK_AI {
 			$out[] = $master;
 		}
 		if ( '' === TWD_SK_Facts::get() ) {
-			$out[] = 'No practice facts have been saved yet. Do not invent any. Keep a [PLACEHOLDER: what is needed] wherever a fact is needed.';
+			$out[] = 'No ' . TWD_SK_Mode::w( 'facts' ) . ' have been saved yet. Do not invent any. Keep a [PLACEHOLDER: what is needed] wherever a fact is needed.';
 		}
 		$out[]  = '';
 		$out[]  = 'The outline to follow (replace the placeholders, keep the components and their order):';
@@ -313,7 +313,7 @@ class TWD_SK_AI {
 		if ( ! $include_facts ) {
 			$block = TWD_SK_Facts::prompt_block();
 			if ( '' !== $block ) {
-				$r = str_replace( $block, 'The therapist will give you the practice facts in the chat. Ask for them first, and use only what they say.', $r );
+				$r = str_replace( $block, 'The ' . TWD_SK_Mode::w( 'person' ) . ' will give you the ' . TWD_SK_Mode::w( 'facts' ) . ' in the chat. Ask for them first, and use only what they say.', $r );
 			}
 		}
 		return self::page_system_prompt() . "\n## The request\n" . $r;
@@ -357,7 +357,7 @@ class TWD_SK_AI {
 		$html = implode( "\n", $parts['sections'] );
 
 		$existing = isset( $raw['page_id'] ) ? (int) $raw['page_id'] : 0;
-		$note     = 'AI draft from the practice facts (' . $in['type'] . ')';
+		$note     = 'AI draft from the ' . TWD_SK_Mode::w( 'facts' ) . ' (' . $in['type'] . ')';
 		if ( $existing > 0 ) {
 			// Fill a page that already exists (for example an outline made from a site brief) as a new version.
 			$id    = $existing;

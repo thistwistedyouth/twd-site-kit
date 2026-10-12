@@ -65,12 +65,12 @@ class TWD_SK_Facts {
 	 */
 	public static function save( $text ) {
 		if ( ! is_string( $text ) ) {
-			return new WP_Error( 'twd_sk_bad_facts', 'The practice facts must be text.' );
+			return new WP_Error( 'twd_sk_bad_facts', 'The ' . TWD_SK_Mode::w( 'facts' ) . ' must be text.' );
 		}
 		$clean = self::clean( $text );
 		$len   = function_exists( 'mb_strlen' ) ? mb_strlen( $clean, 'UTF-8' ) : strlen( $clean );
 		if ( $len > self::MAX ) {
-			return new WP_Error( 'twd_sk_bad_facts', 'The practice facts are too long (' . $len . ' characters). Keep them under ' . self::MAX . '.' );
+			return new WP_Error( 'twd_sk_bad_facts', 'The ' . TWD_SK_Mode::w( 'facts' ) . ' are too long (' . $len . ' characters). Keep them under ' . self::MAX . '.' );
 		}
 		$now = function_exists( 'current_time' ) ? (string) current_time( 'mysql', true ) : gmdate( 'Y-m-d H:i:s' );
 		update_option( self::OPTION, array( 'text' => $clean, 'updated' => $now ), false );
@@ -79,40 +79,7 @@ class TWD_SK_Facts {
 
 	/** The outline offered to start from. Plain words, no sample facts. */
 	public static function template() {
-		return implode( "\n", array(
-			'WHO I AM',
-			'Your name, how you like to be described, and your story in a few lines.',
-			'',
-			'WHO I HELP',
-			'The people you work with, and what they usually come to you for.',
-			'',
-			'WHAT I OFFER',
-			'Each kind of work you do, one line each: therapy, coaching, training, groups, anything else.',
-			'',
-			'MY APPROACH',
-			'How you work, in your own words.',
-			'',
-			'QUALIFICATIONS, REGISTRATIONS AND MEMBERSHIPS',
-			'Write exactly what you are entitled to say, in the wording you want used. Leave this empty if there is nothing.',
-			'',
-			'FEES, SESSIONS AND HOW IT WORKS',
-			'Session length, fees, how a first session goes, cancellations. Only what you want stated.',
-			'',
-			'WHERE AND WHEN',
-			'Where you work, online or in person, and your usual days and times.',
-			'',
-			'HOW TO CONTACT ME',
-			'How people should get in touch.',
-			'',
-			'QUESTIONS PEOPLE ASK',
-			'The questions you hear most, with your answers.',
-			'',
-			'WORDS AND PHRASES I LIKE',
-			'Wording that sounds like you.',
-			'',
-			'THINGS I NEVER SAY OR PROMISE',
-			'Claims, words or promises that must not appear.',
-		) ) . "\n";
+		return implode( "\n", TWD_SK_Mode::w( 'facts_template' ) ) . "\n";
 	}
 
 	/**
@@ -123,17 +90,17 @@ class TWD_SK_Facts {
 		$parts = array();
 		$text  = self::get();
 		if ( '' !== $text ) {
-			$parts[] = "Practice facts (written by the therapist, the only source for new claims):\n" . $text;
+			$parts[] = TWD_SK_Mode::w( 'Facts' ) . ' (written by the ' . TWD_SK_Mode::w( 'person' ) . ", the only source for new claims):\n" . $text;
 		}
 		$p     = TWD_SK_Profile::get();
 		$lines = array();
 		$map   = array(
-			'site_name'   => 'Practice name',
-			'person_name' => 'Therapist name',
+			'site_name'   => TWD_SK_Mode::w( 'site_name_label' ),
+			'person_name' => TWD_SK_Mode::w( 'person_name_label' ),
 			'person_job'  => 'Job title',
 			'phone'       => 'Phone',
 			'email'       => 'Email',
-			'area_served' => 'Where they work',
+			'area_served' => TWD_SK_Mode::w( 'area_label' ),
 		);
 		foreach ( $map as $key => $label ) {
 			if ( is_string( $p[ $key ] ) && '' !== trim( $p[ $key ] ) && false === stripos( $p[ $key ], '[PLACEHOLDER' ) ) {
@@ -147,11 +114,11 @@ class TWD_SK_Facts {
 		}
 		foreach ( (array) $p['registration'] as $r ) {
 			if ( is_string( $r ) && '' !== trim( $r ) && false === stripos( $r, '[PLACEHOLDER' ) ) {
-				$lines[] = 'Registration or membership line (use exactly): ' . $r;
+				$lines[] = TWD_SK_Mode::w( 'registration_line' ) . $r;
 			}
 		}
 		if ( $lines ) {
-			$parts[] = "Site details (real, supplied by the therapist):\n" . implode( "\n", $lines );
+			$parts[] = 'Site details (real, supplied by the ' . TWD_SK_Mode::w( 'person' ) . "):\n" . implode( "\n", $lines );
 		}
 		return implode( "\n\n", $parts );
 	}

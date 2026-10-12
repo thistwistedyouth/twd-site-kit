@@ -50,8 +50,11 @@ if unzip -Z1 "$ROOT/dist/twd-site-kit-latest.zip" | grep -i -E 'claude|history|r
 	echo "FAIL: the zip contains files that must not ship"; exit 1
 fi
 
-# Everything the plugin loads is in the zip.
-for f in twd-site-kit.php readme.txt includes/class-twd-sk-updater.php includes/class-twd-sk-registry.php includes/class-twd-sk-sanitizer.php includes/class-twd-sk-store.php includes/class-twd-sk-prompt.php includes/class-twd-sk-report.php includes/class-twd-sk-template.php includes/class-twd-sk-preview.php includes/class-twd-sk-rest.php includes/class-twd-sk-editor.php includes/class-twd-sk-safe.php includes/class-twd-sk-modules.php includes/class-twd-sk-page.php includes/class-twd-sk-packs.php includes/class-twd-sk-contrast.php includes/class-twd-sk-site.php includes/class-twd-sk-profile.php includes/class-twd-sk-chrome.php includes/class-twd-sk-elementor.php includes/class-twd-sk-starters.php includes/class-twd-sk-setup.php includes/class-twd-sk-mirror.php includes/class-twd-sk-images.php includes/class-twd-sk-quality.php includes/class-twd-sk-seo.php includes/class-twd-sk-schema.php includes/class-twd-sk-sections.php includes/class-twd-sk-facts.php includes/class-twd-sk-recipes.php includes/class-twd-sk-ai.php includes/class-twd-sk-proposals.php includes/class-twd-sk-brief.php includes/class-twd-sk-doctor.php includes/class-twd-sk-assets.php includes/class-twd-sk-cli.php assets/twd-site-kit.css assets/twd-site-kit-editor.css assets/twd-site-kit-editor.js assets/twd-site-kit-editor-site.js assets/twd-site-kit-editor-seo.js templates/kit-page.php packs/sage.json packs/grove.json starters/_gallery.html; do
+# Everything the plugin loads is in the zip: every file twd-site-kit.php requires (read from the file
+# itself, so a new class can never be left out), plus the assets, template and packs it uses.
+LOADED="$(grep -o "includes/[a-z0-9-]*\.php" "$ROOT/twd-site-kit.php" | sort -u)"
+[ -n "$LOADED" ] || { echo "FAIL: could not read the require lines in twd-site-kit.php"; exit 1; }
+for f in twd-site-kit.php readme.txt $LOADED assets/twd-site-kit.css assets/twd-site-kit-editor.css assets/twd-site-kit-editor.js assets/twd-site-kit-editor-site.js assets/twd-site-kit-editor-seo.js templates/kit-page.php packs/sage.json packs/grove.json starters/_gallery.html; do
 	[ -f "$VERIFY/twd-site-kit/$f" ] || { echo "FAIL: missing from the zip: $f"; exit 1; }
 done
 

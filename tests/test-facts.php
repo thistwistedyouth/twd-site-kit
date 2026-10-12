@@ -202,13 +202,17 @@ twd_sk_test( 'facts js: the editor sends only through its api, offers the outlin
 	$site = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' );
 	twd_sk_has( "api('POST', '/pages/generate', body)", $main );
 	twd_sk_has( "api('POST', '/pages/recipe-prompt', body)", $main );
-	twd_sk_has( 'No practice facts are saved yet', $main );
+	twd_sk_has( "'No ' + FACTS + ' are saved yet", $main );
+	twd_sk_has( "var FACTS = W('facts', 'practice facts');", $main );
 	twd_sk_has( 'Create a draft with AI', $main );
-	twd_sk_has( 'Update from my practice facts', $main );
+	twd_sk_has( "'Update from my ' + FACTS", $main );
 	twd_sk_has( "api('GET', '/site/facts')", $site );
 	twd_sk_has( "api('POST', '/site/facts'", $site );
 	twd_sk_has( 'Start from the outline', $site );
-	twd_sk_has( 'Only administrators can see it. It is never shown on the site.', $site );
+	twd_sk_has( "W('facts_help', '')", $site );
+	foreach ( array( 'therapy', 'business' ) as $mode ) {
+		twd_sk_has( 'Only administrators can see it. It is never shown on the site.', TWD_SK_Mode::w( 'facts_help', $mode ), $mode );
+	}
 	foreach ( array( $main, $site ) as $js ) {
 		twd_sk_hasnt( 'innerHTML', $js );
 		twd_sk_hasnt( 'eval(', $js );

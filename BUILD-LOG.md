@@ -2,12 +2,13 @@
 
 The one place to see where this project is. Newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md. Update this file at the end of every piece of work, in the same commit.
 
-## Where we are (last updated at release 0.6.2, 4 Oct 2026)
+## Where we are (last updated at release 0.7.0, 12 Oct 2026)
 
-**Released and live in the update file:** 0.6.2. Sites update from Plugins, "Check for updates", "update now".
+**Released and live in the update file:** 0.7.0. Sites update from Plugins, "Check for updates", "update now".
 
 | Version | What it added |
 |---|---|
+| 0.7.0 | Therapy or business mode: one admin switch (Site tab, `wp twd-sk mode`, or `mode` in a site brief) that changes the editor and AI wording, the facts outline, page types, the interview prompt and the search details type. Therapy wording unchanged |
 | 0.6.2 | `wp twd-sk doctor` and the Site tab's Site report: a plain-text, paste-safe report of the site's state |
 | 0.6.1 | Site brief: one JSON file for a whole site, interview prompt for a Claude chat, check then apply, draft outline pages with Fill with AI |
 | 0.6.0 | A simpler pop-up: Site tab sections, history, extras and the external AI route are closed fold-outs, the Edit screen is one clear step |
@@ -21,15 +22,15 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 | 0.3.0 | The Edit with AI pop-up: prompt, preview, apply, history |
 
 **Next, in order (agreed with the owner, 12 Oct 2026; full spec in `docs/plan-modes-and-setup.md`):**
-- A. 0.7.0: therapy and business mode (`TWD_SK_Mode`, option `twd_sk_mode`, default therapy, one word list per mode).
+- A. DONE in 0.7.0: therapy and business mode (`TWD_SK_Mode`, option `twd_sk_mode`, default therapy, one word list per mode).
 - B. 0.7.1: the setup page (Settings > Set up site), the admin-only front-page button on a fresh install, picture slots and named custom pictures, one build engine (`TWD_SK_Build`) shared with `wp twd-sk build`, all pages as drafts.
-- C. After that, each needing the owner's go: 0.7.2 plan step (sitemap and section outline before build), 0.7.3 add a section by asking, 0.8.x more section types, brand from logo, picture help, starter sets per business type, 0.9.0 launch check.
+- C. After that (the owner said on 12 Oct: build all of these now, beta stage, test afterwards): 0.7.2 plan step (sitemap and section outline before build), 0.7.3 add a section by asking, 0.8.x more section types, brand from logo, picture help, starter sets per business type, 0.9.0 launch check.
 
 **Earlier list (4 Oct 2026), still standing after A and B:**
 1. DONE in 0.6.2: the doctor report.
 2. Owner approves the plans for items 3 to 6 below, answering the seven decisions in the 4 Oct plan (verified registration definition, inline fact tags, publish blocking scope, image matching, typed-details form, confirmation sheet, hosting SSH). PLANNED, NOT APPROVED: do not build them until the owner says so.
-3. Site brief v2 (0.7.0): image slots, and a source tag on every fact and registration line; the publish check counts unverified registration lines as must fix.
-4. Interview prompt v2 (0.7.1): transcript in; facts, brief, gaps and questions out, with a quote behind each fact; a client confirmation sheet; a typed-details form.
+3. Site brief v2 (later, version to be decided): image slots, and a source tag on every fact and registration line; the publish check counts unverified registration lines as must fix.
+4. Interview prompt v2 (later, version to be decided): transcript in; facts, brief, gaps and questions out, with a quote behind each fact; a client confirmation sheet; a typed-details form.
 5. DONE (no release): generic client-folder template in `docs/client-folder/` (layout, client brief template, intake form field list for ONE Elementor Pro form on one page with steps, call questions, 30 minute run sheet, photo shot list, recording and privacy notes). The owner chose one form, not a form per stage; Elementor forms cannot save and resume, so the form is kept short and photos are optional. Interview prompt v2 (item 4) will read the form export plus the transcript, which removes the separate typed-details form from its plan.
 6. Plan only, until a second-site timing test: base site and provisioning.
 7. In parallel, owner: verify 0.4.0 to 0.6.2 on the pilot site (lists below), including Ask the AI now that the articles plugin has its filters.
@@ -39,7 +40,7 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 **Waiting on other projects (cross-project contract):**
 - Nothing. The Articles & Resource Production plugin (`twd-article-publisher`, repo `therapy-web-designs`) now offers the two filters Site Kit uses, from its version 1.34.0 (checked 4 Oct 2026; re-checked 11 Oct 2026, the filters are unchanged, that plugin is now at 1.37.1 on a branch not yet merged to its main): `twd_ai_is_configured` (true when a key is saved) and `twd_ai_complete( null, $system, $message, $max_tokens )` (returns text, a WP_Error, or null; max tokens clamped to 256 to 8000). The names match what Site Kit calls. Site Kit holds no key and calls no AI service. Ask the AI, drafting pages with AI, Fill with AI and the Site tab suggestions appear on a site only when that plugin is at 1.34.0 or later with a key saved.
 
-**Not yet verified on a real site (needs a human):** importing the two Theme Builder templates on Elementor Pro 4.3.1 and their display condition, real Yoast behaviour (writing its fields, the schema graph filter), the media picker, how a page behaves if the plugin is deactivated, caching on the host, Ask the AI, drafting pages and the Site tab suggestions with a real key (the articles plugin side is now in place), importing a real site brief, and the fold-outs on a real phone. The test plan is in the release notes of each version in the conversation that built it; the 0.4.0 steps are in the section below.
+**Not yet verified on a real site (needs a human):** importing the two Theme Builder templates on Elementor Pro 4.3.1 and their display condition, real Yoast behaviour (writing its fields, the schema graph filter), the media picker, how a page behaves if the plugin is deactivated, caching on the host, Ask the AI, drafting pages and the Site tab suggestions with a real key (the articles plugin side is now in place), importing a real site brief, the fold-outs on a real phone, and (0.7.0) switching a fresh site to business mode and checking the Site tab labels, a drafted page's wording and the LocalBusiness search details. The test plan is in the release notes of each version in the conversation that built it; the 0.4.0 steps are in the section below.
 
 **Known limitation:** a page that still uses the old `[twd_page]` shortcode cannot be mirrored into its content for site search until its content is cleared once after switching it to the kit template.
 

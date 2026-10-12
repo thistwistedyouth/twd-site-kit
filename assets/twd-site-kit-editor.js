@@ -15,6 +15,14 @@
 		return;
 	}
 
+	// Words that change with the site type (therapy or business), from TWD_SK_Mode. Therapy wording if missing.
+	var WORDS = cfg.words || {};
+	function W(key, fallback) {
+		return typeof WORDS[key] === 'string' && WORDS[key] ? WORDS[key] : fallback;
+	}
+	var FACTS = W('facts', 'practice facts');
+	var FACTS_PAGE_TITLE = 'New page from your ' + FACTS;
+
 	var state = {
 		tab: '',
 		info: null,
@@ -384,7 +392,7 @@
 		show(ui.reloadBtn, false);
 		var noteKids = [
 			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-note', text: 'Where did these facts come from?' }),
-			el('p', { className: 'twd-sk-ed__help', text: 'For example: the therapist told me on a call, or their old website. This is saved with the version so you can see it later.' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'For example: the ' + W('person', 'therapist') + ' told me on a call, or their old website. This is saved with the version so you can see it later.' }),
 			ui.note
 		];
 		if (ai) {
@@ -430,7 +438,7 @@
 		['More professional', 'Make the tone more professional.'],
 		['Stronger first line', 'Write a stronger first line.'],
 		['Fix links and headings', 'Fix link wording and heading order.'],
-		['Update from my practice facts', 'Update this so it matches my practice facts. Keep the layout.']
+		['Update from my ' + FACTS, 'Update this so it matches my ' + FACTS + '. Keep the layout.']
 	];
 
 	function buildRemixStep(panel) {
@@ -458,7 +466,7 @@
 		ui.facts = el('textarea', { id: 'twd-sk-ed-facts', className: 'twd-sk-ed__textarea twd-sk-ed__short', maxlength: '3000', spellcheck: 'true' });
 		ui.factsKids = [
 			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-facts', text: 'Extra facts for this change (optional)' }),
-			el('p', { className: 'twd-sk-ed__help', text: 'The AI may use only these, the practice facts and the site details for anything new. Leave it empty to keep to what is already there.' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'The AI may use only these, the ' + FACTS + ' and the site details for anything new. Leave it empty to keep to what is already there.' }),
 			ui.facts
 		];
 		ui.remixBtn = button('Ask the AI', 'primary', doRemix);
@@ -518,7 +526,7 @@
 				var unlock = el('input', { id: uid, type: 'checkbox', value: String(s.index) });
 				entry.unlock = unlock;
 				row.appendChild(el('p', { className: 'twd-sk-ed__help twd-sk-ed__locknote', text: 'The words here are locked. The AI can change the layout only.' }));
-				row.appendChild(el('label', { className: 'twd-sk-ed__check twd-sk-ed__unlock', 'for': uid }, [unlock, el('span', { text: 'Allow new wording (only words the therapist has given you)' })]));
+				row.appendChild(el('label', { className: 'twd-sk-ed__check twd-sk-ed__unlock', 'for': uid }, [unlock, el('span', { text: 'Allow new wording (only words the ' + W('person', 'therapist') + ' has given you)' })]));
 			}
 			ui.secChecks.push(entry);
 			ui.secBox.appendChild(row);
@@ -873,13 +881,13 @@
 			var t = sec.querySelector('.twd-sk-ed__step-title');
 			if (t && t.textContent === 'New page') {
 				foldSection(sec, { summary: 'Make an empty draft page' });
-			} else if (t && t.textContent === 'New page from your practice facts') {
+			} else if (t && t.textContent === FACTS_PAGE_TITLE) {
 				foldSection(sec, { summary: 'Draft an About, Contact or topic page from the facts' });
 			}
 		});
 	}
 
-	/* ---- a new page drafted from the practice facts ---- */
+	/* ---- a new page drafted from the facts ---- */
 
 	function buildFactsPageSection(panel) {
 		var recipes = cfg.recipes || {};
@@ -894,7 +902,7 @@
 		ui.fpTopic = el('input', { id: 'twd-sk-ed-fptopic', className: 'twd-sk-ed__input', type: 'text', maxlength: '120', autocomplete: 'off' });
 		ui.fpTopicBox = el('div', { className: 'twd-sk-ed__field' }, [
 			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-fptopic', text: 'What is the page about?' }),
-			el('p', { className: 'twd-sk-ed__help', text: 'For example: Working with anxiety. This becomes the page title.' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'For example: ' + W('topic_example', 'Working with anxiety') + '. This becomes the page title.' }),
 			ui.fpTopic
 		]);
 		ui.fpTitle = el('input', { id: 'twd-sk-ed-fptitle', className: 'twd-sk-ed__input', type: 'text', maxlength: String(cfg.maxTitle || 120), autocomplete: 'off' });
@@ -906,10 +914,10 @@
 		ui.fpCopy = button('Copy prompt for external AI', cfg.aiAvailable ? 'secondary' : 'primary', doFactsPrompt);
 		show(ui.fpCreate, !!cfg.aiAvailable);
 		var kids = [
-			el('p', { className: 'twd-sk-ed__help', text: 'Draft a new page from the practice facts about the person. It is saved as a draft and nothing is published. Wherever the facts do not say what is needed, you will see a [PLACEHOLDER] to replace before it can be published.' })
+			el('p', { className: 'twd-sk-ed__help', text: 'Draft a new page from the ' + FACTS + '. It is saved as a draft and nothing is published. Wherever the facts do not say what is needed, you will see a [PLACEHOLDER] to replace before it can be published.' })
 		];
 		if (!cfg.factsSaved) {
-			kids.push(el('p', { className: 'twd-sk-ed__banner', role: 'status', text: 'No practice facts are saved yet, so the draft will be mostly placeholders.' + (cfg.canManage ? '' : ' An administrator can add them in the Site tab.') }));
+			kids.push(el('p', { className: 'twd-sk-ed__banner', role: 'status', text: 'No ' + FACTS + ' are saved yet, so the draft will be mostly placeholders.' + (cfg.canManage ? '' : ' An administrator can add them in the Site tab.') }));
 		}
 		kids.push(
 			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-fptype', text: 'Page type' }),
@@ -924,7 +932,7 @@
 			ui.fpPromptBox,
 			el('p', {}, [ui.fpLink])
 		);
-		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [el('h3', { className: 'twd-sk-ed__step-title', text: 'New page from your practice facts' })].concat(kids)));
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [el('h3', { className: 'twd-sk-ed__step-title', text: FACTS_PAGE_TITLE })].concat(kids)));
 		syncFactsPage();
 	}
 
@@ -1388,6 +1396,7 @@
 	// What other editor scripts (the Site tab) may use. They register tabs here before the pop-up first opens.
 	window.TWD_SK_ED = {
 		cfg: cfg,
+		W: W,
 		api: api,
 		el: el,
 		clear: clear,

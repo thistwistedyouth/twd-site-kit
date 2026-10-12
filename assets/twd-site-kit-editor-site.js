@@ -13,6 +13,12 @@
 		return;
 	}
 	var el = ED.el;
+	var W = ED.W || function (k, f) {
+		return f;
+	};
+	var WORDS = (ED.cfg && ED.cfg.words) || {};
+	var FACTS = W('facts', 'practice facts');
+	var FACTS_TITLE = W('Facts', 'Practice facts');
 	var clear = ED.clear;
 	var show = ED.show;
 	var button = ED.button;
@@ -589,6 +595,9 @@
 		pui.personName = textInput('twd-sk-pf-personname', 80);
 		pui.personJob = textInput('twd-sk-pf-personjob', 80);
 		pui.sameAs = textArea('twd-sk-pf-sameas', 3);
+		// Business mode hides the job title; a value already saved is kept and still sent back unchanged.
+		pui.personJobField = field(W('person_job_label', 'Therapist job title'), pui.personJob);
+		show(pui.personJobField, WORDS.show_person_job !== false);
 		pui.checks = el('div', { className: 'twd-sk-ed__banner', role: 'status', hidden: '' });
 		pui.msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
 		pui.saveBtn = button('Save site details', 'primary', saveProfile);
@@ -600,7 +609,7 @@
 		logoRow.setAttribute('id', 'twd-sk-pf-logo-row');
 		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
 			el('h3', { className: 'twd-sk-ed__step-title', text: 'Site details' }),
-			el('p', { className: 'twd-sk-ed__help', text: 'These feed the header, the footer and the search engine details. Only add what the client has given you. Leave a box empty rather than guess.' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'These feed the header, the footer and the search engine details. Only add what the ' + W('person', 'therapist') + ' has given you. Leave a box empty rather than guess.' }),
 			pui.checks,
 			el('div', { className: 'twd-sk-ed__grid' }, [
 				field('Site name', pui.name, 'Shown as text if there is no logo.'),
@@ -609,13 +618,13 @@
 				field('Header button link', pui.ctaUrl, 'A page on this site, such as /contact.'),
 				field('Phone number', pui.phone),
 				field('Email address', pui.email),
-				field('Where you work', pui.area, 'For example a town, or Online.'),
-				field('Therapist name', pui.personName, 'For the search engine details.'),
-				field('Therapist job title', pui.personJob)
+				field(W('area_label', 'Where you work'), pui.area, 'For example a town, or Online.'),
+				field(W('person_name_label', 'Therapist name'), pui.personName, 'For the search engine details.'),
+				pui.personJobField
 			]),
-			field('Address lines', pui.address, 'Up to three lines. Leave empty for an online practice.'),
+			field('Address lines', pui.address, W('address_help', 'Up to three lines. Leave empty for an online practice.')),
 			field('Footer text', pui.footerText, 'One or two sentences.'),
-			field('Registration or membership lines', pui.registration, 'Only exactly what the therapist has supplied. One line each, up to four.'),
+			field(W('registration_label', 'Registration lines'), pui.registration, W('registration_help', 'Only exactly what the therapist has supplied. One line each, up to four.')),
 			field('Menu', pui.menu, 'One link per line: Label | /link. A line starting with a dash is a sub-menu link under the line above. Up to 8 menu items.'),
 			field('Legal links', pui.legal, 'One per line: Label | /link. Shown in the footer.'),
 			field('Professional profile links', pui.sameAs, 'Full https addresses, one per line, up to four. Optional.'),
@@ -955,7 +964,7 @@
 
 	ED.onOpen.push(addPills);
 
-	/* ---- practice facts (the master document) ---- */
+	/* ---- the facts (the master document) ---- */
 
 	var fui = { data: null, snap: null };
 
@@ -991,7 +1000,7 @@
 		fui.count = el('p', { className: 'twd-sk-ed__help', 'aria-live': 'polite' });
 		fui.updated = el('p', { className: 'twd-sk-ed__help' });
 		fui.msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
-		fui.saveBtn = button('Save practice facts', 'primary', saveFacts);
+		fui.saveBtn = button('Save ' + FACTS, 'primary', saveFacts);
 		fui.templateBtn = button('Start from the outline', 'secondary', function () {
 			fui.text.value = fui.data ? fui.data.template : '';
 			updateFactsCount();
@@ -999,9 +1008,9 @@
 		});
 		show(fui.templateBtn, false);
 		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
-			el('h3', { className: 'twd-sk-ed__step-title', text: 'Practice facts' }),
-			el('p', { className: 'twd-sk-ed__help', text: 'One master document about the person and their practice: who they are, who they help, what they offer, their approach, qualifications and registrations in exactly the wording they supplied, fees, where and when, questions people ask, and words they like or never use. The AI uses only this, and the site details above, for anything new it writes. Only administrators can see it. It is never shown on the site. Write about the practice only, never about the people they work with.' }),
-			field('Practice facts', fui.text),
+			el('h3', { className: 'twd-sk-ed__step-title', text: FACTS_TITLE }),
+			el('p', { className: 'twd-sk-ed__help', text: W('facts_help', '') }),
+			field(FACTS_TITLE, fui.text),
 			fui.count,
 			fui.updated,
 			el('div', { className: 'twd-sk-ed__actions' }, [fui.saveBtn, fui.templateBtn]),
@@ -1016,7 +1025,7 @@
 	}
 
 	ED.addDirtyCheck(function () {
-		return (fui.data && fui.snap !== null && fui.text.value !== fui.snap) ? 'practice facts' : '';
+		return (fui.data && fui.snap !== null && fui.text.value !== fui.snap) ? FACTS : '';
 	}, function () {
 		if (fui.data) {
 			fillFacts();
@@ -1372,7 +1381,7 @@
 		bui.promptBtn = button('Copy the interview prompt', 'secondary', function () {
 			message(bui.msg, 'Preparing the prompt...', true);
 			api('GET', '/site/brief').then(function (data) {
-				copyText(data.prompt, bui.promptBox, bui.msg, 'Copied. Paste it into a Claude conversation. It will interview the therapist and finish with the brief.');
+				copyText(data.prompt, bui.promptBox, bui.msg, 'Copied. Paste it into a Claude conversation. It will interview the ' + W('person', 'therapist') + ' and finish with the brief.');
 			}, function (err) {
 				message(bui.msg, err.message, false);
 			});
@@ -1396,7 +1405,7 @@
 		});
 		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
 			el('h3', { className: 'twd-sk-ed__step-title', text: 'Site brief' }),
-			el('p', { className: 'twd-sk-ed__help', text: 'One file that describes the whole site: details, menu, header and footer, style, practice facts and the pages to create. Gather it in a conversation (copy the interview prompt), paste the result here, check what it would do, then apply it. You can download the current site as a brief at any time.' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'One file that describes the whole site: site type, details, menu, header and footer, style, ' + FACTS + ' and the pages to create. Gather it in a conversation (copy the interview prompt), paste the result here, check what it would do, then apply it. You can download the current site as a brief at any time.' }),
 			el('div', { className: 'twd-sk-ed__actions' }, [bui.promptBtn, bui.exportBtn]),
 			bui.promptBox,
 			field('Paste a site brief (JSON)', bui.text),
@@ -1437,7 +1446,7 @@
 				box.value = data.report;
 				show(box, true);
 				show(copyBtn, true);
-				message(msg, 'This is a plain-text report of the site. It holds no keys or passwords and none of the text of your practice facts.', true);
+				message(msg, 'This is a plain-text report of the site. It holds no keys or passwords and none of the text of your ' + FACTS + '.', true);
 			}, function (err) {
 				showBtn.disabled = false;
 				message(msg, err.message, false);
@@ -1452,7 +1461,65 @@
 		]));
 	}
 
+	/* ---- site type: therapy or business ---- */
+
+	function buildModeSection(panel) {
+		var msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		var group = el('div', { className: 'twd-sk-ed__modes', role: 'radiogroup', 'aria-label': 'Site type' });
+		var modes = WORDS.modes || { therapy: { label: 'Therapy', help: '' } };
+		var current = WORDS.mode || 'therapy';
+		var radios = [];
+		Object.keys(modes).forEach(function (slug) {
+			var id = 'twd-sk-sitetype-' + slug;
+			var r = el('input', { id: id, type: 'radio', name: 'twd-sk-sitetype', value: slug });
+			r.checked = slug === current;
+			radios.push(r);
+			group.appendChild(el('label', { className: 'twd-sk-ed__check', 'for': id }, [r, el('span', { text: modes[slug].label + (modes[slug].help ? ': ' + modes[slug].help : '') })]));
+		});
+		var reload = button('Reload the page to see it', 'secondary', function () {
+			window.location.reload();
+		});
+		show(reload, false);
+		var save = button('Save site type', 'primary', function () {
+			var chosen = '';
+			radios.forEach(function (r) {
+				if (r.checked) {
+					chosen = r.value;
+				}
+			});
+			message(msg, 'Saving...', true);
+			api('POST', '/site/mode', { mode: chosen }).then(function (data) {
+				current = data.mode;
+				message(msg, 'Saved. Pages already written keep their wording. Reload the page to see the new labels.', true);
+				show(reload, true);
+			}, function (err) {
+				message(msg, err.message, false);
+			});
+		});
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Site type' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'Changes the wording the editor and the AI use, the facts outline, the page types and the search engine details. It never rewrites a page that is already written.' }),
+			group,
+			el('div', { className: 'twd-sk-ed__actions' }, [save, reload]),
+			msg
+		]));
+		ED.addDirtyCheck(function () {
+			var chosen = current;
+			radios.forEach(function (r) {
+				if (r.checked) {
+					chosen = r.value;
+				}
+			});
+			return chosen !== current ? 'site type' : '';
+		}, function () {
+			radios.forEach(function (r) {
+				r.checked = r.value === current;
+			});
+		});
+	}
+
 	function buildSite(panel) {
+		buildModeSection(panel);
 		buildBriefSection(panel);
 		buildStyleSection(panel);
 		buildProfileSection(panel);
@@ -1461,14 +1528,15 @@
 		buildSetupSection(panel);
 		buildDoctorSection(panel);
 		var summaries = {
+			'Site type': 'Now: ' + ((WORDS.modes && WORDS.modes[WORDS.mode]) ? WORDS.modes[WORDS.mode].label : 'Therapy'),
 			'Site brief': 'Build or update the whole site from one file',
 			'Style': 'Pick a look, colours, fonts and corners',
 			'Site details': 'Name, menu, contact lines, footer text',
-			'Practice facts': 'The master document the AI writes from',
 			'Header and footer': 'Layout, fixed header, Elementor templates',
 			'Set up a new site': 'Create the starter pages',
 			'Site report': 'A plain-text report to paste when something looks wrong'
 		};
+		summaries[FACTS_TITLE] = 'The master document the AI writes from';
 		Array.prototype.forEach.call(panel.querySelectorAll('.twd-sk-ed__step'), function (sec) {
 			var t = sec.querySelector('.twd-sk-ed__step-title');
 			ED.foldSection(sec, { summary: t && summaries[t.textContent] ? summaries[t.textContent] : '' });
