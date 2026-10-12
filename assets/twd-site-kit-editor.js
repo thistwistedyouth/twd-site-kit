@@ -414,6 +414,8 @@
 			])));
 		}
 
+		buildAddSection(panel);
+
 		/* History */
 		ui.undoBtn = button('Undo the last change', 'secondary', doUndo);
 		ui.undoBtn.disabled = true;
@@ -490,7 +492,7 @@
 	}
 
 	function loadSections() {
-		if (!cfg.ai || !ui.secBox) {
+		if ((!cfg.ai || !ui.secBox) && !ui.addAfter) {
 			return;
 		}
 		api('GET', pagePath('/sections')).then(function (data) {
@@ -502,6 +504,10 @@
 	}
 
 	function renderSections(data) {
+		fillAddPositions(data.sections || []);
+		if (!cfg.ai || !ui.secBox) {
+			return;
+		}
 		clear(ui.secBox);
 		ui.secChecks = [];
 		if (!data.ai) {
@@ -587,6 +593,114 @@
 				return;
 			}
 			message(ui.remixMsg, err.message, false);
+		});
+	}
+
+	/* ---- adding a section (after an existing one) ---- */
+
+	function buildAddSection(panel) {
+		var comps = cfg.components || {};
+		if (!cfg.isKitPage || !Object.keys(comps).length) {
+			return;
+		}
+		ui.addAfter = el('select', { id: 'twd-sk-ed-add-after', className: 'twd-sk-ed__select' });
+		ui.addComp = el('select', { id: 'twd-sk-ed-add-comp', className: 'twd-sk-ed__select' });
+		Object.keys(comps).forEach(function (k) {
+			if (k !== 'hero') {
+				ui.addComp.appendChild(el('option', { value: k, text: comps[k].label }));
+			}
+		});
+		ui.addVariant = el('select', { id: 'twd-sk-ed-add-variant', className: 'twd-sk-ed__select' });
+		ui.addAbout = el('p', { className: 'twd-sk-ed__help' });
+		function fillVariants() {
+			var c = comps[ui.addComp.value];
+			clear(ui.addVariant);
+			Object.keys(c.variants).forEach(function (v) {
+				ui.addVariant.appendChild(el('option', { value: v, text: c.variants[v] }));
+			});
+			ui.addAbout.textContent = c.description;
+		}
+		ui.addComp.addEventListener('change', fillVariants);
+		if (ui.addComp.querySelector('option[value="text"]')) {
+			ui.addComp.value = 'text';
+		}
+		fillVariants();
+		var kids = [
+			el('p', { className: 'twd-sk-ed__help', text: 'Add one new section to this page. You see a preview first, and nothing is saved until you apply it.' }),
+			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-add-after', text: 'Where should it go?' }),
+			ui.addAfter,
+			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-add-comp', text: 'Kind of section' }),
+			ui.addComp,
+			ui.addAbout,
+			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-add-variant', text: 'Layout' }),
+			ui.addVariant
+		];
+		ui.addAi = null;
+		if (cfg.ai) {
+			ui.addAi = el('input', { id: 'twd-sk-ed-add-ai', type: 'checkbox', checked: '' });
+			ui.addInstruction = el('textarea', { id: 'twd-sk-ed-add-instruction', className: 'twd-sk-ed__textarea twd-sk-ed__short', maxlength: '1500', spellcheck: 'true' });
+			kids.push(
+				el('label', { className: 'twd-sk-ed__check', 'for': 'twd-sk-ed-add-ai' }, [ui.addAi, el('span', { text: 'Write it with AI from the ' + FACTS })]),
+				el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-add-instruction', text: 'What should it say? (optional)' }),
+				ui.addInstruction
+			);
+		} else {
+			kids.push(el('p', { className: 'twd-sk-ed__help', text: 'The new section arrives with [PLACEHOLDER] wording. Replace it with an external AI or by hand before publishing.' }));
+		}
+		ui.addBtn = button('Add the section', 'primary', doAddSection);
+		ui.addMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		kids.push(el('div', { className: 'twd-sk-ed__actions' }, [ui.addBtn]), ui.addMsg);
+		var sec = step('Add a section', kids);
+		panel.appendChild(sec);
+		foldSection(sec, { summary: 'Put a new section on this page' });
+	}
+
+	function fillAddPositions(sections) {
+		if (!ui.addAfter) {
+			return;
+		}
+		clear(ui.addAfter);
+		sections.forEach(function (s) {
+			ui.addAfter.appendChild(el('option', { value: String(s.index), text: 'After ' + (s.index + 1) + '. ' + s.label }));
+		});
+		if (sections.length) {
+			ui.addAfter.value = String(sections[sections.length - 1].index);
+		}
+		ui.addBtn.disabled = !sections.length;
+	}
+
+	function doAddSection() {
+		if (!ui.addAfter.value) {
+			message(ui.addMsg, 'This page has no sections yet.', false);
+			return;
+		}
+		var useAi = !!(ui.addAi && ui.addAi.checked);
+		var body = {
+			base_version: state.version,
+			after: parseInt(ui.addAfter.value, 10),
+			component: ui.addComp.value,
+			variant: ui.addVariant.value,
+			use_ai: useAi,
+			instruction: useAi ? ui.addInstruction.value : '',
+			facts: useAi && ui.facts ? ui.facts.value : ''
+		};
+		ui.addBtn.disabled = true;
+		message(ui.addMsg, useAi ? 'Asking the AI. This can take up to a minute. Nothing is saved.' : 'Adding the section. Nothing is saved.', true);
+		api('POST', pagePath('/add-section'), body).then(function (data) {
+			ui.addBtn.disabled = false;
+			message(ui.addMsg, (data.report || []).join(' ') + ' Check the preview. Nothing is saved yet.', true);
+			ui.paste.value = data.html;
+			state.previewedText = null;
+			if (!ui.note.value.trim()) {
+				ui.note.value = ('Added a section (' + ui.addComp.options[ui.addComp.selectedIndex].text + ')' + (useAi ? ' with AI' : '')).slice(0, 190);
+			}
+			doPreview();
+		}, function (err) {
+			ui.addBtn.disabled = false;
+			message(ui.addMsg, err.message, false);
+			if (err.status === 409) {
+				show(ui.reloadBtn, true);
+			}
 		});
 	}
 

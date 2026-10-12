@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.7.2
+Stable tag: 0.7.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.7.3 =
+* New: Add a section, in the Edit with AI pop-up. Choose where it goes, the kind of section and its layout, and (when the site has an AI key) let the AI write it from the facts. You see a preview first, and nothing is saved until you apply it. Without a key the section arrives with [PLACEHOLDER] wording to fill in.
 
 = 0.7.2 =
 * New: a Pages step in the setup page, before pictures and building. See every page that will be made, change the order and titles, add or remove pages, and choose the sections on each page (add, remove, reorder, pick a layout). Nothing is spent or made until you build.

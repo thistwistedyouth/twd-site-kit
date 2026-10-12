@@ -123,11 +123,12 @@ class TWD_SK_Starters {
 
 	/**
 	 * A page outline from a list of parts (component id and variant class), with every piece of
-	 * sample wording turned into a visible placeholder marker. The first hero's title is the h1.
+	 * sample wording turned into a visible placeholder marker. The first hero's title is the h1,
+	 * unless $first_h1 is false (a section added to a page that already has its h1).
 	 */
-	public static function build( $parts ) {
+	public static function build( $parts, $first_h1 = true ) {
 		$out   = array();
-		$first = true;
+		$first = (bool) $first_h1;
 		foreach ( $parts as $part ) {
 			$skeleton = self::skeleton( $part[0], $part[1] );
 			// The safety notice keeps its real support-line text.
@@ -137,6 +138,9 @@ class TWD_SK_Starters {
 			// A page has one h1: the title of its first hero.
 			if ( $first && 'hero' === $part[0] ) {
 				$skeleton = preg_replace( '/<h2( class="[^"]*twd-sk-hero__title[^"]*")>(.*?)<\/h2>/s', '<h1$1>$2</h1>', $skeleton, 1 );
+			} elseif ( 'hero' === $part[0] ) {
+				// Any later hero has an h2 title: the page's one h1 is already used.
+				$skeleton = preg_replace( '/<h1( class="[^"]*twd-sk-hero__title[^"]*")>(.*?)<\/h1>/s', '<h2$1>$2</h2>', $skeleton );
 			}
 			$first = false;
 			$out[] = $skeleton;

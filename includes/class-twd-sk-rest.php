@@ -86,6 +86,11 @@ class TWD_SK_REST {
 				'callback'            => array( __CLASS__, 'get_sections' ),
 				'permission_callback' => array( __CLASS__, 'can_read_page' ),
 			) );
+			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/add-section', array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_add_section' ),
+				'permission_callback' => array( __CLASS__, 'can_add_section' ),
+			) );
 			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/remix', array(
 				'methods'             => 'POST',
 				'callback'            => array( __CLASS__, 'post_remix' ),
@@ -293,6 +298,11 @@ class TWD_SK_REST {
 	/** Asking the AI spends the site's key, so it has its own, tighter limit. */
 	public static function can_remix_page( $request ) {
 		return self::guard( $request, 'ai' );
+	}
+
+	/** Adding a section: the AI limit when the AI writes it, otherwise the preview limit. */
+	public static function can_add_section( $request ) {
+		return self::guard( $request, self::truthy( $request->get_param( 'use_ai' ) ) ? 'ai' : 'preview' );
 	}
 
 	public static function can_write_page( $request ) {
@@ -761,6 +771,33 @@ class TWD_SK_REST {
 			'unlock'      => $request->get_param( 'unlock' ),
 			'instruction' => $request->get_param( 'instruction' ),
 			'facts'       => $request->get_param( 'facts' ),
+		) );
+		if ( is_wp_error( $result ) ) {
+			$map    = array( 'twd_sk_bad_input' => 400, 'twd_sk_empty_page' => 400, 'twd_sk_ai_unavailable' => 503 );
+			$code   = $result->get_error_code();
+			$status = isset( $map[ $code ] ) ? $map[ $code ] : 502;
+			return self::error( $code, $result->get_error_message(), $status );
+		}
+		return $result;
+	}
+
+	/** A candidate page with one new section. Nothing is saved: it goes to the preview like any change. */
+	public static function post_add_section( $request ) {
+		$id   = (int) $request->get_param( 'id' );
+		$base = self::base_version( $request );
+		if ( is_wp_error( $base ) ) {
+			return $base;
+		}
+		if ( $base !== (int) TWD_SK_Store::get_current_version_id( $id ) ) {
+			return self::error( 'twd_sk_conflict', 'This page changed since you opened the editor. Reload the page and try again.', 409 );
+		}
+		$result = TWD_SK_AI::add_section( $id, array(
+			'after'       => $request->get_param( 'after' ),
+			'component'   => $request->get_param( 'component' ),
+			'variant'     => $request->get_param( 'variant' ),
+			'instruction' => $request->get_param( 'instruction' ),
+			'facts'       => $request->get_param( 'facts' ),
+			'use_ai'      => self::truthy( $request->get_param( 'use_ai' ) ),
 		) );
 		if ( is_wp_error( $result ) ) {
 			$map    = array( 'twd_sk_bad_input' => 400, 'twd_sk_empty_page' => 400, 'twd_sk_ai_unavailable' => 503 );

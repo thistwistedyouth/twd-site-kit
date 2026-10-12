@@ -2,12 +2,13 @@
 
 The one place to see where this project is. Newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md. Update this file at the end of every piece of work, in the same commit.
 
-## Where we are (last updated at release 0.7.2, 12 Oct 2026)
+## Where we are (last updated at release 0.7.3, 12 Oct 2026)
 
-**Released and live in the update file:** 0.7.2. Sites update from Plugins, "Check for updates", "update now".
+**Released and live in the update file:** 0.7.3. Sites update from Plugins, "Check for updates", "update now".
 
 | Version | What it added |
 |---|---|
+| 0.7.3 | Add a section in the Edit with AI pop-up: choose where, the kind and layout, and (with a key) let the AI write it from the facts; preview, then apply |
 | 0.7.2 | The Pages step in the setup page: the list of pages and the sections on each, changed before anything is built; `sections` in a brief's pages |
 | 0.7.1 | The setup page (Settings > Set up site, and a Set this site up link on a fresh site's front page): site type, style, brief or plain notes, pictures (slots and named pictures the AI can place), then a step-by-step build of every page as a draft. `wp twd-sk build` runs the same build. The build log shows in the site report |
 | 0.7.0 | Therapy or business mode: one admin switch (Site tab, `wp twd-sk mode`, or `mode` in a site brief) that changes the editor and AI wording, the facts outline, page types, the interview prompt and the search details type. Therapy wording unchanged |
@@ -26,7 +27,7 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 **Next, in order (agreed with the owner, 12 Oct 2026; full spec in `docs/plan-modes-and-setup.md`):**
 - A. DONE in 0.7.0: therapy and business mode (`TWD_SK_Mode`, option `twd_sk_mode`, default therapy, one word list per mode).
 - B. DONE in 0.7.1: the setup page (Settings > Set up site), the admin-only front-page button on a fresh install, picture slots and named custom pictures, one build engine (`TWD_SK_Build`) shared with `wp twd-sk build`, all pages as drafts.
-- C. After that (the owner said on 12 Oct: build all of these now, beta stage, test afterwards): DONE in 0.7.2 the plan step (sitemap and section outline before build), 0.7.3 add a section by asking, 0.8.x more section types, brand from logo, picture help, starter sets per business type, 0.9.0 launch check.
+- C. After that (the owner said on 12 Oct: build all of these now, beta stage, test afterwards): DONE in 0.7.2 the plan step (sitemap and section outline before build), DONE in 0.7.3 add a section by asking, 0.8.x more section types, brand from logo, picture help, starter sets per business type, 0.9.0 launch check.
 
 **Earlier list (4 Oct 2026), still standing after A and B:**
 1. DONE in 0.6.2: the doctor report.
@@ -36,7 +37,6 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 5. DONE (no release): generic client-folder template in `docs/client-folder/` (layout, client brief template, intake form field list for ONE Elementor Pro form on one page with steps, call questions, 30 minute run sheet, photo shot list, recording and privacy notes). The owner chose one form, not a form per stage; Elementor forms cannot save and resume, so the form is kept short and photos are optional. Interview prompt v2 (item 4) will read the form export plus the transcript, which removes the separate typed-details form from its plan.
 6. Plan only, until a second-site timing test: base site and provisioning.
 7. In parallel, owner: verify 0.4.0 to 0.6.2 on the pilot site (lists below), including Ask the AI now that the articles plugin has its filters.
-- Parked until asked: Add a section.
 - Not planned, on purpose: rewriting every page at once, free CSS, free HTML for the header and footer.
 
 **Waiting on other projects (cross-project contract):**

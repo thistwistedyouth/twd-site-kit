@@ -254,6 +254,83 @@ class TWD_SK_AI {
 		return array( 'html' => $html, 'report' => $report, 'kept' => $kept, 'changed' => $changed );
 	}
 
+	// -- Adding a section ---------------------------------------------------------
+
+	/**
+	 * A candidate page with one new section added after an existing one. Saves nothing: the result goes
+	 * through the same preview and apply steps as any other change.
+	 *
+	 * Without the AI the new section is the component's outline with [PLACEHOLDER] markers (flagged by
+	 * the publish check). With the AI, only the new section is written, from the facts, and it must
+	 * come back as the same kind of section.
+	 *
+	 * @param int   $page_id
+	 * @param array $in after (index), component, variant, instruction, facts, use_ai
+	 * @return array|WP_Error { html, report[], kept[], changed[] }
+	 */
+	public static function add_section( $page_id, $in ) {
+		$parts = TWD_SK_Sections::split( TWD_SK_Store::get_current( (int) $page_id ) );
+		$count = count( $parts['sections'] );
+		if ( 0 === $count ) {
+			return self::err( 'twd_sk_empty_page', 'This page has no sections yet. Add a page outline first.' );
+		}
+		$after = isset( $in['after'] ) && ( is_int( $in['after'] ) || ( is_string( $in['after'] ) && ctype_digit( $in['after'] ) ) ) ? (int) $in['after'] : -1;
+		if ( $after < 0 || $after >= $count ) {
+			return self::err( 'twd_sk_bad_input', 'Choose where the new section goes.' );
+		}
+		$component = isset( $in['component'] ) && is_string( $in['component'] ) ? $in['component'] : '';
+		$variant   = isset( $in['variant'] ) && is_string( $in['variant'] ) ? $in['variant'] : '';
+		$c         = TWD_SK_Registry::get( $component );
+		if ( ! $c || ( '' !== $variant && ! isset( $c['variants'][ $variant ] ) ) ) {
+			return self::err( 'twd_sk_bad_input', 'Choose one of the kit\'s sections and layouts.' );
+		}
+		$instruction = isset( $in['instruction'] ) && is_string( $in['instruction'] ) ? trim( $in['instruction'] ) : '';
+		$facts       = isset( $in['facts'] ) && is_string( $in['facts'] ) ? trim( $in['facts'] ) : '';
+		if ( strlen( $instruction ) > self::MAX_INSTRUCTION || strlen( $facts ) > self::MAX_FACTS ) {
+			return self::err( 'twd_sk_bad_input', 'That is too long. Keep the instruction under ' . self::MAX_INSTRUCTION . ' characters and the facts under ' . self::MAX_FACTS . '.' );
+		}
+		$instruction = TWD_SK_Profile::text( $instruction, self::MAX_INSTRUCTION );
+		$facts       = self::lines( $facts, self::MAX_FACTS );
+
+		$outline  = trim( TWD_SK_Starters::build( array( array( $component, $variant ) ), false ) );
+		$sections = $parts['sections'];
+		$gaps     = $parts['gaps'];
+		$at       = $after + 1;
+		array_splice( $sections, $at, 0, array( $outline ) );
+		array_splice( $gaps, $at, 0, array( "\n" ) );
+
+		if ( empty( $in['use_ai'] ) ) {
+			return array(
+				'html'    => TWD_SK_Sections::join( $gaps, $sections ),
+				'report'  => array( 'Added a ' . $c['label'] . ' section as section ' . ( $at + 1 ) . '. Its wording is marked [PLACEHOLDER] for you to fill in.' ),
+				'kept'    => array(),
+				'changed' => array( $at ),
+			);
+		}
+		if ( ! self::available() ) {
+			return self::err( 'twd_sk_ai_unavailable', 'AI is not set up on this site. Add the section without AI, or ask your web designer to add a key.' );
+		}
+		$ask = 'This is a new section. Write its wording from the facts: replace every [PLACEHOLDER] and every sample word, and keep its component, layout and classes. Where the facts do not say what is needed, keep a [PLACEHOLDER: what is needed].' . ( '' !== $instruction ? ' Also: ' . $instruction : '' );
+		$reply = apply_filters( 'twd_ai_complete', null, self::system_prompt( 'sections' ), self::user_message( 'sections', array( 'gaps' => $gaps, 'sections' => $sections ), array( $at ), $ask, $facts ), self::TOKENS_SECTIONS );
+		if ( is_wp_error( $reply ) ) {
+			return $reply;
+		}
+		if ( ! is_string( $reply ) || '' === trim( $reply ) ) {
+			return self::err( 'twd_sk_ai_unavailable', 'The AI did not answer. Nothing was changed. Try again in a moment.' );
+		}
+		$new = TWD_SK_Sections::split( self::strip_fence( $reply ) );
+		if ( 1 !== count( $new['sections'] ) || TWD_SK_Sections::type_of( $new['sections'][0] ) !== TWD_SK_Sections::type_of( $outline ) ) {
+			return self::err( 'twd_sk_ai_bad_result', 'The AI did not send back one ' . $c['label'] . ' section. Nothing was changed. Try again, or add it without AI.' );
+		}
+		$sections[ $at ] = $new['sections'][0];
+		return array(
+			'html'    => TWD_SK_Sections::join( $gaps, $sections ),
+			'report'  => array( 'The AI wrote a new ' . $c['label'] . ' section as section ' . ( $at + 1 ) . '. Check every fact before you apply it.' ),
+			'kept'    => array(),
+			'changed' => array( $at ),
+		);
+	}
+
 	// -- A new page from the practice facts ------------------------------------
 
 	/**

@@ -17,6 +17,13 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.7.3 (add a section)
+
+- **Parked since 0.6.0, now built on the same rails as everything else.** A new section is a candidate page that goes through the same preview, apply and history as a pasted or remixed one, so there is no new way to save anything.
+- **Works without a key too.** Without AI it adds the outline with [PLACEHOLDER] markers, which the publish check holds back until they are filled in.
+- **The AI writes only the new section,** and must send back one section of the kind chosen; anything else is refused, so it cannot rewrite the rest of the page on the way.
+- **No heroes in the list.** A page has one hero at the top; a second one is rarely wanted from this control and would complicate the one-h1 rule. The outline builder now gives any later hero an h2 title anyway.
+
 ## v0.7.2 (the Pages step)
 
 - **Fix the plan before spending anything.** The best idea in the AI site builders looked at (Elementor's Site Planner) is a sitemap and section outline you can change before anything is generated. Here that is a page list with sections, before Pictures (so picture "use on" lists the final pages) and before Build.
