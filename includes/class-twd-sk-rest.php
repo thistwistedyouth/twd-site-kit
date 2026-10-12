@@ -694,7 +694,7 @@ class TWD_SK_REST {
 			$status = isset( $map[ $code ] ) ? $map[ $code ] : 502;
 			return self::error( $code, $out->get_error_message(), $status );
 		}
-		return array( 'json' => $out['json'] );
+		return array( 'json' => $out['json'], 'note' => isset( $out['note'] ) ? $out['note'] : '' );
 	}
 
 	/** Run one build step. Pages are drafts only. */

@@ -17,6 +17,15 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.9.2 (no page or brief too long for the AI)
+
+- **The first real brief hit the ceiling.** Pasting the first real client brief and pressing "Turn my notes into a brief (AI)" sent the whole 24 KB brief to the AI to retype, and the Articles plugin stops every reply at 8000 tokens ("The AI ran out of room before finishing"). The owner asked for no limit on admin.
+- **The ceiling lives in the Articles plugin**, which this project does not change. So Site Kit works within it instead of asking for more: smaller replies are faster too, and a very long single reply also risks the 120 second request timeout.
+- **A pasted brief needs no AI.** The notes button checks it as a brief (in the browser and on the server), so it cannot be sent to the AI by mistake.
+- **Long notes are kept as the facts word for word.** The AI then writes only the site details, menu and pages, which stay small. Short notes still get tidied under the fact headings as before.
+- **Long pages are written in parts.** More than six sections means groups of up to four, joined in order. Any part that still runs out of room is halved and tried again, so in practice no page is too long. Later parts are told not to write a main heading (and one is demoted if they do) and which pictures are already used.
+- **Six sections or fewer is unchanged**: one call, the same prompt, so existing sites behave exactly as before.
+
 ## v0.9.1 (Site Kit places the header and footer)
 
 - **Elementor Pro made optional.** The owner asked to keep setup as simple as possible and to keep Elementor Pro off unless needed. On the Hello theme Site Kit now switches off Hello's own header and footer and prints the kit ones itself, so a fresh site needs no Theme Builder import.

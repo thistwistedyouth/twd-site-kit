@@ -387,22 +387,31 @@
 		body.appendChild(ui.brief);
 		var summary = el('div', { className: 'twd-sk-setup__summary' });
 		var promptBox = el('textarea', { className: 'large-text', rows: '4', readonly: '', hidden: '', 'aria-label': 'The interview prompt, selected so you can copy it' });
-		var check = button('Check the brief', true, function () {
+		function runCheck(before) {
+			before = before || '';
 			if (ui.brief.value.trim() && !looksLikeJson(ui.brief.value)) {
 				message('That looks like notes rather than a brief. ' + (S.data.ai ? 'Use "Turn my notes into a brief" first.' : 'Run the interview prompt in a Claude conversation and paste the JSON it gives you.'), false);
 				return;
 			}
-			message('Checking...', true);
+			message(before + 'Checking...', true);
 			save({ brief_text: ui.brief.value }).then(function () {
 				planSummary(summary);
-				message(S.data.plan.errors.length ? 'Checked. Some parts need a look (listed below); everything else is fine.' : 'Checked. Nothing is saved to the site until you build it.', !S.data.plan.errors.length);
+				message(before + (S.data.plan.errors.length ? 'Checked. Some parts need a look (listed below); everything else is fine.' : 'Checked. Nothing is saved to the site until you build it.'), !S.data.plan.errors.length);
 			}, function (err) {
 				message(err.message, false);
 			});
+		}
+		var check = button('Check the brief', true, function () {
+			runCheck('');
 		});
 		var notes = button('Turn my notes into a brief (AI)', false, function () {
 			if (!ui.brief.value.trim()) {
 				message('Write or paste some notes first.', false);
+				return;
+			}
+			// A pasted brief needs no AI: check it as it is.
+			if (looksLikeJson(ui.brief.value)) {
+				runCheck('That is already a site brief, so the AI was not needed. ');
 				return;
 			}
 			notes.disabled = true;
@@ -410,7 +419,7 @@
 			api('POST', '/site/build/notes', { notes: ui.brief.value }).then(function (data) {
 				notes.disabled = false;
 				ui.brief.value = data.json;
-				message('Here is the brief. Read it, change anything that is wrong or missing, then press Check the brief. Nothing has been saved to the site.', true);
+				message((data.note ? data.note + ' ' : '') + 'Here is the brief. Read it, change anything that is wrong or missing, then press Check the brief. Nothing has been saved to the site.', true);
 			}, function (err) {
 				notes.disabled = false;
 				message(err.message, false);

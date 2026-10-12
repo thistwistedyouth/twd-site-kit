@@ -26,6 +26,11 @@ class TWD_SK_AI {
 	const MAX_FACTS       = 3000;
 	const TOKENS_SECTIONS = 6000;
 	const TOKENS_PAGE     = 8000;
+	// The Articles plugin allows at most 8000 tokens in one reply. So a long page is written a few
+	// sections at a time, and any part that still runs out of room is halved and written again (0.9.2).
+	const PAGE_CHUNK_OVER  = 6;
+	const PAGE_CHUNK_SIZE  = 4;
+	const PAGE_SPLIT_DEPTH = 3;
 
 	/** True when a plugin offers an AI service with a key set up, and safe mode is off. */
 	public static function available() {
@@ -136,6 +141,41 @@ class TWD_SK_AI {
 		return function_exists( 'mb_substr' ) ? mb_substr( $value, 0, $max ) : substr( $value, 0, $max );
 	}
 
+	/** True when the AI stopped because its reply reached the length ceiling (the Articles plugin's error). */
+	public static function cut_off( $reply ) {
+		return is_wp_error( $reply ) && ( 'twd_ap_ai_cut_off' === $reply->get_error_code() || false !== stripos( $reply->get_error_message(), 'ran out of room' ) );
+	}
+
+	/**
+	 * Writing a page can take several AI calls. Allow up to five minutes where the host lets a plugin
+	 * raise its time limit; never lowers it, and does nothing where there is no limit (the command line).
+	 */
+	public static function allow_time() {
+		$limit = (int) ini_get( 'max_execution_time' );
+		if ( $limit > 0 && $limit < 300 && function_exists( 'set_time_limit' ) && false === stripos( (string) ini_get( 'disable_functions' ), 'set_time_limit' ) ) {
+			set_time_limit( 300 );
+		}
+	}
+
+	/** Sections in balanced groups of at most $size, in order. */
+	public static function chunk_parts( $parts, $size ) {
+		$parts = array_values( (array) $parts );
+		$n     = count( $parts );
+		$size  = max( 1, (int) $size );
+		if ( $n <= $size ) {
+			return array( $parts );
+		}
+		$groups = (int) ceil( $n / $size );
+		$out    = array();
+		$start  = 0;
+		for ( $g = 0; $g < $groups; $g++ ) {
+			$len    = (int) ceil( ( $n - $start ) / ( $groups - $g ) );
+			$out[]  = array_slice( $parts, $start, $len );
+			$start += $len;
+		}
+		return $out;
+	}
+
 	private static function err( $code, $message ) {
 		return new WP_Error( $code, $message );
 	}
@@ -199,6 +239,9 @@ class TWD_SK_AI {
 		$message = self::user_message( $mode, $parts, $chosen, $instruction, $facts );
 		$tokens  = 'sections' === $mode ? self::TOKENS_SECTIONS : self::TOKENS_PAGE;
 		$reply   = apply_filters( 'twd_ai_complete', null, $system, $message, $tokens );
+		if ( self::cut_off( $reply ) ) {
+			return self::err( 'twd_sk_ai_too_long', 'That is more than the AI can rewrite in one go, so nothing was changed. Choose fewer sections (half of them, say) and ask again.' );
+		}
 		if ( is_wp_error( $reply ) ) {
 			return $reply;
 		}
@@ -363,8 +406,13 @@ class TWD_SK_AI {
 		return implode( "\n", $out ) . "\n";
 	}
 
-	/** The request text for drafting a new page of a type, with an optional list of pictures it may place. */
-	public static function page_message( $in, $pictures_block = '' ) {
+	/**
+	 * The request text for drafting a new page of a type, with an optional list of pictures it may place.
+	 *
+	 * @param array|null $part For a page written in parts: start (index of the first section here),
+	 *                         total (sections on the whole page) and used (picture names already placed).
+	 */
+	public static function page_message( $in, $pictures_block = '', $part = null ) {
 		$r     = TWD_SK_Recipes::get( $in['type'] );
 		$out   = array();
 		$out[] = 'Write this page: ' . $r['intent'];
@@ -387,9 +435,20 @@ class TWD_SK_AI {
 			$out[] = '';
 			$out[] = $pictures_block;
 		}
+		if ( is_array( $part ) ) {
+			$count  = count( $in['parts'] );
+			$out[]  = '';
+			$out[]  = 'This page is written in parts. This request is sections ' . ( $part['start'] + 1 ) . ' to ' . ( $part['start'] + $count ) . ' of ' . (int) $part['total'] . '. The other sections are written separately and joined to these, so write only the sections in the outline below. The notes above describe the whole page; use the parts that fit these sections.';
+			if ( $part['start'] > 0 ) {
+				$out[] = 'The page\'s main heading (h1) is in an earlier part, so do not write an h1 here.';
+			}
+			if ( ! empty( $part['used'] ) ) {
+				$out[] = 'Pictures already used on this page (do not use them again): ' . implode( ', ', $part['used'] ) . '.';
+			}
+		}
 		$out[]  = '';
 		$out[]  = 'The outline to follow (replace the placeholders, keep the components and their order):';
-		$out[]  = TWD_SK_Recipes::skeleton_for( $in );
+		$out[]  = is_array( $part ) ? TWD_SK_Starters::build( $in['parts'], 0 === (int) $part['start'] ) : TWD_SK_Recipes::skeleton_for( $in );
 		return implode( "\n", $out ) . "\n";
 	}
 
@@ -413,6 +472,9 @@ class TWD_SK_AI {
 	 * sanitiser always runs). The build passes a pictures block; the reply may then hold pic: names,
 	 * which TWD_SK_Pictures::place() turns into real addresses before saving.
 	 *
+	 * A page with more than PAGE_CHUNK_OVER sections is written PAGE_CHUNK_SIZE sections at a time, and
+	 * any part whose reply runs out of room is halved and written again, so no page is too long to write.
+	 *
 	 * @param array  $in             Checked inputs from TWD_SK_Recipes::inputs().
 	 * @param string $pictures_block From TWD_SK_Pictures::prompt_block(), or ''.
 	 * @return string|WP_Error The page's sections, one after another.
@@ -421,7 +483,46 @@ class TWD_SK_AI {
 		if ( ! self::available() ) {
 			return self::err( 'twd_sk_ai_unavailable', 'AI is not set up on this site. Use the copy and paste way, or ask your web designer to add a key.' );
 		}
-		$reply = apply_filters( 'twd_ai_complete', null, self::page_system_prompt( '' !== $pictures_block ), self::page_message( $in, $pictures_block ), self::TOKENS_PAGE );
+		self::allow_time();
+		$parts  = ! empty( $in['parts'] ) ? array_values( $in['parts'] ) : TWD_SK_Recipes::get( $in['type'] )['parts'];
+		$total  = count( $parts );
+		$groups = $total > self::PAGE_CHUNK_OVER ? self::chunk_parts( $parts, self::PAGE_CHUNK_SIZE ) : array( $parts );
+		$used   = array();
+		$html   = array();
+		$start  = 0;
+		foreach ( $groups as $group ) {
+			$part = self::draft_part( $in, $group, $start, $total, $pictures_block, $used, 0 );
+			if ( is_wp_error( $part ) ) {
+				return $part;
+			}
+			$html[] = $part;
+			$start += count( $group );
+		}
+		return implode( "\n", $html );
+	}
+
+	/** Write the sections in $group (the page's sections from $start on). Halves the group when the reply runs out of room. */
+	private static function draft_part( $in, $group, $start, $total, $pictures_block, &$used, $depth ) {
+		$sub          = $in;
+		$sub['parts'] = $group;
+		$whole        = 0 === $start && count( $group ) === $total;
+		$message      = self::page_message( $sub, $pictures_block, $whole ? null : array( 'start' => $start, 'total' => $total, 'used' => array_keys( $used ) ) );
+		$reply        = apply_filters( 'twd_ai_complete', null, self::page_system_prompt( '' !== $pictures_block ), $message, self::TOKENS_PAGE );
+		if ( self::cut_off( $reply ) ) {
+			if ( count( $group ) > 1 && $depth < self::PAGE_SPLIT_DEPTH ) {
+				$half  = (int) ceil( count( $group ) / 2 );
+				$first = self::draft_part( $in, array_slice( $group, 0, $half ), $start, $total, $pictures_block, $used, $depth + 1 );
+				if ( is_wp_error( $first ) ) {
+					return $first;
+				}
+				$second = self::draft_part( $in, array_slice( $group, $half ), $start + $half, $total, $pictures_block, $used, $depth + 1 );
+				if ( is_wp_error( $second ) ) {
+					return $second;
+				}
+				return $first . "\n" . $second;
+			}
+			return self::err( 'twd_sk_ai_too_long', 'The AI ran out of room writing this page, even a section at a time. Shorten the notes for this page, or the facts, and try again.' );
+		}
 		if ( is_wp_error( $reply ) ) {
 			return $reply;
 		}
@@ -432,11 +533,20 @@ class TWD_SK_AI {
 		if ( strlen( $reply ) > TWD_SK_Store::MAX_BYTES ) {
 			return self::err( 'twd_sk_ai_bad_result', 'The AI sent back more than a page can hold. No page was created. Try again with shorter notes.' );
 		}
-		$parts = TWD_SK_Sections::split( $reply );
-		if ( ! $parts['sections'] ) {
+		$sections = TWD_SK_Sections::split( $reply )['sections'];
+		if ( ! $sections ) {
 			return self::err( 'twd_sk_ai_bad_result', 'The AI did not send back a page. No page was created. Try again.' );
 		}
-		return implode( "\n", $parts['sections'] );
+		if ( $start > 0 ) {
+			// Only the part that starts the page holds its main heading.
+			$sections = preg_replace( array( '#<h1(?=[\s>])#i', '#</h1\s*>#i' ), array( '<h2', '</h2>' ), $sections );
+		}
+		if ( preg_match_all( '/pic:([a-z0-9]+(?:-[a-z0-9]+)*)/', implode( ' ', $sections ), $m ) ) {
+			foreach ( $m[1] as $name ) {
+				$used[ $name ] = true;
+			}
+		}
+		return implode( "\n", $sections );
 	}
 
 	/**

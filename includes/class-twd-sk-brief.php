@@ -437,17 +437,24 @@ class TWD_SK_Brief {
 	// -- A brief from plain notes (needs the AI) ---------------------------------
 
 	const MAX_NOTES  = 30 * 1000;
-	const TOKENS_NOTES = 6000;
+	const TOKENS_NOTES = 8000; // the most the Articles plugin allows in one reply
+	// Notes longer than this are kept as the facts word for word, so the AI writes only the rest of the
+	// brief and its reply stays well inside that ceiling (0.9.2).
+	const NOTES_AS_FACTS = 6000;
 
 	/** System text for turning plain notes into a brief. Built from the same schema text as the interview. */
-	public static function notes_system_prompt() {
+	public static function notes_system_prompt( $keep_notes_as_facts = false ) {
 		$out   = array();
 		$out[] = 'You turn a web designer\'s notes about a ' . TWD_SK_Mode::w( 'practice' ) . ' into ONE site brief JSON object. Reply with the JSON object only: no code fence, no commentary.';
 		$out[] = '';
 		$out[] = '## Rules';
 		$out[] = '- Use only what the notes say. Never invent anything: no names, qualifications, registrations, prices, fees, policies, contact details, reviews or testimonials that are not in the notes. Leave anything unknown as an empty string or an empty list.';
 		$out[] = '- Phone numbers, email addresses, postal addresses and registration lines are copied exactly as written in the notes, or left empty.';
-		$out[] = '- The facts are written in plain sentences under the headings below, in the owner\'s own words where the notes give them.';
+		if ( $keep_notes_as_facts ) {
+			$out[] = '- The notes are long, so leave "facts" as an empty string. The notes themselves are saved as the facts, word for word.';
+		} else {
+			$out[] = '- The facts are written in plain sentences under the headings below, in the owner\'s own words where the notes give them.';
+		}
 		$out[] = '- If the notes do not list pages, plan Home, About and Contact, plus one page for each main ' . TWD_SK_Mode::w( 'service_kind' ) . ' the notes describe (up to six), and a questions and answers page if the notes give questions.';
 		$out[] = '- Draft a short search title and description for each page from the notes. Never use em dashes or en dashes. UK spelling.';
 		$out[] = '- ' . trim( substr( TWD_SK_Mode::w( 'interview_privacy' ), 1 ) );
@@ -459,20 +466,35 @@ class TWD_SK_Brief {
 
 	/**
 	 * Turn plain notes into a brief with the AI. Saves nothing: the person checks the result first.
+	 * A site brief pasted in by mistake is checked as it is, with no AI. Long notes are kept as the facts.
 	 *
-	 * @return array|WP_Error { brief (array), json (pretty text) }
+	 * @return array|WP_Error { brief (array), json (pretty text), note (plain sentence, may be empty) }
 	 */
 	public static function from_notes( $notes ) {
-		if ( ! TWD_SK_AI::available() ) {
-			return new WP_Error( 'twd_sk_ai_unavailable', 'AI is not set up on this site, so notes cannot be turned into a brief here. Use the interview prompt in a Claude conversation, then paste the JSON it gives you.' );
-		}
 		if ( ! is_string( $notes ) || '' === trim( $notes ) ) {
 			return new WP_Error( 'twd_sk_bad_brief', 'Write or paste some notes first.' );
+		}
+		$flags = JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
+		// Already a site brief: no AI needed, and asking it to retype the whole brief would run out of room.
+		if ( '{' === substr( ltrim( TWD_SK_AI::strip_fence( $notes ) ), 0, 1 ) ) {
+			$data = self::parse( $notes );
+			if ( is_wp_error( $data ) ) {
+				return new WP_Error( 'twd_sk_bad_brief', 'That looks like a site brief, but it could not be read (' . $data->get_error_message() . ') Check it was copied in full.' );
+			}
+			return array( 'brief' => $data, 'json' => function_exists( 'wp_json_encode' ) ? wp_json_encode( $data, $flags ) : json_encode( $data, $flags ), 'note' => 'That is already a site brief, so the AI was not needed.' );
+		}
+		if ( ! TWD_SK_AI::available() ) {
+			return new WP_Error( 'twd_sk_ai_unavailable', 'AI is not set up on this site, so notes cannot be turned into a brief here. Use the interview prompt in a Claude conversation, then paste the JSON it gives you.' );
 		}
 		if ( strlen( $notes ) > self::MAX_NOTES ) {
 			return new WP_Error( 'twd_sk_bad_brief', 'Those notes are too long (the limit is ' . (int) ( self::MAX_NOTES / 1000 ) . ' thousand characters). Shorten them and try again.' );
 		}
-		$reply = apply_filters( 'twd_ai_complete', null, self::notes_system_prompt(), "The notes:\n" . TWD_SK_Facts::clean( $notes ) . "\n", self::TOKENS_NOTES );
+		$clean = TWD_SK_Facts::clean( $notes );
+		$keep  = strlen( $clean ) > self::NOTES_AS_FACTS;
+		$reply = apply_filters( 'twd_ai_complete', null, self::notes_system_prompt( $keep ), "The notes:\n" . $clean . "\n", self::TOKENS_NOTES );
+		if ( TWD_SK_AI::cut_off( $reply ) ) {
+			return new WP_Error( 'twd_sk_ai_too_long', 'The AI ran out of room writing the brief, so nothing was changed. Split the notes in two and turn each into a brief, or use the interview prompt in a Claude conversation.' );
+		}
 		if ( is_wp_error( $reply ) ) {
 			return $reply;
 		}
@@ -483,8 +505,13 @@ class TWD_SK_Brief {
 		if ( is_wp_error( $data ) ) {
 			return new WP_Error( 'twd_sk_ai_bad_result', 'The AI did not send back a brief that could be read. Try again, or shorten the notes. (' . $data->get_error_message() . ')' );
 		}
-		$flags = JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
-		return array( 'brief' => $data, 'json' => function_exists( 'wp_json_encode' ) ? wp_json_encode( $data, $flags ) : json_encode( $data, $flags ) );
+		$note = '';
+		if ( $keep ) {
+			$len           = function_exists( 'mb_strlen' ) ? mb_strlen( $clean, 'UTF-8' ) : strlen( $clean );
+			$data['facts'] = $len > TWD_SK_Facts::MAX ? ( function_exists( 'mb_substr' ) ? mb_substr( $clean, 0, TWD_SK_Facts::MAX, 'UTF-8' ) : substr( $clean, 0, TWD_SK_Facts::MAX ) ) : $clean;
+			$note          = 'Your notes are kept as the ' . TWD_SK_Mode::w( 'facts' ) . ' word for word.' . ( $len > TWD_SK_Facts::MAX ? ' Only the first ' . number_format( TWD_SK_Facts::MAX ) . ' characters fit.' : '' );
+		}
+		return array( 'brief' => $data, 'json' => function_exists( 'wp_json_encode' ) ? wp_json_encode( $data, $flags ) : json_encode( $data, $flags ), 'note' => $note );
 	}
 
 	// -- The interview prompt -----------------------------------------------------

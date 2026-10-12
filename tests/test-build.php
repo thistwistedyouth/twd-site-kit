@@ -510,3 +510,126 @@ twd_sk_test( 'pictures: a "keep in view" choice is checked, and the build saves 
 	twd_sk_has( 'Saved where to keep 1 picture in view.', implode( ' ', $r['report'] ) );
 	twd_sk_has( "S.data.focal_points", file_get_contents( ABSPATH . 'assets/twd-site-kit-setup.js' ) );
 } );
+
+// -- Long briefs and long pages (0.9.2) -------------------------------------------------
+
+function twd_sk_outline_of( $message ) {
+	$at = strpos( $message, 'The outline to follow' );
+	return trim( substr( $message, strpos( $message, "\n", $at ) + 1 ) );
+}
+function twd_sk_long_page_in( $sections ) {
+	return TWD_SK_Recipes::inputs( array( 'type' => 'home', 'title' => 'Home', 'sections' => $sections ) );
+}
+function twd_sk_nine_sections() {
+	return array( array( 'hero', 'twd-sk-hero--image' ), array( 'services', 'twd-sk-services--cards' ), array( 'image_text', '' ), array( 'image_text', 'twd-sk-image-text--band' ), array( 'steps', '' ), array( 'pictures', '' ), array( 'pricing', 'twd-sk-pricing--list' ), array( 'areas', '' ), array( 'cta', 'twd-sk-cta--band' ) );
+}
+
+twd_sk_test( 'brief from notes: a site brief pasted into the notes box is checked as it is, with no AI call', function () {
+	twd_sk_ai_provider( 'should not be asked' );
+	$json = '{"schema":"twd-site-brief/1","site":{"name":"Example Hire"},"facts":"' . str_repeat( 'We hire vans. ', 800 ) . '"}';
+	$r    = TWD_SK_Brief::from_notes( $json );
+	twd_sk_true( ! is_wp_error( $r ) );
+	twd_sk_eq( 0, count( $GLOBALS['twd_stub']['ai_calls'] ), 'no AI call' );
+	twd_sk_has( '"name": "Example Hire"', $r['json'] );
+	twd_sk_has( 'not needed', $r['note'] );
+	twd_sk_true( ! is_wp_error( TWD_SK_Brief::from_notes( "```json\n" . $json . "\n```" ) ), 'a fenced brief too' );
+	twd_sk_is_error( 'twd_sk_bad_brief', TWD_SK_Brief::from_notes( '{"schema":"twd-site-brief/1", "site": ' ) );
+	twd_sk_eq( 0, count( $GLOBALS['twd_stub']['ai_calls'] ), 'a broken brief is reported, not sent to the AI' );
+	twd_sk_ai_provider( null, false );
+	twd_sk_true( ! is_wp_error( TWD_SK_Brief::from_notes( $json ) ), 'works with no AI set up' );
+	$out = TWD_SK_REST::post_site_build_notes( twd_sk_rest_req( array( 'notes' => $json ) ) );
+	twd_sk_has( 'not needed', $out['note'] );
+} );
+
+twd_sk_test( 'brief from notes: long notes are kept as the facts word for word, and the AI gets the most room', function () {
+	$brief = '{"schema":"twd-site-brief/1","site":{"name":"Example Hire"},"facts":"Made up by the AI"}';
+	twd_sk_ai_provider( $brief );
+	$r = TWD_SK_Brief::from_notes( 'We hire vans in the county.' );
+	twd_sk_has( 'Made up by the AI', $r['json'], 'short notes: the AI writes the facts as before' );
+	twd_sk_eq( '', $r['note'] );
+	twd_sk_eq( 8000, $GLOBALS['twd_stub']['ai_calls'][0]['tokens'] );
+	twd_sk_has( 'plain sentences under the headings', $GLOBALS['twd_stub']['ai_calls'][0]['system'] );
+
+	$notes = str_repeat( "We hire vans by the day for moves and events.\n", 150 );
+	twd_sk_ai_provider( $brief );
+	$r = TWD_SK_Brief::from_notes( $notes );
+	twd_sk_eq( TWD_SK_Facts::clean( $notes ), $r['brief']['facts'] );
+	twd_sk_hasnt( 'Made up by the AI', $r['json'] );
+	twd_sk_has( 'word for word', $r['note'] );
+	twd_sk_has( 'leave "facts" as an empty string', $GLOBALS['twd_stub']['ai_calls'][0]['system'] );
+
+	$huge = str_repeat( "Line of notes about the van hire business here.\n", 520 );
+	$r    = TWD_SK_Brief::from_notes( $huge );
+	twd_sk_eq( TWD_SK_Facts::MAX, mb_strlen( $r['brief']['facts'], 'UTF-8' ) );
+	twd_sk_has( 'Only the first 20,000 characters fit.', $r['note'] );
+
+	twd_sk_ai_provider( new WP_Error( 'twd_ap_ai_cut_off', 'The AI ran out of room before finishing. Try a shorter idea.' ) );
+	twd_sk_is_error( 'twd_sk_ai_too_long', TWD_SK_Brief::from_notes( 'We hire vans.' ) );
+} );
+
+twd_sk_test( 'page writing: a long page is written a few sections at a time and joined, with one main heading', function () {
+	twd_sk_ai_provider( function ( $system, $message ) {
+		$html = twd_sk_outline_of( $message );
+		// Pretend the AI ignores the rule and writes an h1 in a later part.
+		return false !== strpos( $message, 'do not write an h1' ) ? preg_replace( '/<h2/', '<h1', preg_replace( '#</h2>#', '</h1>', $html, 1 ), 1 ) : $html;
+	} );
+	$html = TWD_SK_AI::draft_page_html( twd_sk_long_page_in( twd_sk_nine_sections() ) );
+	twd_sk_true( is_string( $html ), is_wp_error( $html ) ? $html->get_error_message() : '' );
+	$calls = $GLOBALS['twd_stub']['ai_calls'];
+	twd_sk_eq( 3, count( $calls ) );
+	twd_sk_has( 'sections 1 to 3 of 9', $calls[0]['message'] );
+	twd_sk_has( 'sections 4 to 6 of 9', $calls[1]['message'] );
+	twd_sk_has( 'sections 7 to 9 of 9', $calls[2]['message'] );
+	twd_sk_hasnt( 'do not write an h1', $calls[0]['message'] );
+	twd_sk_has( 'do not write an h1', $calls[2]['message'] );
+	twd_sk_eq( 9, count( TWD_SK_Sections::split( $html )['sections'] ) );
+	twd_sk_eq( 1, substr_count( $html, '<h1' ), 'one main heading' );
+	twd_sk_eq( substr_count( $html, '<h1' ), substr_count( $html, '</h1>' ) );
+
+	// Six sections or fewer: one call, as before.
+	twd_sk_ai_provider( function ( $system, $message ) {
+		return twd_sk_outline_of( $message );
+	} );
+	$html = TWD_SK_AI::draft_page_html( twd_sk_long_page_in( array_slice( twd_sk_nine_sections(), 0, 6 ) ) );
+	twd_sk_eq( 1, count( $GLOBALS['twd_stub']['ai_calls'] ) );
+	twd_sk_hasnt( 'written in parts', $GLOBALS['twd_stub']['ai_calls'][0]['message'] );
+	twd_sk_eq( 6, count( TWD_SK_Sections::split( $html )['sections'] ) );
+} );
+
+twd_sk_test( 'page writing: a part that runs out of room is halved and written again; one section that still does is reported', function () {
+	$cut = new WP_Error( 'twd_ap_ai_cut_off', 'The AI ran out of room before finishing. Try a shorter idea.' );
+	twd_sk_ai_provider( function ( $system, $message ) use ( $cut ) {
+		$html = twd_sk_outline_of( $message );
+		return count( TWD_SK_Sections::split( $html )['sections'] ) > 2 ? $cut : $html;
+	} );
+	$html = TWD_SK_AI::draft_page_html( twd_sk_long_page_in( array_slice( twd_sk_nine_sections(), 0, 6 ) ) );
+	twd_sk_true( is_string( $html ), is_wp_error( $html ) ? $html->get_error_message() : '' );
+	twd_sk_eq( 6, count( TWD_SK_Sections::split( $html )['sections'] ), 'every section written, in order' );
+	twd_sk_eq( 0, strpos( $html, '<section class="twd-sk-hero' ) );
+	twd_sk_eq( 1, substr_count( $html, '<h1' ) );
+	twd_sk_eq( 7, count( $GLOBALS['twd_stub']['ai_calls'] ), 'the whole page, two halves, then four quarters' );
+
+	twd_sk_ai_provider( $cut );
+	twd_sk_is_error( 'twd_sk_ai_too_long', TWD_SK_AI::draft_page_html( twd_sk_long_page_in( twd_sk_nine_sections() ) ) );
+	twd_sk_true( count( $GLOBALS['twd_stub']['ai_calls'] ) <= 15, 'the splitting stops' );
+} );
+
+twd_sk_test( 'page writing: pictures used in an earlier part are named in the later parts', function () {
+	twd_sk_ai_provider( function ( $system, $message ) {
+		$html = twd_sk_outline_of( $message );
+		return false === strpos( $message, 'already used' ) ? str_replace( TWD_SK_Pictures::SAMPLE_SRC, 'pic:van-side', $html ) : $html;
+	} );
+	TWD_SK_AI::draft_page_html( twd_sk_long_page_in( twd_sk_nine_sections() ), 'Pictures you may use: pic:van-side' );
+	$calls = $GLOBALS['twd_stub']['ai_calls'];
+	twd_sk_hasnt( 'already used', $calls[0]['message'] );
+	twd_sk_has( 'Pictures already used on this page (do not use them again): van-side.', $calls[1]['message'] );
+} );
+
+twd_sk_test( 'ask the AI: a reply that runs out of room changes nothing and says to choose fewer sections', function () {
+	$before = twd_sk_ai_page();
+	twd_sk_ai_provider( new WP_Error( 'twd_ap_ai_cut_off', 'The AI ran out of room before finishing. Try a shorter idea.' ) );
+	$r = TWD_SK_AI::remix( 40, array( 'mode' => 'page', 'instruction' => 'Make it warmer.' ) );
+	twd_sk_is_error( 'twd_sk_ai_too_long', $r );
+	twd_sk_has( 'Choose fewer sections', $r->get_error_message() );
+	twd_sk_eq( $before, TWD_SK_Store::get_current( 40 ) );
+} );

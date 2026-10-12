@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.9.1
+Stable tag: 0.9.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,12 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.9.2 =
+* Fixed: a long site brief or page no longer fails with "The AI ran out of room". Pages with more than six sections are written a few sections at a time, and any part that is still too long is split and tried again.
+* Fixed: pasting a site brief and pressing "Turn my notes into a brief (AI)" now just checks the brief, with no AI call.
+* Long notes are kept as the facts word for word, so the AI only writes the rest of the brief.
+* Ask the AI: when a change is too big for one go, it says to choose fewer sections.
 
 = 0.9.1 =
 * New: on the Hello theme Site Kit places the header and footer itself, so Elementor Pro is not needed. Hello's own basic header and footer are switched off, and a Skip to content link comes first.

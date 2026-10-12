@@ -1,13 +1,14 @@
-# Test script: 0.7.0 to 0.9.1 on a fresh site
+# Test script: 0.7.0 to 0.9.2 on a fresh site
 
 Built fast at beta stage; none of this has been tried on a real site yet. Work through it on a **fresh install** first, never on a live client site. Riskiest first: if something in the first block goes wrong, stop and send the site report (Site tab, Site report, or `wp twd-sk doctor`).
 
-Before you start: install Site Kit 0.9.1 (Plugins, Add New, Upload, or the one-click update), plus the Articles plugin with a key if you want the AI parts. Turn on WP_DEBUG_LOG if you can.
+Before you start: install Site Kit 0.9.2 (Plugins, Add New, Upload, or the one-click update), plus the Articles plugin with a key if you want the AI parts. Turn on WP_DEBUG_LOG if you can.
 
 ## 1. Riskiest: things that send, publish or change many pages
 
 1. **Enquiry form email.** Add the Enquiry form section to a page (Edit with AI, Add a section), publish it, open it in a private window and send a message. Does it arrive (check spam)? Does the reply go to the sender? Send six quickly from the same browser: the sixth should say "Too many messages". If nothing arrives at all, 20i may block PHP mail: install an SMTP plugin and try again.
 2. **Build the site.** On the front page, as an admin, click **Set this site up**. Go through every step with a short brief or notes, a logo and two pictures, then **Build the site**. Every step should say Done. Open each page: it should be a draft, with your pictures where expected.
+2a. **A long brief (0.9.2).** Paste a full site brief and press "Turn my notes into a brief (AI)" by mistake: it should say the AI was not needed and check the brief instead. On Build, a Home page with more than six sections should still say Done (it is written in parts).
 3. **Build again.** Press Build the site a second time. No new pages should appear; the same pages get a new version (or no change).
 4. **Publish from the launch check.** Step 7 (Launch). Pages with things to replace cannot be ticked. Publish one ready page and check it shows to a visitor.
 5. **Header and footer (Hello theme, no Elementor Pro).** After the build, open the front page as a visitor. Hello's own plain header and footer should be gone, and the kit header (logo, menu, button) and footer should show once each, at the top and bottom. Press Tab once: a "Skip to content" box should appear top left; Enter jumps past the menu. Check a page set to Elementor Full Width (header shows) and one set to Elementor Canvas (no header, by design). Site tab, Header and footer should say "Placed now by: Site Kit, on the Hello theme".
