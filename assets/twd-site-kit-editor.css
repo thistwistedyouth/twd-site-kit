@@ -123,6 +123,13 @@
   font-weight: 600 !important;
   color: var(--twd-site-color-title) !important;
 }
+.twd-sk-ed .twd-sk-ed__inlinehead.twd-sk-ed__inlinehead {
+  flex: 1 1 100%;
+  margin: 0 !important;
+  font-size: var(--twd-site-size-small) !important;
+  font-weight: 600 !important;
+  color: var(--twd-site-color-title) !important;
+}
 /* ---- the one-box planner's checklist ---- */
 .twd-sk-ed .twd-sk-ed__plan.twd-sk-ed__plan {
   margin: 12px 0 0 !important;

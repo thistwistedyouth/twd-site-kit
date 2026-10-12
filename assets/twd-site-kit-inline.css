@@ -18,3 +18,26 @@ body.twd-sk-inline-on img[data-twd-sk-p] {
   outline: 3px dashed rgba(34, 113, 177, 0.75) !important; outline-offset: -3px !important; cursor: pointer !important;
 }
 body.twd-sk-inline-on img[data-twd-sk-p]:hover { outline-style: solid !important; }
+/* A place marked for a picture (0.10.1): a dashed box to click, and the chosen picture before it is saved. */
+body.twd-sk-inline-on [data-twd-sk-s] {
+  display: block !important; box-sizing: border-box !important; min-height: 9rem !important;
+  padding: 1.25rem 1rem !important; border: 2px dashed #2271b1 !important; border-radius: 12px !important;
+  background-color: rgba(34, 113, 177, 0.06) !important; color: #1d2327 !important; font-size: 0.875rem !important;
+  text-align: center !important; cursor: pointer !important;
+}
+body.twd-sk-inline-on [data-twd-sk-s]::before {
+  content: "+ Add a picture"; display: block; margin-bottom: 0.5rem; font-size: 1rem; font-weight: 700; color: #2271b1;
+}
+body.twd-sk-inline-on [data-twd-sk-s]:hover,
+body.twd-sk-inline-on [data-twd-sk-s]:focus { border-style: solid !important; }
+body.twd-sk-inline-on [data-twd-sk-s][data-twd-sk-filled] { display: none !important; }
+body.twd-sk-inline-on img[data-twd-sk-p]:focus { outline-style: solid !important; }
+body.twd-sk-inline-on img[data-twd-sk-for] {
+  display: block; max-width: 100%; height: auto;
+  outline: 3px solid #00a32a !important; outline-offset: -3px !important; cursor: pointer !important;
+}
+body.twd-sk-inline-on img[data-twd-sk-p][src*="/your-image"],
+body.twd-sk-inline-on img[data-twd-sk-p][src*="/your-badge"],
+body.twd-sk-inline-on img[data-twd-sk-p][src*="/your-logo"] {
+  min-width: 8rem; min-height: 8rem; background-color: rgba(34, 113, 177, 0.06) !important;
+}

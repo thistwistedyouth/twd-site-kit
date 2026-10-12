@@ -92,6 +92,9 @@ class TWD_SK_Editor {
 			'components'     => (bool) $context['is_kit_page'] ? TWD_SK_Recipes::parts_menu() : array(),
 			// Changing words and pictures in place (0.10.0): kit pages, outside safe mode.
 			'inline'         => (bool) $context['is_kit_page'] && ! TWD_SK_Safe::on(),
+			// Uploading a picture from the computer while changing the page in place (0.10.1).
+			'canUpload'      => current_user_can( 'upload_files' ),
+			'mediaUrl'       => esc_url_raw( rest_url( 'wp/v2/media' ) ),
 			'setupUrl'       => current_user_can( 'manage_options' ) ? esc_url_raw( TWD_SK_Build::admin_url() ) : '',
 		) );
 		wp_enqueue_script( self::HANDLE );

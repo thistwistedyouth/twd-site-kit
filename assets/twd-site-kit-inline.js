@@ -1,9 +1,11 @@
 /* TWD Site Kit: change words and pictures in place on the page (0.10.0). Vanilla JS, no build step.
  *
  * Loaded with the editor, only on a kit page the person can edit. The server numbers every piece of
- * text they may change (data-twd-sk-t) and every picture (data-twd-sk-p) when it draws the page for
- * them. Here those pieces become editable; on Save only the changed pieces go back, by number, and the
- * server puts them into the stored page, cleans it and saves a new version (Undo goes back).
+ * text they may change (data-twd-sk-t), every picture (data-twd-sk-p) and every place marked for a
+ * picture (data-twd-sk-s, 0.10.1) when it draws the page for them. Here those pieces become editable;
+ * on Save only the changed pieces go back, by number, and the server puts them into the stored page,
+ * cleans it and saves a new version (Undo goes back). A picture comes from the media library or is
+ * uploaded from the computer to the media library first (0.10.1).
  * It never builds HTML from text and never writes raw HTML into the page. */
 (function () {
 	'use strict';
@@ -17,7 +19,8 @@
 	var el = ED.el;
 	var show = ED.show;
 	var BLOCKS_WITH_BREAKS = { P: 1, LI: 1, DD: 1, FIGCAPTION: 1, BLOCKQUOTE: 1 };
-	var S = { on: false, texts: [], pics: [], orig: {}, origText: {}, origPic: {}, hrefs: {}, picks: {}, range: null, linkTarget: null, picIndex: -1, saving: false };
+	var PICTURE_TYPES = /^image\/(jpeg|png|gif|webp|avif)$/;
+	var S = { on: false, texts: [], pics: [], spots: [], orig: {}, origText: {}, origPic: {}, hrefs: {}, picks: {}, spotPicks: {}, range: null, linkTarget: null, target: null, saving: false, uploading: false };
 	var ui = {};
 
 	function texts() {
@@ -26,6 +29,10 @@
 
 	function pictures() {
 		return Array.prototype.slice.call(document.querySelectorAll('img[data-twd-sk-p]'));
+	}
+
+	function spots() {
+		return Array.prototype.slice.call(document.querySelectorAll('[data-twd-sk-s]'));
 	}
 
 	// The element's contents as markup, read one child at a time through the browser's own serialiser.
@@ -65,7 +72,7 @@
 				n++;
 			}
 		});
-		return n + Object.keys(S.picks).length;
+		return n + Object.keys(S.picks).length + Object.keys(S.spotPicks).length;
 	}
 
 	function status(text) {
@@ -74,8 +81,8 @@
 
 	function counter() {
 		var n = changedCount();
-		status(n ? n + ' change' + (n === 1 ? '' : 's') + ' not saved yet.' : 'Click any words to change them. Click a picture to swap it.');
-		ui.save.disabled = !n || S.saving;
+		status(n ? n + ' change' + (n === 1 ? '' : 's') + ' not saved yet.' : 'Click any words to change them. Click a picture to change it' + (S.spots.length ? ', or a dashed Add a picture box to put one there.' : '.'));
+		ui.save.disabled = !n || S.saving || S.uploading;
 	}
 
 	function markChanged(t) {
@@ -125,9 +132,21 @@
 			ui.altInput,
 			ED.button('Use this description', 'primary', setAlt)
 		]);
+		// Where a picture comes from: the media library, or this computer (it goes into the media library).
+		ui.picHead = el('p', { className: 'twd-sk-ed__inlinehead', tabindex: '-1' });
+		ui.library = ED.button('Choose from the media library', 'primary', fromLibrary);
+		ui.upload = ED.button('Upload from this computer', 'secondary', function () {
+			ui.file.click();
+		});
+		ui.describe = ED.button('Change the description', 'secondary', describeOnly);
+		ui.file = el('input', { type: 'file', id: 'twd-sk-inline-file', accept: 'image/jpeg,image/png,image/gif,image/webp,image/avif', hidden: '', 'aria-label': 'Upload a picture from this computer' });
+		ui.file.addEventListener('change', upload);
+		ui.picPanel = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' }, [
+			ui.picHead, ui.library, ui.upload, ui.describe, ED.button('Close', 'secondary', closePanels), ui.file
+		]);
 		ui.confirm = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' });
 		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar', role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '' }, [
-			ui.bold, ui.italic, ui.link, ui.status, ui.save, ui.cancel, ui.linkPanel, ui.altPanel, ui.confirm
+			ui.bold, ui.italic, ui.link, ui.status, ui.save, ui.cancel, ui.linkPanel, ui.altPanel, ui.picPanel, ui.confirm
 		]);
 		root.appendChild(ui.bar);
 	}
@@ -154,7 +173,12 @@
 	function closePanels() {
 		show(ui.linkPanel, false);
 		show(ui.altPanel, false);
+		show(ui.picPanel, false);
 		S.linkTarget = null;
+	}
+
+	function panelOpen() {
+		return !ui.linkPanel.hasAttribute('hidden') || !ui.altPanel.hasAttribute('hidden') || !ui.picPanel.hasAttribute('hidden');
 	}
 
 	function openLink() {
@@ -177,6 +201,7 @@
 		S.linkTarget = { t: t, a: a, i: i };
 		ui.linkInput.value = a ? (t === a && S.hrefs[i] !== undefined ? S.hrefs[i] : a.getAttribute('href') || '') : '';
 		show(ui.altPanel, false);
+		show(ui.picPanel, false);
 		show(ui.linkPanel, true);
 		ui.linkInput.focus();
 	}
@@ -229,37 +254,240 @@
 
 	/* ---- pictures ---- */
 
-	function choosePicture(img) {
-		if (!(window.wp && window.wp.media)) {
-			status('The media library is not available here. Use Edit with AI to change this picture.');
+	function libraryReady() {
+		return !!(window.wp && window.wp.media);
+	}
+
+	function uploadReady() {
+		return !!(cfg.canUpload && cfg.mediaUrl && window.FormData && window.fetch);
+	}
+
+	function picOf(i) {
+		return document.querySelector('img[data-twd-sk-p="' + i + '"]');
+	}
+
+	function spotOf(i) {
+		return document.querySelector('[data-twd-sk-s="' + i + '"]');
+	}
+
+	function shownFor(i) {
+		return document.querySelector('img[data-twd-sk-for="' + i + '"]');
+	}
+
+	// A picture, a place for one, or a picture just chosen for that place.
+	function pictureTarget(node) {
+		if (!node || !node.closest) {
+			return null;
+		}
+		var n = node.closest('img[data-twd-sk-p], [data-twd-sk-s], img[data-twd-sk-for]');
+		if (!n) {
+			return null;
+		}
+		if (n.hasAttribute('data-twd-sk-p')) {
+			return { kind: 'pic', i: n.getAttribute('data-twd-sk-p') };
+		}
+		return { kind: 'spot', i: n.getAttribute(n.hasAttribute('data-twd-sk-s') ? 'data-twd-sk-s' : 'data-twd-sk-for') };
+	}
+
+	function openPicture(target) {
+		S.target = target;
+		var filled = target.kind === 'pic' || !!S.spotPicks[target.i];
+		ui.picHead.textContent = filled ? 'Change this picture' : 'Add a picture here';
+		show(ui.library, libraryReady());
+		show(ui.upload, uploadReady());
+		show(ui.describe, filled);
+		show(ui.linkPanel, false);
+		show(ui.altPanel, false);
+		show(ui.picPanel, true);
+		if (!libraryReady() && !uploadReady()) {
+			status('Pictures cannot be chosen here. Ask the site owner for permission to upload files, or use Edit with AI.');
+		}
+		(libraryReady() ? ui.library : (uploadReady() ? ui.upload : ui.picHead)).focus();
+	}
+
+	function fromLibrary() {
+		var target = S.target;
+		if (!target || !libraryReady()) {
 			return;
 		}
-		var frame = window.wp.media({ title: 'Choose a picture', library: { type: 'image' }, multiple: false, button: { text: 'Use this picture' } });
+		var frame = window.wp.media({ title: target.kind === 'spot' ? 'Add a picture' : 'Choose a picture', library: { type: 'image' }, multiple: false, button: { text: 'Use this picture' } });
 		frame.on('select', function () {
 			var a = frame.state().get('selection').first().toJSON();
-			var i = img.getAttribute('data-twd-sk-p');
-			var url = a.sizes && a.sizes.large ? a.sizes.large.url : a.url;
-			img.setAttribute('src', url);
-			img.removeAttribute('srcset');
-			img.removeAttribute('sizes');
-			S.picks[i] = { i: parseInt(i, 10), id: a.id, alt: a.alt || '' };
-			S.picIndex = i;
-			ui.altInput.value = a.alt || '';
-			show(ui.linkPanel, false);
-			show(ui.altPanel, true);
-			ui.altInput.focus();
-			counter();
+			usePicture(target, { id: a.id, url: a.sizes && a.sizes.large ? a.sizes.large.url : a.url, alt: a.alt || '' });
 		});
 		frame.open();
 	}
 
+	function busy(on) {
+		S.uploading = on;
+		ui.library.disabled = on;
+		ui.upload.disabled = on;
+		ui.describe.disabled = on;
+		counter();
+	}
+
+	// Upload the chosen file to the media library through WordPress itself, then use it.
+	function upload() {
+		var file = ui.file.files && ui.file.files[0];
+		var target = S.target;
+		ui.file.value = '';
+		if (!file || !target || S.uploading) {
+			return;
+		}
+		if (!PICTURE_TYPES.test(file.type || '')) {
+			status('That file is not a picture the site can show. Choose a JPG, PNG, GIF or WebP file.');
+			return;
+		}
+		var form = new FormData();
+		form.append('file', file, file.name);
+		busy(true);
+		status('Uploading ' + file.name + '...');
+		fetch(cfg.mediaUrl, { method: 'POST', credentials: 'same-origin', headers: { 'X-WP-Nonce': cfg.nonce }, body: form }).then(function (res) {
+			return res.text().then(function (text) {
+				var data = null;
+				try {
+					data = text ? JSON.parse(text) : null;
+				} catch (e) {
+					data = null;
+				}
+				if (!res.ok || !data || !data.id) {
+					var why = data && typeof data.message === 'string' && data.message ? data.message : 'The picture could not be uploaded (error ' + res.status + ').';
+					throw new Error(why + ' You can also upload it in Media, then choose it from the media library.');
+				}
+				return data;
+			});
+		}, function () {
+			throw new Error('Could not reach the site. Check your connection and try again.');
+		}).then(function (data) {
+			busy(false);
+			var sizes = data.media_details && data.media_details.sizes;
+			usePicture(target, { id: data.id, url: sizes && sizes.large ? sizes.large.source_url : data.source_url, alt: data.alt_text || '' });
+		}, function (err) {
+			busy(false);
+			status(err.message);
+		});
+	}
+
+	// Show the chosen picture where it will go, before it is saved.
+	function usePicture(target, pic) {
+		var i = target.i;
+		if (target.kind === 'pic') {
+			var img = picOf(i);
+			if (!img) {
+				return;
+			}
+			img.setAttribute('src', pic.url);
+			img.removeAttribute('srcset');
+			img.removeAttribute('sizes');
+			img.setAttribute('alt', pic.alt);
+			S.picks[i] = { i: parseInt(i, 10), id: pic.id, alt: pic.alt };
+		} else {
+			var spot = spotOf(i);
+			if (!spot) {
+				return;
+			}
+			var shown = shownFor(i);
+			if (!shown) {
+				shown = document.createElement('img');
+				shown.setAttribute('data-twd-sk-for', i);
+				shown.setAttribute('tabindex', '0');
+				shown.setAttribute('role', 'button');
+				shown.setAttribute('title', 'Click to change this picture');
+				var look = lookOf(spot);
+				if (look) {
+					shown.className = look;
+				}
+				spot.parentNode.insertBefore(shown, spot.nextSibling);
+			}
+			shown.setAttribute('src', pic.url);
+			shown.setAttribute('alt', pic.alt);
+			spot.setAttribute('data-twd-sk-filled', '1');
+			S.spotPicks[i] = { i: parseInt(i, 10), id: pic.id, alt: pic.alt };
+		}
+		S.target = target;
+		openAlt(pic.alt);
+		counter();
+	}
+
+	// The class the server gives a picture in each kind of box (TWD_SK_Inline::picture_class).
+	var LOOKS = {
+		'twd-sk-image-text__media': 'twd-sk-image-text__img',
+		'twd-sk-hero__media': 'twd-sk-hero__img',
+		'twd-sk-contact__media': 'twd-sk-contact__img',
+		'twd-sk-pictures__item': 'twd-sk-pictures__img',
+		'twd-sk-logos__item': 'twd-sk-logos__img',
+		'twd-sk-pictures': 'twd-sk-pictures__img',
+		'twd-sk-image-text': 'twd-sk-image-text__img',
+		'twd-sk-logos': 'twd-sk-logos__img'
+	};
+
+	// The look the picture will have once saved, so it matches before it is saved.
+	function lookOf(spot) {
+		for (var n = spot; n && n.nodeType === 1; n = n.parentNode) {
+			for (var c = 0; c < n.classList.length; c++) {
+				if (LOOKS[n.classList[c]]) {
+					return LOOKS[n.classList[c]];
+				}
+			}
+			if (n.tagName === 'SECTION') {
+				break;
+			}
+		}
+		var section = spot.closest('section');
+		var imgs = section ? section.querySelectorAll('img[class]') : [];
+		for (var k = 0; k < imgs.length; k++) {
+			var m = imgs[k].className.match(/(?:^|\s)(twd-sk-[a-z0-9-]+__img)(?:\s|$)/);
+			if (m) {
+				return m[1];
+			}
+		}
+		return '';
+	}
+
+	function openAlt(value) {
+		ui.altInput.value = value || '';
+		show(ui.picPanel, false);
+		show(ui.linkPanel, false);
+		show(ui.altPanel, true);
+		ui.altInput.focus();
+	}
+
+	function describeOnly() {
+		var t = S.target;
+		if (!t) {
+			return;
+		}
+		if (t.kind === 'pic') {
+			var img = picOf(t.i);
+			openAlt(img ? img.getAttribute('alt') : '');
+		} else if (S.spotPicks[t.i]) {
+			openAlt(S.spotPicks[t.i].alt);
+		}
+	}
+
 	function setAlt() {
-		var i = S.picIndex;
-		if (S.picks[i]) {
-			S.picks[i].alt = ui.altInput.value.trim();
-			var img = document.querySelector('img[data-twd-sk-p="' + i + '"]');
+		var t = S.target;
+		var v = ui.altInput.value.trim();
+		if (t && t.kind === 'pic') {
+			var img = picOf(t.i);
+			var was = S.origPic[t.i] && S.origPic[t.i].alt ? S.origPic[t.i].alt : '';
+			if (S.picks[t.i]) {
+				S.picks[t.i].alt = v;
+			} else if (v !== was) {
+				// The same picture with a new description (id 0 keeps the picture).
+				S.picks[t.i] = { i: parseInt(t.i, 10), id: 0, alt: v };
+			}
+			if (S.picks[t.i] && S.picks[t.i].id === 0 && v === was) {
+				delete S.picks[t.i];
+			}
 			if (img) {
-				img.setAttribute('alt', S.picks[i].alt);
+				img.setAttribute('alt', v);
+			}
+		} else if (t && S.spotPicks[t.i]) {
+			S.spotPicks[t.i].alt = v;
+			var shown = shownFor(t.i);
+			if (shown) {
+				shown.setAttribute('alt', v);
 			}
 		}
 		show(ui.altPanel, false);
@@ -275,11 +503,18 @@
 		// Escape anywhere while editing: close an open panel first, otherwise leave (asking if anything changed).
 		if (e.key === 'Escape') {
 			e.preventDefault();
-			if (!ui.linkPanel.hasAttribute('hidden') || !ui.altPanel.hasAttribute('hidden')) {
+			if (panelOpen()) {
 				closePanels();
 			} else if (ui.confirm.hasAttribute('hidden')) {
 				cancel();
 			}
+			return;
+		}
+		// A picture or a place for one, reached with the Tab key.
+		var target = (e.key === 'Enter' || e.key === ' ') && !editableOf(e.target) ? pictureTarget(e.target) : null;
+		if (target) {
+			e.preventDefault();
+			openPicture(target);
 			return;
 		}
 		var t = editableOf(e.target);
@@ -320,11 +555,11 @@
 		if (!S.on || (ui.bar && ui.bar.contains(e.target))) {
 			return;
 		}
-		var img = e.target.closest ? e.target.closest('img[data-twd-sk-p]') : null;
-		if (img) {
+		var target = pictureTarget(e.target);
+		if (target) {
 			e.preventDefault();
 			e.stopPropagation();
-			choosePicture(img);
+			openPicture(target);
 			return;
 		}
 		var a = e.target.closest ? e.target.closest('a') : null;
@@ -341,7 +576,8 @@
 		}
 		S.texts = texts();
 		S.pics = pictures();
-		if (!S.texts.length && !S.pics.length) {
+		S.spots = spots();
+		if (!S.texts.length && !S.pics.length && !S.spots.length) {
 			status('There is nothing to change on this page yet.');
 			return;
 		}
@@ -351,17 +587,25 @@
 		S.origPic = {};
 		S.hrefs = {};
 		S.picks = {};
+		S.spotPicks = {};
+		S.target = null;
 		S.texts.forEach(function (t) {
 			var i = t.getAttribute('data-twd-sk-t');
 			S.orig[i] = copyChildren(t);
 			S.origText[i] = serialize(t);
-			S.origPic[i] = null;
 			t.setAttribute('contenteditable', 'true');
 			t.setAttribute('spellcheck', 'true');
 		});
 		S.pics.forEach(function (img) {
 			S.origPic[img.getAttribute('data-twd-sk-p')] = { src: img.getAttribute('src'), alt: img.getAttribute('alt'), srcset: img.getAttribute('srcset') };
-			img.setAttribute('title', 'Click to choose another picture');
+			img.setAttribute('title', 'Click to change this picture or its description');
+			img.setAttribute('tabindex', '0');
+			img.setAttribute('role', 'button');
+		});
+		S.spots.forEach(function (spot) {
+			spot.setAttribute('title', 'Click to add a picture here');
+			spot.setAttribute('tabindex', '0');
+			spot.setAttribute('role', 'button');
 		});
 		document.body.classList.add('twd-sk-inline-on');
 		show(ui.open, false);
@@ -384,6 +628,13 @@
 		});
 		S.pics.forEach(function (img) {
 			img.removeAttribute('title');
+			img.removeAttribute('tabindex');
+			img.removeAttribute('role');
+		});
+		S.spots.forEach(function (spot) {
+			spot.removeAttribute('title');
+			spot.removeAttribute('tabindex');
+			spot.removeAttribute('role');
 		});
 		document.body.classList.remove('twd-sk-inline-on');
 		show(ui.bar, false);
@@ -408,6 +659,15 @@
 				}
 			}
 		});
+		S.spots.forEach(function (spot) {
+			var shown = shownFor(spot.getAttribute('data-twd-sk-s'));
+			if (shown && shown.parentNode) {
+				shown.parentNode.removeChild(shown);
+			}
+			spot.removeAttribute('data-twd-sk-filled');
+		});
+		S.picks = {};
+		S.spotPicks = {};
 		stop();
 	}
 
@@ -433,7 +693,11 @@
 	}
 
 	function save() {
-		var body = { base_version: cfg.currentVersion, texts: [], pictures: [] };
+		if (S.uploading) {
+			status('Wait for the picture to finish uploading.');
+			return;
+		}
+		var body = { base_version: cfg.currentVersion, texts: [], pictures: [], spots: [] };
 		S.texts.forEach(function (t) {
 			var i = t.getAttribute('data-twd-sk-t');
 			if (t.hasAttribute('data-twd-sk-changed')) {
@@ -447,7 +711,10 @@
 		Object.keys(S.picks).forEach(function (k) {
 			body.pictures.push(S.picks[k]);
 		});
-		if (!body.texts.length && !body.pictures.length) {
+		Object.keys(S.spotPicks).forEach(function (k) {
+			body.spots.push(S.spotPicks[k]);
+		});
+		if (!body.texts.length && !body.pictures.length && !body.spots.length) {
 			status('Nothing has changed yet.');
 			return;
 		}
@@ -481,6 +748,6 @@
 		start();
 	};
 	ED.inlineCount = function () {
-		return texts().length + pictures().length;
+		return texts().length + pictures().length + spots().length;
 	};
 })();

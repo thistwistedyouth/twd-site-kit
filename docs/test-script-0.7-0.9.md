@@ -1,8 +1,8 @@
-# Test script: 0.7.0 to 0.10.0 on a fresh site
+# Test script: 0.7.0 to 0.10.1 on a fresh site
 
 Built fast at beta stage; none of this has been tried on a real site yet. Work through it on a **fresh install** first, never on a live client site. Riskiest first: if something in the first block goes wrong, stop and send the site report (Site tab, Site report, or `wp twd-sk doctor`).
 
-Before you start: install Site Kit 0.10.0 (Plugins, Add New, Upload, or the one-click update), plus the Articles plugin with a key if you want the AI parts. Turn on WP_DEBUG_LOG if you can.
+Before you start: install Site Kit 0.10.1 (Plugins, Add New, Upload, or the one-click update), plus the Articles plugin with a key if you want the AI parts. Turn on WP_DEBUG_LOG if you can.
 
 ## 1. Riskiest: things that send, publish or change many pages
 
@@ -23,11 +23,13 @@ Before you start: install Site Kit 0.10.0 (Plugins, Add New, Upload, or the one-
 10. **Keep in view.** In Media, open a portrait, set Keep in view to Top, save. On a page that crops it (a hero), the face should stay in view.
 11. **Colours from the logo.** Site tab, Style, Take colours from the logo. The page previews the colours; Undo puts them back; Save keeps them. Text on buttons and bands should stay easy to read.
 
-## 2b. Editing (0.10.0)
+## 2b. Editing (0.10.0 and 0.10.1)
 
 12a. **Edit text in place.** On a kit page, press **Edit text** (bottom left, above Edit with AI). Dashed outlines show what can change. Change a heading, make a word bold, change a button's link (Link), and click a picture to swap it and give it a description. Save: the page reloads with the changes, and Edit with AI, History shows "Changed on the page". Try Cancel too: it asks, then puts the words back. The safety notice and the enquiry form should not be editable.
 12b. **One box.** Edit with AI, Edit this page. Type a list, for example: "1. Change the first paragraph to ... 2. Add three boxes with glowing borders for garden parties, weddings and festivals. 3. Add these testimonials as a slider at the bottom: ...(paste two real ones)". Plan the changes: a checklist appears, plus anything it cannot do. Untick one, then Make these changes: each says Done, the preview opens, Apply saves one version. Check the testimonials are word for word.
 12c. **The new looks.** The glow boxes' borders move slowly between two of the site's colours (and stay still if the phone or computer is set to reduce motion). The slider shows one quote at a time: swipe on a phone, arrows and dots on a computer, and nothing moves on its own.
+
+12d. **Pictures in Edit text (0.10.1).** Find a page with a picture marker such as [PLACEHOLDER: image needed] (or ask Edit with AI to add a picture somewhere). Press Edit text: the marker shows as a dashed **+ Add a picture** box. Click it, then **Upload from this computer** and pick a photo: it uploads, shows in place, and asks for a description. Click another picture, **Choose from the media library**, and pick one. Click a third picture, **Change the description** only. Save: all three stay after the reload, the uploaded photo is in Media, and a caption marker next to a picture is still words to type over. Try a PDF in Upload: it should be refused.
 
 ## 3. Lowest: reports and command line (needs SSH)
 

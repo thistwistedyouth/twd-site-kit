@@ -17,6 +17,12 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.10.1 (pictures in Edit text)
+
+- **The owner found a spot the AI had marked "[PLACEHOLDER: image needed]"** on a page and could not put a picture there with Edit text, since it was words, not a picture. Markers like that now show as Add a picture boxes while editing, and choosing a picture puts a real one in its place with the look of the section's other pictures. Caption and description markers stay as words to type over.
+- **Upload from this computer, as well as the media library.** The media library window can already upload, but that is easy to miss. A clear second button opens the computer's own file picker and puts the file into the media library through WordPress's own upload route (so WordPress checks permission, file type and size as usual), then uses it.
+- **Descriptions on their own.** A picture's description (alt text) can now be fixed without swapping the picture, since setup-written descriptions are guesses until checked.
+
 ## v0.10.0 (the editing side, rebuilt)
 
 - **The owner asked for a simpler editing side** after the first real site was built from a brief: one place to ask for changes, a way to fix words directly, a list of edits in one go, and two new looks (boxes with moving borders, a testimonial slideshow). Agreed with recommendations: swipe and arrows only (no autoplay), colours from the site palette only, and in-place editing for everyone who can already edit the page.

@@ -872,7 +872,7 @@ class TWD_SK_REST {
 		if ( $base !== (int) TWD_SK_Store::get_current_version_id( $id ) ) {
 			return self::error( 'twd_sk_conflict', 'This page changed since you opened it. Reload the page and make the change again.', 409 );
 		}
-		$out = TWD_SK_Inline::apply( TWD_SK_Store::get_current( $id ), $request->get_param( 'texts' ), $request->get_param( 'pictures' ) );
+		$out = TWD_SK_Inline::apply( TWD_SK_Store::get_current( $id ), $request->get_param( 'texts' ), $request->get_param( 'pictures' ), $request->get_param( 'spots' ) );
 		if ( is_wp_error( $out ) ) {
 			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_conflict' === $out->get_error_code() ? 409 : 400 );
 		}

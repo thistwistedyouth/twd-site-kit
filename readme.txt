@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.10.0
+Stable tag: 0.10.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,11 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.10.1 =
+* New: in Edit text, a place the AI marked for a picture (such as [PLACEHOLDER: image needed]) shows as an Add a picture box. Click it to put a picture there.
+* New: every picture can come from the media library or be uploaded straight from your computer.
+* New: change a picture's description on its own, without swapping the picture.
 
 = 0.10.0 =
 * New: Edit text. Change words, links and pictures right on the page, with bold, italic and link buttons. Only the changed pieces are saved, as a new version you can undo. No AI needed.
