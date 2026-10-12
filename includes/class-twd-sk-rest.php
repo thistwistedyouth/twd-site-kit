@@ -214,6 +214,11 @@ class TWD_SK_REST {
 				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 			),
 		) );
+		register_rest_route( self::ROUTE_NS, '/site/brand', array(
+			'methods'             => 'GET',
+			'callback'            => array( __CLASS__, 'get_site_brand' ),
+			'permission_callback' => array( __CLASS__, 'can_read_site' ),
+		) );
 		register_rest_route( self::ROUTE_NS, '/site/build', array(
 			'methods'             => 'GET',
 			'callback'            => array( __CLASS__, 'get_site_build' ),
@@ -559,6 +564,24 @@ class TWD_SK_REST {
 		return self::mode_payload();
 	}
 
+	// -- Colours from the logo -----------------------------------------------
+
+	/** Proposed colours from the logo (or another picture). Nothing is saved: the Site tab previews them. */
+	public static function get_site_brand( $request ) {
+		$id = (int) $request->get_param( 'picture' );
+		if ( $id <= 0 ) {
+			$id = (int) TWD_SK_Profile::get()['logo_id'];
+		}
+		if ( $id <= 0 ) {
+			return self::error( 'twd_sk_bad_input', 'There is no logo yet. Choose one in Site details first.', 400 );
+		}
+		$out = TWD_SK_Brand::from_attachment( $id );
+		if ( is_wp_error( $out ) ) {
+			return self::error( $out->get_error_code(), $out->get_error_message(), 400 );
+		}
+		return $out;
+	}
+
 	// -- The site setup build ------------------------------------------------
 
 	private static function build_payload( $errors = array() ) {
@@ -609,7 +632,7 @@ class TWD_SK_REST {
 	/** Save some of the setup page's choices. Good values are kept even when another is refused. */
 	public static function post_site_build_draft( $request ) {
 		$in = array();
-		foreach ( array( 'step', 'mode', 'pack', 'brief_text', 'pictures', 'pages', 'reset_pages' ) as $k ) {
+		foreach ( array( 'step', 'mode', 'pack', 'brand', 'brief_text', 'pictures', 'pages', 'reset_pages' ) as $k ) {
 			$v = $request->get_param( $k );
 			if ( null !== $v ) {
 				$in[ $k ] = $v;

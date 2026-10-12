@@ -301,6 +301,19 @@
 .twd-sk-ed .twd-sk-ed__card.twd-sk-ed__card p {
   margin: 0 0 8px !important;
 }
+.twd-sk-ed .twd-sk-ed__swatches.twd-sk-ed__swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 !important;
+}
+.twd-sk-ed .twd-sk-ed__swatch.twd-sk-ed__swatch {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-pill) !important;
+}
 .twd-sk-ed .twd-sk-ed__row.twd-sk-ed__row {
   margin: 0 0 6px !important;
   font-size: var(--twd-site-size-body) !important;

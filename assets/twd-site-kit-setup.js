@@ -210,7 +210,7 @@
 			return { mode: checked('mode') };
 		}
 		if (step === 'style') {
-			return { pack: checked('pack') };
+			return { pack: checked('pack'), brand: !!(ui.brand && ui.brand.checked) };
 		}
 		if (step === 'brief') {
 			return { brief_text: ui.brief ? ui.brief.value : '' };
@@ -314,6 +314,9 @@
 		body.appendChild(radios('pack', S.data.packs, S.data.draft.pack, function (p) {
 			return { title: p.name, help: p.description };
 		}));
+		ui.brand = el('input', { type: 'checkbox', id: 'twd-sk-setup-brand' });
+		ui.brand.checked = !!S.data.draft.brand;
+		body.appendChild(el('p', {}, [el('label', { 'for': 'twd-sk-setup-brand' }, [ui.brand, el('span', { text: ' Use colours from the logo (you choose the logo on the Pictures step). Every colour is checked so text stays easy to read.' })])]));
 	}
 
 	/* 3. Brief */

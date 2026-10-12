@@ -17,6 +17,13 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.8.2 (colours from the logo)
+
+- **The fastest route to an on-brand first look.** Most small businesses have a logo and nothing else of a brand; their colours set the buttons, headings and bands.
+- **Readable beats exact.** A logo's own colour is often too light for white button text or headings. The colour is darkened step by step only as far as needed, and anything that still fails the 4.5:1 check is left as the style's own and named, so the site never becomes hard to read to match a logo.
+- **No new library.** GD ships with almost every PHP host; SVG logos are read from the colours written in them. Without GD the button says so rather than guessing.
+- **Preview first, as with AI suggestions.** Nothing is saved until Save style; Undo puts the saved colours back.
+
 ## v0.8.1 (the enquiry form)
 
 - **Forms stay out of page HTML.** Everything a person or an AI writes is still sanitised with forms banned; the form is built by the plugin from a shortcode at display time, so nobody can inject one.

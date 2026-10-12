@@ -15,6 +15,7 @@
  *   wp twd-sk safe-mode [on|off|status]  switch the newest features off, or back on
  *   wp twd-sk pack [<slug>]             list style packs, or switch to one
  *   wp twd-sk mode [<mode>]             show the site type (therapy or business), or switch it
+ *   wp twd-sk brand [<picture-id>] [--apply]  colours from the logo, checked for contrast; --apply saves them
  *   wp twd-sk build [<brief-file>] [--mode=<mode>] [--pack=<slug>] [--pictures=<file>] [--no-ai] [--dry-run]
  *                                        set the whole site up from a brief, every page a draft
  */
@@ -386,6 +387,51 @@ class TWD_SK_CLI {
 			return;
 		}
 		WP_CLI::success( 'Built. Every page is a draft. Check each one, replace any [PLACEHOLDER], then publish.' );
+	}
+
+	/**
+	 * Show the main colours of the logo (or another picture) and the style colours made from them,
+	 * each checked so text stays easy to read. Saves nothing unless --apply is given.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [<picture-id>]
+	 * : A picture in the media library. Default: the logo in the site details.
+	 *
+	 * [--apply]
+	 * : Save the colours on top of the current style.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk brand
+	 *     wp twd-sk brand 42 --apply
+	 */
+	public function brand( $args, $assoc_args ) {
+		$id = isset( $args[0] ) ? (int) $args[0] : (int) TWD_SK_Profile::get()['logo_id'];
+		if ( $id <= 0 ) {
+			WP_CLI::error( 'There is no logo in the site details. Give a picture ID.' );
+			return;
+		}
+		$out = TWD_SK_Brand::from_attachment( $id );
+		if ( is_wp_error( $out ) ) {
+			WP_CLI::error( $out->get_error_message() );
+			return;
+		}
+		WP_CLI::log( 'Main colours: ' . implode( ', ', $out['colours'] ) );
+		foreach ( $out['tokens'] as $name => $value ) {
+			WP_CLI::log( '  ' . $name . ': ' . $value );
+		}
+		if ( $out['dropped'] ) {
+			WP_CLI::log( 'Kept the style\'s own for: ' . implode( ', ', $out['dropped'] ) );
+		}
+		if ( isset( $assoc_args['apply'] ) ) {
+			$r = TWD_SK_Site::apply( null, array_merge( TWD_SK_Packs::overrides(), $out['tokens'] ) );
+			if ( is_wp_error( $r ) ) {
+				WP_CLI::error( $r->get_error_message() );
+				return;
+			}
+			WP_CLI::success( 'Saved. Reset the style in the Site tab to undo.' );
+		}
 	}
 
 	/**

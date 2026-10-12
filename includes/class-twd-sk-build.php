@@ -63,6 +63,7 @@ class TWD_SK_Build {
 			'pictures'   => TWD_SK_Pictures::validate( isset( $d['pictures'] ) ? $d['pictures'] : array() )['valid'],
 			'built'      => $built,
 			'used'       => isset( $d['used'] ) && is_array( $d['used'] ) ? array_values( array_filter( $d['used'], 'is_string' ) ) : array(),
+			'brand'      => ! empty( $d['brand'] ),
 			// The page list from the Pages step, or null to follow the brief.
 			'pages'      => isset( $d['pages'] ) && is_array( $d['pages'] ) ? $d['pages'] : null,
 			'updated'    => isset( $d['updated'] ) && is_string( $d['updated'] ) ? $d['updated'] : '',
@@ -107,6 +108,9 @@ class TWD_SK_Build {
 			} else {
 				$d['brief_text'] = $in['brief_text'];
 			}
+		}
+		if ( array_key_exists( 'brand', $in ) ) {
+			$d['brand'] = (bool) $in['brand'] && 'false' !== $in['brand'] && '0' !== $in['brand'];
 		}
 		if ( ! empty( $in['reset_pages'] ) ) {
 			$d['pages'] = null;
@@ -376,6 +380,16 @@ class TWD_SK_Build {
 					$save['cta_url']   = '/' . $pg['slug'];
 					break;
 				}
+			}
+		}
+		// Colours from the logo, when asked for and there is a logo. The contrast checks still decide.
+		if ( $draft['brand'] && isset( $draft['pictures']['slots']['logo'] ) ) {
+			$brand = TWD_SK_Brand::from_attachment( $draft['pictures']['slots']['logo']['id'] );
+			if ( is_wp_error( $brand ) ) {
+				$report[] = 'Colours from the logo: ' . $brand->get_error_message();
+			} elseif ( $brand['tokens'] ) {
+				$applied = TWD_SK_Site::apply( null, array_merge( TWD_SK_Packs::overrides(), $brand['tokens'] ) );
+				$report[] = is_wp_error( $applied ) ? 'Colours from the logo were not used: ' . $applied->get_error_message() : 'Colours taken from the logo (' . count( $brand['tokens'] ) . ' colours).' . ( $brand['dropped'] ? ' Kept the style\'s own for: ' . implode( ', ', $brand['dropped'] ) . ', to keep text easy to read.' : '' );
 			}
 		}
 		if ( $save ) {

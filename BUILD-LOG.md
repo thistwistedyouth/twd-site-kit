@@ -2,12 +2,13 @@
 
 The one place to see where this project is. Newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md. Update this file at the end of every piece of work, in the same commit.
 
-## Where we are (last updated at release 0.8.1, 12 Oct 2026)
+## Where we are (last updated at release 0.8.2, 12 Oct 2026)
 
-**Released and live in the update file:** 0.8.1. Sites update from Plugins, "Check for updates", "update now".
+**Released and live in the update file:** 0.8.2. Sites update from Plugins, "Check for updates", "update now".
 
 | Version | What it added |
 |---|---|
+| 0.8.2 | Colours from the logo: a Site tab button (previewed until saved), a setup page tick box, and `wp twd-sk brand`; every colour checked for contrast |
 | 0.8.1 | The Enquiry form section: name, email, phone, message and consent, emailed to the site address; spam trap, signed token and limits; nothing stored |
 | 0.8.0 | Five new sections: Pictures (a grid with captions), Logos strip, Prices (cards or a list), Opening hours, Areas covered (with a map link) |
 | 0.7.3 | Add a section in the Edit with AI pop-up: choose where, the kind and layout, and (with a key) let the AI write it from the facts; preview, then apply |

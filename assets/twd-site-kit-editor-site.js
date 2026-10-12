@@ -371,7 +371,7 @@
 		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
 			el('h3', { className: 'twd-sk-ed__step-title', text: 'Style' }),
 			el('p', { className: 'twd-sk-ed__help', text: 'Pick a style, then change colours, fonts and corners if you need to. Changes show on this page straight away. Nothing is kept until you press Save style.' })
-		].concat(aiBlocks(['style'])).concat([
+		].concat(aiBlocks(['style'])).concat([brandBlock()]).concat([
 			ui.packs,
 			ui.controls,
 			ui.contrast,
@@ -1169,6 +1169,52 @@
 			el('p', { className: 'twd-sk-ed__help', text: t.help }),
 			box,
 			el('div', { className: 'twd-sk-ed__actions' }, [ask, undo]),
+			msg
+		]);
+	}
+
+	/* Colours from the logo: previewed like an AI suggestion, never saved until Save style. */
+	function brandBlock() {
+		var msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		var swatches = el('div', { className: 'twd-sk-ed__swatches', 'aria-hidden': 'true' });
+		var go = button('Take colours from the logo', 'secondary', function () {
+			if (!S.data) {
+				message(msg, 'The style settings are still loading. Try again in a moment.', false);
+				return;
+			}
+			go.disabled = true;
+			message(msg, 'Reading the logo...', true);
+			api('GET', '/site/brand').then(function (data) {
+				go.disabled = false;
+				clear(swatches);
+				(data.colours || []).forEach(function (hex) {
+					swatches.appendChild(el('span', { className: 'twd-sk-ed__swatch', title: hex, 'data-colour': hex }));
+				});
+				Array.prototype.forEach.call(swatches.children, function (s) {
+					s.style.backgroundColor = s.getAttribute('data-colour');
+				});
+				var n = Object.keys(data.tokens || {}).length;
+				if (!n) {
+					message(msg, 'No colours from the logo could be used without making text hard to read.', false);
+					return;
+				}
+				fillProposal('style', { tokens: data.tokens });
+				message(msg, n + ' colours from the logo are previewed on this page now. Nothing is kept until you press Save style.' + (data.dropped && data.dropped.length ? ' Kept the style\'s own for: ' + data.dropped.join(', ') + ', so text stays easy to read.' : ''), true);
+			}, function (err) {
+				go.disabled = false;
+				message(msg, err.message, false);
+			});
+		});
+		var undo = button('Undo', 'secondary', function () {
+			undoProposal('style');
+			clear(swatches);
+			message(msg, 'Back to what is saved.', true);
+		});
+		return el('div', { className: 'twd-sk-ed__card' }, [
+			el('p', { className: 'twd-sk-ed__label', text: 'Colours from the logo' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'Uses the main colours of the logo in Site details for the buttons, headings, bands and accents. Every colour is checked so text stays easy to read.' }),
+			el('div', { className: 'twd-sk-ed__actions' }, [go, undo]),
+			swatches,
 			msg
 		]);
 	}
