@@ -54,6 +54,14 @@ def parse(text,indent=''):
         body=text[j+1:k-1]; i=k
         if head.startswith('@media'):
             out.append(indent+head+' {'); out.append(parse(body,indent+'  ')); out.append(indent+'}')
+        elif head.startswith('@keyframes'):
+            # Passed through as written: frames are not selectors, and !important is not allowed in them
+            # (an animation cannot beat an !important value anyway, so only non-visual properties animate).
+            out.append(indent+head+' {')
+            for fm in re.finditer(r'([^{}]+)\{([^{}]*)\}',body):
+                ds='; '.join(n.strip()+': '+tok(v.strip()) for n,v in (d.split(':',1) for d in fm.group(2).split(';') if d.strip()))
+                out.append(indent+'  '+fm.group(1).strip()+' { '+ds+'; }')
+            out.append(indent+'}')
         else:
             sels=[sel_out(s) for s in split_sel(head)]
             out.append(indent+(',\n'+indent).join(sels)+' {')

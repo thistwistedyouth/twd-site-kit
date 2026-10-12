@@ -17,6 +17,15 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.10.0 (the editing side, rebuilt)
+
+- **The owner asked for a simpler editing side** after the first real site was built from a brief: one place to ask for changes, a way to fix words directly, a list of edits in one go, and two new looks (boxes with moving borders, a testimonial slideshow). Agreed with recommendations: swipe and arrows only (no autoplay), colours from the site palette only, and in-place editing for everyone who can already edit the page.
+- **Edit text in place, not a page builder.** A full WYSIWYG editor would let anyone add stray colours, sizes and headings, which is what keeps these pages clean, readable on phones and accessible. Changing words, links and pictures where they sit covers most corrections with none of that risk, needs no AI and costs nothing.
+- **Only the changed pieces travel.** The page is numbered when drawn for an editor and renumbered the same way when saving, so the browser never sends back a whole page, and the server version check means a stale screen cannot overwrite newer work.
+- **One box, then a checklist.** Asking the AI for a short, checked plan first (rather than a rewritten page) means each change touches only its own sections, nothing runs out of room, and the person can untick anything before a word changes. Things the kit cannot do are said plainly with the nearest option, rather than half done.
+- **The request is the only new source of facts.** Every step gets the whole request as the facts the person supplied, so testimonials and names they paste are used word for word and nothing else new is allowed.
+- **New looks are kit parts.** The glow and the slider are registry variants with tests, contrast-safe colours and reduced-motion support, not styling the AI writes. The glow animates the outline colour because the kit's visual properties are `!important`, which an animation cannot override.
+
 ## v0.9.3 (reading the brief reliably, and building again)
 
 - **A copied brief arrived broken and the build went ahead anyway.** The brief's facts were one line of over 12,000 characters; copying the file from a viewer most likely cut that line, so the JSON no longer read. The build only warned, then made the starter set's pages with no facts, a menu and a button for them.

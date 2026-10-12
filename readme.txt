@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.9.3
+Stable tag: 0.10.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,12 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.10.0 =
+* New: Edit text. Change words, links and pictures right on the page, with bold, italic and link buttons. Only the changed pieces are saved, as a new version you can undo. No AI needed.
+* New: one box in Edit with AI. Write what you want changed (one line or a list), get a checklist to untick from, then the changes are made one at a time and shown in the preview before anything is saved. It says plainly what a page cannot do, and uses any wording you paste word for word.
+* New sections: boxes with a softly moving border in the site's colours, and a testimonial slider (swipe, arrows and dots; nothing moves on its own). Both respect reduced motion.
+* The separate section picker, extra facts box and Add a section panel are replaced by the one box.
 
 = 0.9.3 =
 * New: Choose the brief file on the setup page reads the .json file itself, so nothing is lost in copy and paste.

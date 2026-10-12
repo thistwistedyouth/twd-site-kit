@@ -126,8 +126,24 @@ class TWD_SK_Page {
 		}
 
 		self::$rendered = true;
+		self::enqueue_extras( $html );
+		// For someone who can edit this page: number the words and pictures they may change in place.
+		if ( class_exists( 'TWD_SK_Inline' ) && TWD_SK_Inline::allowed( $post_id ) ) {
+			$html = TWD_SK_Inline::mark( $html );
+		}
 
 		return '<div class="' . self::WRAPPER_CLASS . '">' . self::render_html( $html ) . '</div>';
+	}
+
+	/** Small scripts only some sections need, loaded only on a page that has them. */
+	public static function enqueue_extras( $html ) {
+		if ( TWD_SK_Safe::on() || ! function_exists( 'wp_enqueue_script' ) || ! defined( 'TWD_SK_URL' ) ) {
+			return;
+		}
+		// The quote slider still swipes without its script; the script adds arrows, dots and keys.
+		if ( false !== strpos( (string) $html, 'twd-sk-quote--slider' ) ) {
+			wp_enqueue_script( 'twd-site-kit-slider', TWD_SK_URL . 'assets/twd-site-kit-slider.js', array(), defined( 'TWD_SK_VERSION' ) ? TWD_SK_VERSION : false, true );
+		}
 	}
 
 	/**

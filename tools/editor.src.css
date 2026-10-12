@@ -15,6 +15,36 @@
 .twd-sk-ed__open:hover, .twd-sk-ed__open:focus-visible {
   background-color: $color-primary-hover; border-color: $color-primary-hover; color: $color-on-primary;
 }
+/* The second floating button (0.10.0): change words in place. Sits above Edit with AI. */
+.twd-sk-ed__open--text { bottom: 84px; background-color: $color-surface; color: $color-title; border-color: $color-title; }
+.twd-sk-ed__open--text:hover, .twd-sk-ed__open--text:focus-visible { background-color: $color-title; border-color: $color-title; color: $color-surface; }
+
+/* ---- the in-place editing toolbar (pinned to the bottom of the screen) ---- */
+.twd-sk-ed__inlinebar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 99995; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 10px 16px; background-color: $color-surface; border-top: 3px solid $color-primary; box-shadow: $shadow-card;
+}
+.twd-sk-ed__inlinebar .twd-sk-ed__btn { margin: 0; }
+.twd-sk-ed__tool {
+  min-width: 44px; min-height: 44px; padding: 0 12px; background-color: $color-surface; border: 1px solid $color-border;
+  border-radius: $radius-field; font-family: $font-body; font-size: $size-small; font-weight: 600; color: $color-title; cursor: pointer;
+}
+.twd-sk-ed__tool:hover, .twd-sk-ed__tool:focus-visible { border-color: $color-primary; color: $color-primary; }
+.twd-sk-ed__tool:focus-visible { outline: 2px solid $color-accent-text; outline-offset: 2px; }
+.twd-sk-ed__inlinestatus { flex: 1 1 220px; font-size: $size-small; color: $color-title; }
+.twd-sk-ed__inlinepanel { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid $color-border; }
+.twd-sk-ed__inlinepanel .twd-sk-ed__input { flex: 1 1 240px; width: auto; }
+.twd-sk-ed__inlinepanel label { flex: 1 1 100%; font-size: $size-small; font-weight: 600; color: $color-title; }
+
+/* ---- the one-box planner's checklist ---- */
+.twd-sk-ed__plan { margin: 12px 0 0; padding: 0; list-style: none; }
+.twd-sk-ed__planitem { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px 10px; padding: 10px 0; border-bottom: 1px solid $color-border; }
+.twd-sk-ed__planitem .twd-sk-ed__check { flex: 1 1 260px; }
+.twd-sk-ed__planstate { padding: 2px 10px; border-radius: $radius-pill; background-color: $color-bg; font-size: $size-small; color: $color-title; }
+.twd-sk-ed__planstate.is-done { background-color: $color-primary; color: $color-on-primary; }
+.twd-sk-ed__planstate.is-failed { background-color: $color-title; color: $color-surface; }
+.twd-sk-ed__plannote { flex: 1 1 100%; margin: 0; font-size: $size-small; color: $color-muted; }
+.twd-sk-ed__cannot { margin: 12px 0 0; padding: 10px 14px; border-left: 3px solid $color-accent; background-color: $color-bg; font-size: $size-small; color: $color-title; }
 
 /* ---- edit pills (laid over the corner of the header and footer once Edit with AI has been opened) ---- */
 .twd-sk-ed__pill {
@@ -211,6 +241,8 @@
   .twd-sk-ed__check { min-height: 48px; }
   .twd-sk-ed__frame { height: 50vh; }
   .twd-sk-ed__open { left: 16px; bottom: 16px; }
+  .twd-sk-ed__open--text { bottom: 72px; }
+  .twd-sk-ed__inlinebar .twd-sk-ed__btn { width: auto; }
   .twd-sk-ed__grid { grid-template-columns: 1fr; }
   .twd-sk-ed__color { min-height: 48px; }
 }

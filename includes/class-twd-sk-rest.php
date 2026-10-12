@@ -32,6 +32,8 @@ class TWD_SK_REST {
 			'ai'      => array( 10, 600 ),
 			// The site setup build: one request per page, each may spend the key once.
 			'build'   => array( 60, 600 ),
+			// The one-box planner's changes: one request per change, each may spend the key once.
+			'plan'    => array( 40, 600 ),
 		);
 	}
 
@@ -95,6 +97,23 @@ class TWD_SK_REST {
 				'methods'             => 'POST',
 				'callback'            => array( __CLASS__, 'post_remix' ),
 				'permission_callback' => array( __CLASS__, 'can_remix_page' ),
+			) );
+			// Words and pictures changed in place on the page (0.10.0).
+			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/inline', array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_inline' ),
+				'permission_callback' => array( __CLASS__, 'can_write_page' ),
+			) );
+			// The one-box planner (0.10.0): a plan (one AI call), then one change per request.
+			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/plan', array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_plan' ),
+				'permission_callback' => array( __CLASS__, 'can_remix_page' ),
+			) );
+			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/plan/step', array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_plan_step' ),
+				'permission_callback' => array( __CLASS__, 'can_plan_step' ),
 			) );
 		}
 		register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/status', array(
@@ -313,6 +332,11 @@ class TWD_SK_REST {
 	/** Asking the AI spends the site's key, so it has its own, tighter limit. */
 	public static function can_remix_page( $request ) {
 		return self::guard( $request, 'ai' );
+	}
+
+	/** One change from a plan: its own limit, since a plan of several changes runs one request each. */
+	public static function can_plan_step( $request ) {
+		return self::guard( $request, 'plan' );
 	}
 
 	/** Adding a section: the AI limit when the AI writes it, otherwise the preview limit. */
@@ -836,6 +860,67 @@ class TWD_SK_REST {
 			return self::error( $code, $result->get_error_message(), $status );
 		}
 		return $result;
+	}
+
+	/** Words and pictures changed on the page itself, put into the stored page and saved as a new version. */
+	public static function post_inline( $request ) {
+		$id   = (int) $request->get_param( 'id' );
+		$base = self::base_version( $request );
+		if ( is_wp_error( $base ) ) {
+			return $base;
+		}
+		if ( $base !== (int) TWD_SK_Store::get_current_version_id( $id ) ) {
+			return self::error( 'twd_sk_conflict', 'This page changed since you opened it. Reload the page and make the change again.', 409 );
+		}
+		$out = TWD_SK_Inline::apply( TWD_SK_Store::get_current( $id ), $request->get_param( 'texts' ), $request->get_param( 'pictures' ) );
+		if ( is_wp_error( $out ) ) {
+			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_conflict' === $out->get_error_code() ? 409 : 400 );
+		}
+		$note  = 'Changed on the page (' . (int) $out['changed'] . ' piece' . ( 1 === (int) $out['changed'] ? '' : 's' ) . ')';
+		$saved = TWD_SK_Store::save( $id, $out['html'], array( 'base_version' => $base, 'note' => $note ) );
+		return self::after_write( $id, $saved );
+	}
+
+	/** The checklist of changes for a request. Nothing is changed. */
+	public static function post_plan( $request ) {
+		$id   = (int) $request->get_param( 'id' );
+		$base = self::base_version( $request );
+		if ( is_wp_error( $base ) ) {
+			return $base;
+		}
+		if ( $base !== (int) TWD_SK_Store::get_current_version_id( $id ) ) {
+			return self::error( 'twd_sk_conflict', 'This page changed since you opened the editor. Reload the page and try again.', 409 );
+		}
+		$out = TWD_SK_Plan::plan( $id, $request->get_param( 'request' ) );
+		if ( is_wp_error( $out ) ) {
+			return self::ai_error( $out );
+		}
+		return $out;
+	}
+
+	/** One change from the checklist, on the working copy. Nothing is saved. */
+	public static function post_plan_step( $request ) {
+		$id   = (int) $request->get_param( 'id' );
+		$base = self::base_version( $request );
+		if ( is_wp_error( $base ) ) {
+			return $base;
+		}
+		if ( $base !== (int) TWD_SK_Store::get_current_version_id( $id ) ) {
+			return self::error( 'twd_sk_conflict', 'This page changed since you opened the editor. Reload the page and try again.', 409 );
+		}
+		$html = $request->get_param( 'html' );
+		$out  = TWD_SK_Plan::step( $id, is_string( $html ) ? $html : '', $request->get_param( 'order' ), $request->get_param( 'change' ), $request->get_param( 'request' ) );
+		if ( is_wp_error( $out ) ) {
+			return self::ai_error( $out );
+		}
+		return $out;
+	}
+
+	private static function ai_error( $e ) {
+		$map    = array( 'twd_sk_bad_input' => 400, 'twd_sk_empty_page' => 400, 'twd_sk_too_large' => 413, 'twd_sk_ai_unavailable' => 503 );
+		$code   = $e->get_error_code();
+		$status = isset( $map[ $code ] ) ? $map[ $code ] : 502;
+		return self::error( $code, $e->get_error_message(), $status );
 	}
 
 	/** A candidate page with one new section. Nothing is saved: it goes to the preview like any change. */

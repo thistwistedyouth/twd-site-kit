@@ -605,6 +605,8 @@ require_once ABSPATH . 'includes/class-twd-sk-enquiry.php';
 require_once ABSPATH . 'includes/class-twd-sk-brand.php';
 require_once ABSPATH . 'includes/class-twd-sk-sets.php';
 require_once ABSPATH . 'includes/class-twd-sk-launch.php';
+require_once ABSPATH . 'includes/class-twd-sk-inline.php';
+require_once ABSPATH . 'includes/class-twd-sk-plan.php';
 require_once ABSPATH . 'includes/class-twd-sk-assets.php';
 require_once ABSPATH . 'includes/class-twd-sk-updater.php';
 require_once ABSPATH . 'includes/class-twd-sk-report.php';

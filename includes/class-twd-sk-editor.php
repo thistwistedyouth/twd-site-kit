@@ -17,6 +17,7 @@ class TWD_SK_Editor {
 	const HANDLE      = 'twd-site-kit-editor';
 	const HANDLE_SITE = 'twd-site-kit-editor-site';
 	const HANDLE_SEO  = 'twd-site-kit-editor-seo';
+	const HANDLE_INLINE = 'twd-site-kit-inline';
 
 	public static function init() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue' ), 20 );
@@ -89,9 +90,18 @@ class TWD_SK_Editor {
 			'factsSaved'     => '' !== TWD_SK_Facts::get(),
 			'words'          => TWD_SK_Mode::js_words(),
 			'components'     => (bool) $context['is_kit_page'] ? TWD_SK_Recipes::parts_menu() : array(),
+			// Changing words and pictures in place (0.10.0): kit pages, outside safe mode.
+			'inline'         => (bool) $context['is_kit_page'] && ! TWD_SK_Safe::on(),
 			'setupUrl'       => current_user_can( 'manage_options' ) ? esc_url_raw( TWD_SK_Build::admin_url() ) : '',
 		) );
 		wp_enqueue_script( self::HANDLE );
+
+		// Changing words and pictures in place: anyone who can edit this kit page, and not in safe mode.
+		if ( ! TWD_SK_Safe::on() && $context['is_kit_page'] ) {
+			wp_register_script( self::HANDLE_INLINE, $base . 'assets/twd-site-kit-inline.js', array( self::HANDLE ), $ver, true );
+			wp_enqueue_script( self::HANDLE_INLINE );
+			wp_enqueue_style( self::HANDLE_INLINE, $base . 'assets/twd-site-kit-inline.css', array(), $ver );
+		}
 
 		// The Search tab: anyone who can edit this kit page, and not in safe mode.
 		if ( ! TWD_SK_Safe::on() && $context['is_kit_page'] ) {

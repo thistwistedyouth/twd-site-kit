@@ -73,13 +73,16 @@ twd_sk_test( 'add section rest: refused when the page moved on; the AI limit app
 	twd_sk_is_error( 'twd_sk_forbidden', TWD_SK_REST::can_add_section( twd_sk_rest_req( array( 'id' => 13 ) ) ), 'not on a page they cannot edit' );
 } );
 
-twd_sk_test( 'add section js: offers every kind but a hero, sends to its own route, and goes through the preview', function () {
+twd_sk_test( 'planner js (0.10.0): one box replaces Add a section; the plan and each change use their own routes, and the result goes through the preview', function () {
 	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' );
-	twd_sk_has( "api('POST', pagePath('/add-section'), body)", $js );
-	twd_sk_has( "if (k !== 'hero')", $js );
-	twd_sk_has( 'buildAddSection(panel);', $js );
-	$start = strpos( $js, 'function doAddSection' );
-	twd_sk_has( 'doPreview();', substr( $js, $start, 2000 ) );
+	twd_sk_has( "api('POST', pagePath('/plan'), { base_version: state.version, request: request })", $js );
+	twd_sk_has( "api('POST', pagePath('/plan/step'), { base_version: state.version, request: state.planRequest, change: item.change, html: work.html, order: work.order })", $js );
+	twd_sk_has( 'buildPlanStep(panel);', $js );
+	twd_sk_hasnt( 'buildAddSection', $js );
+	$start = strpos( $js, 'function runPlan' );
+	twd_sk_has( 'doPreview();', substr( $js, $start, 4000 ) );
+	twd_sk_has( "maxlength: '6000'", $js );
+	twd_sk_has( 'Not possible on a page: ', $js );
 	$php = file_get_contents( ABSPATH . 'includes/class-twd-sk-editor.php' );
 	twd_sk_has( "'components'     => (bool) \$context['is_kit_page'] ? TWD_SK_Recipes::parts_menu() : array(),", $php );
 } );

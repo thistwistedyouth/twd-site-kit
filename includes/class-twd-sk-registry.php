@@ -213,6 +213,33 @@ class TWD_SK_Registry {
 	}
 
 	private static function quote( $variant ) {
+		if ( 'slider' === $variant ) {
+			$cards = array();
+			foreach ( array( 'Quote text here.', 'Another quote here.', 'A third quote here.' ) as $q ) {
+				$cards[] = '<figure class="twd-sk-quote__card">';
+				$cards[] = '<blockquote class="twd-sk-quote__text">';
+				$cards[] = '<p>' . $q . '</p>';
+				$cards[] = '</blockquote>';
+				$cards[] = '<figcaption class="twd-sk-quote__cite">Name and context</figcaption>';
+				$cards[] = '</figure>';
+			}
+			// One quote at a time: swipe on a phone; arrows and dots are added by twd-site-kit-slider.js.
+			return self::lines( array_merge(
+				array(
+					'<section class="twd-sk-quote twd-sk-quote--slider twd-sk-tone-base">',
+					'<div class="twd-sk-inner">',
+					'<h2 class="twd-sk-title">What people say</h2>',
+					'<div class="twd-sk-quote__track">',
+				),
+				$cards,
+				array(
+					'</div>',
+					'<p class="twd-sk-quote__note">A short note about consent or anonymity.</p>',
+					'</div>',
+					'</section>',
+				)
+			) );
+		}
 		if ( 'pullout' === $variant ) {
 			return self::lines( array(
 				'<section class="twd-sk-quote twd-sk-quote--pullout twd-sk-tone-base">',
@@ -273,6 +300,30 @@ class TWD_SK_Registry {
 	}
 
 	private static function services( $variant ) {
+		if ( 'glow' === $variant ) {
+			$items = array();
+			foreach ( array( 1, 2, 3 ) as $i ) {
+				$items[] = '<div class="twd-sk-card twd-sk-services__item">';
+				$items[] = '<h3 class="twd-sk-services__name">Service name here</h3>';
+				$items[] = '<p class="twd-sk-services__desc">Short description here.</p>';
+				$items[] = '</div>';
+			}
+			return self::lines( array_merge(
+				array(
+					'<section class="twd-sk-services twd-sk-services--glow twd-sk-tone-base">',
+					'<div class="twd-sk-inner">',
+					'<span class="twd-sk-eyebrow">Short label here</span>',
+					'<h2 class="twd-sk-title">What I offer <span class="twd-sk-accent">to you</span></h2>',
+					'<div class="twd-sk-services__list">',
+				),
+				$items,
+				array(
+					'</div>',
+					'</div>',
+					'</section>',
+				)
+			) );
+		}
 		if ( 'pills' === $variant ) {
 			return self::lines( array(
 				'<section class="twd-sk-services twd-sk-services--pills twd-sk-tone-base">',
@@ -812,7 +863,7 @@ class TWD_SK_Registry {
 			'quote'      => array(
 				'id'          => 'quote',
 				'label'       => 'Quote or testimonial',
-				'description' => 'A group of quote cards, or one boxed statement. Only use real quotes, with permission.',
+				'description' => 'A group of quote cards, a slider showing one quote at a time, or one boxed statement. Only use real quotes, with permission, word for word.',
 				'skeleton'    => self::quote( 'cards' ),
 				'variants'    => array(
 					'twd-sk-quote--cards'   => array(
@@ -822,6 +873,10 @@ class TWD_SK_Registry {
 					'twd-sk-quote--pullout' => array(
 						'label'    => 'Pullout: one boxed statement',
 						'skeleton' => self::quote( 'pullout' ),
+					),
+					'twd-sk-quote--slider'  => array(
+						'label'    => 'Slider: one quote at a time, swipe or use the arrows',
+						'skeleton' => self::quote( 'slider' ),
 					),
 				),
 				'classes'     => array(
@@ -834,6 +889,13 @@ class TWD_SK_Registry {
 					'twd-sk-quote__cite',
 					'twd-sk-quote__note',
 					'twd-sk-quote__pullout',
+					// The slider (0.10.0). The controls are added by twd-site-kit-slider.js, never stored.
+					'twd-sk-quote--slider',
+					'twd-sk-quote__track',
+					'twd-sk-quote__controls',
+					'twd-sk-quote__arrow',
+					'twd-sk-quote__dots',
+					'twd-sk-quote__dot',
 				),
 				'shortcodes'  => array(),
 			),
@@ -872,7 +934,7 @@ class TWD_SK_Registry {
 			'services'   => array(
 				'id'          => 'services',
 				'label'       => 'Services list',
-				'description' => 'What is offered, as linked cards, or as a row of short topic pills.',
+				'description' => 'What is offered, as linked cards, boxes with a softly moving border, or a row of short topic pills.',
 				'skeleton'    => self::services( 'cards' ),
 				'variants'    => array(
 					'twd-sk-services--cards' => array(
@@ -883,11 +945,16 @@ class TWD_SK_Registry {
 						'label'    => 'Pills: a row of short topics',
 						'skeleton' => self::services( 'pills' ),
 					),
+					'twd-sk-services--glow'  => array(
+						'label'    => 'Glow: boxes with a softly moving border in the site\'s colours',
+						'skeleton' => self::services( 'glow' ),
+					),
 				),
 				'classes'     => array(
 					'twd-sk-services',
 					'twd-sk-services--cards',
 					'twd-sk-services--pills',
+					'twd-sk-services--glow',
 					'twd-sk-services__list',
 					'twd-sk-services__item',
 					'twd-sk-services__name',

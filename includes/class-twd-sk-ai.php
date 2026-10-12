@@ -198,13 +198,15 @@ class TWD_SK_AI {
 		if ( strlen( $instruction ) > self::MAX_INSTRUCTION ) {
 			return self::err( 'twd_sk_bad_input', 'That instruction is too long. Keep it under ' . self::MAX_INSTRUCTION . ' characters.' );
 		}
-		if ( strlen( $facts ) > self::MAX_FACTS ) {
-			return self::err( 'twd_sk_bad_input', 'The facts are too long. Keep them under ' . self::MAX_FACTS . ' characters.' );
+		// The planner (0.10.0) passes the whole request as the facts, and its own working copy of the page.
+		$max_facts = ! empty( $in['plan'] ) ? TWD_SK_Plan::MAX_REQUEST : self::MAX_FACTS;
+		if ( strlen( $facts ) > $max_facts ) {
+			return self::err( 'twd_sk_bad_input', 'The facts are too long. Keep them under ' . $max_facts . ' characters.' );
 		}
 		$instruction = TWD_SK_Profile::text( $instruction, self::MAX_INSTRUCTION );
-		$facts       = self::lines( $facts, self::MAX_FACTS );
+		$facts       = self::lines( $facts, $max_facts );
 
-		$current = TWD_SK_Store::get_current( (int) $page_id );
+		$current = isset( $in['html'] ) && is_string( $in['html'] ) ? $in['html'] : TWD_SK_Store::get_current( (int) $page_id );
 		$parts   = TWD_SK_Sections::split( $current );
 		$count   = count( $parts['sections'] );
 		if ( 0 === $count ) {
@@ -312,7 +314,7 @@ class TWD_SK_AI {
 	 * @return array|WP_Error { html, report[], kept[], changed[] }
 	 */
 	public static function add_section( $page_id, $in ) {
-		$parts = TWD_SK_Sections::split( TWD_SK_Store::get_current( (int) $page_id ) );
+		$parts = TWD_SK_Sections::split( isset( $in['html'] ) && is_string( $in['html'] ) ? $in['html'] : TWD_SK_Store::get_current( (int) $page_id ) );
 		$count = count( $parts['sections'] );
 		if ( 0 === $count ) {
 			return self::err( 'twd_sk_empty_page', 'This page has no sections yet. Add a page outline first.' );
@@ -329,11 +331,12 @@ class TWD_SK_AI {
 		}
 		$instruction = isset( $in['instruction'] ) && is_string( $in['instruction'] ) ? trim( $in['instruction'] ) : '';
 		$facts       = isset( $in['facts'] ) && is_string( $in['facts'] ) ? trim( $in['facts'] ) : '';
-		if ( strlen( $instruction ) > self::MAX_INSTRUCTION || strlen( $facts ) > self::MAX_FACTS ) {
-			return self::err( 'twd_sk_bad_input', 'That is too long. Keep the instruction under ' . self::MAX_INSTRUCTION . ' characters and the facts under ' . self::MAX_FACTS . '.' );
+		$max_facts = ! empty( $in['plan'] ) ? TWD_SK_Plan::MAX_REQUEST : self::MAX_FACTS;
+		if ( strlen( $instruction ) > self::MAX_INSTRUCTION || strlen( $facts ) > $max_facts ) {
+			return self::err( 'twd_sk_bad_input', 'That is too long. Keep the instruction under ' . self::MAX_INSTRUCTION . ' characters and the facts under ' . $max_facts . '.' );
 		}
 		$instruction = TWD_SK_Profile::text( $instruction, self::MAX_INSTRUCTION );
-		$facts       = self::lines( $facts, self::MAX_FACTS );
+		$facts       = self::lines( $facts, $max_facts );
 
 		$outline  = trim( TWD_SK_Starters::build( array( array( $component, $variant ) ), false ) );
 		$sections = $parts['sections'];
@@ -355,6 +358,9 @@ class TWD_SK_AI {
 		}
 		$ask = 'This is a new section. Write its wording from the facts: replace every [PLACEHOLDER] and every sample word, and keep its component, layout and classes. Where the facts do not say what is needed, keep a [PLACEHOLDER: what is needed].' . ( '' !== $instruction ? ' Also: ' . $instruction : '' );
 		$reply = apply_filters( 'twd_ai_complete', null, self::system_prompt( 'sections' ), self::user_message( 'sections', array( 'gaps' => $gaps, 'sections' => $sections ), array( $at ), $ask, $facts ), self::TOKENS_SECTIONS );
+		if ( self::cut_off( $reply ) ) {
+			return self::err( 'twd_sk_ai_too_long', 'That new section is more than the AI can write in one go. Ask for a shorter one.' );
+		}
 		if ( is_wp_error( $reply ) ) {
 			return $reply;
 		}

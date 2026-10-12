@@ -36,6 +36,20 @@ function twd_sk_css_block( $css, &$pos, $media, &$rules ) {
 			twd_sk_css_block( $css, $pos, $prelude, $rules );
 			continue;
 		}
+		// An animation's frames are not selectors: skip the whole block, noting its name.
+		if ( 0 === strpos( $prelude, '@keyframes' ) ) {
+			$GLOBALS['twd_sk_css_keyframes'][] = trim( substr( $prelude, 10 ) );
+			$depth = 1;
+			while ( $pos < $len && $depth > 0 ) {
+				if ( '{' === $css[ $pos ] ) {
+					$depth++;
+				} elseif ( '}' === $css[ $pos ] ) {
+					$depth--;
+				}
+				$pos++;
+			}
+			continue;
+		}
 		$close = strpos( $css, '}', $pos );
 		$body  = substr( $css, $pos, $close - $pos );
 		$pos   = $close + 1;
@@ -222,9 +236,11 @@ twd_sk_test( 'css: every token in the schema is actually used by the stylesheet 
 
 twd_sk_test( 'css: no imports, no external urls, no expressions, no javascript', function () {
 	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
-	foreach ( array( '@import', 'url(', 'expression(', 'javascript:', 'behavior:', '-moz-binding', 'http://', 'https://' ) as $bad ) {
+	foreach ( array( '@import', 'url(', 'expression(', 'javascript:', '-moz-binding', 'http://', 'https://' ) as $bad ) {
 		twd_sk_hasnt( $bad, $raw );
 	}
+	// The old Internet Explorer "behavior" property, but not scroll-behavior.
+	twd_sk_true( 1 !== preg_match( '/(?<![a-z-])behavior\s*:/i', $raw ), 'no behavior property' );
 } );
 
 twd_sk_test( 'css: every registry class (shared and component) appears in the stylesheet, so no class is a dead hook', function () {
@@ -418,4 +434,23 @@ twd_sk_test( 'css: stray direct children of the page (not sections) get a max-wi
 			twd_sk_true( 1 === preg_match( '/^<section\b/', $v['skeleton'] ), $id . ' variant root is a section' );
 		}
 	}
+} );
+
+twd_sk_test( 'css: animations are named twd-sk-*, animate only the outline colour, and stop for visitors who ask for less motion', function () {
+	$GLOBALS['twd_sk_css_keyframes'] = array();
+	twd_sk_css_parse( file_get_contents( ABSPATH . 'assets/twd-site-kit.css' ) );
+	twd_sk_eq( array( 'twd-sk-glow' ), $GLOBALS['twd_sk_css_keyframes'] );
+	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	preg_match( '/@keyframes twd-sk-glow \{(.*?)\n\}/s', $raw, $m );
+	twd_sk_true( isset( $m[1] ) );
+	twd_sk_hasnt( '!important', $m[1] );
+	preg_match_all( '/([a-z-]+):/', $m[1], $props );
+	twd_sk_eq( array( 'outline-color' ), array_values( array_unique( $props[1] ) ) );
+	$found = false;
+	foreach ( twd_sk_css_rules() as $rule ) {
+		if ( '@media (prefers-reduced-motion: reduce)' === $rule['media'] && 'animation' === $rule['decls'][0]['prop'] && 'none' === $rule['decls'][0]['value'] ) {
+			$found = true;
+		}
+	}
+	twd_sk_true( $found, 'reduced motion switches the glow off' );
 } );

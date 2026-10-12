@@ -370,8 +370,9 @@
 		];
 		var outKids = [ui.previewMsg, ui.banner, ui.report, ui.frame, el('p', {}, [ui.newTab])];
 
+		buildInlineEntry(panel);
 		if (ai) {
-			buildRemixStep(panel);
+			buildPlanStep(panel);
 			// The discard button lives with the preview, not inside the tucked-away external section.
 			pasteKids[2] = el('div', { className: 'twd-sk-ed__actions' }, [ui.previewBtn]);
 			outKids.unshift(el('div', { className: 'twd-sk-ed__actions' }, [ui.discardBtn]));
@@ -401,9 +402,9 @@
 				ui.applyMsg
 			]));
 			// Everything else is one click away.
-			var more = step('More options', ui.factsKids.concat(noteKids));
+			var more = step('More options', noteKids);
 			panel.appendChild(more);
-			foldSection(more, { summary: 'Extra facts for this change, and the note saved with it' });
+			foldSection(more, { summary: 'The note saved with this change' });
 			var ext = step('Use an external AI instead', copyKids.concat(pasteKids));
 			panel.appendChild(ext);
 			foldSection(ext);
@@ -413,8 +414,6 @@
 				ui.applyMsg
 			])));
 		}
-
-		buildAddSection(panel);
 
 		/* History */
 		ui.undoBtn = button('Undo the last change', 'secondary', doUndo);
@@ -431,277 +430,209 @@
 		foldSection(hist, { summary: 'Undo, or go back to an earlier version' });
 	}
 
-	/* ---- step 1 (when the site has an AI key): ask the AI ---- */
+	/* ---- changing words in place (twd-site-kit-inline.js) ---- */
+
+	function buildInlineEntry(panel) {
+		var ED = window.TWD_SK_ED;
+		if (!ED || typeof ED.startInline !== 'function') {
+			return;
+		}
+		panel.appendChild(step('', [
+			el('p', { className: 'twd-sk-ed__help', text: 'Fixing a few words, a link or a picture? Change them right on the page. No AI, and nothing is saved until you press Save.' }),
+			el('div', { className: 'twd-sk-ed__actions' }, [button('Edit text on the page', 'secondary', function () {
+				close();
+				ED.startInline();
+			})])
+		]));
+	}
+
+	/* ---- step 1 (when the site has an AI key): one box, a checklist, then the changes ---- */
 
 	var CHIPS = [
-		['Warmer', 'Make it warmer.'],
-		['Shorter', 'Make it shorter.'],
+		['Warmer', 'Make the wording warmer.'],
+		['Shorter', 'Make the page shorter.'],
 		['Simpler words', 'Use simpler words.'],
-		['More professional', 'Make the tone more professional.'],
 		['Stronger first line', 'Write a stronger first line.'],
 		['Fix links and headings', 'Fix link wording and heading order.'],
-		['Update from my ' + FACTS, 'Update this so it matches my ' + FACTS + '. Keep the layout.']
+		['Update from my ' + FACTS, 'Update the page so it matches my ' + FACTS + '. Keep the layout.']
 	];
 
-	function buildRemixStep(panel) {
-		var modes = el('div', { className: 'twd-sk-ed__modes', role: 'radiogroup', 'aria-label': 'What to change' });
-		ui.modeSections = el('input', { id: 'twd-sk-ed-mode-sections', type: 'radio', name: 'twd-sk-ed-mode', value: 'sections', checked: '' });
-		ui.modePage = el('input', { id: 'twd-sk-ed-mode-page', type: 'radio', name: 'twd-sk-ed-mode', value: 'page' });
-		[ui.modeSections, ui.modePage].forEach(function (r) {
-			r.addEventListener('change', syncMode);
-		});
-		modes.appendChild(el('label', { className: 'twd-sk-ed__check', 'for': 'twd-sk-ed-mode-sections' }, [ui.modeSections, el('span', { text: 'Some sections that I choose (recommended)' })]));
-		modes.appendChild(el('label', { className: 'twd-sk-ed__check', 'for': 'twd-sk-ed-mode-page' }, [ui.modePage, el('span', { text: 'The whole page' })]));
-
-		ui.secBox = el('div', { className: 'twd-sk-ed__seclist', role: 'group', 'aria-label': 'Sections of this page' });
-		ui.instruction = el('textarea', { id: 'twd-sk-ed-instruction', className: 'twd-sk-ed__textarea twd-sk-ed__short', maxlength: '1500', spellcheck: 'true' });
+	function buildPlanStep(panel) {
+		ui.request = el('textarea', { id: 'twd-sk-ed-request', className: 'twd-sk-ed__textarea', maxlength: '6000', spellcheck: 'true' });
 		var chips = el('div', { className: 'twd-sk-ed__chips' });
 		CHIPS.forEach(function (c) {
 			var chip = el('button', { type: 'button', className: 'twd-sk-ed__chip', text: c[0] });
 			chip.addEventListener('click', function () {
-				var v = ui.instruction.value.trim();
-				ui.instruction.value = v ? v + ' ' + c[1] : c[1];
-				ui.instruction.focus();
+				var v = ui.request.value.trim();
+				ui.request.value = v ? v + '\n' + c[1] : c[1];
+				ui.request.focus();
 			});
 			chips.appendChild(chip);
 		});
-		ui.facts = el('textarea', { id: 'twd-sk-ed-facts', className: 'twd-sk-ed__textarea twd-sk-ed__short', maxlength: '3000', spellcheck: 'true' });
-		ui.factsKids = [
-			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-facts', text: 'Extra facts for this change (optional)' }),
-			el('p', { className: 'twd-sk-ed__help', text: 'The AI may use only these, the ' + FACTS + ' and the site details for anything new. Leave it empty to keep to what is already there.' }),
-			ui.facts
-		];
-		ui.remixBtn = button('Ask the AI', 'primary', doRemix);
-		ui.remixMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
-
-		panel.appendChild(step('1. Ask the AI to change this page', [
-			el('p', { className: 'twd-sk-ed__help', text: 'Choose what to change and say what you want. You see a preview first, and nothing is saved until you apply it.' }),
-			modes,
-			ui.secBox,
-			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-instruction', text: 'What do you want changed?' }),
+		ui.planBtn = button('Plan the changes', 'primary', doPlan);
+		ui.planMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		ui.planBox = el('div', { className: 'twd-sk-ed__planbox', hidden: '' });
+		panel.appendChild(step('1. Say what you want changed', [
+			el('p', { className: 'twd-sk-ed__help', text: 'One line, or a list. For example: "1. Change the first paragraph to ... 2. Add three boxes with glowing borders for garden parties, weddings and festivals. 3. Add these testimonials as a slider at the bottom: ...". Paste any wording you want used: it is kept word for word.' }),
+			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-request', text: 'What do you want changed?' }),
 			chips,
-			ui.instruction,
-			el('p', { className: 'twd-sk-ed__help', text: 'The AI writes drafts. Check every fact and every claim before you apply.' }),
-			el('div', { className: 'twd-sk-ed__actions' }, [ui.remixBtn]),
-			ui.remixMsg
+			ui.request,
+			el('p', { className: 'twd-sk-ed__help', text: 'You see a checklist first, then a preview. Nothing is saved until you apply it, and Undo always goes back. The AI writes drafts. Check every fact and every claim before you apply.' }),
+			el('div', { className: 'twd-sk-ed__actions' }, [ui.planBtn]),
+			ui.planMsg,
+			ui.planBox
 		]));
 	}
 
-	function syncMode() {
-		show(ui.secBox, ui.modeSections.checked);
-	}
-
+	// Kept under its old name: it checks that AI is available and notes the page version.
 	function loadSections() {
-		if ((!cfg.ai || !ui.secBox) && !ui.addAfter) {
+		if (!cfg.ai || !ui.planBtn) {
 			return;
 		}
 		api('GET', pagePath('/sections')).then(function (data) {
 			state.version = data.version;
-			renderSections(data);
+			ui.planBtn.disabled = !data.ai;
+			if (!data.ai) {
+				message(ui.planMsg, 'AI is not available on this site right now. Use the external AI option below.', false);
+			}
 		}, function (err) {
-			message(ui.remixMsg, err.message, false);
+			message(ui.planMsg, err.message, false);
 		});
 	}
 
-	function renderSections(data) {
-		fillAddPositions(data.sections || []);
-		if (!cfg.ai || !ui.secBox) {
+	function doPlan() {
+		var request = ui.request.value.trim();
+		if (!request) {
+			message(ui.planMsg, 'Say what you want changed first.', false);
+			ui.request.focus();
 			return;
 		}
-		clear(ui.secBox);
-		ui.secChecks = [];
-		if (!data.ai) {
-			message(ui.remixMsg, 'AI is not available on this site right now. Use the external AI option below.', false);
-			ui.remixBtn.disabled = true;
-			return;
-		}
-		ui.remixBtn.disabled = false;
-		if (!data.sections.length) {
-			ui.secBox.appendChild(el('p', { className: 'twd-sk-ed__help', text: 'This page has no sections yet. Paste a page in first (use the external AI option below).' }));
-			return;
-		}
-		data.sections.forEach(function (s) {
-			var id = 'twd-sk-ed-sec-' + s.index;
-			var box = el('input', { id: id, type: 'checkbox', value: String(s.index) });
-			var row = el('div', { className: 'twd-sk-ed__sec' }, [
-				el('label', { className: 'twd-sk-ed__check', 'for': id }, [box, el('span', { text: (s.index + 1) + '. ' + s.label + ' (' + s.type + ')' })])
-			]);
-			var entry = { index: s.index, box: box, unlock: null };
-			if (s.locked) {
-				var uid = 'twd-sk-ed-unlock-' + s.index;
-				var unlock = el('input', { id: uid, type: 'checkbox', value: String(s.index) });
-				entry.unlock = unlock;
-				row.appendChild(el('p', { className: 'twd-sk-ed__help twd-sk-ed__locknote', text: 'The words here are locked. The AI can change the layout only.' }));
-				row.appendChild(el('label', { className: 'twd-sk-ed__check twd-sk-ed__unlock', 'for': uid }, [unlock, el('span', { text: 'Allow new wording (only words the ' + W('person', 'therapist') + ' has given you)' })]));
-			}
-			ui.secChecks.push(entry);
-			ui.secBox.appendChild(row);
-		});
-		syncMode();
-	}
-
-	function doRemix() {
-		var instruction = ui.instruction.value.trim();
-		if (!instruction) {
-			message(ui.remixMsg, 'Say what you want changed first.', false);
-			ui.instruction.focus();
-			return;
-		}
-		var body = { base_version: state.version, instruction: instruction, facts: ui.facts.value, mode: ui.modePage.checked ? 'page' : 'sections' };
-		var names = [];
-		if (body.mode === 'sections') {
-			body.indexes = [];
-			body.unlock = [];
-			(ui.secChecks || []).forEach(function (c) {
-				if (c.box.checked) {
-					body.indexes.push(c.index);
-					names.push(String(c.index + 1));
-					if (c.unlock && c.unlock.checked) {
-						body.unlock.push(c.index);
-					}
-				}
-			});
-			if (!body.indexes.length) {
-				message(ui.remixMsg, 'Choose at least one section to change, or choose the whole page.', false);
-				return;
-			}
-		}
-		ui.remixBtn.disabled = true;
-		message(ui.remixMsg, 'Asking the AI. This can take up to a minute. Nothing is saved.', true);
-		api('POST', pagePath('/remix'), body).then(function (data) {
-			ui.remixBtn.disabled = false;
-			clear(ui.remixMsg);
-			if (!data.changed || !data.changed.length) {
-				message(ui.remixMsg, (data.report && data.report.length ? data.report.join(' ') : 'The AI made no change.') + ' Try wording the instruction differently.', false);
-				return;
-			}
-			message(ui.remixMsg, 'The AI has drafted a change. Check the preview below. Nothing is saved yet.', true);
-			if (data.report && data.report.length) {
-				listInto(ui.remixMsg, data.report);
-			}
-			ui.paste.value = data.html;
-			state.previewedText = null;
-			if (!ui.note.value.trim()) {
-				ui.note.value = ('AI remix (' + (body.mode === 'page' ? 'whole page' : 'sections ' + names.join(', ')) + '): ' + instruction).slice(0, 190);
-			}
-			doPreview();
+		ui.planBtn.disabled = true;
+		clear(ui.planBox);
+		show(ui.planBox, false);
+		message(ui.planMsg, 'Planning the changes. This takes a few seconds. Nothing is changed yet.', true);
+		api('POST', pagePath('/plan'), { base_version: state.version, request: request }).then(function (data) {
+			ui.planBtn.disabled = false;
+			state.planRequest = request;
+			renderPlan(data);
 		}, function (err) {
-			ui.remixBtn.disabled = false;
+			ui.planBtn.disabled = false;
+			message(ui.planMsg, err.message, false);
 			if (err.status === 409) {
-				message(ui.remixMsg, err.message, false);
 				show(ui.reloadBtn, true);
-				return;
 			}
-			message(ui.remixMsg, err.message, false);
 		});
 	}
 
-	/* ---- adding a section (after an existing one) ---- */
-
-	function buildAddSection(panel) {
-		var comps = cfg.components || {};
-		if (!cfg.isKitPage || !Object.keys(comps).length) {
-			return;
-		}
-		ui.addAfter = el('select', { id: 'twd-sk-ed-add-after', className: 'twd-sk-ed__select' });
-		ui.addComp = el('select', { id: 'twd-sk-ed-add-comp', className: 'twd-sk-ed__select' });
-		Object.keys(comps).forEach(function (k) {
-			if (k !== 'hero') {
-				ui.addComp.appendChild(el('option', { value: k, text: comps[k].label }));
-			}
+	function renderPlan(data) {
+		clear(ui.planBox);
+		state.plan = [];
+		var list = el('ol', { className: 'twd-sk-ed__plan' });
+		(data.changes || []).forEach(function (c, n) {
+			var id = 'twd-sk-ed-plan-' + n;
+			var box = el('input', { id: id, type: 'checkbox', checked: '' });
+			var badge = el('span', { className: 'twd-sk-ed__planstate', text: 'To do' });
+			var note = el('p', { className: 'twd-sk-ed__plannote', hidden: '' });
+			list.appendChild(el('li', { className: 'twd-sk-ed__planitem' }, [
+				el('label', { className: 'twd-sk-ed__check', 'for': id }, [box, el('span', { text: c.label })]),
+				badge,
+				note
+			]));
+			state.plan.push({ change: c, box: box, badge: badge, note: note });
 		});
-		ui.addVariant = el('select', { id: 'twd-sk-ed-add-variant', className: 'twd-sk-ed__select' });
-		ui.addAbout = el('p', { className: 'twd-sk-ed__help' });
-		function fillVariants() {
-			var c = comps[ui.addComp.value];
-			clear(ui.addVariant);
-			Object.keys(c.variants).forEach(function (v) {
-				ui.addVariant.appendChild(el('option', { value: v, text: c.variants[v] }));
-			});
-			ui.addAbout.textContent = c.description;
-		}
-		ui.addComp.addEventListener('change', fillVariants);
-		if (ui.addComp.querySelector('option[value="text"]')) {
-			ui.addComp.value = 'text';
-		}
-		fillVariants();
-		var kids = [
-			el('p', { className: 'twd-sk-ed__help', text: 'Add one new section to this page. You see a preview first, and nothing is saved until you apply it.' }),
-			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-add-after', text: 'Where should it go?' }),
-			ui.addAfter,
-			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-add-comp', text: 'Kind of section' }),
-			ui.addComp,
-			ui.addAbout,
-			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-add-variant', text: 'Layout' }),
-			ui.addVariant
-		];
-		ui.addAi = null;
-		if (cfg.ai) {
-			ui.addAi = el('input', { id: 'twd-sk-ed-add-ai', type: 'checkbox', checked: '' });
-			ui.addInstruction = el('textarea', { id: 'twd-sk-ed-add-instruction', className: 'twd-sk-ed__textarea twd-sk-ed__short', maxlength: '1500', spellcheck: 'true' });
-			kids.push(
-				el('label', { className: 'twd-sk-ed__check', 'for': 'twd-sk-ed-add-ai' }, [ui.addAi, el('span', { text: 'Write it with AI from the ' + FACTS })]),
-				el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-add-instruction', text: 'What should it say? (optional)' }),
-				ui.addInstruction
-			);
+		if (state.plan.length) {
+			message(ui.planMsg, 'Here is the plan. Untick anything you do not want, then make the changes.', true);
+			ui.planBox.appendChild(list);
 		} else {
-			kids.push(el('p', { className: 'twd-sk-ed__help', text: 'The new section arrives with [PLACEHOLDER] wording. Replace it with an external AI or by hand before publishing.' }));
+			message(ui.planMsg, 'Nothing on that list can be done on this page. See below.', false);
 		}
-		ui.addBtn = button('Add the section', 'primary', doAddSection);
-		ui.addMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
-		kids.push(el('div', { className: 'twd-sk-ed__actions' }, [ui.addBtn]), ui.addMsg);
-		var sec = step('Add a section', kids);
-		panel.appendChild(sec);
-		foldSection(sec, { summary: 'Put a new section on this page' });
-	}
-
-	function fillAddPositions(sections) {
-		if (!ui.addAfter) {
-			return;
-		}
-		clear(ui.addAfter);
-		sections.forEach(function (s) {
-			ui.addAfter.appendChild(el('option', { value: String(s.index), text: 'After ' + (s.index + 1) + '. ' + s.label }));
+		(data.cannot || []).forEach(function (c) {
+			ui.planBox.appendChild(el('p', { className: 'twd-sk-ed__cannot', text: 'Not possible on a page: ' + c.what + (c.nearest ? '. Nearest the kit can do: ' + c.nearest + '.' : '.') }));
 		});
-		if (sections.length) {
-			ui.addAfter.value = String(sections[sections.length - 1].index);
+		(data.dropped || []).forEach(function (line) {
+			ui.planBox.appendChild(el('p', { className: 'twd-sk-ed__help', text: line }));
+		});
+		if (state.plan.length) {
+			ui.runBtn = button('Make these changes', 'primary', runPlan);
+			ui.planBox.appendChild(el('div', { className: 'twd-sk-ed__actions' }, [ui.runBtn]));
 		}
-		ui.addBtn.disabled = !sections.length;
+		show(ui.planBox, true);
 	}
 
-	function doAddSection() {
-		if (!ui.addAfter.value) {
-			message(ui.addMsg, 'This page has no sections yet.', false);
+	function setPlanState(item, text, cls) {
+		item.badge.textContent = text;
+		item.badge.className = 'twd-sk-ed__planstate' + (cls ? ' ' + cls : '');
+	}
+
+	// One change per request, on a working copy. The last copy goes to the preview; Apply saves it.
+	function runPlan() {
+		var todo = state.plan.filter(function (item) {
+			return item.box.checked;
+		});
+		if (!todo.length) {
+			message(ui.planMsg, 'Tick at least one change first.', false);
 			return;
 		}
-		var useAi = !!(ui.addAi && ui.addAi.checked);
-		var body = {
-			base_version: state.version,
-			after: parseInt(ui.addAfter.value, 10),
-			component: ui.addComp.value,
-			variant: ui.addVariant.value,
-			use_ai: useAi,
-			instruction: useAi ? ui.addInstruction.value : '',
-			facts: useAi && ui.facts ? ui.facts.value : ''
-		};
-		ui.addBtn.disabled = true;
-		message(ui.addMsg, useAi ? 'Asking the AI. This can take up to a minute. Nothing is saved.' : 'Adding the section. Nothing is saved.', true);
-		api('POST', pagePath('/add-section'), body).then(function (data) {
-			ui.addBtn.disabled = false;
-			message(ui.addMsg, (data.report || []).join(' ') + ' Check the preview. Nothing is saved yet.', true);
-			ui.paste.value = data.html;
+		ui.runBtn.disabled = true;
+		ui.planBtn.disabled = true;
+		state.plan.forEach(function (item) {
+			item.box.disabled = true;
+			setPlanState(item, item.box.checked ? 'Waiting' : 'Skipped', '');
+			show(item.note, false);
+		});
+		var work = { html: '', order: null, done: [] };
+		var i = 0;
+		message(ui.planMsg, 'Making the changes, one at a time. Nothing is saved.', true);
+		function next() {
+			if (i >= todo.length) {
+				finish();
+				return;
+			}
+			var item = todo[i];
+			setPlanState(item, 'Working...', '');
+			api('POST', pagePath('/plan/step'), { base_version: state.version, request: state.planRequest, change: item.change, html: work.html, order: work.order }).then(function (out) {
+				work.html = out.html;
+				work.order = out.order;
+				work.done.push(item.change.label);
+				setPlanState(item, 'Done', 'is-done');
+				if (out.report && out.report.length) {
+					item.note.textContent = out.report.join(' ');
+					show(item.note, true);
+				}
+				i++;
+				next();
+			}, function (err) {
+				setPlanState(item, 'Not done', 'is-failed');
+				item.note.textContent = err.message;
+				show(item.note, true);
+				if (err.status === 409) {
+					show(ui.reloadBtn, true);
+					finish();
+					return;
+				}
+				i++;
+				next();
+			});
+		}
+		function finish() {
+			ui.runBtn.disabled = false;
+			ui.planBtn.disabled = false;
+			state.plan.forEach(function (item) {
+				item.box.disabled = false;
+			});
+			if (!work.done.length) {
+				message(ui.planMsg, 'No change could be made. See the notes above, then try wording it differently.', false);
+				return;
+			}
+			message(ui.planMsg, work.done.length + ' change' + (work.done.length === 1 ? '' : 's') + ' made. Check the preview below. Nothing is saved yet.', true);
+			ui.paste.value = work.html;
 			state.previewedText = null;
 			if (!ui.note.value.trim()) {
-				ui.note.value = ('Added a section (' + ui.addComp.options[ui.addComp.selectedIndex].text + ')' + (useAi ? ' with AI' : '')).slice(0, 190);
+				ui.note.value = ('Changes: ' + work.done.join('; ')).slice(0, 190);
 			}
 			doPreview();
-		}, function (err) {
-			ui.addBtn.disabled = false;
-			message(ui.addMsg, err.message, false);
-			if (err.status === 409) {
-				show(ui.reloadBtn, true);
-			}
-		});
+		}
+		next();
 	}
 
 	/* ---- step 1: the prompt and the clipboard ---- */
@@ -844,6 +775,11 @@
 			}
 			ui.paste.value = '';
 			ui.note.value = '';
+			if (ui.request) {
+				ui.request.value = '';
+				clear(ui.planBox);
+				show(ui.planBox, false);
+			}
 			clearPreview();
 			renderVersions(data);
 			show(ui.reloadBtn, true);
@@ -1389,6 +1325,8 @@
 		var out = [];
 		if (ui.paste && ui.paste.value.trim()) {
 			out.push('page text that you pasted but have not applied');
+		} else if (ui.request && ui.request.value.trim()) {
+			out.push('the changes you typed in the box');
 		}
 		((window.TWD_SK_ED && window.TWD_SK_ED.dirtyChecks) || []).forEach(function (check) {
 			var label = '';
@@ -1405,6 +1343,12 @@
 	}
 
 	function discardUnsaved() {
+		if (ui.request) {
+			ui.request.value = '';
+			clear(ui.planBox);
+			show(ui.planBox, false);
+			message(ui.planMsg, '', true);
+		}
 		if (ui.paste && ui.paste.value) {
 			var token = state.token;
 			ui.paste.value = '';

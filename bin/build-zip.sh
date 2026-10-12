@@ -54,7 +54,7 @@ fi
 # itself, so a new class can never be left out), plus the assets, template and packs it uses.
 LOADED="$(grep -o "includes/[a-z0-9-]*\.php" "$ROOT/twd-site-kit.php" | sort -u)"
 [ -n "$LOADED" ] || { echo "FAIL: could not read the require lines in twd-site-kit.php"; exit 1; }
-for f in twd-site-kit.php readme.txt $LOADED assets/twd-site-kit.css assets/twd-site-kit-editor.css assets/twd-site-kit-editor.js assets/twd-site-kit-editor-site.js assets/twd-site-kit-editor-seo.js assets/twd-site-kit-setup.js assets/twd-site-kit-setup.css templates/kit-page.php packs/sage.json packs/grove.json starters/_gallery.html; do
+for f in twd-site-kit.php readme.txt $LOADED assets/twd-site-kit.css assets/twd-site-kit-editor.css assets/twd-site-kit-editor.js assets/twd-site-kit-editor-site.js assets/twd-site-kit-editor-seo.js assets/twd-site-kit-setup.js assets/twd-site-kit-setup.css assets/twd-site-kit-slider.js assets/twd-site-kit-inline.js assets/twd-site-kit-inline.css templates/kit-page.php packs/sage.json packs/grove.json starters/_gallery.html; do
 	[ -f "$VERIFY/twd-site-kit/$f" ] || { echo "FAIL: missing from the zip: $f"; exit 1; }
 done
 

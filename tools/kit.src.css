@@ -203,6 +203,31 @@
   border-radius: $radius-card; font-family: $font-heading; font-size: $size-h3;
   font-weight: $title-weight; line-height: 1.5; color: $color-title;
 }
+/* Slider (0.10.0): one quote at a time. Swiping works with no script; twd-site-kit-slider.js adds
+   the arrows, the dots and arrow keys. Nothing moves on its own. */
+.twd-sk-quote--slider .twd-sk-inner { max-width: $container-narrow; }
+.twd-sk-quote--slider .twd-sk-title { margin-bottom: 8px; }
+.twd-sk-quote__track {
+  display: flex; gap: $gap-sm; margin-top: 32px; overflow-x: auto; scroll-snap-type: x mandatory;
+  scroll-behavior: smooth; scrollbar-width: thin; padding-bottom: 8px;
+}
+.twd-sk-quote__track > .twd-sk-quote__card { flex: 0 0 100%; scroll-snap-align: center; }
+.twd-sk-quote__controls { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 16px; }
+.twd-sk-quote__arrow {
+  width: 44px; height: 44px; padding: 0; background-color: $color-surface; border: 1px solid $color-border;
+  border-radius: $radius-pill; font-size: 24px; line-height: 1; color: $color-title; cursor: pointer;
+}
+.twd-sk-quote__arrow:hover, .twd-sk-quote__arrow:focus-visible { border-color: $color-primary; color: $color-primary; }
+.twd-sk-quote__dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+.twd-sk-quote__dot {
+  width: 28px; height: 28px; padding: 0; background-color: transparent; border: 0;
+  border-radius: $radius-pill; cursor: pointer; position: relative;
+}
+.twd-sk-quote__dot::after {
+  content: ""; position: absolute; left: 8px; top: 8px; width: 12px; height: 12px;
+  border: 1px solid $color-primary; border-radius: $radius-pill; background-color: transparent;
+}
+.twd-sk-quote__dot[aria-current="true"]::after { background-color: $color-primary; }
 
 /* ---- faq ---- */
 .twd-sk-faq__list > * + * { margin-top: 12px; }
@@ -232,6 +257,17 @@
 }
 .twd-sk-services__desc { color: $color-body; }
 .twd-sk-services__pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 8px; }
+/* Glow (0.10.0): boxes whose outline colour moves slowly between the heading and accent colours.
+   The outline is animated rather than the border, because visual properties carry !important and
+   an animation cannot change an !important value. Still for visitors who ask for less motion. */
+.twd-sk-services--glow .twd-sk-services__list { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.twd-sk-services--glow .twd-sk-services__item {
+  outline: 2px solid $color-heading; outline-offset: -1px; animation: twd-sk-glow 3.2s ease-in-out infinite alternate;
+}
+@keyframes twd-sk-glow {
+  from { outline-color: $color-heading; }
+  to { outline-color: $color-accent; }
+}
 .twd-sk-services__pill {
   padding: 10px 22px; background-color: $color-surface; border: 1px solid $color-accent;
   border-radius: $radius-pill; font-size: $size-small; font-weight: $btn-weight; color: $color-title;
@@ -466,6 +502,12 @@
   font-weight: $btn-weight; letter-spacing: $btn-spacing; color: $color-on-primary;
 }
 & .elementor-button:hover, & .elementor-button:focus-visible { background-color: $color-primary-hover; color: $color-on-primary; }
+
+/* ---- less motion, when the visitor asks for it ---- */
+@media (prefers-reduced-motion: reduce) {
+  .twd-sk-services--glow .twd-sk-services__item { animation: none; }
+  .twd-sk-quote__track { scroll-behavior: auto; }
+}
 
 /* ---- responsive ---- */
 /* ---- site header and footer (printed by [twd_header] and [twd_footer], not part of a page) ---- */
