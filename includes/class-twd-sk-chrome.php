@@ -30,6 +30,7 @@ class TWD_SK_Chrome {
 
 	const OPTION     = 'twd_sk_chrome';
 	const HANDLE_JS  = 'twd-site-kit-header';
+	const HANDLE_SHRINK = 'twd-site-kit-header-shrink';
 	const NAV_ID     = 'twd-sk-nav';
 
 	private static $placed = array( 'header' => false, 'footer' => false );
@@ -157,7 +158,7 @@ class TWD_SK_Chrome {
 	public static function classes() {
 		$classes = array(
 			'twd-sk-chrome', 'twd-sk-chrome--sticky', 'twd-sk-chrome--strip',
-			'twd-sk-header', 'twd-sk-header--sticky', 'twd-sk-header--js', 'twd-sk-header--open',
+			'twd-sk-header', 'twd-sk-header--sticky', 'twd-sk-header--shrink', 'twd-sk-header--shrunk', 'twd-sk-header--js', 'twd-sk-header--open',
 			'twd-sk-header__strip', 'twd-sk-header__strip-inner', 'twd-sk-header__strip-link', 'twd-sk-header__inner',
 			'twd-sk-header__logo', 'twd-sk-header__logo-img', 'twd-sk-header__logo-text', 'twd-sk-header__toggle', 'twd-sk-header__bars',
 			'twd-sk-header__panel', 'twd-sk-header__nav', 'twd-sk-header__menu', 'twd-sk-header__item', 'twd-sk-header__item--parent',
@@ -182,6 +183,7 @@ class TWD_SK_Chrome {
 			'header_variant' => '',     // '' means the pack's own choice
 			'footer_variant' => '',
 			'sticky'         => false,
+			'shrink'         => false,   // 0.13.0: a fixed header gets smaller after a small scroll
 			'show_button'    => true,
 			'show_strip'     => false,
 			'footer_columns' => 3,
@@ -226,6 +228,7 @@ class TWD_SK_Chrome {
 					}
 					break;
 				case 'sticky':
+				case 'shrink':
 				case 'show_button':
 				case 'show_strip':
 					if ( is_bool( $value ) || 0 === $value || 1 === $value || '0' === $value || '1' === $value ) {
@@ -277,6 +280,7 @@ class TWD_SK_Chrome {
 			'header'      => $h,
 			'footer'      => $f,
 			'sticky'      => $sticky,
+			'shrink'      => $sticky && (bool) $s['shrink'],
 			'button'      => (bool) $s['show_button'],
 			'strip'       => (bool) $s['show_strip'],
 			'columns'     => (int) $s['footer_columns'],
@@ -375,6 +379,13 @@ class TWD_SK_Chrome {
 		}
 	}
 
+	/** Only printed when the header is fixed AND the setting is on (never in safe mode: render_header returns early there). */
+	private static function enqueue_shrink_script() {
+		if ( function_exists( 'wp_enqueue_script' ) && defined( 'TWD_SK_URL' ) ) {
+			wp_enqueue_script( self::HANDLE_SHRINK, TWD_SK_URL . 'assets/twd-site-kit-header-shrink.js', array(), defined( 'TWD_SK_VERSION' ) ? TWD_SK_VERSION : false, true );
+		}
+	}
+
 	// -- The header -------------------------------------------------------
 
 	/** Hidden until focused. Hello's main content area has the id content. */
@@ -391,7 +402,7 @@ class TWD_SK_Chrome {
 		$eff   = self::effective();
 		$strip = $eff['strip'] && ( '' !== $profile['phone'] || '' !== $profile['email'] );
 		$wrap  = 'twd-sk-page twd-sk-chrome' . ( $eff['sticky'] ? ' twd-sk-chrome--sticky' : '' ) . ( $eff['sticky'] && $strip ? ' twd-sk-chrome--strip' : '' );
-		$cls   = 'twd-sk-header twd-sk-header--' . $eff['header'] . ( $eff['sticky'] ? ' twd-sk-header--sticky' : '' );
+		$cls   = 'twd-sk-header twd-sk-header--' . $eff['header'] . ( $eff['sticky'] ? ' twd-sk-header--sticky' : '' ) . ( $eff['shrink'] ? ' twd-sk-header--shrink' : '' );
 
 		$out  = '<div class="' . $wrap . '"><header class="' . $cls . '">' . ( $skip ? self::skip_link() : '' );
 		if ( $strip ) {
@@ -425,6 +436,9 @@ class TWD_SK_Chrome {
 		$out .= '</div></div></header></div>';
 
 		self::enqueue_script();
+		if ( $eff['shrink'] ) {
+			self::enqueue_shrink_script();
+		}
 		return $out;
 	}
 

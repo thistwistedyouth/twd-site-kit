@@ -647,6 +647,7 @@
 		cui.footer.value = c.settings.footer_variant;
 		cui.cols.value = String(c.settings.footer_columns);
 		cui.sticky.checked = !!c.settings.sticky;
+		cui.shrink.checked = !!c.settings.shrink;
 		cui.button.checked = !!c.settings.show_button;
 		cui.strip.checked = !!c.settings.show_strip;
 		cui.placement.value = c.settings.placement;
@@ -696,6 +697,7 @@
 				footer_variant: cui.footer.value,
 				footer_columns: parseInt(cui.cols.value, 10),
 				sticky: cui.sticky.checked,
+				shrink: cui.shrink.checked,
 				show_button: cui.button.checked,
 				show_strip: cui.strip.checked,
 				placement: cui.placement.value
@@ -737,7 +739,9 @@
 		var sticky = checkbox('twd-sk-ch-sticky', 'Keep the header fixed at the top of the screen');
 		var btn = checkbox('twd-sk-ch-button', 'Show the header button');
 		var strip = checkbox('twd-sk-ch-strip', 'Show a thin strip with the phone number and email above the header');
+		var shrink = checkbox('twd-sk-ch-shrink', 'Make the fixed header smaller when scrolling (only works with the fixed header above)');
 		cui.sticky = sticky.input;
+		cui.shrink = shrink.input;
 		cui.button = btn.input;
 		cui.strip = strip.input;
 		cui.placement = selectWith('twd-sk-ch-placement', {}, '');
@@ -768,6 +772,7 @@
 				field('Footer columns', cui.cols, 'Used by the column footers.')
 			]),
 			sticky.label,
+			shrink.label,
 			btn.label,
 			strip.label,
 			el('div', { className: 'twd-sk-ed__actions' }, [cui.saveBtn, cui.exportBtn, cui.reloadBtn]),
@@ -904,7 +909,7 @@
 	}
 
 	function chromeSnap() {
-		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.sticky.checked, cui.button.checked, cui.strip.checked, cui.placement.value]);
+		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.sticky.checked, cui.shrink.checked, cui.button.checked, cui.strip.checked, cui.placement.value]);
 	}
 
 	ED.addDirtyCheck(function () {

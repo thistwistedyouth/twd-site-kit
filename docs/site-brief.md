@@ -35,7 +35,7 @@ Pictures are chosen from the media library. The logo, the Home page's main pictu
 |---|---|---|
 | `mode` | `therapy` or `business` | Optional. Sets the site type before anything else, so labels and AI wording follow it |
 | `site` | `name`, `person_name`, `person_job`, `phone`, `email`, `address` (list), `area_served`, `registration` (list), `same_as` (list of https links) | Registration lines only exactly as the person supplied them |
-| `header` | `menu` (list of `label`, `url`, `children`), `cta_label`, `cta_url`, `layout`, `sticky`, `show_button`, `show_strip` | Up to 8 menu items, one level of children |
+| `header` | `menu` (list of `label`, `url`, `children`), `cta_label`, `cta_url`, `layout`, `sticky`, `shrink` (only has an effect with `sticky`), `show_button`, `show_strip` | Up to 8 menu items, one level of children |
 | `footer` | `text`, `legal` (list of `label`, `url`), `layout`, `columns` (1 to 3) | |
 | `style` | `pack`, `tokens` | Leave `tokens` empty unless colours were asked for |
 | `facts` | text with capital-letter headings | The practice facts, up to 20000 characters |

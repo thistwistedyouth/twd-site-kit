@@ -2,12 +2,13 @@
 
 The one place to see where this project is. Newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md. Update this file at the end of every piece of work, in the same commit.
 
-## Where we are (last updated at release 0.12.0, 14 Oct 2026)
+## Where we are (last updated at release 0.13.0, 15 Oct 2026)
 
 **Released and live in the update file:** 0.11.0 (merged to `main` on 14 Oct 2026). **0.12.0 (Full site set up, a test option) is committed on `main` locally and is not pushed until the owner has seen the diff.** The owner lifted the verify-first rule for Tell us (0.11.0) and for the Full site set up, so both are tested together with 0.7.0 to 0.10.2 (see `docs/test-script-0.7-0.9.md`). Everything from 0.7.0 to 0.12.0 is NOT yet tried on a real site: work through that script on a fresh install first. Sites update from Plugins, "Check for updates", "update now".
 
 | Version | What it added |
 |---|---|
+| 0.13.0 | Shrink on scroll: a Site tab tick box (off by default) so the fixed header gets smaller after a short scroll and returns at the top; a tiny separate script loaded only when it is on; no page shift. NOT YET VERIFIED on a real site |
 | 0.12.0 | Full site set up (test option): paste everything in one box, the AI lists what is missing and asks questions on the setup page, the build waits until nothing is missing, pages written only from the facts, photo spots marked with what is wanted and a Pexels search, or no photos. NOT YET VERIFIED on a real site |
 | 0.11.0 | Tell us: a button for anyone who can edit pages to send a note; notes kept on the site as private text (12 months by default), administrator panel with statuses, ideas and Copy new notes as markdown, a small version label bottom left for signed-in editors, `wp twd-sk snags`, optional notification email with no message text; Edit text renamed Visual editor. NOT YET VERIFIED on a real site |
 | 0.10.2 | Edit text toolbar as a compact bottom-left card, clear of the New Article button; Edit text, Save changes and Cancel in the WordPress admin bar |

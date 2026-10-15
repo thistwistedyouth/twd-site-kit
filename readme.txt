@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.12.0
+Stable tag: 0.13.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,11 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.13.0 =
+* New: Shrink on scroll. A tick box in the Site tab, Header and footer ("Make the fixed header smaller when scrolling"), off by default. With it on and the header fixed at the top, the header gets a little smaller (smaller logo, less space above and below) after a short scroll and returns to full size at the top. The page never moves when it changes size.
+* A tiny script (about 40 lines) does this and loads only when the box is ticked and the header is fixed. Without it the header is just a normal fixed header. Nothing animates for visitors who ask for reduced motion. Also in the site brief as header.shrink. Off in safe mode.
+* The header logo height now comes from one stylesheet variable, ready for a logo size setting later.
 
 = 0.12.0 =
 * New (test option): Full site set up. Paste everything you have in one box. The AI says what is still missing and asks any design questions (look, tone of voice, photos), and the site is built only when nothing is missing.

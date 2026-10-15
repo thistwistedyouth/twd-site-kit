@@ -113,6 +113,47 @@ twd_sk_test( 'chrome: a sticky header is fixed only for the single-row variants,
 	twd_sk_true( ! TWD_SK_Chrome::defaults()['sticky'] );
 } );
 
+twd_sk_test( 'chrome: shrink on scroll is off by default, needs the fixed header, and loads its tiny script only then', function () {
+	twd_sk_true( ! TWD_SK_Chrome::defaults()['shrink'], 'off by default' );
+	twd_sk_chrome_setup( null, array( 'sticky' => false, 'shrink' => true ) );
+	twd_sk_true( ! TWD_SK_Chrome::effective()['shrink'], 'not fixed, so no shrink' );
+	$GLOBALS['twd_stub']['scripts'] = array();
+	$html = TWD_SK_Chrome::render_header();
+	twd_sk_hasnt( 'twd-sk-header--shrink', $html );
+	twd_sk_true( empty( $GLOBALS['twd_stub']['scripts']['twd-site-kit-header-shrink']['enqueued'] ), 'script not loaded' );
+	twd_sk_chrome_setup( null, array( 'sticky' => true, 'shrink' => false ) );
+	twd_sk_hasnt( 'twd-sk-header--shrink', TWD_SK_Chrome::render_header(), 'setting off, no class' );
+	$GLOBALS['twd_stub']['scripts'] = array();
+	twd_sk_chrome_setup( null, array( 'sticky' => true, 'shrink' => true ) );
+	$html = TWD_SK_Chrome::render_header();
+	twd_sk_has( 'twd-sk-header twd-sk-header--bar twd-sk-header--sticky twd-sk-header--shrink', $html );
+	twd_sk_hasnt( 'twd-sk-header--shrunk', $html, 'the script, never the server, adds shrunk' );
+	twd_sk_true( ! empty( $GLOBALS['twd_stub']['scripts']['twd-site-kit-header-shrink']['enqueued'] ), 'script loaded' );
+	TWD_SK_Chrome::save_settings( array( 'header_variant' => 'centered' ) );
+	twd_sk_true( ! TWD_SK_Chrome::effective()['shrink'], 'the centred header is never fixed, so never shrinks' );
+	twd_sk_true( is_wp_error( TWD_SK_Chrome::save_settings( array( 'shrink' => 'maybe' ) ) ) );
+	TWD_SK_Chrome::save_settings( array( 'header_variant' => 'bar', 'shrink' => false ) );
+} );
+
+twd_sk_test( 'chrome shrink script: tiny, vanilla, passive, with a gap between shrink and grow back', function () {
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-header-shrink.js' );
+	twd_sk_true( strlen( $js ) < 2000, 'tiny' );
+	twd_sk_has( 'passive: true', $js );
+	twd_sk_has( 'requestAnimationFrame', $js );
+	twd_sk_has( 'var SHRINK_AT = 60;', $js );
+	twd_sk_has( 'var GROW_AT = 20;', $js );
+	twd_sk_hasnt( 'innerHTML', $js );
+	twd_sk_hasnt( "\xE2\x80\x94", $js );
+	if ( function_exists( 'shell_exec' ) && '' !== trim( (string) shell_exec( 'command -v node 2>/dev/null' ) ) ) {
+		twd_sk_eq( '', trim( (string) shell_exec( 'node --check ' . escapeshellarg( ABSPATH . 'assets/twd-site-kit-header-shrink.js' ) . ' 2>&1' ) ) );
+	}
+	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	twd_sk_has( '--twd-sk-logo-h: 32px', $raw );
+	twd_sk_true( 1 === preg_match( '/twd-sk-header--shrink[^{]*twd-sk-header__inner[^{]*\{[^}]*transition/', $raw ), 'eased' );
+	twd_sk_true( 1 === preg_match( '/prefers-reduced-motion: reduce\)\s*\{[^@]*twd-sk-header--shrink[^{]*\{[^}]*transition: none/', $raw ), 'no motion when asked' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-chrome--sticky\.twd-sk-chrome--sticky[^{]*\{[^}]*height: 76px/', $raw ), 'the spacer keeps its full height, so nothing shifts' );
+} );
+
 twd_sk_test( 'chrome header: structure, landmarks, menu button and submenu', function () {
 	twd_sk_chrome_setup();
 	$html = TWD_SK_Chrome::render_header();

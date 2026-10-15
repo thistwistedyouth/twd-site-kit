@@ -505,6 +505,7 @@
 
 /* ---- less motion, when the visitor asks for it ---- */
 @media (prefers-reduced-motion: reduce) {
+  .twd-sk-header--shrink .twd-sk-header__inner, .twd-sk-header--shrink .twd-sk-header__logo-img { transition: none; }
   .twd-sk-services--glow .twd-sk-services__item { animation: none; }
   .twd-sk-quote__track { scroll-behavior: auto; }
 }
@@ -530,7 +531,12 @@
 .twd-sk-skip:focus, .twd-sk-skip:focus-visible { width: auto; height: auto; clip-path: none; overflow: visible; }
 .twd-sk-header__inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-top: 14px; padding-bottom: 14px; }
 .twd-sk-header__logo { display: inline-flex; align-items: center; flex: 0 0 auto; color: $color-title; text-decoration: none; }
-.twd-sk-header__logo-img { display: block; width: auto; max-width: 220px; max-height: 48px; }
+.twd-sk-header__logo-img { display: block; width: auto; max-width: 220px; max-height: var(--twd-sk-logo-h, 48px); }
+/* Shrink on scroll (0.13.0): a script adds --shrunk after a small scroll. The spacer (--sticky wrapper) keeps its height, so nothing on the page moves. */
+.twd-sk-header--shrink .twd-sk-header__inner { transition: padding .2s ease; }
+.twd-sk-header--shrink .twd-sk-header__logo-img { transition: max-height .2s ease; }
+.twd-sk-header--shrunk { --twd-sk-logo-h: 32px; }
+.twd-sk-header--shrunk .twd-sk-header__inner { padding-top: 6px; padding-bottom: 6px; }
 .twd-sk-header__logo-text { font-family: $font-heading; font-size: $size-h3; font-weight: $heading-weight; font-style: $heading-style; line-height: 1.2; color: $color-title; }
 .twd-sk-header__toggle {
   display: none; align-items: center; justify-content: center; min-width: 48px; min-height: 48px; padding: 0;

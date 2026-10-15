@@ -17,6 +17,13 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.13.0 (Shrink on scroll)
+- Setting `shrink` in `twd_sk_chrome` (default off), effective only with the fixed header (so never the centred layout, never safe mode, where the plain header prints). Also in the brief as `header.shrink`.
+- A second small visitor script, `twd-site-kit-header-shrink.js`, separate from the mobile menu script so a site without the setting loads nothing extra. One class, `twd-sk-header--shrunk`, added past 60px of scroll and removed under 20px (the gap stops flicker). The server never prints `--shrunk`.
+- No layout shift: the fixed header's spacer (`twd-sk-chrome--sticky`, 76px or 112px with the strip) is untouched; only the header inside it gets shorter (padding 14px to 6px, logo 48px to 32px).
+- Logo size: the owner's SK-002 note was not found in this repo. The logo max height now reads the variable `--twd-sk-logo-h` (default 48px), so a future logo size setting only has to set that. No setting was added for it.
+- Theme Builder: a Pro template that contains our `[twd_header]` shortcode gets the same behaviour (same output); a Pro header that does not use our shortcode is never touched because we print nothing there.
+
 ## v0.12.0 (Full site set up)
 
 - **The ordinary build fills gaps with placeholders, so the owner has to hunt for them, and an AI left to fill a gap can invent.** The owner asked for an option that does not build until enough is known, and leaves only photos as places to fill.

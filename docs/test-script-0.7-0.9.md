@@ -32,6 +32,12 @@ Before you start: install Site Kit 0.12.0 (from the branch zip for now; Edit tex
 12d. **Pictures in Edit text (0.10.1).** Find a page with a picture marker such as [PLACEHOLDER: image needed] (or ask Edit with AI to add a picture somewhere). Press Visual editor: the marker shows as a dashed **+ Add a picture** box. Click it, then **Upload from this computer** and pick a photo: it uploads, shows in place, and asks for a description. Click another picture, **Choose from the media library**, and pick one. Click a third picture, **Change the description** only. Save: all three stay after the reload, the uploaded photo is in Media, and a caption marker next to a picture is still words to type over. Try a PDF in Upload: it should be refused.
 12e. **The Edit text card and admin bar (0.10.2).** Press Visual editor: the tools appear as a small card at the bottom left, not a full-width bar, and the New Article button (bottom right) stays clear. In the black admin bar at the top, Visual editor has become **Save changes** next to **Cancel**. Change a word: it reads Save changes (1); press it to save. On a phone the card spans the screen above other buttons.
 
+## 2e. Shrink on scroll (0.13.0)
+1. Site tab, Header and footer: tick "Keep the header fixed" and "Make the fixed header smaller when scrolling", Save, reload a long page.
+2. Scroll down a little (about 60px): the header should get smaller (logo and spacing) and the page must not jump. Scroll back to the very top: it returns to full size. Slowly wobble around 20 to 60px: it must not flicker.
+3. On a phone width: open the menu button before and after shrinking; the menu panel should still sit directly under the header. Tab to the skip link and the header button in both sizes.
+4. Untick Shrink, Save, reload: the header stays one size. Safe mode on: no change in size.
+
 ## 2c. Tell us (0.11.0)
 
 13a. **Switch it on.** Site tab, Tell us notes: tick Show the Tell us button, leave Keep notes for at 12 months, Save. Reload. A **Tell us** button should sit directly above **Visual editor** (bottom left). On a page with no Visual editor button it takes that button's place. Switch safe mode on: the button disappears. Switch it off again.

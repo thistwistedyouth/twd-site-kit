@@ -22,6 +22,7 @@
     "cta_url": "/contact",
     "layout": "bar",
     "sticky": false,
+    "shrink": false,
     "show_button": true,
     "show_strip": false
   },

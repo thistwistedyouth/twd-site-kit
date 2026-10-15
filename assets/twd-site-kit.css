@@ -1426,6 +1426,10 @@
 }
 /* ---- less motion, when the visitor asks for it ---- */
 @media (prefers-reduced-motion: reduce) {
+  .twd-sk-page .twd-sk-header--shrink.twd-sk-header--shrink .twd-sk-header__inner.twd-sk-header__inner,
+  .twd-sk-page .twd-sk-header--shrink.twd-sk-header--shrink .twd-sk-header__logo-img.twd-sk-header__logo-img {
+    transition: none;
+  }
   .twd-sk-page .twd-sk-services--glow.twd-sk-services--glow .twd-sk-services__item.twd-sk-services__item {
     animation: none;
   }
@@ -1523,7 +1527,21 @@
   display: block;
   width: auto;
   max-width: 220px;
-  max-height: 48px;
+  max-height: var(--twd-sk-logo-h, 48px);
+}
+/* Shrink on scroll (0.13.0): a script adds --shrunk after a small scroll. The spacer (--sticky wrapper) keeps its height, so nothing on the page moves. */
+.twd-sk-page .twd-sk-header--shrink.twd-sk-header--shrink .twd-sk-header__inner.twd-sk-header__inner {
+  transition: padding .2s ease;
+}
+.twd-sk-page .twd-sk-header--shrink.twd-sk-header--shrink .twd-sk-header__logo-img.twd-sk-header__logo-img {
+  transition: max-height .2s ease;
+}
+.twd-sk-page .twd-sk-header--shrunk.twd-sk-header--shrunk {
+  --twd-sk-logo-h: 32px;
+}
+.twd-sk-page .twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__inner.twd-sk-header__inner {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
 }
 .twd-sk-page .twd-sk-header__logo-text.twd-sk-header__logo-text {
   font-family: var(--twd-site-font-heading) !important;
