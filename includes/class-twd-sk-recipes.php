@@ -68,6 +68,18 @@ class TWD_SK_Recipes {
 				),
 				'intent'      => TWD_SK_Mode::w( 'recipe_faq' ),
 			),
+			// 0.12.0 (full site set up): a page that introduces the articles grid. Not mode dependent wording.
+			'resources' => array(
+				'label'       => 'Resources page',
+				'title'       => 'Resources',
+				'needs_topic' => false,
+				'parts'       => array(
+					array( 'hero', 'twd-sk-hero--compact' ),
+					array( 'resources', '' ),
+					array( 'cta', 'twd-sk-cta--strip' ),
+				),
+				'intent'      => 'A short, welcoming introduction above the articles grid, saying what the articles are for and who they may help. Keep the articles grid exactly as it is. Do not invent article titles, topics or claims.',
+			),
 		);
 	}
 

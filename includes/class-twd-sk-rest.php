@@ -268,6 +268,17 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_site_build_notes' ),
 			'permission_callback' => array( __CLASS__, 'can_propose_site' ),
 		) );
+		// The full site set up (0.12.0): check what is missing, then prepare the brief and the page list.
+		register_rest_route( self::ROUTE_NS, '/site/full/check', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_full_check' ),
+			'permission_callback' => array( __CLASS__, 'can_propose_site' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/full/prepare', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_full_prepare' ),
+			'permission_callback' => array( __CLASS__, 'can_propose_site' ),
+		) );
 		register_rest_route( self::ROUTE_NS, '/site/build/step', array(
 			'methods'             => 'POST',
 			'callback'            => array( __CLASS__, 'post_site_build_step' ),
@@ -676,6 +687,12 @@ class TWD_SK_REST {
 			'done'     => (string) get_option( TWD_SK_Build::DONE, '' ),
 			'safe'     => TWD_SK_Safe::on(),
 			'max_pictures' => TWD_SK_Pictures::MAX_CUSTOM,
+			'full'         => array(
+				'ai'          => TWD_SK_AI::available(),
+				'articles'    => TWD_SK_Full::articles_available(),
+				'default_email' => TWD_SK_Full::default_email(),
+				'design'      => TWD_SK_Full::design_questions( array() ),
+			),
 			'sets'         => TWD_SK_Sets::summary(),
 			'focal_points' => array_map( function ( $p ) {
 				return $p[0];
@@ -690,7 +707,7 @@ class TWD_SK_REST {
 	/** Save some of the setup page's choices. Good values are kept even when another is refused. */
 	public static function post_site_build_draft( $request ) {
 		$in = array();
-		foreach ( array( 'step', 'mode', 'set', 'pack', 'brand', 'brief_text', 'pictures', 'pages', 'reset_pages' ) as $k ) {
+		foreach ( array( 'step', 'mode', 'set', 'pack', 'brand', 'brief_text', 'pictures', 'pages', 'reset_pages', 'full', 'full_notes', 'full_answers' ) as $k ) {
 			$v = $request->get_param( $k );
 			if ( null !== $v ) {
 				$in[ $k ] = $v;
@@ -719,6 +736,48 @@ class TWD_SK_REST {
 			return self::error( $code, $out->get_error_message(), $status );
 		}
 		return array( 'json' => $out['json'], 'note' => isset( $out['note'] ) ? $out['note'] : '' );
+	}
+
+	/** The full site set up: keep the notes and answers, ask the AI what is missing, keep the result. */
+	public static function post_site_full_check( $request ) {
+		$in = array();
+		foreach ( array( 'full_notes', 'full_answers' ) as $k ) {
+			$v = $request->get_param( $k );
+			if ( null !== $v ) {
+				$in[ $k ] = $v;
+			}
+		}
+		if ( $in ) {
+			$saved = TWD_SK_Build::save_draft( $in );
+			if ( $saved['errors'] ) {
+				return self::error( 'twd_sk_bad_input', implode( ' ', $saved['errors'] ), 400 );
+			}
+		}
+		$check = TWD_SK_Full::check( TWD_SK_Build::draft() );
+		if ( is_wp_error( $check ) ) {
+			$map    = array( 'twd_sk_bad_input' => 400, 'twd_sk_ai_unavailable' => 503 );
+			$code   = $check->get_error_code();
+			$status = isset( $map[ $code ] ) ? $map[ $code ] : 502;
+			return self::error( $code, $check->get_error_message(), $status );
+		}
+		TWD_SK_Build::store_full_check( $check );
+		return self::build_payload();
+	}
+
+	/** The full site set up: turn a ready check into a brief and the list of pages, and move on to the pictures. */
+	public static function post_site_full_prepare( $request ) {
+		$prepared = TWD_SK_Full::prepare( TWD_SK_Build::draft() );
+		if ( is_wp_error( $prepared ) ) {
+			$map    = array( 'twd_sk_not_ready' => 409, 'twd_sk_bad_brief' => 400, 'twd_sk_ai_unavailable' => 503 );
+			$code   = $prepared->get_error_code();
+			$status = isset( $map[ $code ] ) ? $map[ $code ] : 502;
+			return self::error( $code, $prepared->get_error_message(), $status );
+		}
+		$stored = TWD_SK_Build::store_prepared( $prepared );
+		if ( is_wp_error( $stored ) ) {
+			return self::error( 'twd_sk_bad_input', $stored->get_error_message(), 400 );
+		}
+		return self::build_payload();
 	}
 
 	/** Run one build step. Pages are drafts only. */

@@ -17,6 +17,18 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.12.0 (Full site set up)
+
+- **The ordinary build fills gaps with placeholders, so the owner has to hunt for them, and an AI left to fill a gap can invent.** The owner asked for an option that does not build until enough is known, and leaves only photos as places to fill.
+- **The AI only asks; the code decides.** What counts as "enough" is a floor in code (name, person, something offered with detail, story, where they work, registration or none, questions or skip) plus whatever the AI also asks for. Every claim the AI makes about the notes must be backed by the words really being there, or it is ignored, so a made up name, email or phone cannot get through.
+- **The page list and each page's sections are chosen by code**, from what was supplied, so a testimonials section is never written when no testimonials were given, and a phone row is never made when there is no number.
+- **Email defaults to info@ on the site's own address** (the owner's rule), said so on the screen. A phone is never defaulted.
+- **A page the AI cannot write is not saved as an outline.** An outline full of placeholders is exactly what this option exists to avoid.
+- **Photos are the one thing left open**, as a marker that says what photo is wanted and a Pexels search to start from, in the shape the Visual editor already understands. The marker is capped at 60 characters because the sanitiser treats longer bracketed text as a shortcode and removes it. "No photos" builds layouts without picture spots instead (hero compact, text instead of image and text, a plain contact section).
+- **After writing, the code checks the page, because telling the AI not to invent is not proof.** Leftover placeholders, and any email, phone number or price not in the supplied facts, are listed. This cannot prove every sentence true, so pages stay drafts.
+- **A test option, off by default**, on the first step of the setup page. It needs the AI key.
+- **Deferred:** a Visual editor button to switch a photo spot to a layout without a photo after the build (needs a section by section conversion).
+
 ## v0.11.0 (Tell us)
 
 - **Clients need a way to say what they want changed without a phone call or a wp-admin visit.** The owner asked for a "Tell us" button on the front of the site, notes kept on the client's own site, and a way to pull them over SSH. No GitHub token or outside service on a client site, so nothing can leak and nothing needs to be rotated.

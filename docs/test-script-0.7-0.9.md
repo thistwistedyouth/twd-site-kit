@@ -1,8 +1,8 @@
-# Test script: 0.7.0 to 0.11.0 on a fresh site
+# Test script: 0.7.0 to 0.12.0 on a fresh site
 
 Built fast at beta stage; none of this has been tried on a real site yet. Work through it on a **fresh install** first, never on a live client site. Riskiest first: if something in the first block goes wrong, stop and send the site report (Site tab, Site report, or `wp twd-sk doctor`).
 
-Before you start: install Site Kit 0.11.0 (from the branch zip for now; Edit text is now called Visual editor, and Tell us is new) (Plugins, Add New, Upload, or the one-click update), plus the Articles plugin with a key if you want the AI parts. Turn on WP_DEBUG_LOG if you can.
+Before you start: install Site Kit 0.12.0 (from the branch zip for now; Edit text is now called Visual editor, and Tell us is new) (Plugins, Add New, Upload, or the one-click update), plus the Articles plugin with a key if you want the AI parts. Turn on WP_DEBUG_LOG if you can.
 
 ## 1. Riskiest: things that send, publish or change many pages
 
@@ -43,6 +43,21 @@ Before you start: install Site Kit 0.11.0 (from the branch zip for now; Edit tex
 13f. **Email.** In the Site tab turn on Email me, give an address, Save, send a note as the Editor. An email arrives saying a note has arrived and naming the page. It must NOT contain what the note says. Check spam too.
 13g. **Over SSH.** `wp twd-sk snags --status=new --format=markdown`, then `wp twd-sk snags` (JSON), then `wp twd-sk snag-status <id> done`.
 13h. **Privacy.** Tools, Export Personal Data for the Editor's email: the notes are in the export. Erase Personal Data: they are gone.
+
+## 2d. Full site set up (test) (0.12.0)
+
+Needs the AI key from the Articles plugin. Use a fresh site and made-up details (a pretend practice) so nothing real is involved.
+
+14a. **Switch it on.** Settings, Set up site. On the first step, tick **Full site set up (test)** and press Save and continue. The steps become Site type, Full set up, Pictures, Build, Launch.
+14b. **Paste and check.** Paste a few paragraphs about a pretend practice: its name, who you are, two things you offer, a short story. Press **Check what is missing**. You should get a list of what it understood, a list of questions with a box under each, contact details (the email filled in as info@ plus your site address and said to be assumed, the phone empty), and three design questions (look, tone, photos). The Build must not be possible yet.
+14c. **Nothing invented.** Read the questions: each should ask for something your notes really lack, in plain words. Check that it did not claim a name, email, phone or registration you never gave.
+14d. **Answer and check again.** Answer everything, choose a look, a tone and Photos, then **Check again**. Repeat until the box says Ready. Then change one word in the notes: the Looks right, continue button should switch off and ask you to Check again.
+14e. **Continue.** Press **Looks right, continue**. You land on Pictures. Build must still say it is not ready if you go to Build before this.
+14f. **Build with photos.** Choose "I will add my own photos", build. Every step should say Done. Open the pages: Home, About, one per thing you offer, Questions and answers, Resources (only if the Articles plugin is on), Contact. Read every page. Nothing should be marked [PLACEHOLDER] except photo spots, and each spot should say what photo is wanted and a Pexels search. Nothing should be invented: no phone number you did not give, no prices, no qualifications.
+14g. **The checks.** The build report lists anything on a page that was not in your notes (an email, phone or price). If you add a made up phone number to the notes then remove it again and rebuild, the flag should appear and go. The last report line says what was left out (for example testimonials) and what to do about photos.
+14h. **Photo spots.** Open a page, press **Visual editor**, click a photo spot: choose or upload a photo. The marker goes and the photo shows. Try publishing a page that still has a spot: it should be refused.
+14i. **No photos.** Start again, choose "No photos for now", build. No page should have a photo spot, and the layouts should still look right on a computer and a phone (a plain top band, text sections instead of image and text, a contact section without a picture). The report suggests a few Pexels searches.
+14j. **Safe mode and the ordinary set up.** With safe mode on the setup page is unavailable. With the tick box off, the old Style, Brief and Pages steps and the old build behave as before.
 
 ## 3. Lowest: reports and command line (needs SSH)
 

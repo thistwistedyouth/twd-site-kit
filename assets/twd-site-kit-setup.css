@@ -49,3 +49,7 @@
   .twd-sk-setup__body { padding: 8px 12px 12px; }
   .twd-sk-setup__pic { grid-template-columns: 1fr; }
 }
+.twd-sk-setup__qblock { margin: 0 0 16px; }
+.twd-sk-setup__q { display: block; margin-bottom: 4px; }
+.twd-sk-setup__qblock textarea { width: 100%; }
+.twd-sk-setup__fullout h3 { margin-top: 24px; }

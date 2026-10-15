@@ -55,9 +55,9 @@ twd_sk_test( 'facts: never printed to visitors, in the header, footer, structure
 	twd_sk_hasnt( 'SECRET-FACT-MARKER', (string) $page );
 } );
 
-twd_sk_test( 'recipes: five page types, each outline passes the sanitiser unchanged, has one h1, and starts with placeholders', function () {
+twd_sk_test( 'recipes: six page types, each outline passes the sanitiser unchanged, has one h1, and starts with placeholders', function () {
 	$types = TWD_SK_Recipes::types();
-	twd_sk_eq( array( 'about', 'contact', 'home', 'service', 'faq' ), array_keys( $types ) );
+	twd_sk_eq( array( 'about', 'contact', 'home', 'service', 'faq', 'resources' ), array_keys( $types ) );
 	foreach ( $types as $key => $r ) {
 		$html = TWD_SK_Recipes::skeleton( $key );
 		$res  = TWD_SK_Sanitizer::clean_with_report( $html );
@@ -229,7 +229,7 @@ twd_sk_test( 'facts: the editor is told whether facts are saved (never their tex
 	$d = $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data'];
 	twd_sk_eq( true, $d['factsSaved'] );
 	twd_sk_eq( true, $d['canManage'] );
-	twd_sk_eq( array( 'about', 'contact', 'home', 'service', 'faq' ), array_keys( $d['recipes'] ) );
+	twd_sk_eq( array( 'about', 'contact', 'home', 'service', 'faq', 'resources' ), array_keys( $d['recipes'] ) );
 	twd_sk_hasnt( 'SECRET-FACT-MARKER', json_encode( $d ), 'the text is never handed to the browser through the page' );
 	twd_sk_ed_setup( array( 'edit_pages', 'edit_post:12' ) );
 	twd_sk_ed_loaded();

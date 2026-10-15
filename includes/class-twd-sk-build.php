@@ -34,7 +34,7 @@ class TWD_SK_Build {
 	const HANDLE    = 'twd-site-kit-setup';
 
 	public static function steps() {
-		return array( 'type', 'style', 'brief', 'pages', 'pictures', 'build', 'launch' );
+		return array( 'type', 'style', 'brief', 'pages', 'full', 'pictures', 'build', 'launch' );
 	}
 
 	public static function init() {
@@ -69,6 +69,16 @@ class TWD_SK_Build {
 			'pages'      => isset( $d['pages'] ) && is_array( $d['pages'] ) ? $d['pages'] : null,
 			// Fingerprints of the menu and header button this setup filled in itself (0.9.3).
 			'auto'       => isset( $d['auto'] ) && is_array( $d['auto'] ) ? array_filter( $d['auto'], 'is_string' ) : array(),
+			// The full site set up (0.12.0, a test option): the notes, the answers to the questions, the last check.
+			'full'          => ! empty( $d['full'] ),
+			'full_notes'    => isset( $d['full_notes'] ) && is_string( $d['full_notes'] ) ? $d['full_notes'] : '',
+			'full_answers'  => TWD_SK_Full::clean_answers( isset( $d['full_answers'] ) ? $d['full_answers'] : array() ),
+			'full_check'    => isset( $d['full_check'] ) && is_array( $d['full_check'] ) ? $d['full_check'] : null,
+			'full_prepared' => ! empty( $d['full_prepared'] ),
+			// Chosen with the "Photos?" question: pages are built with layouts that have no picture spots.
+			'no_photos'     => ! empty( $d['no_photos'] ),
+			// What each page of the last full build still needs a look at, by page slug.
+			'flags'         => isset( $d['flags'] ) && is_array( $d['flags'] ) ? $d['flags'] : array(),
 			'updated'    => isset( $d['updated'] ) && is_string( $d['updated'] ) ? $d['updated'] : '',
 		);
 	}
@@ -137,6 +147,43 @@ class TWD_SK_Build {
 			$d['pictures']   = $p['valid'];
 			$errors          = array_merge( $errors, $p['errors'] );
 		}
+		// The full site set up (0.12.0). Changing the notes or an answer means the last check no longer stands.
+		$changed_full = false;
+		if ( array_key_exists( 'full', $in ) ) {
+			$on = (bool) $in['full'] && 'false' !== $in['full'] && '0' !== $in['full'];
+			if ( $on !== $d['full'] ) {
+				$d['full']    = $on;
+				$changed_full = true;
+			}
+		}
+		if ( isset( $in['full_notes'] ) ) {
+			if ( ! is_string( $in['full_notes'] ) ) {
+				$errors[] = 'The notes must be text.';
+			} elseif ( strlen( $in['full_notes'] ) > TWD_SK_Brief::MAX_NOTES ) {
+				$errors[] = 'Those notes are too long (' . (int) ( TWD_SK_Brief::MAX_NOTES / 1000 ) . ' thousand characters at most).';
+			} else {
+				$clean = TWD_SK_Full::clean_text( $in['full_notes'], TWD_SK_Brief::MAX_NOTES );
+				if ( $clean !== $d['full_notes'] ) {
+					$d['full_notes'] = $clean;
+					$changed_full    = true;
+				}
+			}
+		}
+		if ( array_key_exists( 'full_answers', $in ) ) {
+			$answers = TWD_SK_Full::clean_answers( $in['full_answers'] );
+			if ( $answers !== $d['full_answers'] ) {
+				$d['full_answers'] = $answers;
+				$changed_full      = true;
+			}
+		}
+		if ( $changed_full ) {
+			$packs              = TWD_SK_Packs::packs();
+			$d['full_prepared'] = false;
+			$d['no_photos']     = isset( $d['full_answers']['photos'] ) && 'none' === $d['full_answers']['photos'];
+			if ( isset( $d['full_answers']['style'] ) && isset( $packs[ $d['full_answers']['style'] ] ) ) {
+				$d['pack'] = $d['full_answers']['style'];
+			}
+		}
 		// The step moves on only when everything else was accepted, so a reload lands where the problem is.
 		if ( isset( $in['step'] ) && ! $errors && in_array( $in['step'], self::steps(), true ) ) {
 			$d['step'] = $in['step'];
@@ -183,6 +230,32 @@ class TWD_SK_Build {
 	public static function reset_draft() {
 		update_option( self::DRAFT, array(), false );
 		return self::draft();
+	}
+
+	// -- The full site set up (0.12.0) ----------------------------------------------------
+
+	/** Keep the result of a check. The notes and answers it was made from are already in the draft. */
+	public static function store_full_check( $check ) {
+		$d                  = self::draft();
+		$d['full_check']    = $check;
+		$d['full_prepared'] = false;
+		return self::write_draft( $d );
+	}
+
+	/** Keep the brief and the page list prepared from a ready check, and move on to the pictures. */
+	public static function store_prepared( $prepared ) {
+		$d = self::draft();
+		$pages = self::clean_pages( $prepared['pages'] );
+		if ( is_wp_error( $pages ) ) {
+			return $pages;
+		}
+		$flags = defined( 'JSON_UNESCAPED_SLASHES' ) ? JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE : 0;
+		$d['brief_text']    = function_exists( 'wp_json_encode' ) ? wp_json_encode( $prepared['brief'], $flags ) : json_encode( $prepared['brief'], $flags );
+		$d['pages']         = $pages;
+		$d['full_prepared'] = true;
+		$d['flags']         = array();
+		$d['step']          = 'pictures';
+		return self::write_draft( $d );
 	}
 
 	// -- The plan -------------------------------------------------------------------
@@ -313,6 +386,8 @@ class TWD_SK_Build {
 			'blocking' => $bp['blocking'],
 			'ai'       => $ai,
 			'pictures' => array( 'slots' => count( $draft['pictures']['slots'] ), 'custom' => count( $draft['pictures']['custom'] ) ),
+			'full'     => (bool) $draft['full'],
+			'full_ready' => ! $draft['full'] || $draft['full_prepared'],
 		);
 	}
 
@@ -349,6 +424,13 @@ class TWD_SK_Build {
 		$plan  = self::plan( $draft );
 		if ( '' !== $plan['brief_error'] && in_array( $step, array( 'settings', 'page', 'finish' ), true ) ) {
 			return new WP_Error( 'twd_sk_bad_brief', 'The brief could not be read, so nothing was changed. Fix it on the Brief step (Choose the brief file is the safest way), or empty the brief box to build without one. ' . $plan['brief_error'] );
+		}
+		// The full site set up never builds until the questions are answered and the notes prepared (0.12.0).
+		if ( $draft['full'] && ! $draft['full_prepared'] && in_array( $step, array( 'settings', 'page', 'finish' ), true ) ) {
+			return new WP_Error( 'twd_sk_not_ready', 'The full site set up is not ready. Answer the questions on the Full set up step first; nothing was changed.' );
+		}
+		if ( $draft['full'] && ! TWD_SK_AI::available() && in_array( $step, array( 'settings', 'page' ), true ) ) {
+			return new WP_Error( 'twd_sk_ai_unavailable', 'The full site set up writes every page with the AI, and the AI is not available now. Nothing was changed.' );
 		}
 		try {
 			if ( 'settings' === $step ) {
@@ -538,12 +620,22 @@ class TWD_SK_Build {
 			return array( 'step' => 'page', 'ok' => true, 'report' => array( '"' . $pg['title'] . '" already exists, so it was left alone.' ), 'page' => self::page_summary( $pg['id'], false ) );
 		}
 		$in     = array( 'type' => $pg['type'], 'title' => $pg['title'], 'topic' => $pg['topic'], 'notes' => $pg['notes'], 'parts' => $pg['parts'] );
+		$full   = ! empty( $draft['full'] );
+		if ( $full ) {
+			// Only the supplied facts, and no [PLACEHOLDER] for text (0.12.0).
+			$in['strict'] = true;
+			$use_ai       = true;
+		}
 		$report = array();
 		$ai     = $use_ai && TWD_SK_AI::available();
 		$html   = '';
 		if ( $ai ) {
 			$html = TWD_SK_AI::draft_page_html( $in, TWD_SK_Pictures::prompt_block( $draft['pictures'], $pg['slug'] ) );
 			if ( is_wp_error( $html ) ) {
+				if ( $full ) {
+					// An outline full of placeholders is exactly what this option exists to avoid.
+					return new WP_Error( 'twd_sk_ai_failed', '"' . $pg['title'] . '": the AI could not write it (' . $html->get_error_message() . ') Nothing was saved for this page. Try again.' );
+				}
 				$report[] = '"' . $pg['title'] . '": the AI could not write it (' . $html->get_error_message() . ') The outline was saved instead; use Fill with AI on the page later.';
 				$ai       = false;
 			}
@@ -554,6 +646,19 @@ class TWD_SK_Build {
 		$used   = $draft['used'];
 		$placed = TWD_SK_Pictures::place( $html, $draft['pictures'], $pg['slug'], $pg['type'], $used );
 		$report = array_merge( $report, $placed['report'] );
+		$flags  = array();
+		if ( $full ) {
+			// Picture spots get a marker that says what photo is wanted; the page is checked for anything the facts do not back up.
+			$fin            = TWD_SK_Full::finalise( $placed['html'], $pg, $draft );
+			$placed['html'] = $fin['html'];
+			$flags          = $fin['flags'];
+			if ( $fin['spots'] ) {
+				$report[] = '"' . $pg['title'] . '": ' . $fin['spots'] . ' place' . ( 1 === $fin['spots'] ? '' : 's' ) . ' for a photo, each marked with what is wanted and a Pexels search.';
+			}
+			foreach ( $flags as $flag ) {
+				$report[] = '"' . $pg['title'] . '" needs a look: ' . $flag;
+			}
+		}
 
 		$id = 'rebuild' === $pg['action'] ? (int) $pg['id'] : 0;
 		if ( ! $id ) {
@@ -580,8 +685,12 @@ class TWD_SK_Build {
 			}
 		}
 		$draft['used'] = $used;
+		if ( $full ) {
+			$draft['flags'][ $pg['slug'] ] = $flags;
+		}
 		self::write_draft( $draft );
 		$summary  = self::page_summary( $id, $ai );
+		$summary['flags'] = $flags;
 		$report[] = '"' . $pg['title'] . '" ' . ( 'rebuild' === $pg['action'] ? 'made again' : 'made' ) . ( $ai ? ' with AI' : ' as an outline' ) . ' (draft, ID ' . (int) $id . '): ' . $summary['must'] . ' to fix, ' . $summary['check'] . ' to check.';
 		return array( 'step' => 'page', 'ok' => true, 'report' => $report, 'page' => $summary );
 	}
@@ -649,6 +758,23 @@ class TWD_SK_Build {
 			$must += $p['must'];
 		}
 		$report[] = count( $pages ) . ' draft page' . ( 1 === count( $pages ) ? '' : 's' ) . ' ready. ' . ( $must ? $must . ' thing' . ( 1 === $must ? '' : 's' ) . ' still to fix before they can be published (missing details marked [PLACEHOLDER]).' : 'Nothing is marked as missing.' );
+		if ( ! empty( $draft['full'] ) ) {
+			$looks = 0;
+			foreach ( $draft['flags'] as $list ) {
+				$looks += is_array( $list ) ? count( $list ) : 0;
+			}
+			$report[] = $looks ? $looks . ' thing' . ( 1 === $looks ? '' : 's' ) . ' on the pages the facts did not back up (listed above). Read every page before you publish it.' : 'Nothing on the pages went beyond the facts you supplied. Still read every page before you publish it.';
+			if ( ! empty( $draft['full_check']['left_out'] ) ) {
+				$report[] = 'Left out because nothing was supplied: ' . implode( ' ', array_map( function ( $l ) {
+					return rtrim( $l, '.' ) . '.';
+				}, $draft['full_check']['left_out'] ) );
+			}
+			if ( ! empty( $draft['no_photos'] ) ) {
+				$report[] = 'No photo spots were made. If you add photos later, Pexels searches that suit a site like this: ' . implode( ', ', TWD_SK_Full::photo_ideas( $draft['mode'] ) ) . '.';
+			} else {
+				$report[] = 'Open each page, press Visual editor and click a marked photo spot to upload your photo. The marker says what is wanted and gives a Pexels search to start from. A page with a photo spot cannot be published until the spot is filled or removed.';
+			}
+		}
 		if ( $stale ) {
 			$report[] = 'An earlier build also made these pages, which are no longer in the plan: "' . implode( '", "', $stale ) . '". They are still drafts and were not changed. Move them to the bin in Pages if you do not need them.';
 		}

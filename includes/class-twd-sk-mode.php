@@ -60,6 +60,24 @@ class TWD_SK_Mode {
 		return is_string( $v ) && isset( self::modes()[ $v ] ) ? $v : self::DEFAULT_MODE;
 	}
 
+	/** Set only while using() runs: the mode to read instead of the stored one. */
+	private static $forced = null;
+
+	/**
+	 * Run something with another mode in use, without saving anything (the full site set up reads the notes in
+	 * the type chosen on its first step before that type is saved to the site). The stored mode is back afterwards,
+	 * even if the function throws.
+	 */
+	public static function using( $mode, $fn ) {
+		$before       = self::$forced;
+		self::$forced = ( is_string( $mode ) && isset( self::modes()[ $mode ] ) ) ? $mode : null;
+		try {
+			return call_user_func( $fn );
+		} finally {
+			self::$forced = $before;
+		}
+	}
+
 	/** The mode in use: therapy in safe mode, otherwise the stored setting. */
 	public static function get() {
 		try {
@@ -69,7 +87,7 @@ class TWD_SK_Mode {
 		} catch ( \Throwable $e ) {
 			return self::DEFAULT_MODE;
 		}
-		return self::stored();
+		return null !== self::$forced ? self::$forced : self::stored();
 	}
 
 	public static function is( $mode ) {
@@ -183,6 +201,12 @@ class TWD_SK_Mode {
 				'recipe_service_label' => 'Service or topic page (for example Working with anxiety)',
 				'topic_example'      => 'Working with anxiety',
 				'service_kind'       => 'kind of work or topic',
+				// Picture search ideas for the full site set up (0.12.0): short, so a marker stays under 60 characters.
+				'photo_calm'         => 'calm counselling room',
+				'photo_top'          => 'calm natural light room',
+				'photo_portrait'     => 'calm therapist portrait',
+				'photo_space'        => 'welcoming reception',
+				'photo_ideas'        => 'calm counselling room, soft natural light, welcoming reception',
 				'form_help'          => 'Please do not include anything private or urgent. If you need help now, call 999 in an emergency or use the support lines on this site.',
 				// The facts outline.
 				'facts_template'     => array(
@@ -264,6 +288,11 @@ class TWD_SK_Mode {
 				'recipe_service_label' => 'Product or service page (for example Weekend hire)',
 				'topic_example'      => 'Weekend hire',
 				'service_kind'       => 'product or service',
+				'photo_calm'         => 'small business at work',
+				'photo_top'          => 'friendly small business',
+				'photo_portrait'     => 'business owner portrait',
+				'photo_space'        => 'shop front',
+				'photo_ideas'        => 'small business at work, friendly shop front, hands at work',
 				'form_help'          => 'We will reply as soon as we can. Please do not include payment details.',
 				'facts_template'     => array(
 					'WHO WE ARE',

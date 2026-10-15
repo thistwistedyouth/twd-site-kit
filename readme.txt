@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.11.0
+Stable tag: 0.12.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,13 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.12.0 =
+* New (test option): Full site set up. Paste everything you have in one box. The AI says what is still missing and asks any design questions (look, tone of voice, photos), and the site is built only when nothing is missing.
+* Pages are written only from what you supply. A fact the notes do not support is left out rather than marked as missing. The only places left to fill in are photos: each photo spot says what is wanted and gives a Pexels search to start from, and you upload the photo in the Visual editor. Or choose no photos, and the pages are built with layouts that have no photo spots.
+* The page list is Home, About, one page for each thing you offer, Questions and answers, Resources (when the Articles plugin is active) and Contact. The email is yours, or info@ on your site address if you gave none. No phone number is shown unless you give one.
+* Every written page is checked afterwards: any email, phone number or price that is not in your notes is listed for you to look at. Pages are drafts and nothing is published.
+* Needs the AI key from the Articles plugin. Off unless ticked on the first step of Set up site.
 
 = 0.11.0 =
 * New: Tell us. A button for anyone who can edit pages. They write what they would like changed, and the note is kept on your own site as text, then deleted after the time you choose (12 months unless you change it). Off until you switch it on in the Site tab.

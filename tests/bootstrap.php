@@ -172,6 +172,9 @@ function wp_add_inline_style( $handle, $css ) {
 function add_shortcode( $tag, $callback ) {
 	$GLOBALS['twd_stub']['shortcodes'][ $tag ] = $callback;
 }
+function shortcode_exists( $tag ) {
+	return isset( $GLOBALS['twd_stub']['shortcodes'][ $tag ] );
+}
 // Stand-in for WordPress: turns ANY [tag ...] into a visible marker, so a test
 // can tell whether a shortcode was run.
 function do_shortcode( $content ) {
@@ -617,6 +620,7 @@ require_once ABSPATH . 'includes/class-twd-sk-proposals.php';
 require_once ABSPATH . 'includes/class-twd-sk-brief.php';
 require_once ABSPATH . 'includes/class-twd-sk-doctor.php';
 require_once ABSPATH . 'includes/class-twd-sk-pictures.php';
+require_once ABSPATH . 'includes/class-twd-sk-full.php';
 require_once ABSPATH . 'includes/class-twd-sk-build.php';
 require_once ABSPATH . 'includes/class-twd-sk-enquiry.php';
 require_once ABSPATH . 'includes/class-twd-sk-brand.php';

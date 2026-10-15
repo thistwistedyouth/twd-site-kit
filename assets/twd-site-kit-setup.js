@@ -1,6 +1,6 @@
 /* TWD Site Kit: the setup page (Settings > Set up site). Vanilla JS, no build step.
  *
- * Seven steps: site type, style, brief, pages (the list of pages and the sections on each), pictures, build,
+ * Seven steps (the full site set up replaces style, brief and pages with one): site type, style, brief, pages (the list of pages and the sections on each), pictures, build,
  * and launch (the launch check, and publishing the pages that are ready). Each Next saves the choices on the server
  * (so leaving and coming back resumes), and the build runs one request per step so nothing runs
  * long. Every page is made as a draft. Pictures are chosen with the WordPress media library; only
@@ -14,16 +14,27 @@
 		return;
 	}
 
-	var STEPS = [
+	var ALL_STEPS = [
 		{ id: 'type', label: 'Site type' },
 		{ id: 'style', label: 'Style' },
 		{ id: 'brief', label: 'Brief' },
 		{ id: 'pages', label: 'Pages' },
+		{ id: 'full', label: 'Full set up' },
 		{ id: 'pictures', label: 'Pictures' },
 		{ id: 'build', label: 'Build' },
 		{ id: 'launch', label: 'Launch' }
 	];
+	var FULL_ONLY = { full: true };
+	var FULL_SKIP = { style: true, brief: true, pages: true };
 	var S = { data: null, step: 'type', building: false, results: null };
+
+	/* The steps shown: the full site set up replaces Style, Brief and Pages with one step (0.12.0). */
+	function steps() {
+		var full = !!(S.data && S.data.draft && S.data.draft.full);
+		return ALL_STEPS.filter(function (s) {
+			return full ? !FULL_SKIP[s.id] : !FULL_ONLY[s.id];
+		});
+	}
 	var ui = {};
 
 	/* ---- small helpers ---- */
@@ -213,7 +224,7 @@
 	/* What each step sends when leaving it. */
 	function valuesOf(step) {
 		if (step === 'type') {
-			return { mode: checked('mode'), set: ui.set ? ui.set.value : '' };
+			return { mode: checked('mode'), set: ui.set ? ui.set.value : '', full: !!(ui.full && ui.full.checked) };
 		}
 		if (step === 'style') {
 			return { pack: checked('pack'), brand: !!(ui.brand && ui.brand.checked) };
@@ -252,7 +263,7 @@
 	function render() {
 		clear(root);
 		var nav = el('ol', { className: 'twd-sk-setup__steps', 'aria-label': 'Steps' });
-		STEPS.forEach(function (s, i) {
+		steps().forEach(function (s, i) {
 			var b = el('button', { type: 'button', className: 'twd-sk-setup__stepbtn', text: (i + 1) + '. ' + s.label });
 			if (s.id === S.step) {
 				b.setAttribute('aria-current', 'step');
@@ -276,11 +287,18 @@
 		if (S.data.done) {
 			body.appendChild(el('div', { className: 'notice notice-info inline' }, [el('p', { text: 'This site was last built on ' + S.data.done + ' (UTC). Building again makes new versions of the pages it made; it never touches other pages.' })]));
 		}
-		var builders = { type: buildType, style: buildStyle, brief: buildBrief, pages: buildPages, pictures: buildPictures, build: buildBuild, launch: buildLaunch };
+		var list_ = steps();
+		// A saved step that this kind of set up does not show (for example Style when the full set up is on) lands on the first step that does.
+		if (!list_.some(function (x) {
+			return x.id === S.step;
+		})) {
+			S.step = list_[0].id;
+		}
+		var builders = { type: buildType, style: buildStyle, brief: buildBrief, pages: buildPages, full: buildFull, pictures: buildPictures, build: buildBuild, launch: buildLaunch };
 		builders[S.step](body);
 
 		var idx = 0;
-		STEPS.forEach(function (s, i) {
+		list_.forEach(function (s, i) {
 			if (s.id === S.step) {
 				idx = i;
 			}
@@ -288,12 +306,19 @@
 		var nextRow = el('p', { className: 'twd-sk-setup__nav' });
 		if (idx > 0) {
 			nextRow.appendChild(button('Back', false, function () {
-				go(STEPS[idx - 1].id);
+				go(list_[idx - 1].id);
 			}));
 		}
-		if (idx < STEPS.length - 1) {
+		// The full set up has its own button to move on, which prepares the pages; the plain one would skip the questions.
+		var stepsAfterFull = S.step === 'full' && !S.data.draft.full_prepared;
+		if (idx < list_.length - 1 && !stepsAfterFull) {
 			nextRow.appendChild(button('Save and continue', true, function () {
-				go(STEPS[idx + 1].id);
+				// On the first step the tick box decides which step comes next.
+				var after = list_[idx + 1].id;
+				if (S.step === 'type' && ui.full) {
+					after = ui.full.checked ? 'full' : 'style';
+				}
+				go(after);
 			}));
 		}
 		body.appendChild(nextRow);
@@ -344,6 +369,15 @@
 		body.appendChild(el('p', {}, [el('label', { 'for': 'twd-sk-setup-set', text: 'Kind of site ' }), ui.set]));
 		body.appendChild(ui.setHelp);
 		fillSets();
+
+		// The full site set up (0.12.0, a test option).
+		body.appendChild(el('h3', { text: 'Full site set up (test)' }));
+		ui.full = el('input', { type: 'checkbox', id: 'twd-sk-setup-full' });
+		ui.full.checked = !!S.data.draft.full;
+		body.appendChild(el('p', {}, [el('label', { 'for': 'twd-sk-setup-full' }, [ui.full, el('span', { text: ' Paste everything you have in one place. The AI says what is still missing and asks any design questions, and the site is built only when nothing is missing. Pages are written only from what you give, and only photos are left as spots to fill.' })])]));
+		if (!S.data.full.ai) {
+			body.appendChild(el('p', { className: 'description', text: 'This option needs the AI key from the Articles plugin, and none is set up on this site yet.' }));
+		}
 	}
 
 	/* 2. Style */
@@ -717,8 +751,174 @@
 		return out;
 	}
 
+	/* The full site set up (0.12.0): one box of notes, the questions it still needs, then the pages. */
+	function buildFull(body) {
+		var d = S.data.draft;
+		var chk = d.full_check;
+		var info = S.data.full;
+		heading(body, 'Full site set up (test)', 'Paste everything you have in one box: notes, your story, what you offer, a transcript. Then press Check. It tells you what is still missing and asks any design questions. The site is only built when nothing is missing, and every page is written only from what you give. Photos are the one exception: each photo spot is marked with what is wanted.');
+		if (!info.ai) {
+			body.appendChild(el('div', { className: 'notice notice-error inline' }, [el('p', { text: 'This option needs the AI key from the Articles plugin, and none is set up on this site. Turn it off on the first step to use the ordinary set up.' })]));
+		}
+		var answers = {};
+		Object.keys(d.full_answers || {}).forEach(function (k) {
+			answers[k] = d.full_answers[k];
+		});
+		ui.fullNotes = el('textarea', { id: 'twd-sk-setup-fullnotes', className: 'large-text', rows: '14', 'aria-label': 'Everything you have about the site' });
+		ui.fullNotes.value = d.full_notes || '';
+		body.appendChild(ui.fullNotes);
+		var fields = {};
+		var out = el('div', { className: 'twd-sk-setup__fullout' });
+		var proceed = null;
+
+		function dirty() {
+			if (proceed) {
+				proceed.disabled = true;
+			}
+			message('You changed something, so press Check again before you continue.', false);
+		}
+		ui.fullNotes.addEventListener('input', dirty);
+
+		function assumedEmail() {
+			return chk && chk.contact && chk.contact.email_assumed ? chk.contact.email : info.default_email;
+		}
+
+		function gather() {
+			var a = {};
+			Object.keys(fields).forEach(function (k) {
+				var f = fields[k];
+				var v = '';
+				if (f.type === 'radio') {
+					v = checked(f.name);
+				} else {
+					v = f.input.value.trim();
+				}
+				// An email left as the suggestion stays a suggestion: it is only an answer once it has been changed.
+				if (k === 'email' && !answers.email && v === (assumedEmail() || '')) {
+					v = '';
+				}
+				if (v) {
+					a[k] = v;
+				}
+			});
+			// Answers to earlier questions that are not shown any more are kept.
+			Object.keys(answers).forEach(function (k) {
+				if (!fields[k] && a[k] === undefined) {
+					a[k] = answers[k];
+				}
+			});
+			return a;
+		}
+
+		function field(key, label, why, rows, value) {
+			var id = 'twd-sk-setup-q-' + key;
+			var input = el('textarea', { id: id, className: 'large-text', rows: String(rows || 2) });
+			input.value = value || '';
+			input.addEventListener('input', dirty);
+			fields[key] = { type: 'text', input: input };
+			var kids = [el('label', { 'for': id, className: 'twd-sk-setup__q' }, [el('strong', { text: label })])];
+			if (why) {
+				kids.push(el('p', { className: 'description', text: why }));
+			}
+			kids.push(input);
+			return el('div', { className: 'twd-sk-setup__qblock' }, kids);
+		}
+
+		function designBlock(q) {
+			var name = 'full-d-' + q.key;
+			var group = el('fieldset', { className: 'twd-sk-setup__radios' }, [el('legend', {}, [el('strong', { text: q.question })])]);
+			q.options.forEach(function (o) {
+				var id = 'twd-sk-setup-' + name + '-' + o.value;
+				var input = el('input', { type: 'radio', id: id, name: 'twd-sk-setup-' + name, value: o.value });
+				input.checked = answers[q.key] === o.value;
+				input.addEventListener('change', dirty);
+				group.appendChild(el('label', { className: 'twd-sk-setup__radio', 'for': id }, [input, el('strong', { text: o.label }), el('span', { text: o.help || '' })]));
+			});
+			fields[q.key] = { type: 'radio', name: name };
+			return group;
+		}
+
+		function draw() {
+			clear(out);
+			fields = {};
+			if (!chk) {
+				return;
+			}
+			if (chk.summary && chk.summary.length) {
+				out.appendChild(el('h3', { text: 'What I understood' }));
+				out.appendChild(list(chk.summary));
+			}
+			if (chk.missing && chk.missing.length) {
+				out.appendChild(el('h3', { text: 'What I still need' }));
+				chk.missing.forEach(function (m) {
+					out.appendChild(field(m.key, m.question, m.why, m.key === 'about' || m.key === 'services' || m.key === 'faq' || /_detail$/.test(m.key) ? 5 : 2, answers[m.key]));
+				});
+			}
+			out.appendChild(el('h3', { text: 'Contact details' }));
+			var emailValue = answers.email || (chk.contact ? chk.contact.email : info.default_email) || '';
+			var emailLabel = chk.contact && chk.contact.email_assumed && !answers.email ? 'Email address (assumed from your site address: change it if it is wrong)' : 'Email address shown on the site';
+			var emailInput = el('input', { id: 'twd-sk-setup-q-email', type: 'text', className: 'regular-text', value: emailValue });
+			emailInput.addEventListener('input', dirty);
+			fields.email = { type: 'text', input: emailInput };
+			var phoneInput = el('input', { id: 'twd-sk-setup-q-phone', type: 'text', className: 'regular-text', value: answers.phone || (chk.contact ? chk.contact.phone : '') || '' });
+			phoneInput.addEventListener('input', dirty);
+			fields.phone = { type: 'text', input: phoneInput };
+			out.appendChild(el('p', {}, [el('label', { 'for': 'twd-sk-setup-q-email', text: emailLabel + ' ' }), emailInput]));
+			out.appendChild(el('p', {}, [el('label', { 'for': 'twd-sk-setup-q-phone', text: 'Phone number (optional: leave empty and none is shown) ' }), phoneInput]));
+			out.appendChild(el('h3', { text: 'Design' }));
+			(S.data.full.design || []).forEach(function (q) {
+				out.appendChild(designBlock(q));
+			});
+			if (chk.left_out && chk.left_out.length) {
+				out.appendChild(el('h3', { text: 'Left out because nothing was supplied' }));
+				out.appendChild(list(chk.left_out));
+			}
+		}
+		body.appendChild(out);
+		draw();
+
+		function runCheck() {
+			checkBtn.disabled = true;
+			message('Asking the AI. This can take a minute...', true);
+			api('POST', '/site/full/check', { full_notes: ui.fullNotes.value, full_answers: gather() }).then(function (data) {
+				checkBtn.disabled = false;
+				S.data = data;
+				S.step = 'full';
+				render();
+				var c = data.draft.full_check;
+				message(c && c.ready ? 'Ready. Nothing is missing except photos. Read what I understood, then press Looks right, continue.' : 'Checked. Answer what is listed, then press Check again.', !!(c && c.ready));
+			}, function (err) {
+				checkBtn.disabled = false;
+				message(err.message, false);
+			});
+		}
+		var checkBtn = button(chk ? 'Check again' : 'Check what is missing', !(chk && chk.ready), runCheck);
+		checkBtn.disabled = !info.ai;
+		var row = el('p', { className: 'twd-sk-setup__actions' }, [checkBtn]);
+		if (chk && chk.ready) {
+			proceed = button('Looks right, continue', true, function () {
+				proceed.disabled = true;
+				message('Preparing the pages...', true);
+				api('POST', '/site/full/prepare', {}).then(function (data) {
+					S.data = data;
+					S.step = data.draft.step || 'pictures';
+					render();
+					message('Prepared. Add photos if you have them, or go straight on to Build.', true);
+				}, function (err) {
+					proceed.disabled = false;
+					message(err.message, false);
+				});
+			});
+			row.appendChild(proceed);
+		}
+		body.appendChild(row);
+	}
+
 	function buildPictures(body) {
 		heading(body, 'Pictures', 'Choose pictures from the media library, or upload new ones there. Slot pictures go to a fixed place. Named pictures can be placed by the AI where they fit, and their description becomes the alt text that screen readers and search engines read.');
+		if (S.data.draft.full) {
+			body.appendChild(el('p', { className: 'description', text: S.data.draft.no_photos ? 'You chose no photos, so no photo spots are made. A logo still helps and can be added here.' : 'Photos are optional here. Anything you add is placed where it fits. Every other photo spot is marked on the page with what is wanted and a Pexels search, and you fill it in the Visual editor.' }));
+		}
 		ui.slotRows = [];
 		ui.customRows = [];
 		var saved = S.data.draft.pictures || { slots: {}, custom: [] };
@@ -849,11 +1049,19 @@
 		} else if (plan.errors.length || plan.blocking.length) {
 			body.appendChild(el('div', { className: 'notice notice-warning inline' }, [el('p', { text: 'The brief has parts that will be skipped:' }), list(plan.errors.concat(plan.blocking))]));
 		}
+		if (plan.full && !plan.full_ready) {
+			body.appendChild(el('div', { className: 'notice notice-error inline' }, [
+				el('p', { text: 'The full site set up is not ready, so building is switched off. Answer the questions first.' }),
+				el('p', {}, [button('Go to the Full set up step', false, function () {
+					go('full');
+				})])
+			]));
+		}
 		var aiId = 'twd-sk-setup-ai';
 		var aiBox = el('input', { type: 'checkbox', id: aiId });
 		aiBox.checked = !!plan.ai;
-		aiBox.disabled = !plan.ai;
-		body.appendChild(el('p', {}, [el('label', { 'for': aiId }, [aiBox, el('span', { text: plan.ai ? ' Write the pages with AI from the facts (otherwise outlines with [PLACEHOLDER] markers)' : ' Writing with AI needs a key in the Articles plugin. Without it, pages are made as outlines to fill in.' })])]));
+		aiBox.disabled = !plan.ai || !!plan.full;
+		body.appendChild(el('p', {}, [el('label', { 'for': aiId }, [aiBox, el('span', { text: plan.ai ? (plan.full ? ' The pages are written with AI from the facts you gave, and only from them' : ' Write the pages with AI from the facts (otherwise outlines with [PLACEHOLDER] markers)') : ' Writing with AI needs a key in the Articles plugin. Without it, pages are made as outlines to fill in.' })])]));
 		body.appendChild(el('p', { className: 'description', text: 'Pictures: ' + plan.pictures.slots + ' in slots, ' + plan.pictures.custom + ' named.' }));
 
 		var rows = [];
@@ -875,7 +1083,7 @@
 		var buildBtn = button('Build the site', true, function () {
 			runFrom(0, false);
 		});
-		buildBtn.disabled = !!plan.brief_error;
+		buildBtn.disabled = !!plan.brief_error || (plan.full && !plan.full_ready);
 		var reset = button('Start again', false, function () {
 			confirmInline(body, 'Forget the choices on this page (type, style, brief and pictures)? Pages already made stay as drafts.', 'Yes, start again', function () {
 				api('POST', '/site/build/reset', { confirm: true }).then(function (data) {
@@ -945,7 +1153,11 @@
 			var ul = el('ul', { className: 'twd-sk-setup__list' });
 			pages.forEach(function (p) {
 				var a = el('a', { href: p.url, text: p.title || ('Page ' + p.id) });
-				ul.appendChild(el('li', {}, [a, el('span', { text: ': ' + (p.must ? p.must + ' to fix' : 'nothing marked as missing') + (p.check ? ', ' + p.check + ' to check' : '') })]));
+				var kids = [a, el('span', { text: ': ' + (p.must ? p.must + ' to fix' : 'nothing marked as missing') + (p.check ? ', ' + p.check + ' to check' : '') })];
+				if (p.flags && p.flags.length) {
+					kids.push(list(p.flags));
+				}
+				ul.appendChild(el('li', {}, kids));
 			});
 			results.appendChild(ul);
 			results.appendChild(el('p', { text: 'Open a page and use Edit with AI to change it, replace anything marked [PLACEHOLDER], then publish it from the Pages tab. ' }, [el('a', { href: cfg.homeUrl, text: 'Open the site' })]));

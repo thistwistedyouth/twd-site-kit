@@ -386,8 +386,10 @@ class TWD_SK_AI {
 	 * System text for drafting a whole new page.
 	 *
 	 * @param bool $with_pictures True when the request lists pictures the AI may place (the setup build).
+	 * @param bool $strict        True for the full site set up (0.12.0): only words the facts support, no [PLACEHOLDER]
+	 *                            for text, leave out whatever the facts do not support. Pictures stay as they are.
 	 */
-	public static function page_system_prompt( $with_pictures = false ) {
+	public static function page_system_prompt( $with_pictures = false, $strict = false ) {
 		$out   = array();
 		$out[] = 'You write one new page for a ' . TWD_SK_Mode::w( 'persons' ) . ' website. The page is HTML made from a fixed set of components.';
 		$out[] = '';
@@ -396,13 +398,27 @@ class TWD_SK_AI {
 		$out[] = '';
 		$out[] = '## Rules';
 		$rules = self::rules();
-		$rules[] = 'Follow the outline: keep its components and their order. Replace every [PLACEHOLDER] in the outline with real wording written from the ' . TWD_SK_Mode::w( 'facts' ) . ', in the ' . TWD_SK_Mode::w( 'persons' ) . ' own voice. Where the facts do not say what is needed, keep a [PLACEHOLDER: what is needed] there.';
+		if ( $strict ) {
+			// The shared rule that tells the AI to leave a [PLACEHOLDER] where a fact is missing does not apply here.
+			$rules = array_values( array_filter( $rules, function ( $rule ) {
+				return false === strpos( $rule, 'write [PLACEHOLDER: what is needed]' );
+			} ) );
+			$rules[] = 'Use only the facts in the page, the ' . TWD_SK_Mode::w( 'facts' ) . ' and the site details the ' . TWD_SK_Mode::w( 'person' ) . ' supplied. Never invent a ' . TWD_SK_Mode::w( 'invent_list' ) . '.';
+			$rules[] = 'Follow the outline: keep its components and their order. Replace every [PLACEHOLDER] in the outline with real wording written ONLY from the ' . TWD_SK_Mode::w( 'facts' ) . ' and the site details, in the ' . TWD_SK_Mode::w( 'persons' ) . ' own voice. Never write a [PLACEHOLDER] for any text. If the facts do not support a sentence, a heading, a card or a list item, leave it out and let the page be shorter: delete a whole card or list item rather than inventing it.';
+			$rules[] = 'Never invent names, qualifications, registrations, prices, fees, contact details, addresses, opening times, reviews, statistics or claims. Use contact details exactly as given. If there is no phone number, remove the phone button or row completely. If there is no postal address, write where the ' . TWD_SK_Mode::w( 'person' ) . ' works (the area served, or online) in its place.';
+		} else {
+			$rules[] = 'Follow the outline: keep its components and their order. Replace every [PLACEHOLDER] in the outline with real wording written from the ' . TWD_SK_Mode::w( 'facts' ) . ', in the ' . TWD_SK_Mode::w( 'persons' ) . ' own voice. Where the facts do not say what is needed, keep a [PLACEHOLDER: what is needed] there.';
+		}
 		if ( $with_pictures ) {
 			$rules[] = 'Pictures: where the outline has a picture, you may use one of the pictures listed in the request by writing its address exactly as given (for example pic:front-view), with alt text that says what it shows. Use each picture once at most. Where none fits, keep the outline\'s picture address exactly as it is. Never invent a picture or a file name.';
 		} else {
 			$rules[] = 'Keep every image address in the outline exactly as it is. The ' . TWD_SK_Mode::w( 'person' ) . ' adds real pictures later. Never invent an image file name.';
 		}
-		$rules[] = 'Use the contact details and registration wording exactly as given in the facts and site details. If they are not given, leave a [PLACEHOLDER].';
+		if ( ! $strict ) {
+			$rules[] = 'Use the contact details and registration wording exactly as given in the facts and site details. If they are not given, leave a [PLACEHOLDER].';
+		} else {
+			$rules[] = 'Use registration wording exactly as given in the facts and site details. If none is given, do not mention registration at all.';
+		}
 		foreach ( $rules as $i => $rule ) {
 			$out[] = ( $i + 1 ) . '. ' . $rule;
 		}
@@ -513,7 +529,7 @@ class TWD_SK_AI {
 		$sub['parts'] = $group;
 		$whole        = 0 === $start && count( $group ) === $total;
 		$message      = self::page_message( $sub, $pictures_block, $whole ? null : array( 'start' => $start, 'total' => $total, 'used' => array_keys( $used ) ) );
-		$reply        = apply_filters( 'twd_ai_complete', null, self::page_system_prompt( '' !== $pictures_block ), $message, self::TOKENS_PAGE );
+		$reply        = apply_filters( 'twd_ai_complete', null, self::page_system_prompt( '' !== $pictures_block, ! empty( $in['strict'] ) ), $message, self::TOKENS_PAGE );
 		if ( self::cut_off( $reply ) ) {
 			if ( count( $group ) > 1 && $depth < self::PAGE_SPLIT_DEPTH ) {
 				$half  = (int) ceil( count( $group ) / 2 );
