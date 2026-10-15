@@ -129,13 +129,16 @@ class TWD_SK_Editor {
 		}
 	}
 
-	/** The button. It stays hidden until the script runs; the pop-up itself is built by the script. */
+	/**
+	 * The button, and a small version label in the bottom left corner for signed-in editors, so a phone showing a
+	 * cached build is easy to spot. The button stays hidden until the script runs; the pop-up is built by the script.
+	 */
 	public static function print_root() {
 		if ( null === self::context() ) {
 			return;
 		}
 		echo '<div id="twd-sk-ed" class="twd-sk-ed"><button type="button" id="twd-sk-ed-open" class="twd-sk-ed__open" hidden aria-haspopup="dialog">'
 			. esc_html__( 'Edit with AI', 'twd-site-kit' )
-			. '</button></div>';
+			. '</button><span class="twd-sk-ed__version" title="TWD Site Kit version">v' . esc_html( defined( 'TWD_SK_VERSION' ) ? TWD_SK_VERSION : '' ) . '</span></div>';
 	}
 }

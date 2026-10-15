@@ -28,6 +28,7 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 * New: an administrator sees every note, can mark it new, seen, done or parked, add private ideas, and copy the new notes as markdown.
 * New: wp twd-sk snags prints the notes, wp twd-sk snag-status changes one, wp twd-sk snags-setting switches the module.
 * New: an optional email saying a note has arrived. It never contains the note.
+* New: signed-in editors see a small version label in the bottom left corner, so a phone showing an old cached copy is easy to spot.
 * Changed: Edit text is now called Visual editor.
 * Safe mode switches Tell us off. Notes are never sent anywhere else.
 

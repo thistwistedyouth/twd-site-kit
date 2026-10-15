@@ -35,6 +35,7 @@ Before you start: install Site Kit 0.11.0 (from the branch zip for now; Edit tex
 ## 2c. Tell us (0.11.0)
 
 13a. **Switch it on.** Site tab, Tell us notes: tick Show the Tell us button, leave Keep notes for at 12 months, Save. Reload. A **Tell us** button should sit directly above **Visual editor** (bottom left). On a page with no Visual editor button it takes that button's place. Switch safe mode on: the button disappears. Switch it off again.
+13a2. **Version label.** Signed in as an Editor, look at the very bottom left corner of any page: a small "v0.11.0" label sits below the buttons and never covers one, on a computer and on a phone. Signed out (private window) it must not appear.
 13b. **Send a note as a client.** Sign in as someone who can edit pages but is not an administrator (an Editor). Press Tell us. It says "What would you like changed?", shows the page name, a text box with a count, and a short privacy line saying how many months it is kept. Write "Please change the heading on this page", press Send. It says thank you. The note appears under Your earlier notes.
 13c. **Web addresses.** Send a note that includes a made-up address such as www.example.org. It is saved as "(web address removed)".
 13d. **Delete.** Press Delete on your note: it says "Sure? Delete" first. Press again: it goes. Send three more and check the eleventh in an hour is refused politely.

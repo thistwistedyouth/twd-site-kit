@@ -58,6 +58,23 @@
   border-color: var(--twd-site-color-title) !important;
   color: var(--twd-site-color-surface) !important;
 }
+/* The version label (0.11.0): bottom left corner, below every floating button, never in the way of a tap. */
+.twd-sk-ed .twd-sk-ed__version.twd-sk-ed__version {
+  position: fixed;
+  left: 8px;
+  bottom: 0;
+  z-index: 99985;
+  height: 16px;
+  padding: 0 8px !important;
+  pointer-events: none;
+  background-color: var(--twd-site-color-surface) !important;
+  border-radius: 0 var(--twd-site-radius-field) 0 0 !important;
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  line-height: 16px !important;
+  color: var(--twd-site-color-muted) !important;
+  white-space: nowrap;
+}
 /* The Tell us button (0.11.0). Sits above the Visual editor button, or in its place on a page without one. */
 .twd-sk-ed .twd-sk-ed__open--tellus.twd-sk-ed__open--tellus {
   bottom: 144px;

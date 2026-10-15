@@ -428,3 +428,18 @@ twd_sk_test( 'snags cli: lists notes as json or markdown, sets a status, and swi
 	( new TWD_SK_CLI() )->snags_setting( array( 'on' ), array() );
 	twd_sk_true( TWD_SK_Snags::enabled() );
 } );
+
+twd_sk_test( 'version label: signed-in editors get a small version label in the bottom left; visitors get nothing', function () {
+	twd_sk_sn_on();
+	ob_start();
+	TWD_SK_Editor::print_root();
+	$html = ob_get_clean();
+	twd_sk_has( '<span class="twd-sk-ed__version" title="TWD Site Kit version">v' . TWD_SK_VERSION . '</span>', $html );
+	$GLOBALS['twd_stub']['user'] = 0;
+	ob_start();
+	TWD_SK_Editor::print_root();
+	twd_sk_eq( '', ob_get_clean(), 'visitors see no label' );
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.css' );
+	twd_sk_has( '.twd-sk-ed__version', $css );
+	twd_sk_has( 'pointer-events: none', $css, 'never in the way of a tap' );
+} );

@@ -18,6 +18,12 @@
 /* The second floating button (0.10.0): change words in place. Sits above Edit with AI. */
 .twd-sk-ed__open--text { bottom: 84px; background-color: $color-surface; color: $color-title; border-color: $color-title; }
 .twd-sk-ed__open--text:hover, .twd-sk-ed__open--text:focus-visible { background-color: $color-title; border-color: $color-title; color: $color-surface; }
+/* The version label (0.11.0): bottom left corner, below every floating button, never in the way of a tap. */
+.twd-sk-ed__version {
+  position: fixed; left: 8px; bottom: 0; z-index: 99985; height: 16px; padding: 0 8px; pointer-events: none;
+  background-color: $color-surface; border-radius: 0 $radius-field 0 0;
+  font-family: $font-body; font-size: $size-small; line-height: 16px; color: $color-muted; white-space: nowrap;
+}
 /* The Tell us button (0.11.0). Sits above the Visual editor button, or in its place on a page without one. */
 .twd-sk-ed__open--tellus { bottom: 144px; background-color: $color-surface; color: $color-title; border-color: $color-title; }
 .twd-sk-ed__open--tellus:hover, .twd-sk-ed__open--tellus:focus-visible { background-color: $color-title; border-color: $color-title; color: $color-surface; }
