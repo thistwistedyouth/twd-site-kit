@@ -439,7 +439,7 @@
 		}
 		panel.appendChild(step('', [
 			el('p', { className: 'twd-sk-ed__help', text: 'Fixing a few words, a link or a picture? Change them right on the page. No AI, and nothing is saved until you press Save.' }),
-			el('div', { className: 'twd-sk-ed__actions' }, [button('Edit text on the page', 'secondary', function () {
+			el('div', { className: 'twd-sk-ed__actions' }, [button('Visual editor on the page', 'secondary', function () {
 				close();
 				ED.startInline();
 			})])

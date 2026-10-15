@@ -1,8 +1,8 @@
-# Test script: 0.7.0 to 0.10.2 on a fresh site
+# Test script: 0.7.0 to 0.11.0 on a fresh site
 
 Built fast at beta stage; none of this has been tried on a real site yet. Work through it on a **fresh install** first, never on a live client site. Riskiest first: if something in the first block goes wrong, stop and send the site report (Site tab, Site report, or `wp twd-sk doctor`).
 
-Before you start: install Site Kit 0.10.2 (Plugins, Add New, Upload, or the one-click update), plus the Articles plugin with a key if you want the AI parts. Turn on WP_DEBUG_LOG if you can.
+Before you start: install Site Kit 0.11.0 (from the branch zip for now; Edit text is now called Visual editor, and Tell us is new) (Plugins, Add New, Upload, or the one-click update), plus the Articles plugin with a key if you want the AI parts. Turn on WP_DEBUG_LOG if you can.
 
 ## 1. Riskiest: things that send, publish or change many pages
 
@@ -25,12 +25,23 @@ Before you start: install Site Kit 0.10.2 (Plugins, Add New, Upload, or the one-
 
 ## 2b. Editing (0.10.0 to 0.10.2)
 
-12a. **Edit text in place.** On a kit page, press **Edit text** (bottom left, above Edit with AI). Dashed outlines show what can change. Change a heading, make a word bold, change a button's link (Link), and click a picture to swap it and give it a description. Save: the page reloads with the changes, and Edit with AI, History shows "Changed on the page". Try Cancel too: it asks, then puts the words back. The safety notice and the enquiry form should not be editable.
+12a. **Visual editor (was Edit text).** On a kit page, press **Visual editor** (bottom left, above Edit with AI). Dashed outlines show what can change. Change a heading, make a word bold, change a button's link (Link), and click a picture to swap it and give it a description. Save: the page reloads with the changes, and Edit with AI, History shows "Changed on the page". Try Cancel too: it asks, then puts the words back. The safety notice and the enquiry form should not be editable.
 12b. **One box.** Edit with AI, Edit this page. Type a list, for example: "1. Change the first paragraph to ... 2. Add three boxes with glowing borders for garden parties, weddings and festivals. 3. Add these testimonials as a slider at the bottom: ...(paste two real ones)". Plan the changes: a checklist appears, plus anything it cannot do. Untick one, then Make these changes: each says Done, the preview opens, Apply saves one version. Check the testimonials are word for word.
 12c. **The new looks.** The glow boxes' borders move slowly between two of the site's colours (and stay still if the phone or computer is set to reduce motion). The slider shows one quote at a time: swipe on a phone, arrows and dots on a computer, and nothing moves on its own.
 
-12d. **Pictures in Edit text (0.10.1).** Find a page with a picture marker such as [PLACEHOLDER: image needed] (or ask Edit with AI to add a picture somewhere). Press Edit text: the marker shows as a dashed **+ Add a picture** box. Click it, then **Upload from this computer** and pick a photo: it uploads, shows in place, and asks for a description. Click another picture, **Choose from the media library**, and pick one. Click a third picture, **Change the description** only. Save: all three stay after the reload, the uploaded photo is in Media, and a caption marker next to a picture is still words to type over. Try a PDF in Upload: it should be refused.
-12e. **The Edit text card and admin bar (0.10.2).** Press Edit text: the tools appear as a small card at the bottom left, not a full-width bar, and the New Article button (bottom right) stays clear. In the black admin bar at the top, Edit text has become **Save changes** next to **Cancel**. Change a word: it reads Save changes (1); press it to save. On a phone the card spans the screen above other buttons.
+12d. **Pictures in Edit text (0.10.1).** Find a page with a picture marker such as [PLACEHOLDER: image needed] (or ask Edit with AI to add a picture somewhere). Press Visual editor: the marker shows as a dashed **+ Add a picture** box. Click it, then **Upload from this computer** and pick a photo: it uploads, shows in place, and asks for a description. Click another picture, **Choose from the media library**, and pick one. Click a third picture, **Change the description** only. Save: all three stay after the reload, the uploaded photo is in Media, and a caption marker next to a picture is still words to type over. Try a PDF in Upload: it should be refused.
+12e. **The Edit text card and admin bar (0.10.2).** Press Visual editor: the tools appear as a small card at the bottom left, not a full-width bar, and the New Article button (bottom right) stays clear. In the black admin bar at the top, Visual editor has become **Save changes** next to **Cancel**. Change a word: it reads Save changes (1); press it to save. On a phone the card spans the screen above other buttons.
+
+## 2c. Tell us (0.11.0)
+
+13a. **Switch it on.** Site tab, Tell us notes: tick Show the Tell us button, leave Keep notes for at 12 months, Save. Reload. A **Tell us** button should sit directly above **Visual editor** (bottom left). On a page with no Visual editor button it takes that button's place. Switch safe mode on: the button disappears. Switch it off again.
+13b. **Send a note as a client.** Sign in as someone who can edit pages but is not an administrator (an Editor). Press Tell us. It says "What would you like changed?", shows the page name, a text box with a count, and a short privacy line saying how many months it is kept. Write "Please change the heading on this page", press Send. It says thank you. The note appears under Your earlier notes.
+13c. **Web addresses.** Send a note that includes a made-up address such as www.example.org. It is saved as "(web address removed)".
+13d. **Delete.** Press Delete on your note: it says "Sure? Delete" first. Press again: it goes. Send three more and check the eleventh in an hour is refused politely.
+13e. **The administrator panel.** Sign in as an administrator, press Tell us. You see every note with who sent it, a status box on each, Add an idea, and **Copy new notes as markdown**. Change a status to Done and the count on the button goes down. Press the copy button and paste into a text file: the notes are there, with no web addresses. Ideas you add must NOT appear for the Editor (check in a private window signed in as the Editor).
+13f. **Email.** In the Site tab turn on Email me, give an address, Save, send a note as the Editor. An email arrives saying a note has arrived and naming the page. It must NOT contain what the note says. Check spam too.
+13g. **Over SSH.** `wp twd-sk snags --status=new --format=markdown`, then `wp twd-sk snags` (JSON), then `wp twd-sk snag-status <id> done`.
+13h. **Privacy.** Tools, Export Personal Data for the Editor's email: the notes are in the export. Erase Personal Data: they are gone.
 
 ## 3. Lowest: reports and command line (needs SSH)
 

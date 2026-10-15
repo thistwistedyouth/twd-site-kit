@@ -17,6 +17,18 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.11.0 (Tell us)
+
+- **Clients need a way to say what they want changed without a phone call or a wp-admin visit.** The owner asked for a "Tell us" button on the front of the site, notes kept on the client's own site, and a way to pull them over SSH. No GitHub token or outside service on a client site, so nothing can leak and nothing needs to be rotated.
+- **Text only in version one.** Photos would land in the public-by-address media library and add upload limits and clean-up. A note names the page automatically instead.
+- **No web addresses anywhere.** They are removed from a message when saved, so no export, email, panel or command can ever print one, and a client's pasted link cannot end up in a file the owner keeps.
+- **Ideas share the record with a type field** so the owner has one list; they are never shown to clients or counted for them.
+- **The email is a notification only** (a note arrived, and the page), never the message, so a note about something private never travels by email.
+- **Retention is a setting, 12 months by default**, and the sweep runs once a day on a normal page load without wp-cron, even when the module is off, so a site that switches it off still forgets old notes.
+- **The module is a normal Site Kit module, not a separate plugin**, so it ships, updates and is switched off by safe mode like everything else.
+- **Edit text became Visual editor** at the owner's request. Nothing else about it changed.
+- **The verify-first rule was lifted for this one feature** by the owner on 14 Oct 2026, so it is tested together with 0.7.0 to 0.10.2.
+
 ## v0.10.2 (the Edit text card)
 
 - **The toolbar clashed with the Articles plugin's New Article button**, which sits bottom right. The full-width bar became a compact card at the bottom left, where the Edit text and Edit with AI buttons already are (they hide while it is open). On a phone there is no room for both, so the card spans the screen and sits above other floating buttons while editing.

@@ -519,6 +519,23 @@ function wp_update_post( $args, $wp_error = false ) {
 	}
 	return $args['ID'];
 }
+/** Deletes a post from the stand-in store, with its meta. */
+function wp_delete_post( $id, $force = false ) {
+	if ( ! isset( $GLOBALS['twd_stub']['posts'][ $id ] ) ) {
+		return false;
+	}
+	$post = $GLOBALS['twd_stub']['posts'][ $id ];
+	unset( $GLOBALS['twd_stub']['posts'][ $id ], $GLOBALS['twd_stub']['meta'][ $id ] );
+	return $post;
+}
+function register_post_type( $type, $args = array() ) {
+	$GLOBALS['twd_stub']['post_types'][ $type ] = $args;
+	return (object) array( 'name' => $type );
+}
+function get_user_by( $field, $value ) {
+	$by = isset( $GLOBALS['twd_stub']['user_emails'] ) ? $GLOBALS['twd_stub']['user_emails'] : array();
+	return isset( $by[ $value ] ) ? (object) array( 'ID' => (int) $by[ $value ] ) : false;
+}
 function have_posts() {
 	static $done = false;
 	if ( ! empty( $GLOBALS['twd_stub']['loop_reset'] ) ) {
@@ -614,6 +631,7 @@ require_once ABSPATH . 'includes/class-twd-sk-template.php';
 require_once ABSPATH . 'includes/class-twd-sk-preview.php';
 require_once ABSPATH . 'includes/class-twd-sk-rest.php';
 require_once ABSPATH . 'includes/class-twd-sk-editor.php';
+require_once ABSPATH . 'includes/class-twd-sk-snags.php';
 require_once ABSPATH . 'includes/class-twd-sk-modules.php';
 
 // Tiny assertion helpers ---------------------------------------------------

@@ -17,6 +17,9 @@
  *   wp twd-sk mode [<mode>]             show the site type (therapy or business), or switch it
  *   wp twd-sk brand [<picture-id>] [--apply]  colours from the logo, checked for contrast; --apply saves them
  *   wp twd-sk launch-check [--publish]  check the whole site before launch; --publish publishes the pages that are ready
+ *   wp twd-sk snags [--status=<status>] [--type=<type>] [--format=json|markdown]  print the Tell us notes kept on this site
+ *   wp twd-sk snag-status <id> <status>  set a note to new, seen, done or parked
+ *   wp twd-sk snags-setting [on|off]     show, or switch, the Tell us module
  *   wp twd-sk build [<brief-file>] [--mode=<mode>] [--set=<slug>] [--pack=<slug>] [--pictures=<file>] [--no-ai] [--dry-run]
  *                                        set the whole site up from a brief, every page a draft
  */
@@ -512,6 +515,119 @@ class TWD_SK_CLI {
 			$line .= ' Safe mode is on, so therapy wording is used until it is turned off.';
 		}
 		WP_CLI::log( $line );
+	}
+
+	/**
+	 * Print the Tell us notes kept on this site, newest first. Read only. Prints no web addresses.
+	 * Ideas are included (they are yours); use --type=snag for client notes only.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--status=<status>]
+	 * : Only notes with this status: new, seen, done or parked.
+	 *
+	 * [--type=<type>]
+	 * : Only snag (from a client) or idea (yours).
+	 *
+	 * [--format=<format>]
+	 * : json (default) or markdown.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk snags --status=new --format=markdown
+	 *     wp twd-sk snags --format=json > notes.json
+	 */
+	public function snags( $args, $assoc_args ) {
+		$opts = array( 'include_ideas' => true );
+		foreach ( array( 'status', 'type' ) as $key ) {
+			if ( isset( $assoc_args[ $key ] ) ) {
+				$opts[ $key ] = (string) $assoc_args[ $key ];
+			}
+		}
+		if ( isset( $opts['status'] ) && ! isset( TWD_SK_Snags::statuses()[ $opts['status'] ] ) ) {
+			WP_CLI::error( 'The status must be new, seen, done or parked.' );
+			return;
+		}
+		if ( isset( $opts['type'] ) && ! in_array( $opts['type'], TWD_SK_Snags::types(), true ) ) {
+			WP_CLI::error( 'The type must be snag or idea.' );
+			return;
+		}
+		$notes  = TWD_SK_Snags::find( $opts );
+		$format = isset( $assoc_args['format'] ) ? strtolower( (string) $assoc_args['format'] ) : 'json';
+		if ( 'markdown' === $format ) {
+			WP_CLI::line( rtrim( TWD_SK_Snags::markdown( $notes ) ) );
+			return;
+		}
+		if ( 'json' !== $format ) {
+			WP_CLI::error( 'The format must be json or markdown.' );
+			return;
+		}
+		$rows = array();
+		foreach ( $notes as $n ) {
+			$row            = TWD_SK_Snags::present( $n, false );
+			$row['user_id'] = $n['user_id'];
+			$rows[]         = $row;
+		}
+		WP_CLI::line( wp_json_encode( $rows ) );
+	}
+
+	/**
+	 * Set the status of one Tell us note.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <id>
+	 * : The note number (the id shown by the snags command).
+	 *
+	 * <status>
+	 * : new, seen, done or parked.
+	 *
+	 * @subcommand snag-status
+	 */
+	public function snag_status( $args, $assoc_args ) {
+		if ( count( $args ) < 2 ) {
+			WP_CLI::error( 'Give the note number and a status: wp twd-sk snag-status 12 done' );
+			return;
+		}
+		$saved = TWD_SK_Snags::set_status( (int) $args[0], strtolower( (string) $args[1] ) );
+		if ( is_wp_error( $saved ) ) {
+			WP_CLI::error( $saved->get_error_message() );
+			return;
+		}
+		WP_CLI::success( 'Note ' . $saved['id'] . ' is now ' . $saved['status'] . '.' );
+	}
+
+	/**
+	 * Show, or switch, the Tell us module. It stays off in safe mode whatever this says.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk snags-setting
+	 *     wp twd-sk snags-setting on
+	 *
+	 * @subcommand snags-setting
+	 */
+	public function snags_setting( $args, $assoc_args ) {
+		if ( isset( $args[0] ) ) {
+			$word = strtolower( (string) $args[0] );
+			if ( 'on' !== $word && 'off' !== $word ) {
+				WP_CLI::error( 'Use on or off.' );
+				return;
+			}
+			$cur   = TWD_SK_Snags::settings();
+			$saved = TWD_SK_Snags::save_settings( array(
+				'enabled'  => 'on' === $word,
+				'months'   => $cur['months'],
+				'email_on' => $cur['email_on'],
+				'email'    => $cur['email'],
+			) );
+			if ( is_wp_error( $saved ) ) {
+				WP_CLI::error( $saved->get_error_message() );
+				return;
+			}
+		}
+		$cur = TWD_SK_Snags::settings();
+		WP_CLI::log( 'Tell us: ' . ( $cur['enabled'] ? 'on' : 'off' ) . ( $cur['safe_mode'] ? ' (safe mode is on, so it is switched off for now)' : '' ) . '. Notes are kept for ' . $cur['months'] . ' months. Email notification: ' . ( $cur['email_on'] ? 'on' : 'off' ) . '.' );
 	}
 
 	/**

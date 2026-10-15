@@ -1,6 +1,6 @@
 # Design: the "Tell us" snag module
 
-Status: DESIGN ONLY, approved in outline, not built. Building waits until versions 0.7.0 to 0.10.2 have been verified on a fresh test install (see `docs/test-script-0.7-0.9.md`). This file is public: invented examples only.
+Status: BUILT as version 0.11.0 on a branch, not yet verified on a real site. The owner lifted the verify-first rule for this feature, so it is tested together with 0.7.0 to 0.10.2 (see `docs/test-script-0.7-0.9.md`). This file is public: invented examples only.
 
 ## What it is
 
@@ -87,8 +87,8 @@ A small, quiet line in the pop-up and the admin panel showing the plugin version
 
 Photos or any attachment, reply-by-link, status shown back to the client, push notifications, a separate plugin, any external service.
 
-## Before building (definition of done applies)
+## Done and still to do (definition of done applies)
 
-1. Versions 0.7.0 to 0.10.2 verified on a fresh install using `docs/test-script-0.7-0.9.md`, and fixes released.
-2. Owner says go.
-3. Then: tests, PHP 7.4 check, privacy check, a real-site test, version bumped in three places, BUILD-LOG and CLAUDE.md updated, diff shown before any push. It would ship as 0.11.0.
+Done on the branch: the code, the tests (they pass, including the PHP 7.4 syntax and privacy checks), the version bump to 0.11.0, the changelog, BUILD-LOG, CLAUDE.md and HISTORY.
+
+Still to do: a real-site test by a human (the Tell us section of `docs/test-script-0.7-0.9.md`), then merge to main when the owner says so. Until then the feature is labelled not yet verified.

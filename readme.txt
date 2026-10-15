@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.10.2
+Stable tag: 0.11.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,14 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.11.0 =
+* New: Tell us. A button for anyone who can edit pages. They write what they would like changed, and the note is kept on your own site as text, then deleted after the time you choose (12 months unless you change it). Off until you switch it on in the Site tab.
+* New: an administrator sees every note, can mark it new, seen, done or parked, add private ideas, and copy the new notes as markdown.
+* New: wp twd-sk snags prints the notes, wp twd-sk snag-status changes one, wp twd-sk snags-setting switches the module.
+* New: an optional email saying a note has arrived. It never contains the note.
+* Changed: Edit text is now called Visual editor.
+* Safe mode switches Tell us off. Notes are never sent anywhere else.
 
 = 0.10.2 =
 * Changed: the Edit text toolbar is now a compact card at the bottom left, so it no longer covers buttons from other plugins at the bottom right (such as New Article). On a phone it spans the screen.

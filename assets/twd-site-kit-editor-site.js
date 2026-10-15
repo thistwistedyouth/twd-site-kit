@@ -1631,6 +1631,67 @@
 		});
 	}
 
+	function buildSnagsSection(panel) {
+		var msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		var on = el('input', { id: 'twd-sk-snags-on', type: 'checkbox' });
+		var months = el('select', { id: 'twd-sk-snags-months', className: 'twd-sk-ed__input' });
+		var emailOn = el('input', { id: 'twd-sk-snags-emailon', type: 'checkbox' });
+		var email = el('input', { id: 'twd-sk-snags-email', className: 'twd-sk-ed__input', type: 'email', autocomplete: 'off', maxlength: '120' });
+		var saved = null;
+		function fill(data) {
+			saved = data;
+			on.checked = !!data.enabled;
+			clear(months);
+			(data.month_choices || [12]).forEach(function (m) {
+				var o = el('option', { value: String(m), text: m + ' months' });
+				if (m === data.months) {
+					o.selected = true;
+				}
+				months.appendChild(o);
+			});
+			emailOn.checked = !!data.email_on;
+			email.value = data.email || '';
+		}
+		function current() {
+			return { enabled: on.checked, months: parseInt(months.value, 10) || 12, email_on: emailOn.checked, email: email.value.trim() };
+		}
+		var save = button('Save Tell us settings', 'primary', function () {
+			message(msg, 'Saving...', true);
+			api('POST', '/snags/settings', current()).then(function (data) {
+				fill(data);
+				message(msg, 'Saved. Reload the page to see the Tell us button come or go.', true);
+			}, function (err) {
+				message(msg, err.message, false);
+			});
+		});
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Tell us notes' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'Lets anyone who can edit pages tell you what they would like changed, from the front of their own site. Notes are kept on this site only, as text, and deleted after the time you choose. Nothing is sent anywhere except the optional email, which says a note has arrived and never what it says. Safe mode switches this off.' }),
+			el('label', { className: 'twd-sk-ed__check', 'for': 'twd-sk-snags-on' }, [on, el('span', { text: 'Show the Tell us button' })]),
+			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-snags-months', text: 'Keep notes for' }),
+			months,
+			el('label', { className: 'twd-sk-ed__check', 'for': 'twd-sk-snags-emailon' }, [emailOn, el('span', { text: 'Email me when a note arrives (the email says that one arrived, not what it says)' })]),
+			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-snags-email', text: 'Send that email to' }),
+			email,
+			el('div', { className: 'twd-sk-ed__actions' }, [save]),
+			msg
+		]));
+		api('GET', '/snags/settings').then(fill, function (err) {
+			message(msg, err.message, false);
+		});
+		ED.addDirtyCheck(function () {
+			if (!saved) {
+				return '';
+			}
+			var c = current();
+			return c.enabled !== !!saved.enabled || c.months !== saved.months || c.email_on !== !!saved.email_on || c.email !== (saved.email || '') ? 'Tell us settings' : '';
+		}, function () {
+			if (saved) {
+				fill(saved);
+			}
+		});
+	}
+
 	function buildSite(panel) {
 		buildModeSection(panel);
 		buildBriefSection(panel);
@@ -1640,6 +1701,7 @@
 		buildChromeSection(panel);
 		buildSetupSection(panel);
 		buildLaunchSection(panel);
+		buildSnagsSection(panel);
 		buildDoctorSection(panel);
 		var summaries = {
 			'Site type': 'Now: ' + ((WORDS.modes && WORDS.modes[WORDS.mode]) ? WORDS.modes[WORDS.mode].label : 'Therapy'),
@@ -1649,6 +1711,7 @@
 			'Header and footer': 'Who places them, layout, fixed header',
 			'Set up a new site': 'Create the starter pages',
 			'Launch check': 'Everything to check before going live',
+			'Tell us notes': 'Let clients send you notes, and how long you keep them',
 			'Site report': 'A plain-text report to paste when something looks wrong'
 		};
 		summaries[FACTS_TITLE] = 'The master document the AI writes from';

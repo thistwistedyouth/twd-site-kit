@@ -2,12 +2,13 @@
 
 The one place to see where this project is. Newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md. Update this file at the end of every piece of work, in the same commit.
 
-## Where we are (last updated at release 0.10.2, 12 Oct 2026)
+## Where we are (last updated at release 0.11.0, 14 Oct 2026)
 
-**Released and live in the update file:** 0.10.2. Everything from 0.7.0 to 0.10.2 was built on 12 Oct 2026 at the owner's request (beta) and is NOT yet tried on a real site: work through `docs/test-script-0.7-0.9.md` on a fresh install first. Sites update from Plugins, "Check for updates", "update now".
+**Released and live in the update file:** 0.10.2. **0.11.0 (Tell us, and Edit text renamed Visual editor) is built on the branch `ethos-and-snag-design` only: not merged to main, so no site is offered it yet.** The owner lifted the verify-first rule for this one feature on 14 Oct 2026, so it is tested together with 0.7.0 to 0.10.2 (see the Tell us section of `docs/test-script-0.7-0.9.md`). Everything from 0.7.0 to 0.10.2 was built on 12 Oct 2026 at the owner's request (beta) and is NOT yet tried on a real site: work through `docs/test-script-0.7-0.9.md` on a fresh install first. Sites update from Plugins, "Check for updates", "update now".
 
 | Version | What it added |
 |---|---|
+| 0.11.0 | Tell us: a button for anyone who can edit pages to send a note; notes kept on the site as private text (12 months by default), administrator panel with statuses, ideas and Copy new notes as markdown, `wp twd-sk snags`, optional notification email with no message text; Edit text renamed Visual editor. NOT YET VERIFIED on a real site |
 | 0.10.2 | Edit text toolbar as a compact bottom-left card, clear of the New Article button; Edit text, Save changes and Cancel in the WordPress admin bar |
 | 0.10.1 | Edit text pictures: Add a picture boxes where the AI left a picture marker, Upload from this computer beside the media library, descriptions changed on their own |
 | 0.10.0 | Editing rebuilt: Edit text in place (words, links, pictures), one box in Edit with AI that plans a checklist and runs it, glow boxes and a quote slider |
@@ -40,7 +41,7 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 - A. DONE in 0.7.0: therapy and business mode (`TWD_SK_Mode`, option `twd_sk_mode`, default therapy, one word list per mode).
 - B. DONE in 0.7.1: the setup page (Settings > Set up site), the admin-only front-page button on a fresh install, picture slots and named custom pictures, one build engine (`TWD_SK_Build`) shared with `wp twd-sk build`, all pages as drafts.
 - C. After that (the owner said on 12 Oct: build all of these now, beta stage, test afterwards): DONE in 0.7.2 the plan step (sitemap and section outline before build), DONE in 0.7.3 add a section by asking, 0.8.x more section types, brand from logo, picture help, starter sets per business type, 0.9.0 launch check. ALL DONE (0.8.0 sections, 0.8.1 enquiry form, 0.8.2 colours from the logo, 0.8.3 keep in view, 0.8.4 starter sets, 0.9.0 launch check).
-- D. Next: the owner tests 0.7.0 to 0.10.2 on a fresh install (`docs/test-script-0.7-0.9.md`); fixes from that come first. Then the earlier list below.
+- D. Next: the owner tests 0.7.0 to 0.11.0 on a fresh install (`docs/test-script-0.7-0.9.md`); fixes from that come first. Then the earlier list below.
 
 **Earlier list (4 Oct 2026), still standing after A and B:**
 1. DONE in 0.6.2: the doctor report.
@@ -59,6 +60,8 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 - Nothing. The Articles & Resource Production plugin (`twd-article-publisher`, repo `therapy-web-designs`) now offers the two filters Site Kit uses, from its version 1.34.0 (checked 4 Oct 2026; re-checked 11 Oct 2026, the filters are unchanged, that plugin is now at 1.37.1 on a branch not yet merged to its main): `twd_ai_is_configured` (true when a key is saved) and `twd_ai_complete( null, $system, $message, $max_tokens )` (returns text, a WP_Error, or null; max tokens clamped to 256 to 8000). The names match what Site Kit calls. Site Kit holds no key and calls no AI service. Ask the AI, drafting pages with AI, Fill with AI and the Site tab suggestions appear on a site only when that plugin is at 1.34.0 or later with a key saved.
 
 **Not yet verified on a real site (needs a human):** importing the two Theme Builder templates on Elementor Pro 4.3.1 and their display condition, real Yoast behaviour (writing its fields, the schema graph filter), the media picker, how a page behaves if the plugin is deactivated, caching on the host, Ask the AI, drafting pages and the Site tab suggestions with a real key (the articles plugin side is now in place), importing a real site brief, the fold-outs on a real phone, (0.7.0) switching a fresh site to business mode and checking the Site tab labels, a drafted page's wording and the LocalBusiness search details, and (0.7.1) the whole setup page on a fresh install: the front-page link, the real media library picker and uploads, notes to a brief and a full build with a real key, the pictures landing where expected, the menu links working once the pages are published, and `wp twd-sk build` over SSH, and (0.8.0/0.8.1) the new sections on a real theme and phone, and the enquiry form actually delivering email from 20i (check the spam folder, and set up an SMTP plugin if mail does not arrive), and (0.9.1) the header and footer placed by Site Kit on a real Hello install: the hook names `hello_elementor_header_footer` and Elementor Pro's `elementor_location_exits` were written from memory, so check Hello's own header really goes, ours shows once at the top and bottom of every page (including Elementor Full Width pages, and none on Canvas), and an Elementor Pro template, if present, takes over. The test plan is in the release notes of each version in the conversation that built it; the 0.4.0 steps are in the section below.
+
+**Not yet verified (0.11.0):** the Tell us button position above the Visual editor button on a real theme and phone, the pop-up, sending and deleting a note as an editor, the administrator panel and Copy new notes as markdown (clipboard on a real browser), the Site tab section, the notification email actually arriving, the daily retention sweep, WordPress's personal data export and erase tools, `wp twd-sk snags` over SSH, and safe mode hiding the button.
 
 **Known limitation:** a page that still uses the old `[twd_page]` shortcode cannot be mirrored into its content for site search until its content is cleared once after switching it to the kit template.
 

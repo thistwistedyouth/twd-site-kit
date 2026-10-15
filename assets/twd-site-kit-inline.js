@@ -86,7 +86,7 @@
 		adminBar();
 	}
 
-	/* ---- the WordPress admin bar (0.10.2): Edit text, then Save changes and Cancel while editing ---- */
+	/* ---- the WordPress admin bar (0.10.2): Visual editor, then Save changes and Cancel while editing ---- */
 
 	function adminItem(list, id, onClick) {
 		var a = el('a', { className: 'ab-item', href: '#', role: 'button' });
@@ -124,7 +124,7 @@
 			return;
 		}
 		var n = S.on ? changedCount() : 0;
-		ui.abMain.a.textContent = S.on ? (n ? 'Save changes (' + n + ')' : 'Save changes') : 'Edit text';
+		ui.abMain.a.textContent = S.on ? (n ? 'Save changes (' + n + ')' : 'Save changes') : 'Visual editor';
 		ui.abMain.a.setAttribute('aria-disabled', S.on && (!n || S.saving || S.uploading) ? 'true' : 'false');
 		ui.abCancel.a.textContent = 'Cancel';
 		ui.abCancel.li.style.display = S.on ? '' : 'none';
@@ -791,7 +791,7 @@
 
 	buildBar();
 	buildAdminBar();
-	ui.open = el('button', { type: 'button', id: 'twd-sk-ed-text', className: 'twd-sk-ed__open twd-sk-ed__open--text', text: 'Edit text' });
+	ui.open = el('button', { type: 'button', id: 'twd-sk-ed-text', className: 'twd-sk-ed__open twd-sk-ed__open--text', text: 'Visual editor' });
 	ui.open.addEventListener('click', start);
 	root.appendChild(ui.open);
 	document.addEventListener('keydown', onKey, true);

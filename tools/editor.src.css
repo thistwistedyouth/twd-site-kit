@@ -18,6 +18,10 @@
 /* The second floating button (0.10.0): change words in place. Sits above Edit with AI. */
 .twd-sk-ed__open--text { bottom: 84px; background-color: $color-surface; color: $color-title; border-color: $color-title; }
 .twd-sk-ed__open--text:hover, .twd-sk-ed__open--text:focus-visible { background-color: $color-title; border-color: $color-title; color: $color-surface; }
+/* The Tell us button (0.11.0). Sits above the Visual editor button, or in its place on a page without one. */
+.twd-sk-ed__open--tellus { bottom: 144px; background-color: $color-surface; color: $color-title; border-color: $color-title; }
+.twd-sk-ed__open--tellus:hover, .twd-sk-ed__open--tellus:focus-visible { background-color: $color-title; border-color: $color-title; color: $color-surface; }
+.twd-sk-ed__open--tellus.twd-sk-ed__open--low { bottom: 84px; }
 
 /* ---- the in-place editing card (0.10.2: bottom left, where the floating buttons sit, clear of other
    plugins' buttons on the right; full width on a phone, above them while editing) ---- */
@@ -248,8 +252,19 @@
   .twd-sk-ed__frame { height: 50vh; }
   .twd-sk-ed__open { left: 16px; bottom: 16px; }
   .twd-sk-ed__open--text { bottom: 72px; }
+  .twd-sk-ed__open--tellus { bottom: 128px; }
+  .twd-sk-ed__open--tellus.twd-sk-ed__open--low { bottom: 72px; }
   .twd-sk-ed__inlinebar { left: 12px; right: 12px; bottom: 12px; width: auto; max-width: none; max-height: 70%; }
   .twd-sk-ed__inlinebar .twd-sk-ed__btn { width: auto; }
   .twd-sk-ed__grid { grid-template-columns: 1fr; }
   .twd-sk-ed__color { min-height: 48px; }
 }
+
+/* ---- Tell us notes (0.11.0) ---- */
+.twd-sk-tu__list { margin: 0; padding: 0; list-style: none; }
+.twd-sk-tu__item { padding: 12px 0; border-bottom: 1px solid $color-border; }
+.twd-sk-tu__head { margin: 0 0 2px; color: $color-title; }
+.twd-sk-tu__text { margin: 6px 0 8px; white-space: pre-wrap; overflow-wrap: anywhere; color: $color-body; }
+.twd-sk-tu__status { width: auto; min-width: 140px; }
+.twd-sk-tu__client, .twd-sk-tu__admin { margin: 0 0 16px; }
+.twd-sk-tu__version { margin: 16px 0 0; font-size: $size-small; color: $color-muted; }
