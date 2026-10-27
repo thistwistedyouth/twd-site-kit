@@ -204,7 +204,7 @@ twd_sk_test( 'cli: pack with an unknown name fails, lists the choices and change
 		$cli->pack( array( 'nonsense' ), array() );
 	} );
 	twd_sk_has( 'no style pack called "nonsense"', $msg );
-	twd_sk_has( 'grove, ink, sage', $msg );
+	twd_sk_has( 'grove, ink, midnight, sage', $msg );
 	twd_sk_eq( 'sage', TWD_SK_Packs::active_slug() );
 } );
 
