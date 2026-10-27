@@ -17,6 +17,21 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## The large footer (`feature`), branch `footer-feature`, on top of `studio-0.14`
+
+Why: the four footers were a small logo, a line of text and a list of links with a lot of empty space, and a client's brief asked for the full logo lockup, the registration line and the contact email in the footer of every page. The owner's review asked for a stronger layout, so a fifth footer layout was added. Nothing is released; the version number is the owner's to agree.
+
+- **Its own logo tokens.** The brief named `footer-logo-height` for the large logo, but every pack sets that to 56 to 72 pixels for the other four footers, so reusing it would either leave the new footer small or change how the old ones look (they must not change). `footer-logo-height-feature` (140px) and `footer-logo-height-feature-sm` (150px, used up to 900px wide) are new tokens with defaults, in every pack and the Site tab, so an older pack still reads. The owner can say he would rather share the old token.
+- **The logo is asked for at the `large` size.** The other footers ask for `medium` (300px), which would be stretched and soft at 140 to 150px high. Only the large footer asks for more.
+- **The footer text is a heading by look, not by tag.** It is a paragraph styled in the heading font at the h2 step (and the smaller h2 step on phones). A real h2 would join the page's heading outline from the footer of every page, and the page-title step is too big for one or two sentences. Changing the size is a one-line change in the stylesheet source.
+- **No new colour.** The strip uses the band colour with the on-band text and the accent-on-dark links, which the contrast check already refuses to save below 4.5:1 (the Site tab and style kits both go through it); the part above it uses the surface colour with title, body and accent text. A test lists the colours the large footer's rules use and fails on any other. Every shipped pack is checked for these pairs.
+- **Two blocks, always.** `footer_columns` is ignored (as the centred and simple layouts ignore it); with no menu there is one block. The email and the registration lines stay in the main area, never the strip, because the client's brief wants them there on every page.
+- **Two link columns by CSS, not by markup.** `columns: 140px 2`, so a narrow phone drops to one column rather than squeezing; the list reads down each column.
+- **Stylesheet ceiling raised to 120 KB** (about 110 KB now). Each rule is written with doubled class names, which is most of the weight.
+- **`wp twd-sk style apply --footer=feature`** now works with no pack name: only the layouts change and the current look stays (a dry run first lists the change).
+- **The older layouts are byte for byte the same.** The four older footers and the header were rendered for two profiles on a test server with the code before and after this work and compared: identical. The generated stylesheet only gained rules.
+- **Not verified on a real site:** how a real lockup looks at 140 to 150px high, the two link columns on a real theme, the strip on a real browser, and with an Elementor Pro footer template.
+
 ## v0.14.0 (the studio build, branch `studio-0.14`)
 
 **The owner's answers (27 Oct 2026, evening):** the Five Keys stay articles in the Articles plugin; a JPEG logo is a warning in the studio's readiness check, not a gap; a restyle must stay reversible (it is: snapshot then apply, revert puts it back); packs keep `ember`, and `slate` became `midnight`; the SSH alias and WordPress folder are recorded once per client in the private repo, never a key.

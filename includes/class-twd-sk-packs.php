@@ -178,6 +178,8 @@ class TWD_SK_Packs {
 			'hero-min-height', 'hero-min-height-sm',
 			// 0.14.0: logo sizes (header, header on phones, the front page's larger logo, footer).
 			'logo-height', 'logo-height-sm', 'logo-height-front', 'footer-logo-height',
+			// 0.14.0: the logo in the feature footer, much larger than the other footers' (desktop, then phones).
+			'footer-logo-height-feature', 'footer-logo-height-feature-sm',
 		) as $name ) {
 			$s[ $name ] = 'length';
 		}
@@ -201,12 +203,14 @@ class TWD_SK_Packs {
 	 */
 	public static function defaults() {
 		return array(
-			'logo-height'        => '48px',
-			'logo-height-sm'     => '40px',
-			'logo-height-front'  => '120px',
-			'footer-logo-height' => '64px',
-			'image-filter'       => 'none',
-			'image-tint'         => 'transparent',
+			'logo-height'                   => '48px',
+			'logo-height-sm'                => '40px',
+			'logo-height-front'             => '120px',
+			'footer-logo-height'            => '64px',
+			'footer-logo-height-feature'    => '140px',
+			'footer-logo-height-feature-sm' => '150px',
+			'image-filter'                  => 'none',
+			'image-tint'                    => 'transparent',
 		);
 	}
 

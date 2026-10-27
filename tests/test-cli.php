@@ -363,3 +363,25 @@ twd_sk_test( 'cli: save --pictures refuses a file that is not JSON and saves not
 	unlink( $file );
 	unlink( $pics );
 } );
+
+twd_sk_test( 'cli: style apply with only --footer (or --header) changes just that layout and keeps the look; a dry run saves nothing; with nothing to go on it says what to give', function () {
+	WP_CLI::reset();
+	( new TWD_SK_CLI() )->style( array( 'apply' ), array( 'footer' => 'feature', 'dry-run' => true ) );
+	twd_sk_has( 'footer variant: the style\'s own to feature', WP_CLI::all() );
+	twd_sk_has( 'Dry run: nothing was changed.', WP_CLI::all() );
+	twd_sk_eq( '', TWD_SK_Chrome::settings()['footer_variant'], 'nothing saved' );
+	WP_CLI::reset();
+	( new TWD_SK_CLI() )->style( array( 'apply' ), array( 'footer' => 'feature' ) );
+	twd_sk_eq( 'feature', TWD_SK_Chrome::settings()['footer_variant'] );
+	twd_sk_eq( 'sage', TWD_SK_Packs::active_slug(), 'the style pack is as it was' );
+	$cli = new TWD_SK_CLI();
+	$msg = twd_sk_cli_fails( function () use ( $cli ) {
+		$cli->style( array( 'apply' ), array() );
+	} );
+	twd_sk_has( '--footer', $msg );
+	$msg = twd_sk_cli_fails( function () use ( $cli ) {
+		$cli->style( array( 'apply' ), array( 'footer' => 'wild' ) );
+	} );
+	twd_sk_has( 'footer layout', $msg );
+	twd_sk_eq( 'feature', TWD_SK_Chrome::settings()['footer_variant'], 'a refused layout changes nothing' );
+} );

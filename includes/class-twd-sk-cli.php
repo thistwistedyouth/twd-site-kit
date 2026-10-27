@@ -447,7 +447,7 @@ class TWD_SK_CLI {
 	 * : status, snapshot, apply, revert or swap.
 	 *
 	 * [<what>]
-	 * : For apply: a pack name or a kit file. For snapshot: a name. For swap: the page ID.
+	 * : For apply: a pack name or a kit file (leave it out with --header or --footer to change only the layouts). For snapshot: a name. For swap: the page ID.
 	 *
 	 * [<component>]
 	 * : For swap: the section kind (text, image_text, faq ...).
@@ -462,7 +462,7 @@ class TWD_SK_CLI {
 	 * : With apply: the header layout (bar, centered, split, minimal).
 	 *
 	 * [--footer=<layout>]
-	 * : With apply: the footer layout (columns, band, centered, simple).
+	 * : With apply: the footer layout (columns, band, centered, simple, feature).
 	 *
 	 * [--dry-run]
 	 * : With apply or swap: say what would change and change nothing.
@@ -471,6 +471,7 @@ class TWD_SK_CLI {
 	 *
 	 *     wp twd-sk style snapshot "before the demo"
 	 *     wp twd-sk style apply grove --header=centered --footer=band --dry-run
+	 *     wp twd-sk style apply --footer=feature --dry-run
 	 *     wp twd-sk style apply kit.json
 	 *     wp twd-sk style revert
 	 *     wp twd-sk style swap 12 text standard twd-sk-text--prose --dry-run
@@ -503,11 +504,13 @@ class TWD_SK_CLI {
 		}
 		if ( 'apply' === $action ) {
 			$what = isset( $args[1] ) ? (string) $args[1] : '';
-			if ( '' === $what ) {
-				WP_CLI::error( 'Give a pack name or a kit file.' );
+			if ( '' === $what && ! isset( $assoc_args['header'] ) && ! isset( $assoc_args['footer'] ) ) {
+				WP_CLI::error( 'Give a pack name or a kit file, or --header or --footer to change only the layouts.' );
 				return;
 			}
-			if ( is_readable( $what ) && ! isset( TWD_SK_Packs::packs()[ $what ] ) ) {
+			if ( '' === $what ) {
+				$data = array(); // Only the layouts change: the current look stays.
+			} elseif ( is_readable( $what ) && ! isset( TWD_SK_Packs::packs()[ $what ] ) ) {
 				$data = json_decode( (string) file_get_contents( $what ), true );
 				if ( ! is_array( $data ) ) {
 					WP_CLI::error( 'Could not read the kit file as JSON.' );

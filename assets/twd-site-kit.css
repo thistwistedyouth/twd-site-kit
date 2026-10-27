@@ -2326,6 +2326,86 @@
 .twd-sk-page .twd-sk-footer--simple.twd-sk-footer--simple .twd-sk-footer__bottom.twd-sk-footer__bottom {
   border-top: 0 !important;
 }
+/* The feature footer (0.14.0): large logo, the footer text as a heading, contact and registration on the left, links in two columns on the right, a slim band-colour strip below. */
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__main.twd-sk-footer__main {
+  grid-template-columns: 1.15fr 1fr;
+  align-items: start;
+  padding-top: var(--twd-site-section-y) !important;
+  padding-bottom: var(--twd-site-section-y) !important;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature.twd-sk-footer--cols-1.twd-sk-footer--cols-1 .twd-sk-footer__main.twd-sk-footer__main {
+  grid-template-columns: 1fr;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__logo-img.twd-sk-footer__logo-img {
+  width: auto;
+  max-width: 100%;
+  height: var(--twd-site-footer-logo-height-feature);
+  max-height: none;
+  object-fit: contain;
+  object-position: left center;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__tagline.twd-sk-footer__tagline {
+  margin: 28px 0 0 !important;
+  font-family: var(--twd-site-font-heading) !important;
+  font-size: var(--twd-site-size-h2) !important;
+  font-weight: var(--twd-site-heading-weight) !important;
+  font-style: var(--twd-site-heading-style) !important;
+  line-height: var(--twd-site-line-heading) !important;
+  color: var(--twd-site-color-title) !important;
+  overflow-wrap: break-word;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__contact-group.twd-sk-footer__contact-group {
+  margin: 32px 0 0 !important;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__contact-group.twd-sk-footer__contact-group .twd-sk-footer__heading.twd-sk-footer__heading {
+  margin: 0 0 8px !important;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__contact.twd-sk-footer__contact {
+  margin: 0 0 6px !important;
+  font-size: var(--twd-site-size-body) !important;
+  overflow-wrap: anywhere;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__regs.twd-sk-footer__regs {
+  margin: 24px 0 0 !important;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__link.twd-sk-footer__link {
+  font-size: var(--twd-site-size-body) !important;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__links--two.twd-sk-footer__links--two {
+  columns: 140px 2;
+  column-gap: 24px;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__links--two.twd-sk-footer__links--two > li {
+  break-inside: avoid;
+  padding: 0 0 12px !important;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__links--two.twd-sk-footer__links--two > li + li {
+  margin-top: 0 !important;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__links.twd-sk-footer__links .twd-sk-footer__link.twd-sk-footer__link {
+  color: var(--twd-site-color-title) !important;
+  text-decoration: none !important;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__links.twd-sk-footer__links .twd-sk-footer__link.twd-sk-footer__link:hover,
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__links.twd-sk-footer__links .twd-sk-footer__link.twd-sk-footer__link:focus-visible {
+  color: var(--twd-site-color-accent-text) !important;
+  text-decoration: underline !important;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__bottom.twd-sk-footer__bottom {
+  background-color: var(--twd-site-color-band) !important;
+  border-top: 0 !important;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__bottom-inner.twd-sk-footer__bottom-inner {
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__copy.twd-sk-footer__copy,
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__legal.twd-sk-footer__legal {
+  color: var(--twd-site-color-on-band) !important;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__legal-link.twd-sk-footer__legal-link {
+  color: var(--twd-site-color-accent-on-dark) !important;
+}
 @media (max-width: 900px) {
   .twd-sk-page .twd-sk-text__grid.twd-sk-text__grid,
   .twd-sk-page .twd-sk-contact--split.twd-sk-contact--split .twd-sk-contact__grid.twd-sk-contact__grid {
@@ -2575,6 +2655,19 @@
   .twd-sk-page .twd-sk-footer__bottom-inner.twd-sk-footer__bottom-inner {
     flex-direction: column;
     align-items: flex-start;
+  }
+  /* The feature footer stacks its two blocks; the logo takes its phone size and the heading its smaller step, still large. */
+  .twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__main.twd-sk-footer__main {
+    grid-template-columns: 1fr;
+    gap: var(--twd-site-gap-md);
+    padding-top: var(--twd-site-section-y-sm) !important;
+    padding-bottom: var(--twd-site-section-y-sm) !important;
+  }
+  .twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__logo-img.twd-sk-footer__logo-img {
+    height: var(--twd-site-footer-logo-height-feature-sm);
+  }
+  .twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__tagline.twd-sk-footer__tagline {
+    font-size: var(--twd-site-size-h2-sm) !important;
   }
 }
 /* Question groups on a wide screen: one group at a time (0.14.0). */

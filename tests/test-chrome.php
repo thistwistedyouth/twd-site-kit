@@ -48,9 +48,9 @@ twd_sk_test( 'chrome: the shortcodes are registered by init (and init does not l
 	twd_sk_true( false !== $pos && $pos < strpos( $src, 'if ( ! TWD_SK_Safe::on() )' ), 'registered before, outside, the safe mode check' );
 } );
 
-twd_sk_test( 'chrome: four header and four footer variants, each with a label', function () {
+twd_sk_test( 'chrome: four header and five footer variants, each with a label', function () {
 	twd_sk_eq( array( 'bar', 'centered', 'split', 'minimal' ), array_keys( TWD_SK_Chrome::header_variants() ) );
-	twd_sk_eq( array( 'columns', 'band', 'centered', 'simple' ), array_keys( TWD_SK_Chrome::footer_variants() ) );
+	twd_sk_eq( array( 'columns', 'band', 'centered', 'simple', 'feature' ), array_keys( TWD_SK_Chrome::footer_variants() ) );
 	foreach ( array_merge( TWD_SK_Chrome::header_variants(), TWD_SK_Chrome::footer_variants() ) as $label ) {
 		twd_sk_true( strlen( $label ) > 10 );
 	}
@@ -246,9 +246,9 @@ twd_sk_test( 'chrome header: the menu script is enqueued only when the full head
 	twd_sk_eq( array(), $GLOBALS['twd_stub']['scripts'] );
 } );
 
-twd_sk_test( 'chrome footer: columns, band, centred and simple', function () {
+twd_sk_test( 'chrome footer: columns, band, centred, simple and feature', function () {
 	twd_sk_chrome_setup();
-	foreach ( array( 'columns', 'band', 'centered', 'simple' ) as $v ) {
+	foreach ( array( 'columns', 'band', 'centered', 'simple', 'feature' ) as $v ) {
 		TWD_SK_Chrome::save_settings( array( 'footer_variant' => $v ) );
 		$html = TWD_SK_Chrome::render_footer();
 		twd_sk_has( 'twd-sk-footer twd-sk-footer--' . $v, $html, $v );
@@ -659,4 +659,175 @@ twd_sk_test( 'chrome (0.14.0): one skip link: Hello\'s own is switched off throu
 	TWD_SK_Safe::set( true );
 	twd_sk_eq( true, apply_filters( 'hello_elementor_enable_skip_link', true ), 'safe mode: Hello keeps its own' );
 	TWD_SK_Safe::set( false );
+} );
+
+// -- The feature footer (0.14.0) --------------------------------------------------------------
+
+/** The pieces of a feature footer, cut at the markers the markup puts between them. */
+function twd_sk_feature_parts( $html ) {
+	$marker    = '<div class="twd-sk-footer__col">';
+	$brand_at  = strpos( $html, $marker );
+	$links_at  = strpos( $html, $marker, $brand_at + 1 );
+	$bottom_at = strpos( $html, '<div class="twd-sk-footer__bottom">' );
+	return array(
+		'brand'  => substr( $html, $brand_at, ( false === $links_at ? $bottom_at : $links_at ) - $brand_at ),
+		'links'  => false === $links_at ? '' : substr( $html, $links_at, $bottom_at - $links_at ),
+		'bottom' => substr( $html, $bottom_at ),
+	);
+}
+
+twd_sk_test( 'chrome footer feature: the logo large, the footer text as a heading, Contact with the email then the registration on the left, the page links in two columns with no label on the right', function () {
+	$GLOBALS['twd_stub']['attachments'][50] = array( 'url' => '/u/logo.png', 'w' => 600, 'h' => 200, 'is_image' => true );
+	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'logo_id' => 50 ) ), array( 'footer_variant' => 'feature', 'footer_columns' => 3 ) );
+	$html  = TWD_SK_Chrome::render_footer();
+	$parts = twd_sk_feature_parts( $html );
+	twd_sk_has( '<footer class="twd-sk-footer twd-sk-footer--feature twd-sk-footer--cols-2">', $html, 'two blocks, whatever the columns setting says' );
+	twd_sk_hasnt( 'twd-sk-tone-band', $html, 'only the strip uses the band colour, through the stylesheet' );
+	twd_sk_eq( 2, substr_count( $html, 'class="twd-sk-footer__col"' ), 'a left and a right block' );
+
+	$b = $parts['brand'];
+	twd_sk_has( '<img class="twd-sk-footer__logo-img" src="/u/logo.png" alt="Calm Practice"', $b );
+	twd_sk_eq( 'large', $GLOBALS['twd_stub']['image_size_asked'][50], 'a bigger size of the picture, so a large logo stays sharp' );
+	$order = array( '<img class="twd-sk-footer__logo-img"', '<p class="twd-sk-footer__tagline">Gentle, practical therapy.</p>', 'twd-sk-footer__contact-group', '<p class="twd-sk-footer__heading">Contact</p>', 'hello@calm.example', '01234 567890', '1 High Street', 'twd-sk-footer__regs', '<p class="twd-sk-footer__reg-line">Member of an example body</p>' );
+	$last  = -1;
+	foreach ( $order as $needle ) {
+		$at = strpos( $b, $needle );
+		twd_sk_true( false !== $at && $at > $last, 'left block order: ' . $needle );
+		$last = (int) $at;
+	}
+	twd_sk_eq( 1, substr_count( $html, 'twd-sk-footer__heading' ), 'one small label, Contact, and nothing like Explore above the links' );
+	twd_sk_hasnt( 'Explore', $html );
+
+	$l = $parts['links'];
+	twd_sk_has( '<nav aria-label="Footer"><ul class="twd-sk-footer__links twd-sk-footer__links--two">', $l );
+	foreach ( array( 'Home', 'About', 'Services' ) as $label ) {
+		twd_sk_has( '>' . $label . '</a>', $l );
+	}
+	twd_sk_hasnt( 'Anxiety', $l, 'the same top level links the columns footer shows' );
+	twd_sk_hasnt( 'twd-sk-footer__heading', $l );
+
+	$s = $parts['bottom'];
+	twd_sk_has( '&copy; ' . gmdate( 'Y' ) . ' Calm Practice', $s );
+	twd_sk_has( 'href="/privacy">Privacy</a>', $s );
+	foreach ( array( 'hello@calm.example', 'Member of an example body', '01234', 'Contact', 'twd-sk-footer__reg' ) as $not ) {
+		twd_sk_hasnt( $not, $s, 'the strip holds only the copyright and the legal links: ' . $not );
+	}
+
+	$known = array_merge( TWD_SK_Chrome::classes(), array( 'twd-sk-page', 'twd-sk-inner' ) );
+	foreach ( twd_sk_chrome_classes_in( $html ) as $c ) {
+		twd_sk_true( in_array( $c, $known, true ), 'class: ' . $c );
+	}
+} );
+
+twd_sk_test( 'chrome footer feature: whatever was not supplied is left out, and nothing is invented', function () {
+	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'logo_id' => 0, 'footer_text' => '', 'phone' => '', 'email' => '', 'address' => array(), 'registration' => array(), 'menu' => array() ) ), array( 'footer_variant' => 'feature' ) );
+	$html = TWD_SK_Chrome::render_footer();
+	twd_sk_has( 'twd-sk-footer--feature twd-sk-footer--cols-1', $html, 'no links, so one block' );
+	twd_sk_has( '<p class="twd-sk-footer__name">Calm Practice</p>', $html, 'no logo: the name as text' );
+	foreach ( array( 'twd-sk-footer__tagline', 'twd-sk-footer__contact-group', 'twd-sk-footer__regs', '<nav aria-label="Footer">', 'Contact' ) as $not ) {
+		twd_sk_hasnt( $not, $html, $not );
+	}
+	twd_sk_eq( 1, substr_count( $html, 'class="twd-sk-footer__col"' ), 'one block' );
+	twd_sk_has( 'twd-sk-footer__bottom', $html, 'the strip is always there' );
+	// Only an email: Contact shows it, with no phone line and no address line.
+	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'phone' => '', 'address' => array() ) ), array( 'footer_variant' => 'feature' ) );
+	$brand = twd_sk_feature_parts( TWD_SK_Chrome::render_footer() )['brand'];
+	twd_sk_has( 'Contact</p><p class="twd-sk-footer__contact"><a class="twd-sk-footer__link" href="mailto:hello@calm.example">hello@calm.example</a></p>', $brand );
+	twd_sk_eq( 1, substr_count( $brand, 'class="twd-sk-footer__contact"' ) );
+} );
+
+twd_sk_test( 'chrome footer feature: the other four layouts print none of the feature pieces, and safe mode still prints the plain footer', function () {
+	foreach ( array( 'columns', 'band', 'centered', 'simple' ) as $v ) {
+		twd_sk_chrome_setup( null, array( 'footer_variant' => $v, 'footer_columns' => 3 ) );
+		$html = TWD_SK_Chrome::render_footer();
+		foreach ( array( 'twd-sk-footer--feature', 'twd-sk-footer__tagline', 'twd-sk-footer__contact-group', 'twd-sk-footer__regs', 'twd-sk-footer__links--two' ) as $not ) {
+			twd_sk_hasnt( $not, $html, $v . ' has no ' . $not );
+		}
+	}
+	twd_sk_chrome_setup( null, array( 'footer_variant' => 'columns' ) );
+	twd_sk_has( '<p class="twd-sk-footer__heading">Explore</p>', TWD_SK_Chrome::render_footer(), 'the columns footer keeps its label' );
+	twd_sk_has( '<div class="twd-sk-inner twd-sk-footer__reg">', TWD_SK_Chrome::render_footer(), 'and its registration row' );
+	twd_sk_chrome_setup( null, array( 'footer_variant' => 'feature' ) );
+	TWD_SK_Safe::set( true );
+	$plain = TWD_SK_Chrome::shortcode_footer();
+	TWD_SK_Safe::set( false );
+	twd_sk_hasnt( 'twd-sk-footer--feature', $plain, 'safe mode prints the minimal footer' );
+	twd_sk_has( 'twd-sk-footer--simple', $plain );
+	TWD_SK_Chrome::save_settings( array( 'footer_variant' => '' ) );
+} );
+
+twd_sk_test( 'chrome footer feature: selectable in settings, in a pack file, in the site brief and in a style kit', function () {
+	twd_sk_true( ! is_wp_error( TWD_SK_Chrome::save_settings( array( 'footer_variant' => 'feature' ) ) ) );
+	twd_sk_eq( 'feature', TWD_SK_Chrome::effective()['footer'] );
+	TWD_SK_Chrome::save_settings( array( 'footer_variant' => '' ) );
+	$dir  = sys_get_temp_dir() . '/twdsk-packfeature-' . getmypid();
+	mkdir( $dir );
+	$data = json_decode( file_get_contents( ABSPATH . 'packs/sage.json' ), true );
+	$data['slug']   = 'tmpfeature';
+	$data['chrome'] = array( 'header' => 'bar', 'footer' => 'feature' );
+	file_put_contents( $dir . '/tmpfeature.json', json_encode( $data ) );
+	twd_sk_eq( array( 'header' => 'bar', 'footer' => 'feature' ), TWD_SK_Packs::read_pack_file( $dir . '/tmpfeature.json' )['chrome'] );
+	unlink( $dir . '/tmpfeature.json' );
+	rmdir( $dir );
+	$plan = TWD_SK_Brief::plan( array( 'schema' => 'twd-site-brief/1', 'footer' => array( 'layout' => 'feature' ) ), false );
+	twd_sk_eq( array( 'footer_variant' => 'feature' ), $plan['changes']['chrome'] );
+	twd_sk_has( 'feature', TWD_SK_Brief::interview_prompt(), 'the interview prompt lists it' );
+	$kit = TWD_SK_Style::read_kit( array( 'chrome' => array( 'footer' => 'feature' ) ) );
+	twd_sk_true( ! is_wp_error( $kit ) );
+	twd_sk_eq( 'feature', $kit['chrome']['footer_variant'] );
+	$dry = TWD_SK_Style::apply( $kit, array( 'dry_run' => true ) );
+	twd_sk_true( ! $dry['applied'] );
+	twd_sk_has( 'footer variant', implode( ' ', $dry['changes'] ) );
+	twd_sk_true( is_wp_error( TWD_SK_Chrome::save_settings( array( 'footer_variant' => 'features' ) ) ), 'a misspelt layout is still refused' );
+} );
+
+twd_sk_test( 'chrome footer feature css: only existing colour tokens, the band colour on the strip, the large logo from its own tokens, two link columns, stacked on small screens', function () {
+	$raw     = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	$allowed = array( 'var(--twd-site-color-title)', 'var(--twd-site-color-accent-text)', 'var(--twd-site-color-band)', 'var(--twd-site-color-on-band)', 'var(--twd-site-color-accent-on-dark)' );
+	$found   = 0;
+	foreach ( twd_sk_css_rules() as $rule ) {
+		if ( false === strpos( $rule['selectors'][0], 'twd-sk-footer--feature' ) ) {
+			continue;
+		}
+		$found++;
+		foreach ( $rule['decls'] as $d ) {
+			if ( in_array( $d['prop'], array( 'color', 'background-color' ), true ) ) {
+				twd_sk_true( in_array( $d['value'], $allowed, true ), 'no new colour: ' . $d['value'] );
+			}
+		}
+	}
+	twd_sk_true( $found >= 10, 'the feature rules are there' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-footer--feature\.twd-sk-footer--feature \.twd-sk-footer__bottom\.twd-sk-footer__bottom \{[^}]*background-color: var\(--twd-site-color-band\) !important/', $raw ), 'the strip is the band colour' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-footer--feature\.twd-sk-footer--feature \.twd-sk-footer__copy\.twd-sk-footer__copy,[^{]*\{[^}]*color: var\(--twd-site-color-on-band\)/', $raw ), 'lighter text for the copyright and the legal row' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-footer--feature\.twd-sk-footer--feature \.twd-sk-footer__legal-link\.twd-sk-footer__legal-link \{[^}]*color: var\(--twd-site-color-accent-on-dark\)/', $raw ), 'and the legal links' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-footer--feature\.twd-sk-footer--feature \.twd-sk-footer__logo-img\.twd-sk-footer__logo-img \{[^}]*height: var\(--twd-site-footer-logo-height-feature\)/', $raw ), 'the large logo height is a token' );
+	twd_sk_true( 1 === preg_match( '/@media \(max-width: 900px\)[^@]*twd-sk-footer--feature\.twd-sk-footer--feature \.twd-sk-footer__logo-img\.twd-sk-footer__logo-img \{[^}]*height: var\(--twd-site-footer-logo-height-feature-sm\)/', $raw ), 'phones use the phone logo height' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-footer__links--two\.twd-sk-footer__links--two \{[^}]*columns: 140px 2/', $raw ), 'two columns when the width allows' );
+	twd_sk_true( 1 === preg_match( '/@media \(max-width: 900px\)[^@]*twd-sk-footer--feature\.twd-sk-footer--feature \.twd-sk-footer__main\.twd-sk-footer__main \{[^}]*grid-template-columns: 1fr;/', $raw ), 'the blocks stack' );
+	twd_sk_true( 1 === preg_match( '/@media \(max-width: 900px\)[^@]*twd-sk-footer--feature\.twd-sk-footer--feature \.twd-sk-footer__tagline\.twd-sk-footer__tagline \{[^}]*font-size: var\(--twd-site-size-h2-sm\)/', $raw ), 'the heading keeps a large step on phones' );
+} );
+
+twd_sk_test( 'chrome footer feature tokens: a large logo on desktop, 150px or more on phones, in every pack, editable, and the older packs get the defaults', function () {
+	foreach ( TWD_SK_Packs::packs() as $slug => $pack ) {
+		$t = $pack['tokens'];
+		$d = (int) $t['footer-logo-height-feature'];
+		twd_sk_true( $d >= 120 && $d <= 160, $slug . ' desktop logo ' . $d );
+		twd_sk_true( (int) $t['footer-logo-height-feature-sm'] >= 150, $slug . ' phone logo' );
+		// The strip: text and links on the band colour, and the page part above it on the surface colour.
+		twd_sk_true( TWD_SK_Contrast::ratio( $t['color-on-band'], $t['color-band'] ) >= 4.5, $slug . ' strip text' );
+		twd_sk_true( TWD_SK_Contrast::ratio( $t['color-accent-on-dark'], $t['color-band'] ) >= 4.5, $slug . ' strip links' );
+		foreach ( array( 'color-title', 'color-body', 'color-accent-text' ) as $name ) {
+			twd_sk_true( TWD_SK_Contrast::ratio( $t[ $name ], $t['color-surface'] ) >= 4.5, $slug . ' ' . $name . ' on the surface' );
+		}
+	}
+	twd_sk_true( in_array( 'footer-logo-height-feature', TWD_SK_Site::editable_names(), true ) && in_array( 'footer-logo-height-feature-sm', TWD_SK_Site::editable_names(), true ), 'editable in the Site tab' );
+	twd_sk_eq( '140px', TWD_SK_Packs::defaults()['footer-logo-height-feature'] );
+	twd_sk_eq( '150px', TWD_SK_Packs::defaults()['footer-logo-height-feature-sm'] );
+	// A site override that made the strip unreadable is refused by the same check as every other band colour.
+	$tokens = TWD_SK_Packs::packs()['sage']['tokens'];
+	$tokens['color-band'] = '#EEEEEE';
+	$ids = array_map( function ( $b ) {
+		return $b['id'];
+	}, TWD_SK_Contrast::check( $tokens )['blocking'] );
+	twd_sk_true( in_array( 'band_text', $ids, true ) && in_array( 'band_accent', $ids, true ) );
 } );

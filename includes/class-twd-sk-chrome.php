@@ -7,7 +7,7 @@
  * the words and links come from the site profile (TWD_SK_Profile). Variants live here, in the
  * plugin, so a new site needs no layout work.
  *
- * Header variants: bar, centered, split, minimal. Footer variants: columns, band, centered, simple.
+ * Header variants: bar, centered, split, minimal. Footer variants: columns, band, centered, simple, feature.
  *
  * Placement (0.9.1): on the Hello theme, Site Kit places the header and footer itself, with no
  * Elementor Pro needed. It switches off Hello's own basic header and footer (the filter
@@ -153,6 +153,8 @@ class TWD_SK_Chrome {
 			'band'     => 'One to three columns on the band colour',
 			'centered' => 'One centred column',
 			'simple'   => 'Just the copyright, legal links and registration lines',
+			// 0.14.0: the large logo, footer text as a heading, contact and registration, links in two columns, a dark strip below.
+			'feature'  => 'Large logo with contact and registration, links in two columns, dark strip below',
 		);
 	}
 
@@ -174,6 +176,8 @@ class TWD_SK_Chrome {
 			'twd-sk-footer__heading', 'twd-sk-footer__links', 'twd-sk-footer__link', 'twd-sk-footer__contact',
 			'twd-sk-footer__reg', 'twd-sk-footer__reg-line', 'twd-sk-footer__bottom', 'twd-sk-footer__bottom-inner',
 			'twd-sk-footer__copy', 'twd-sk-footer__legal', 'twd-sk-footer__legal-link', 'twd-sk-skip',
+			// 0.14.0: the feature footer's own pieces (the footer text as a heading, the contact and registration groups, the two-column list).
+			'twd-sk-footer__tagline', 'twd-sk-footer__contact-group', 'twd-sk-footer__regs', 'twd-sk-footer__links--two',
 		);
 		foreach ( array_keys( self::header_variants() ) as $v ) {
 			$classes[] = 'twd-sk-header--' . $v;
@@ -356,16 +360,16 @@ class TWD_SK_Chrome {
 		return rtrim( $path, '/' ) === rtrim( $request, '/' ) || ( '/' === $path && '/' === $request );
 	}
 
-	private static function logo_html( $profile, $img_class, $text_class, $lazy = false ) {
+	private static function logo_html( $profile, $img_class, $text_class, $lazy = false, $size = 'medium' ) {
 		$name = self::site_name( $profile );
-		$img  = self::logo_img( $profile['logo_id'], $img_class, $name, $lazy );
+		$img  = self::logo_img( $profile['logo_id'], $img_class, $name, $lazy, $size );
 		return '' !== $img ? $img : '<span class="' . $text_class . '">' . self::esc( $name ) . '</span>';
 	}
 
 	/** One logo picture tag, or '' when the id is not a usable picture. */
-	private static function logo_img( $id, $img_class, $alt, $lazy = false ) {
+	private static function logo_img( $id, $img_class, $alt, $lazy = false, $size = 'medium' ) {
 		if ( $id && function_exists( 'wp_get_attachment_image_src' ) ) {
-			$src = wp_get_attachment_image_src( (int) $id, 'medium' );
+			$src = wp_get_attachment_image_src( (int) $id, $size );
 			if ( is_array( $src ) && ! empty( $src[0] ) ) {
 				$w = ! empty( $src[1] ) ? ' width="' . (int) $src[1] . '"' : '';
 				$h = ! empty( $src[2] ) ? ' height="' . (int) $src[2] . '"' : '';
@@ -557,6 +561,9 @@ class TWD_SK_Chrome {
 		$variant = $eff['footer'];
 
 		$bottom = '<div class="twd-sk-footer__bottom"><div class="twd-sk-inner twd-sk-footer__bottom-inner">' . self::copyright( $profile ) . self::legal_links( $profile ) . '</div></div>';
+		if ( 'feature' === $variant ) {
+			return self::render_footer_feature( $profile, $bottom );
+		}
 		$reg    = '';
 		if ( $profile['registration'] ) {
 			$reg = '<div class="twd-sk-inner twd-sk-footer__reg">';
@@ -622,6 +629,58 @@ class TWD_SK_Chrome {
 		$tone = 'band' === $variant ? ' twd-sk-tone-band' : '';
 		return '<div class="twd-sk-page twd-sk-chrome"><footer class="twd-sk-footer twd-sk-footer--' . $variant . ' twd-sk-footer--cols-' . $cols . $tone . '">'
 			. $main . $reg . $bottom . '</footer></div>';
+	}
+
+	/**
+	 * The feature footer (0.14.0). Left block: the logo large (a bigger size of the picture, so it stays sharp),
+	 * the footer text set as a heading, a small Contact label with the email, phone and address lines, then the
+	 * registration lines. Right block: the page links in two columns, with no label above them. Below: the
+	 * slim strip with only the copyright and the legal links. The email and the registration lines stay in the
+	 * main area, never in the strip. Anything not supplied leaves its piece out; nothing is invented.
+	 */
+	private static function render_footer_feature( $profile, $bottom ) {
+		$brand = $profile['logo_id']
+			? '<div>' . self::logo_html( $profile, 'twd-sk-footer__logo-img', 'twd-sk-footer__name', true, 'large' ) . '</div>'
+			: '<p class="twd-sk-footer__name">' . self::esc( self::site_name( $profile ) ) . '</p>';
+		if ( '' !== $profile['footer_text'] ) {
+			$brand .= '<p class="twd-sk-footer__tagline">' . self::esc( $profile['footer_text'] ) . '</p>';
+		}
+
+		$lines = array();
+		if ( '' !== $profile['email'] ) {
+			$lines[] = '<p class="twd-sk-footer__contact">' . self::email_html( $profile['email'], 'twd-sk-footer__link' ) . '</p>';
+		}
+		if ( '' !== $profile['phone'] ) {
+			$lines[] = '<p class="twd-sk-footer__contact">' . self::phone_html( $profile['phone'], 'twd-sk-footer__link' ) . '</p>';
+		}
+		foreach ( $profile['address'] as $line ) {
+			$lines[] = '<p class="twd-sk-footer__contact">' . self::esc( $line ) . '</p>';
+		}
+		if ( $lines ) {
+			$brand .= '<div class="twd-sk-footer__contact-group"><p class="twd-sk-footer__heading">Contact</p>' . implode( '', $lines ) . '</div>';
+		}
+		if ( $profile['registration'] ) {
+			$brand .= '<div class="twd-sk-footer__regs">';
+			foreach ( $profile['registration'] as $line ) {
+				$brand .= '<p class="twd-sk-footer__reg-line">' . self::esc( $line ) . '</p>';
+			}
+			$brand .= '</div>';
+		}
+
+		$links = '';
+		if ( $profile['menu'] ) {
+			$links = '<nav aria-label="Footer"><ul class="twd-sk-footer__links twd-sk-footer__links--two">';
+			foreach ( $profile['menu'] as $item ) {
+				$links .= '<li><a class="twd-sk-footer__link" href="' . self::url( $item['url'] ) . '">' . self::esc( $item['label'] ) . '</a></li>';
+			}
+			$links .= '</ul></nav>';
+		}
+
+		$main = '<div class="twd-sk-inner twd-sk-footer__main"><div class="twd-sk-footer__col">' . $brand . '</div>'
+			. ( '' !== $links ? '<div class="twd-sk-footer__col">' . $links . '</div>' : '' ) . '</div>';
+
+		return '<div class="twd-sk-page twd-sk-chrome"><footer class="twd-sk-footer twd-sk-footer--feature twd-sk-footer--cols-' . ( '' !== $links ? 2 : 1 ) . '">'
+			. $main . $bottom . '</footer></div>';
 	}
 
 	public static function render_minimal_footer() {

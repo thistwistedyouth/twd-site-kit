@@ -444,6 +444,7 @@ function get_bloginfo( $what = 'name' ) {
 }
 /** Attachments in the stand-in: id => array( url, width, height, is_image ). */
 function wp_get_attachment_image_src( $id, $size = 'thumbnail' ) {
+	$GLOBALS['twd_stub']['image_size_asked'][ (int) $id ] = $size;
 	$a = isset( $GLOBALS['twd_stub']['attachments'][ (int) $id ] ) ? $GLOBALS['twd_stub']['attachments'][ (int) $id ] : null;
 	return ( $a && ! empty( $a['is_image'] ) ) ? array( $a['url'], $a['w'], $a['h'], false ) : false;
 }

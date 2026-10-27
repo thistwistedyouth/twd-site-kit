@@ -741,6 +741,25 @@
 .twd-sk-footer--centered .twd-sk-footer__legal { justify-content: center; }
 .twd-sk-footer--centered .twd-sk-footer__reg { text-align: center; }
 .twd-sk-footer--simple .twd-sk-footer__bottom { border-top: 0; }
+/* The feature footer (0.14.0): large logo, the footer text as a heading, contact and registration on the left, links in two columns on the right, a slim band-colour strip below. */
+.twd-sk-footer--feature .twd-sk-footer__main { grid-template-columns: 1.15fr 1fr; align-items: start; padding-top: $section-y; padding-bottom: $section-y; }
+.twd-sk-footer--feature.twd-sk-footer--cols-1 .twd-sk-footer__main { grid-template-columns: 1fr; }
+.twd-sk-footer--feature .twd-sk-footer__logo-img { width: auto; max-width: 100%; height: $footer-logo-height-feature; max-height: none; object-fit: contain; object-position: left center; }
+.twd-sk-footer--feature .twd-sk-footer__tagline { margin: 28px 0 0; font-family: $font-heading; font-size: $size-h2; font-weight: $heading-weight; font-style: $heading-style; line-height: $line-heading; color: $color-title; overflow-wrap: break-word; }
+.twd-sk-footer--feature .twd-sk-footer__contact-group { margin: 32px 0 0; }
+.twd-sk-footer--feature .twd-sk-footer__contact-group .twd-sk-footer__heading { margin: 0 0 8px; }
+.twd-sk-footer--feature .twd-sk-footer__contact { margin: 0 0 6px; font-size: $size-body; overflow-wrap: anywhere; }
+.twd-sk-footer--feature .twd-sk-footer__regs { margin: 24px 0 0; }
+.twd-sk-footer--feature .twd-sk-footer__link { font-size: $size-body; }
+.twd-sk-footer--feature .twd-sk-footer__links--two { columns: 140px 2; column-gap: 24px; }
+.twd-sk-footer--feature .twd-sk-footer__links--two > li { break-inside: avoid; padding: 0 0 12px; }
+.twd-sk-footer--feature .twd-sk-footer__links--two > li + li { margin-top: 0; }
+.twd-sk-footer--feature .twd-sk-footer__links .twd-sk-footer__link { color: $color-title; text-decoration: none; }
+.twd-sk-footer--feature .twd-sk-footer__links .twd-sk-footer__link:hover, .twd-sk-footer--feature .twd-sk-footer__links .twd-sk-footer__link:focus-visible { color: $color-accent-text; text-decoration: underline; }
+.twd-sk-footer--feature .twd-sk-footer__bottom { background-color: $color-band; border-top: 0; }
+.twd-sk-footer--feature .twd-sk-footer__bottom-inner { padding-top: 12px; padding-bottom: 12px; }
+.twd-sk-footer--feature .twd-sk-footer__copy, .twd-sk-footer--feature .twd-sk-footer__legal { color: $color-on-band; }
+.twd-sk-footer--feature .twd-sk-footer__legal-link { color: $color-accent-on-dark; }
 
 @media (max-width: 900px) {
   .twd-sk-text__grid, .twd-sk-contact--split .twd-sk-contact__grid { grid-template-columns: 1fr; }
@@ -814,6 +833,10 @@
   .twd-sk-header__strip-inner { justify-content: center; }
   .twd-sk-footer--cols-2 .twd-sk-footer__main, .twd-sk-footer--cols-3 .twd-sk-footer__main { grid-template-columns: 1fr; }
   .twd-sk-footer__bottom-inner { flex-direction: column; align-items: flex-start; }
+  /* The feature footer stacks its two blocks; the logo takes its phone size and the heading its smaller step, still large. */
+  .twd-sk-footer--feature .twd-sk-footer__main { grid-template-columns: 1fr; gap: $gap-md; padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
+  .twd-sk-footer--feature .twd-sk-footer__logo-img { height: $footer-logo-height-feature-sm; }
+  .twd-sk-footer--feature .twd-sk-footer__tagline { font-size: $size-h2-sm; }
 }
 
 /* Question groups on a wide screen: one group at a time (0.14.0). */

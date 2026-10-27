@@ -41,6 +41,8 @@ class TWD_SK_Site {
 			array( 'logo', 'logo-height-sm', 'Header logo height on phones', 'size' ),
 			array( 'logo', 'logo-height-front', 'Front page logo height', 'size' ),
 			array( 'logo', 'footer-logo-height', 'Footer logo height', 'size' ),
+			array( 'logo', 'footer-logo-height-feature', 'Large footer: logo height', 'size' ),
+			array( 'logo', 'footer-logo-height-feature-sm', 'Large footer: logo height on phones', 'size' ),
 		);
 	}
 
