@@ -50,6 +50,7 @@ class TWD_SK_Brief {
 				'layout'      => $c['header_variant'],
 				'sticky'      => (bool) $c['sticky'],
 				'shrink'      => (bool) $c['shrink'],
+				'front_logo'  => (bool) $c['front_logo'],
 				'show_button' => (bool) $c['show_button'],
 				'show_strip'  => (bool) $c['show_strip'],
 			),
@@ -272,7 +273,7 @@ class TWD_SK_Brief {
 		// Site, header and footer fields map onto the saved profile and header and footer settings.
 		$map = array(
 			'site'   => array( 'name' => array( 'profile', 'site_name', 'Site name' ), 'person_name' => array( 'profile', 'person_name', TWD_SK_Mode::w( 'person_name_label', $mode ) ), 'person_job' => array( 'profile', 'person_job', TWD_SK_Mode::w( 'person_job_label', $mode ) ), 'phone' => array( 'profile', 'phone', 'Phone' ), 'email' => array( 'profile', 'email', 'Email' ), 'address' => array( 'profile', 'address', 'Address lines' ), 'area_served' => array( 'profile', 'area_served', TWD_SK_Mode::w( 'area_label', $mode ) ), 'registration' => array( 'profile', 'registration', TWD_SK_Mode::w( 'registration_label', $mode ) ), 'same_as' => array( 'profile', 'same_as', 'Profile links' ) ),
-			'header' => array( 'menu' => array( 'profile', 'menu', 'Menu' ), 'cta_label' => array( 'profile', 'cta_label', 'Header button text' ), 'cta_url' => array( 'profile', 'cta_url', 'Header button link' ), 'layout' => array( 'chrome', 'header_variant', 'Header layout' ), 'sticky' => array( 'chrome', 'sticky', 'Fixed header' ), 'shrink' => array( 'chrome', 'shrink', 'Shrink the fixed header on scroll' ), 'show_button' => array( 'chrome', 'show_button', 'Show the header button' ), 'show_strip' => array( 'chrome', 'show_strip', 'Contact strip' ) ),
+			'header' => array( 'menu' => array( 'profile', 'menu', 'Menu' ), 'cta_label' => array( 'profile', 'cta_label', 'Header button text' ), 'cta_url' => array( 'profile', 'cta_url', 'Header button link' ), 'layout' => array( 'chrome', 'header_variant', 'Header layout' ), 'sticky' => array( 'chrome', 'sticky', 'Fixed header' ), 'shrink' => array( 'chrome', 'shrink', 'Shrink the fixed header on scroll' ), 'front_logo' => array( 'chrome', 'front_logo', 'Bigger logo on the front page' ), 'show_button' => array( 'chrome', 'show_button', 'Show the header button' ), 'show_strip' => array( 'chrome', 'show_strip', 'Contact strip' ) ),
 			'footer' => array( 'text' => array( 'profile', 'footer_text', 'Footer text' ), 'legal' => array( 'profile', 'legal', 'Legal links' ), 'layout' => array( 'chrome', 'footer_variant', 'Footer layout' ), 'columns' => array( 'chrome', 'footer_columns', 'Footer columns' ) ),
 		);
 		foreach ( $map as $group => $fields ) {

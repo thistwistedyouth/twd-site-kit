@@ -185,7 +185,7 @@ twd_sk_test( 'cli: pack with no name lists the packs and marks the active one', 
 	foreach ( $data['rows'] as $row ) {
 		$by[ $row['pack'] ] = $row['active'];
 	}
-	twd_sk_eq( array( 'grove' => '', 'sage' => 'yes' ), $by );
+	twd_sk_eq( array( 'grove' => '', 'ink' => '', 'sage' => 'yes' ), $by );
 } );
 
 twd_sk_test( 'cli: pack with a name switches the active pack and says what to do about caches', function () {
@@ -204,7 +204,7 @@ twd_sk_test( 'cli: pack with an unknown name fails, lists the choices and change
 		$cli->pack( array( 'nonsense' ), array() );
 	} );
 	twd_sk_has( 'no style pack called "nonsense"', $msg );
-	twd_sk_has( 'grove, sage', $msg );
+	twd_sk_has( 'grove, ink, sage', $msg );
 	twd_sk_eq( 'sage', TWD_SK_Packs::active_slug() );
 } );
 
@@ -332,4 +332,34 @@ twd_sk_test( 'cli: export-templates writes the two Theme Builder JSON files and 
 		( new TWD_SK_CLI() )->export_templates( array(), array( 'dir' => $dir . '/missing' ) );
 	} ) );
 	rmdir( $dir );
+} );
+
+twd_sk_test( 'cli: save --pictures swaps pic: names for the named pictures before cleaning, and lists unknown names (0.14.0)', function () {
+	WP_CLI::reset();
+	twd_stub_add_post( 12, 'page', '[twd_page]' );
+	$GLOBALS['twd_stub']['attachments'][70] = array( 'url' => 'https://example.test/u/river.jpg', 'w' => 1600, 'h' => 900, 'is_image' => true );
+	$pics = twd_sk_tmp_file( json_encode( array( 'slots' => array(), 'custom' => array( array( 'name' => 'river', 'id' => 70, 'description' => 'The river at dusk', 'use_on' => 'any' ) ) ) ) );
+	$file = twd_sk_tmp_file( '<section class="twd-sk-image-text twd-sk-image-text--band"><img class="twd-sk-image-text__img" src="pic:river" alt=""><img class="twd-sk-image-text__img" src="pic:nope" alt=""></section>' );
+	( new TWD_SK_CLI() )->save( array( '12', $file ), array( 'pictures' => $pics, 'page-slug' => 'home', 'page-type' => 'home' ) );
+	$stored = TWD_SK_Store::get_current( 12 );
+	twd_sk_has( 'src="https://example.test/u/river.jpg" alt="The river at dusk"', $stored, 'the named picture is placed with its alt text' );
+	twd_sk_has( 'src="/wp-content/uploads/your-image.jpg"', $stored, 'an unknown name becomes the sample picture, which the leftover check flags' );
+	twd_sk_has( 'Pictures placed: river', WP_CLI::all() );
+	twd_sk_has( 'not on this page\'s list', WP_CLI::all() );
+	twd_sk_true( isset( TWD_SK_Store::get_leftover_levels( 12 )['must']['your-image'] ) );
+	unlink( $file );
+	unlink( $pics );
+} );
+
+twd_sk_test( 'cli: save --pictures refuses a file that is not JSON and saves nothing', function () {
+	WP_CLI::reset();
+	twd_stub_add_post( 12, 'page', '[twd_page]' );
+	$pics = twd_sk_tmp_file( '{not json' );
+	$file = twd_sk_tmp_file( '<p>x</p>' );
+	twd_sk_cli_fails( function () use ( $file, $pics ) {
+		( new TWD_SK_CLI() )->save( array( '12', $file ), array( 'pictures' => $pics ) );
+	} );
+	twd_sk_eq( '', TWD_SK_Store::get_current( 12 ) );
+	unlink( $file );
+	unlink( $pics );
 } );

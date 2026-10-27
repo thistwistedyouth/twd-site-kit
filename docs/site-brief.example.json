@@ -23,6 +23,7 @@
     "layout": "bar",
     "sticky": false,
     "shrink": false,
+    "front_logo": false,
     "show_button": true,
     "show_strip": false
   },

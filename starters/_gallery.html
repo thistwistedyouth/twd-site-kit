@@ -54,7 +54,7 @@
 </section>
 <div class="twd-sk-gallery-label">
 <div class="twd-sk-inner">
-<p><strong>text / default</strong>: A heading and paragraphs. The aside variant adds cards in a side column.</p>
+<p><strong>text / default</strong>: A heading and paragraphs. The aside variant adds cards in a side column; the prose variant is a left-aligned reading column for longer writing.</p>
 </div>
 </div>
 <section class="twd-sk-text twd-sk-tone-surface">
@@ -69,7 +69,7 @@
 </section>
 <div class="twd-sk-gallery-label">
 <div class="twd-sk-inner">
-<p><strong>text / twd-sk-text--aside</strong>: A heading and paragraphs. The aside variant adds cards in a side column.</p>
+<p><strong>text / twd-sk-text--aside</strong>: A heading and paragraphs. The aside variant adds cards in a side column; the prose variant is a left-aligned reading column for longer writing.</p>
 </div>
 </div>
 <section class="twd-sk-text twd-sk-text--aside twd-sk-tone-surface">
@@ -93,6 +93,20 @@
 <p>Short text here.</p>
 </div>
 </aside>
+</div>
+</div>
+</section>
+<div class="twd-sk-gallery-label">
+<div class="twd-sk-inner">
+<p><strong>text / twd-sk-text--prose</strong>: A heading and paragraphs. The aside variant adds cards in a side column; the prose variant is a left-aligned reading column for longer writing.</p>
+</div>
+</div>
+<section class="twd-sk-text twd-sk-text--prose twd-sk-tone-base">
+<div class="twd-sk-inner twd-sk-inner--narrow">
+<h2 class="twd-sk-title">Section heading here</h2>
+<div class="twd-sk-text__body">
+<p>Paragraph text here.</p>
+<p>Another paragraph here.</p>
 </div>
 </div>
 </section>
@@ -315,7 +329,7 @@
 </section>
 <div class="twd-sk-gallery-label">
 <div class="twd-sk-inner">
-<p><strong>faq / default</strong>: Questions that open and close. Pure HTML, no JavaScript.</p>
+<p><strong>faq / default</strong>: Questions that open and close. Pure HTML, no JavaScript. The groups layout puts the questions in named groups with a link to each.</p>
 </div>
 </div>
 <section class="twd-sk-faq twd-sk-tone-surface">
@@ -334,6 +348,56 @@
 <p>Another answer here.</p>
 </div>
 </details>
+</div>
+</div>
+</section>
+<div class="twd-sk-gallery-label">
+<div class="twd-sk-inner">
+<p><strong>faq / twd-sk-faq--groups</strong>: Questions that open and close. Pure HTML, no JavaScript. The groups layout puts the questions in named groups with a link to each.</p>
+</div>
+</div>
+<section class="twd-sk-faq twd-sk-faq--groups twd-sk-tone-surface" id="twd-sk-questions">
+<div class="twd-sk-inner twd-sk-inner--narrow">
+<h2 class="twd-sk-title">Frequently asked questions</h2>
+<ul class="twd-sk-faq__tabs">
+<li class="twd-sk-faq__tab"><a class="twd-sk-faq__tablink" href="#twd-sk-questions-1">Group heading here</a></li>
+<li class="twd-sk-faq__tab"><a class="twd-sk-faq__tablink" href="#twd-sk-questions-2">Group heading here</a></li>
+<li class="twd-sk-faq__tab"><a class="twd-sk-faq__tablink" href="#twd-sk-questions-3">Group heading here</a></li>
+</ul>
+<div class="twd-sk-faq__groups">
+<div class="twd-sk-faq__group twd-sk-faq__group--default" id="twd-sk-questions-1">
+<h3 class="twd-sk-faq__groupname">Group heading here</h3>
+<div class="twd-sk-faq__list">
+<details class="twd-sk-faq__item">
+<summary class="twd-sk-faq__question">Question here?</summary>
+<div class="twd-sk-faq__answer">
+<p>Answer here.</p>
+</div>
+</details>
+</div>
+</div>
+<div class="twd-sk-faq__group" id="twd-sk-questions-2">
+<h3 class="twd-sk-faq__groupname">Group heading here</h3>
+<div class="twd-sk-faq__list">
+<details class="twd-sk-faq__item">
+<summary class="twd-sk-faq__question">Question here?</summary>
+<div class="twd-sk-faq__answer">
+<p>Answer here.</p>
+</div>
+</details>
+</div>
+</div>
+<div class="twd-sk-faq__group" id="twd-sk-questions-3">
+<h3 class="twd-sk-faq__groupname">Group heading here</h3>
+<div class="twd-sk-faq__list">
+<details class="twd-sk-faq__item">
+<summary class="twd-sk-faq__question">Question here?</summary>
+<div class="twd-sk-faq__answer">
+<p>Answer here.</p>
+</div>
+</details>
+</div>
+</div>
 </div>
 </div>
 </section>

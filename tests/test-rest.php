@@ -596,7 +596,7 @@ twd_sk_test( 'rest site: the state lists every pack with its tokens, the editabl
 	$slugs = array_map( function ( $p ) {
 		return $p['slug'];
 	}, $out['packs'] );
-	twd_sk_eq( array( 'grove', 'sage' ), $slugs );
+	twd_sk_eq( array( 'grove', 'ink', 'sage' ), $slugs );
 	twd_sk_true( isset( $out['packs'][0]['tokens']['color-primary'] ) );
 	twd_sk_true( count( $out['editable'] ) >= 15 );
 	twd_sk_true( in_array( 'Lora', $out['fonts'], true ) );

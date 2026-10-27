@@ -4,7 +4,7 @@
  *
  * These go through TWD_SK_Store only. They are not the import endpoint.
  *
- *   wp twd-sk save <page_id> <file>     store a file (or - for stdin) as a new version
+ *   wp twd-sk save <page_id> <file>     store a file (or - for stdin) as a new version (--pictures places pic: names first)
  *   wp twd-sk get <page_id>             print the current HTML
  *   wp twd-sk versions <page_id>        list versions, newest first
  *   wp twd-sk undo <page_id>            step back one change (recorded as a new version)
@@ -49,9 +49,21 @@ class TWD_SK_CLI {
 	 * [--base=<version>]
 	 * : Refuse to save if the page is no longer on this version.
 	 *
+	 * [--pictures=<file>]
+	 * : A pictures JSON file (the same format as wp twd-sk build --pictures). Every src="pic:NAME" in the
+	 *   file is swapped for that named picture's address and alt text before the page is cleaned, with the
+	 *   same engine the build uses (0.14.0). A name not in the file is left as the sample picture and listed.
+	 *
+	 * [--page-slug=<slug>]
+	 * : With --pictures: this page's slug, so pictures marked "use on" that page are offered (default: any page).
+	 *
+	 * [--page-type=<type>]
+	 * : With --pictures: the page type (home, about), so its slot picture fills the first sample picture.
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp twd-sk save 12 home.html --note="First draft"
+	 *     wp twd-sk save 12 home.html --pictures=pictures.json --page-slug=home --page-type=home
 	 */
 	public function save( $args, $assoc_args ) {
 		$page_id = self::page_id( isset( $args[0] ) ? $args[0] : '' );
@@ -73,6 +85,26 @@ class TWD_SK_CLI {
 		if ( false === $html ) {
 			WP_CLI::error( 'Could not read the HTML.' );
 			return;
+		}
+
+		if ( isset( $assoc_args['pictures'] ) ) {
+			$raw  = is_readable( (string) $assoc_args['pictures'] ) ? file_get_contents( (string) $assoc_args['pictures'] ) : false;
+			$pics = false === $raw ? null : json_decode( $raw, true );
+			if ( ! is_array( $pics ) ) {
+				WP_CLI::error( 'Could not read the pictures file as JSON.' );
+				return;
+			}
+			$set = TWD_SK_Pictures::validate( $pics );
+			foreach ( $set['errors'] as $e ) {
+				WP_CLI::warning( $e );
+			}
+			$used   = array();
+			$placed = TWD_SK_Pictures::place( $html, $set['valid'], isset( $assoc_args['page-slug'] ) ? (string) $assoc_args['page-slug'] : '', isset( $assoc_args['page-type'] ) ? (string) $assoc_args['page-type'] : '', $used );
+			$html   = $placed['html'];
+			foreach ( $placed['report'] as $line ) {
+				WP_CLI::warning( $line );
+			}
+			WP_CLI::log( 'Pictures placed: ' . ( $used ? implode( ', ', $used ) : 'none by name' ) . '.' );
 		}
 
 		$opts = array();

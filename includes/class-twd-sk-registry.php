@@ -125,6 +125,20 @@ class TWD_SK_Registry {
 	}
 
 	private static function text( $variant ) {
+		if ( 'prose' === $variant ) {
+			// 0.14.0: a reading column: narrow, left aligned, room between paragraphs, for pages where the writing leads.
+			return self::lines( array(
+				'<section class="twd-sk-text twd-sk-text--prose twd-sk-tone-base">',
+				'<div class="twd-sk-inner twd-sk-inner--narrow">',
+				'<h2 class="twd-sk-title">Section heading here</h2>',
+				'<div class="twd-sk-text__body">',
+				'<p>Paragraph text here.</p>',
+				'<p>Another paragraph here.</p>',
+				'</div>',
+				'</div>',
+				'</section>',
+			) );
+		}
 		if ( 'aside' === $variant ) {
 			return self::lines( array(
 				'<section class="twd-sk-text twd-sk-text--aside twd-sk-tone-surface">',
@@ -275,7 +289,49 @@ class TWD_SK_Registry {
 		) );
 	}
 
-	private static function faq() {
+	/**
+	 * @param string $variant '' for one list of questions, 'groups' for grouped questions (0.14.0): a row of
+	 *                        links to each group, one group shown at a time on a wide screen (pure CSS, :target,
+	 *                        the group marked --default shows first), every group stacked on a phone.
+	 */
+	private static function faq( $variant = '' ) {
+		if ( 'groups' === $variant ) {
+			$tabs   = array();
+			$groups = array();
+			foreach ( array( 1, 2, 3 ) as $n ) {
+				$tabs[]   = '<li class="twd-sk-faq__tab"><a class="twd-sk-faq__tablink" href="#twd-sk-questions-' . $n . '">Group heading here</a></li>';
+				$groups[] = '<div class="twd-sk-faq__group' . ( 1 === $n ? ' twd-sk-faq__group--default' : '' ) . '" id="twd-sk-questions-' . $n . '">';
+				$groups[] = '<h3 class="twd-sk-faq__groupname">Group heading here</h3>';
+				$groups[] = '<div class="twd-sk-faq__list">';
+				$groups[] = '<details class="twd-sk-faq__item">';
+				$groups[] = '<summary class="twd-sk-faq__question">Question here?</summary>';
+				$groups[] = '<div class="twd-sk-faq__answer">';
+				$groups[] = '<p>Answer here.</p>';
+				$groups[] = '</div>';
+				$groups[] = '</details>';
+				$groups[] = '</div>';
+				$groups[] = '</div>';
+			}
+			return self::lines( array_merge(
+				array(
+					'<section class="twd-sk-faq twd-sk-faq--groups twd-sk-tone-surface" id="twd-sk-questions">',
+					'<div class="twd-sk-inner twd-sk-inner--narrow">',
+					'<h2 class="twd-sk-title">Frequently asked questions</h2>',
+					'<ul class="twd-sk-faq__tabs">',
+				),
+				$tabs,
+				array(
+					'</ul>',
+					'<div class="twd-sk-faq__groups">',
+				),
+				$groups,
+				array(
+					'</div>',
+					'</div>',
+					'</section>',
+				)
+			) );
+		}
 		return self::lines( array(
 			'<section class="twd-sk-faq twd-sk-tone-surface">',
 			'<div class="twd-sk-inner twd-sk-inner--narrow">',
@@ -782,17 +838,22 @@ class TWD_SK_Registry {
 			'text'       => array(
 				'id'          => 'text',
 				'label'       => 'Text',
-				'description' => 'A heading and paragraphs. The aside variant adds cards in a side column.',
+				'description' => 'A heading and paragraphs. The aside variant adds cards in a side column; the prose variant is a left-aligned reading column for longer writing.',
 				'skeleton'    => self::text( '' ),
 				'variants'    => array(
 					'twd-sk-text--aside' => array(
 						'label'    => 'Aside: text with cards in a side column',
 						'skeleton' => self::text( 'aside' ),
 					),
+					'twd-sk-text--prose' => array(
+						'label'    => 'Prose: a narrow, left-aligned reading column for longer writing',
+						'skeleton' => self::text( 'prose' ),
+					),
 				),
 				'classes'     => array(
 					'twd-sk-text',
 					'twd-sk-text--aside',
+					'twd-sk-text--prose',
 					'twd-sk-text__grid',
 					'twd-sk-text__body',
 					'twd-sk-text__aside',
@@ -918,15 +979,29 @@ class TWD_SK_Registry {
 			'faq'        => array(
 				'id'          => 'faq',
 				'label'       => 'FAQ',
-				'description' => 'Questions that open and close. Pure HTML, no JavaScript.',
+				'description' => 'Questions that open and close. Pure HTML, no JavaScript. The groups layout puts the questions in named groups with a link to each.',
 				'skeleton'    => self::faq(),
-				'variants'    => array(),
+				'variants'    => array(
+					'twd-sk-faq--groups' => array(
+						'label'    => 'Groups: questions in named groups, one group shown at a time on a wide screen, each with its own link',
+						'skeleton' => self::faq( 'groups' ),
+					),
+				),
 				'classes'     => array(
 					'twd-sk-faq',
 					'twd-sk-faq__list',
 					'twd-sk-faq__item',
 					'twd-sk-faq__question',
 					'twd-sk-faq__answer',
+					// Question groups (0.14.0).
+					'twd-sk-faq--groups',
+					'twd-sk-faq__tabs',
+					'twd-sk-faq__tab',
+					'twd-sk-faq__tablink',
+					'twd-sk-faq__groups',
+					'twd-sk-faq__group',
+					'twd-sk-faq__group--default',
+					'twd-sk-faq__groupname',
 				),
 				'shortcodes'  => array(),
 			),

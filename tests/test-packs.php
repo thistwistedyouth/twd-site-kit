@@ -19,14 +19,19 @@ function twd_sk_write_pack( $slug, $data ) {
 
 // -- the two shipped packs ---------------------------------------------------
 
-twd_sk_test( 'packs: exactly two packs ship, sage and grove, and both are valid', function () {
-	twd_sk_eq( array( 'grove', 'sage' ), array_keys( TWD_SK_Packs::packs() ) );
-	twd_sk_true( is_array( twd_sk_pack( 'sage' ) ) );
-	twd_sk_true( is_array( twd_sk_pack( 'grove' ) ) );
+function twd_sk_pack_slugs() {
+	return array_keys( TWD_SK_Packs::packs() );
+}
+
+twd_sk_test( 'packs: the shipped packs are sage, grove and ink (0.14.0), and all are valid', function () {
+	twd_sk_eq( array( 'grove', 'ink', 'sage' ), twd_sk_pack_slugs() );
+	foreach ( twd_sk_pack_slugs() as $slug ) {
+		twd_sk_true( is_array( twd_sk_pack( $slug ) ), $slug );
+	}
 } );
 
 twd_sk_test( 'packs: each pack defines every token in the schema and nothing else', function () {
-	foreach ( array( 'sage', 'grove' ) as $slug ) {
+	foreach ( twd_sk_pack_slugs() as $slug ) {
 		$raw = json_decode( file_get_contents( ABSPATH . 'packs/' . $slug . '.json' ), true );
 		$have = array_keys( $raw['tokens'] );
 		$want = TWD_SK_Packs::token_names();
@@ -119,7 +124,7 @@ twd_sk_test( 'tokens: weights, line heights and keyword tokens are strict', func
 } );
 
 twd_sk_test( 'tokens: only bundled fonts or system stacks are accepted, never an arbitrary name', function () {
-	foreach ( array( 'Cormorant Garamond', 'Lora', 'Jost', 'Nunito', 'System serif', 'System sans' ) as $v ) {
+	foreach ( array( 'Cormorant Garamond', 'Lora', 'Jost', 'Nunito', 'EB Garamond', 'Inter', 'System serif', 'System sans' ) as $v ) {
 		twd_sk_true( TWD_SK_Packs::valid_token( 'font-body', $v ), $v );
 	}
 	foreach ( array( 'Comic Sans MS', 'Arial', 'x"; background:url(x)', 'Jost, serif', '', 'jost' ) as $v ) {
@@ -222,7 +227,7 @@ twd_sk_test( 'packs: active_tokens are the active pack, with valid per-site over
 // -- CSS output ---------------------------------------------------------------
 
 twd_sk_test( 'output: tokens_css is one :root block of --twd-site-* properties and nothing else', function () {
-	foreach ( array( 'sage', 'grove' ) as $slug ) {
+	foreach ( twd_sk_pack_slugs() as $slug ) {
 		$css = TWD_SK_Packs::tokens_css( twd_sk_pack( $slug )['tokens'] );
 		twd_sk_true( 0 === strpos( $css, ':root{--twd-site-' ), $slug . ' starts with :root' );
 		twd_sk_eq( 1, substr_count( $css, '{' ) );
@@ -324,7 +329,7 @@ twd_sk_test( 'fonts: no stray font files on disk that the registry does not know
 } );
 
 twd_sk_test( 'fonts: each bundled family ships with its open font licence', function () {
-	foreach ( array( 'cormorant-garamond', 'lora', 'jost', 'nunito' ) as $slug ) {
+	foreach ( array( 'cormorant-garamond', 'lora', 'jost', 'nunito', 'eb-garamond', 'inter' ) as $slug ) {
 		$path = ABSPATH . 'assets/fonts/OFL-' . $slug . '.txt';
 		twd_sk_true( is_file( $path ), 'licence for ' . $slug );
 		twd_sk_has( 'SIL OPEN FONT LICENSE', strtoupper( file_get_contents( $path ) ) );
@@ -359,8 +364,8 @@ function twd_sk_contrast( $a, $b ) {
 	return ( $x + 0.05 ) / ( $y + 0.05 );
 }
 
-twd_sk_test( 'contrast: body text and card titles meet WCAG AA (4.5) on their backgrounds in both packs', function () {
-	foreach ( array( 'sage', 'grove' ) as $slug ) {
+twd_sk_test( 'contrast: body text and card titles meet WCAG AA (4.5) on their backgrounds in every pack', function () {
+	foreach ( twd_sk_pack_slugs() as $slug ) {
 		$t = twd_sk_pack( $slug )['tokens'];
 		twd_sk_true( twd_sk_contrast( $t['color-body'], $t['color-bg'] ) >= 4.5, $slug . ' body on bg' );
 		twd_sk_true( twd_sk_contrast( $t['color-body'], $t['color-surface'] ) >= 4.5, $slug . ' body on surface' );
@@ -391,7 +396,7 @@ twd_sk_test( 'contrast: text pairs on bands, buttons, headings and eyebrows reac
 		array( 'color-eyebrow', 'color-surface' ),
 		array( 'color-primary', 'color-bg' ),
 	);
-	foreach ( array( 'sage', 'grove' ) as $slug ) {
+	foreach ( twd_sk_pack_slugs() as $slug ) {
 		$t = twd_sk_pack( $slug )['tokens'];
 		foreach ( $pairs as $p ) {
 			$ratio = twd_sk_contrast( $t[ $p[0] ], $t[ $p[1] ] );
@@ -402,7 +407,7 @@ twd_sk_test( 'contrast: text pairs on bands, buttons, headings and eyebrows reac
 
 twd_sk_test( 'sizes: packs keep body and lead at 16px or more and small text, eyebrows and buttons at 14px or more', function () {
 	$floors = array( 'size-body' => 16, 'size-lead' => 16, 'size-small' => 14, 'eyebrow-size' => 14, 'btn-size' => 14 );
-	foreach ( array( 'sage', 'grove' ) as $slug ) {
+	foreach ( twd_sk_pack_slugs() as $slug ) {
 		$t = twd_sk_pack( $slug )['tokens'];
 		foreach ( $floors as $name => $min ) {
 			twd_sk_true( (float) $t[ $name ] >= $min, $slug . ' ' . $name . ' is ' . $t[ $name ] );
@@ -412,4 +417,54 @@ twd_sk_test( 'sizes: packs keep body and lead at 16px or more and small text, ey
 	twd_sk_true( ! TWD_SK_Packs::valid_token( 'eyebrow-size', '11px' ) );
 	twd_sk_true( ! TWD_SK_Packs::valid_token( 'size-small', '13px' ) );
 	twd_sk_true( TWD_SK_Packs::valid_token( 'eyebrow-size', '14px' ) );
+} );
+
+// -- 0.14.0: ink, the logo size tokens with defaults, EB Garamond and Inter ---------------
+
+twd_sk_test( 'packs: ink is text-led (off-white, ink-black, one blue-green for buttons and links, EB Garamond and Inter, small corners, no shadows)', function () {
+	$t = twd_sk_pack( 'ink' )['tokens'];
+	twd_sk_eq( 'EB Garamond', $t['font-heading'] );
+	twd_sk_eq( 'Inter', $t['font-body'] );
+	twd_sk_eq( $t['color-primary'], $t['color-accent-text'], 'links use the one colour' );
+	twd_sk_eq( $t['color-primary'], $t['color-accent'], 'the accent is the one colour too' );
+	twd_sk_eq( $t['color-heading'], $t['color-title'], 'headings are ink, not a second colour' );
+	twd_sk_eq( 'none', $t['shadow-card'] );
+	twd_sk_eq( 'none', $t['shadow-image'] );
+	twd_sk_eq( 'normal', $t['heading-style'] );
+	twd_sk_true( (int) $t['radius-btn'] <= 6 && (int) $t['radius-card'] <= 6, 'small corners' );
+	twd_sk_true( twd_sk_contrast( $t['color-primary'], $t['color-bg'] ) >= 4.5, 'the one colour reads on the page' );
+	twd_sk_true( twd_sk_contrast( $t['color-body'], $t['color-bg'] ) >= 12, 'ink on paper' );
+} );
+
+twd_sk_test( 'packs: a pack written before the logo tokens existed is still valid and gets their defaults', function () {
+	$old = json_decode( file_get_contents( ABSPATH . 'packs/sage.json' ), true );
+	$old['slug'] = 'older';
+	foreach ( array_keys( TWD_SK_Packs::defaults() ) as $name ) {
+		unset( $old['tokens'][ $name ] );
+	}
+	$pack = TWD_SK_Packs::read_pack_file( twd_sk_write_pack( 'older', $old ) );
+	twd_sk_true( is_array( $pack ), 'an older pack still reads' );
+	twd_sk_eq( '48px', $pack['tokens']['logo-height'] );
+	twd_sk_eq( '120px', $pack['tokens']['logo-height-front'] );
+	twd_sk_eq( '64px', $pack['tokens']['footer-logo-height'] );
+	twd_sk_eq( count( TWD_SK_Packs::token_names() ), count( $pack['tokens'] ), 'every token present after the defaults' );
+	// A pack may set its own.
+	twd_sk_eq( '44px', twd_sk_pack( 'ink' )['tokens']['logo-height'] );
+	// The stylesheet reads the tokens, so a site can set its own size as an override.
+	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	twd_sk_has( 'max-height: var(--twd-sk-logo-h, var(--twd-site-logo-height))', $raw );
+	twd_sk_has( 'max-height: var(--twd-site-footer-logo-height)', $raw );
+	twd_sk_has( 'max-height: var(--twd-site-logo-height-front)', $raw );
+	twd_sk_true( in_array( 'logo-height', TWD_SK_Site::editable_names(), true ), 'editable in the Site tab' );
+} );
+
+twd_sk_test( 'fonts: EB Garamond and Inter are bundled as variable latin woff2 with italics and the SIL licence', function () {
+	$fonts = TWD_SK_Packs::fonts();
+	twd_sk_eq( 2, count( $fonts['EB Garamond']['files'] ) );
+	twd_sk_eq( 2, count( $fonts['Inter']['files'] ) );
+	$css = TWD_SK_Packs::font_face_css( twd_sk_pack( 'ink' )['tokens'], 'https://example.test/fonts/' );
+	twd_sk_eq( 4, substr_count( $css, '@font-face' ) );
+	twd_sk_has( 'font-family:"EB Garamond";font-style:italic', $css );
+	twd_sk_has( 'font-family:"Inter";font-style:normal;font-weight:100 900', $css );
+	twd_sk_hasnt( 'Lora', $css );
 } );

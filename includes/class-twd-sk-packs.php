@@ -66,6 +66,21 @@ class TWD_SK_Packs {
 					array( 'file' => 'nunito-latin-wght-normal.woff2', 'style' => 'normal', 'weight' => '200 1000' ),
 				),
 			),
+			// 0.14.0: a quiet Garamond and a neutral sans, both SIL Open Font Licence (Fontsource packages).
+			'EB Garamond'        => array(
+				'stack' => 'Georgia, "Times New Roman", serif',
+				'files' => array(
+					array( 'file' => 'eb-garamond-latin-wght-normal.woff2', 'style' => 'normal', 'weight' => '400 800' ),
+					array( 'file' => 'eb-garamond-latin-wght-italic.woff2', 'style' => 'italic', 'weight' => '400 800' ),
+				),
+			),
+			'Inter'              => array(
+				'stack' => '"Helvetica Neue", Arial, sans-serif',
+				'files' => array(
+					array( 'file' => 'inter-latin-wght-normal.woff2', 'style' => 'normal', 'weight' => '100 900' ),
+					array( 'file' => 'inter-latin-wght-italic.woff2', 'style' => 'italic', 'weight' => '100 900' ),
+				),
+			),
 			'System serif'       => array(
 				'stack' => 'Georgia, "Times New Roman", serif',
 				'files' => array(),
@@ -118,6 +133,8 @@ class TWD_SK_Packs {
 			'container', 'container-narrow', 'gutter', 'gutter-sm',
 			'section-y', 'section-y-sm', 'gap-lg', 'gap-md', 'gap-sm',
 			'hero-min-height', 'hero-min-height-sm',
+			// 0.14.0: logo sizes (header, header on phones, the front page's larger logo, footer).
+			'logo-height', 'logo-height-sm', 'logo-height-front', 'footer-logo-height',
 		) as $name ) {
 			$s[ $name ] = 'length';
 		}
@@ -129,6 +146,19 @@ class TWD_SK_Packs {
 
 	public static function token_names() {
 		return array_keys( self::schema() );
+	}
+
+	/**
+	 * Tokens added after 0.13.0 with the value an older pack gets when it does not define them,
+	 * so a pack file written for an earlier version keeps working unchanged.
+	 */
+	public static function defaults() {
+		return array(
+			'logo-height'        => '48px',
+			'logo-height-sm'     => '40px',
+			'logo-height-front'  => '120px',
+			'footer-logo-height' => '64px',
+		);
 	}
 
 	// -- Validation --------------------------------------------------------
@@ -262,8 +292,9 @@ class TWD_SK_Packs {
 			}
 		}
 		if ( $complete ) {
+			$defaults = self::defaults();
 			foreach ( array_keys( $schema ) as $name ) {
-				if ( ! array_key_exists( $name, $tokens ) ) {
+				if ( ! array_key_exists( $name, $tokens ) && ! isset( $defaults[ $name ] ) ) {
 					$out['errors'][] = 'missing token: ' . $name;
 				}
 			}
@@ -313,7 +344,8 @@ class TWD_SK_Packs {
 			'slug'        => $slug,
 			'name'        => $data['name'],
 			'description' => isset( $data['description'] ) && is_string( $data['description'] ) ? $data['description'] : '',
-			'tokens'      => $check['valid'],
+			// A token the pack does not define (added in a later version) takes its default.
+			'tokens'      => array_merge( self::defaults(), $check['valid'] ),
 			'chrome'      => $chrome,
 		);
 	}

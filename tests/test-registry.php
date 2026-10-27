@@ -219,3 +219,54 @@ twd_sk_test( 'registry: the contact component holds no form, and says so', funct
 	twd_sk_hasnt( '<form', $c['skeleton'] );
 	twd_sk_has( 'Elementor widget', $c['description'] );
 } );
+
+// -- 0.14.0: question groups --------------------------------------------------------------
+
+twd_sk_test( 'registry: the faq groups layout is pure HTML: a row of in-page links, groups with twd-sk- ids, a default group, questions as details, one h1 nowhere', function () {
+	$g = TWD_SK_Registry::get( 'faq' )['variants']['twd-sk-faq--groups']['skeleton'];
+	twd_sk_has( 'class="twd-sk-faq twd-sk-faq--groups', $g );
+	twd_sk_eq( 3, substr_count( $g, 'class="twd-sk-faq__tablink" href="#twd-sk-questions-' ) );
+	twd_sk_eq( 3, substr_count( $g, ' id="twd-sk-questions-' ) );
+	twd_sk_eq( 1, substr_count( $g, 'twd-sk-faq__group--default' ), 'one default group' );
+	twd_sk_eq( 3, substr_count( $g, '<details class="twd-sk-faq__item">' ) );
+	twd_sk_hasnt( '<script', $g );
+	twd_sk_hasnt( '<button', $g );
+	twd_sk_hasnt( 'data-', $g );
+	preg_match_all( '/ id="([^"]+)"/', $g, $ids );
+	foreach ( $ids[1] as $id ) {
+		twd_sk_true( 0 === strpos( $id, 'twd-sk-' ), 'id prefix: ' . $id );
+	}
+	// The sanitiser keeps it whole, and the sample group heading is flagged as leftover text.
+	$r = TWD_SK_Sanitizer::clean_with_report( $g );
+	twd_sk_eq( 0, $r['report']['total'] );
+	twd_sk_true( isset( TWD_SK_Sanitizer::find_leftovers( $g )['Heading here'] ) );
+	// The stylesheet shows one group at a time only on a wide screen, with no script, via :target and :has.
+	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	twd_sk_true( 1 === preg_match( '/@media \(min-width: 769px\)[^@]*twd-sk-faq__group\.twd-sk-faq__group:not\(:target\) \{[^}]*display: none/', $raw ), 'wide screens show the linked group' );
+	twd_sk_true( 1 === preg_match( '/@media \(min-width: 769px\)[^@]*:not\(:has\([^)]*:target\)\)[^{]*twd-sk-faq__group--default[^{]*\{[^}]*display: none/', $raw ), 'with no link followed, the default group shows' );
+	twd_sk_has( 'scroll-margin-top', $raw );
+	// It is offered as a layout in the Visual editor's section menu.
+	twd_sk_true( isset( TWD_SK_Recipes::parts_menu()['faq']['variants']['twd-sk-faq--groups'] ) );
+} );
+
+twd_sk_test( 'compatibility: a page stored by 0.13 passes through the 0.14 sanitiser byte for byte', function () {
+	$stored = file_get_contents( ABSPATH . 'tests/fixtures/stored-page-0-13.html' );
+	twd_sk_true( strlen( $stored ) > 5000 );
+	twd_sk_eq( $stored, TWD_SK_Sanitizer::clean( $stored ), 'an old page is not changed by the new code' );
+	twd_sk_eq( 0, TWD_SK_Sanitizer::clean_with_report( $stored )['report']['total'] );
+	// Saved through the store it is a no-op second time round, so no version is written for nothing.
+	twd_stub_add_post( 913 );
+	$first = TWD_SK_Store::save( 913, $stored );
+	twd_sk_eq( 1, $first['version'] );
+	$again = TWD_SK_Store::save( 913, $stored );
+	twd_sk_true( ! empty( $again['unchanged'] ) );
+} );
+
+twd_sk_test( 'registry: the prose text layout is a narrow left-aligned reading column (0.14.0)', function () {
+	$v = TWD_SK_Registry::get( 'text' )['variants']['twd-sk-text--prose'];
+	twd_sk_has( 'class="twd-sk-text twd-sk-text--prose', $v['skeleton'] );
+	twd_sk_has( 'twd-sk-inner--narrow', $v['skeleton'] );
+	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-text--prose\.twd-sk-text--prose \.twd-sk-text__body\.twd-sk-text__body \{[^}]*text-align: left/', $raw ), 'left aligned' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-text\.twd-sk-text:not\(\.twd-sk-text--aside\.twd-sk-text--aside\):not\(\.twd-sk-text--prose\.twd-sk-text--prose\)/', $raw ), 'the centred rule leaves prose alone' );
+} );

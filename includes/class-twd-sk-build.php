@@ -540,6 +540,9 @@ class TWD_SK_Build {
 		if ( isset( $draft['pictures']['slots']['logo'] ) ) {
 			$save['logo_id'] = $draft['pictures']['slots']['logo']['id'];
 		}
+		if ( isset( $draft['pictures']['slots']['logo_mark'] ) ) {
+			$save['logo_mark_id'] = $draft['pictures']['slots']['logo_mark']['id'];
+		}
 		// A basic menu from the planned pages when there is none yet.
 		if ( ! $profile['menu'] ) {
 			$menu = array();

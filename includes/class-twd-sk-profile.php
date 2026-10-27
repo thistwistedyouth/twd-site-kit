@@ -30,6 +30,7 @@ class TWD_SK_Profile {
 		return array(
 			'site_name'    => '',
 			'logo_id'      => 0,
+			'logo_mark_id' => 0,   // 0.14.0: a small symbol-only mark for the header on pages other than the front page
 			'menu'         => array(),
 			'cta_label'    => '',
 			'cta_url'      => '',
@@ -151,15 +152,17 @@ class TWD_SK_Profile {
 				$u = self::url( $value );
 				return false === $u ? 'The button link is not allowed. Use a page on this site, #anchor, https, mailto or tel.' : array( $u );
 			case 'logo_id':
+			case 'logo_mark_id':
 			case 'about_page_id':
+				$is_logo = 'logo_id' === $key || 'logo_mark_id' === $key;
 				if ( ! is_int( $value ) && ! ( is_string( $value ) && ctype_digit( $value ) ) ) {
-					return 'logo_id' === $key ? 'The logo must be the number of a picture in the media library.' : 'That must be a page number.';
+					return $is_logo ? 'The logo must be the number of a picture in the media library.' : 'That must be a page number.';
 				}
 				if ( (int) $value < 0 ) {
-					return 'logo_id' === $key ? 'The logo must be the number of a picture in the media library.' : 'That must be a page number.';
+					return $is_logo ? 'The logo must be the number of a picture in the media library.' : 'That must be a page number.';
 				}
 				$value = (int) $value;
-				if ( 'logo_id' === $key && $value > 0 && ! self::is_image( $value ) ) {
+				if ( $is_logo && $value > 0 && ! self::is_image( $value ) ) {
 					return 'That logo number is not a picture in the media library.';
 				}
 				return array( max( 0, $value ) );
@@ -345,6 +348,7 @@ class TWD_SK_Profile {
 		return array(
 			'site_name'    => TWD_SK_Mode::w( 'ph_site_name' ),
 			'logo_id'      => 0,
+			'logo_mark_id' => 0,
 			'menu'         => array(
 				array( 'label' => 'Home', 'url' => '/', 'children' => array() ),
 				array( 'label' => 'About', 'url' => '/about', 'children' => array() ),

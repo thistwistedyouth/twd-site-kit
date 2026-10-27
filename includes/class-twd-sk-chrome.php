@@ -161,6 +161,8 @@ class TWD_SK_Chrome {
 			'twd-sk-header', 'twd-sk-header--sticky', 'twd-sk-header--shrink', 'twd-sk-header--shrunk', 'twd-sk-header--js', 'twd-sk-header--open',
 			'twd-sk-header__strip', 'twd-sk-header__strip-inner', 'twd-sk-header__strip-link', 'twd-sk-header__inner',
 			'twd-sk-header__logo', 'twd-sk-header__logo-img', 'twd-sk-header__logo-text', 'twd-sk-header__toggle', 'twd-sk-header__bars',
+			// 0.14.0: the front page's larger stacked logo, and the small mark used elsewhere.
+			'twd-sk-header--front', 'twd-sk-header__logo-mark', 'twd-sk-chrome--front',
 			'twd-sk-header__panel', 'twd-sk-header__nav', 'twd-sk-header__menu', 'twd-sk-header__item', 'twd-sk-header__item--parent',
 			'twd-sk-header__link', 'twd-sk-header__sub', 'twd-sk-header__sublink', 'twd-sk-header__cta',
 			'twd-sk-footer', 'twd-sk-footer--cols-1', 'twd-sk-footer--cols-2', 'twd-sk-footer--cols-3',
@@ -184,6 +186,7 @@ class TWD_SK_Chrome {
 			'footer_variant' => '',
 			'sticky'         => false,
 			'shrink'         => false,   // 0.13.0: a fixed header gets smaller after a small scroll
+			'front_logo'     => false,   // 0.14.0: the full logo, larger and centred above the menu, on the front page only
 			'show_button'    => true,
 			'show_strip'     => false,
 			'footer_columns' => 3,
@@ -229,6 +232,7 @@ class TWD_SK_Chrome {
 					break;
 				case 'sticky':
 				case 'shrink':
+				case 'front_logo':
 				case 'show_button':
 				case 'show_strip':
 					if ( is_bool( $value ) || 0 === $value || 1 === $value || '0' === $value || '1' === $value ) {
@@ -281,6 +285,7 @@ class TWD_SK_Chrome {
 			'footer'      => $f,
 			'sticky'      => $sticky,
 			'shrink'      => $sticky && (bool) $s['shrink'],
+			'front_logo'  => (bool) $s['front_logo'],
 			'button'      => (bool) $s['show_button'],
 			'strip'       => (bool) $s['show_strip'],
 			'columns'     => (int) $s['footer_columns'],
@@ -346,15 +351,50 @@ class TWD_SK_Chrome {
 
 	private static function logo_html( $profile, $img_class, $text_class, $lazy = false ) {
 		$name = self::site_name( $profile );
-		if ( $profile['logo_id'] && function_exists( 'wp_get_attachment_image_src' ) ) {
-			$src = wp_get_attachment_image_src( (int) $profile['logo_id'], 'medium' );
+		$img  = self::logo_img( $profile['logo_id'], $img_class, $name, $lazy );
+		return '' !== $img ? $img : '<span class="' . $text_class . '">' . self::esc( $name ) . '</span>';
+	}
+
+	/** One logo picture tag, or '' when the id is not a usable picture. */
+	private static function logo_img( $id, $img_class, $alt, $lazy = false ) {
+		if ( $id && function_exists( 'wp_get_attachment_image_src' ) ) {
+			$src = wp_get_attachment_image_src( (int) $id, 'medium' );
 			if ( is_array( $src ) && ! empty( $src[0] ) ) {
 				$w = ! empty( $src[1] ) ? ' width="' . (int) $src[1] . '"' : '';
 				$h = ! empty( $src[2] ) ? ' height="' . (int) $src[2] . '"' : '';
-				return '<img class="' . $img_class . '" src="' . self::url( $src[0] ) . '" alt="' . esc_attr( $name ) . '"' . $w . $h . ( $lazy ? ' loading="lazy"' : '' ) . ' decoding="async">';
+				return '<img class="' . $img_class . '" src="' . self::url( $src[0] ) . '" alt="' . esc_attr( $alt ) . '"' . $w . $h . ( $lazy ? ' loading="lazy"' : '' ) . ' decoding="async">';
 			}
 		}
-		return '<span class="' . $text_class . '">' . self::esc( $name ) . '</span>';
+		return '';
+	}
+
+	/**
+	 * The header logo (0.14.0). With the front page logo option on and this the front page, the full
+	 * logo prints large; a small mark, when one is set, prints beside it (hidden until the header shrinks,
+	 * when it takes the full logo's place). On other pages the mark prints with the site name as text;
+	 * with no mark the full logo prints as always.
+	 */
+	private static function header_logo_html( $profile, $front, $option_on ) {
+		$name = self::site_name( $profile );
+		$mark = $option_on ? self::logo_img( $profile['logo_mark_id'], 'twd-sk-header__logo-mark', '' ) : '';
+		if ( $front ) {
+			$full = self::logo_img( $profile['logo_id'], 'twd-sk-header__logo-img', $name );
+			if ( '' !== $full ) {
+				return $mark . $full;
+			}
+		} elseif ( '' !== $mark ) {
+			return $mark . '<span class="twd-sk-header__logo-text">' . self::esc( $name ) . '</span>';
+		}
+		return self::logo_html( $profile, 'twd-sk-header__logo-img', 'twd-sk-header__logo-text' );
+	}
+
+	/** True on the site's front page (the home page), where the larger logo may show. */
+	private static function is_front() {
+		try {
+			return function_exists( 'is_front_page' ) && is_front_page();
+		} catch ( \Throwable $e ) {
+			return false;
+		}
 	}
 
 	/** A phone number as a link when it has digits, else as plain text (a starter holds a placeholder). */
@@ -401,8 +441,9 @@ class TWD_SK_Chrome {
 		}
 		$eff   = self::effective();
 		$strip = $eff['strip'] && ( '' !== $profile['phone'] || '' !== $profile['email'] );
-		$wrap  = 'twd-sk-page twd-sk-chrome' . ( $eff['sticky'] ? ' twd-sk-chrome--sticky' : '' ) . ( $eff['sticky'] && $strip ? ' twd-sk-chrome--strip' : '' );
-		$cls   = 'twd-sk-header twd-sk-header--' . $eff['header'] . ( $eff['sticky'] ? ' twd-sk-header--sticky' : '' ) . ( $eff['shrink'] ? ' twd-sk-header--shrink' : '' );
+		$front = $eff['front_logo'] && $profile['logo_id'] && self::is_front();
+		$wrap  = 'twd-sk-page twd-sk-chrome' . ( $eff['sticky'] ? ' twd-sk-chrome--sticky' : '' ) . ( $eff['sticky'] && $strip ? ' twd-sk-chrome--strip' : '' ) . ( $eff['sticky'] && $front ? ' twd-sk-chrome--front' : '' );
+		$cls   = 'twd-sk-header twd-sk-header--' . $eff['header'] . ( $eff['sticky'] ? ' twd-sk-header--sticky' : '' ) . ( $eff['shrink'] ? ' twd-sk-header--shrink' : '' ) . ( $front ? ' twd-sk-header--front' : '' );
 
 		$out  = '<div class="' . $wrap . '"><header class="' . $cls . '">' . ( $skip ? self::skip_link() : '' );
 		if ( $strip ) {
@@ -411,7 +452,7 @@ class TWD_SK_Chrome {
 				. '</div></div>';
 		}
 		$out .= '<div class="twd-sk-inner twd-sk-header__inner">';
-		$out .= '<a class="twd-sk-header__logo" href="' . self::url( self::home() ) . '">' . self::logo_html( $profile, 'twd-sk-header__logo-img', 'twd-sk-header__logo-text' ) . '</a>';
+		$out .= '<a class="twd-sk-header__logo" href="' . self::url( self::home() ) . '">' . self::header_logo_html( $profile, $front, $eff['front_logo'] && $profile['logo_id'] ) . '</a>';
 		$out .= '<button type="button" class="twd-sk-header__toggle" aria-expanded="false" aria-controls="' . self::NAV_ID . '" hidden>'
 			. '<span class="twd-sk-visually-hidden">Menu</span><span class="twd-sk-header__bars" aria-hidden="true"></span></button>';
 		$out .= '<div class="twd-sk-header__panel"><nav id="' . self::NAV_ID . '" class="twd-sk-header__nav" aria-label="Main"><ul class="twd-sk-header__menu">';

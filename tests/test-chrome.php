@@ -148,7 +148,7 @@ twd_sk_test( 'chrome shrink script: tiny, vanilla, passive, with a gap between s
 		twd_sk_eq( '', trim( (string) shell_exec( 'node --check ' . escapeshellarg( ABSPATH . 'assets/twd-site-kit-header-shrink.js' ) . ' 2>&1' ) ) );
 	}
 	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
-	twd_sk_has( '--twd-sk-logo-h: 32px', $raw );
+	twd_sk_has( '--twd-sk-logo-h: var(--twd-site-logo-height-sm)', $raw );
 	twd_sk_true( 1 === preg_match( '/twd-sk-header--shrink[^{]*twd-sk-header__inner[^{]*\{[^}]*transition/', $raw ), 'eased' );
 	twd_sk_true( 1 === preg_match( '/prefers-reduced-motion: reduce\)\s*\{[^@]*twd-sk-header--shrink[^{]*\{[^}]*transition: none/', $raw ), 'no motion when asked' );
 	twd_sk_true( 1 === preg_match( '/twd-sk-chrome--sticky\.twd-sk-chrome--sticky[^{]*\{[^}]*height: 76px/', $raw ), 'the spacer keeps its full height, so nothing shifts' );
@@ -579,4 +579,68 @@ twd_sk_test( 'placement: the site report, the build report and the launch check 
 	} ) );
 	twd_sk_eq( 'warn', $chrome[0]['status'] );
 	twd_sk_has( 'Hello', $chrome[0]['detail'] );
+} );
+
+// -- 0.14.0: the front page logo and the small mark -------------------------------------------
+
+twd_sk_test( 'chrome front logo (0.14.0): off by default; on, the front page gets the larger stacked logo and the mark, other pages the mark and the name', function () {
+	twd_sk_true( ! TWD_SK_Chrome::defaults()['front_logo'], 'off by default' );
+	$GLOBALS['twd_stub']['attachments'][50] = array( 'url' => '/u/logo.png', 'w' => 200, 'h' => 80, 'is_image' => true );
+	$GLOBALS['twd_stub']['attachments'][51] = array( 'url' => '/u/mark.png', 'w' => 60, 'h' => 60, 'is_image' => true );
+	// Off: one logo everywhere, nothing new in the markup even on the front page.
+	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'logo_id' => 50, 'logo_mark_id' => 51 ) ), array( 'front_logo' => false, 'sticky' => true ) );
+	$GLOBALS['twd_stub']['front'] = true;
+	$html = TWD_SK_Chrome::render_header();
+	twd_sk_hasnt( 'twd-sk-header--front', $html );
+	twd_sk_hasnt( 'twd-sk-header__logo-mark', $html, 'the mark is only used by the front page option' );
+	twd_sk_has( '<img class="twd-sk-header__logo-img" src="/u/logo.png"', $html );
+	// On, front page: the --front class, the mark (hidden until shrunk) then the full logo.
+	TWD_SK_Chrome::save_settings( array( 'front_logo' => true ) );
+	$html = TWD_SK_Chrome::render_header();
+	twd_sk_has( ' twd-sk-header--front', $html );
+	twd_sk_has( 'twd-sk-chrome--sticky twd-sk-chrome--front', $html, 'the spacer knows the header is taller' );
+	twd_sk_true( strpos( $html, 'twd-sk-header__logo-mark' ) < strpos( $html, 'twd-sk-header__logo-img' ), 'mark first, then the full logo' );
+	twd_sk_has( '<img class="twd-sk-header__logo-mark" src="/u/mark.png" alt=""', $html );
+	twd_sk_hasnt( 'twd-sk-header__logo-text', $html );
+	// On, another page: the mark and the site name as text, no full logo.
+	$GLOBALS['twd_stub']['front'] = false;
+	$html = TWD_SK_Chrome::render_header();
+	twd_sk_hasnt( 'twd-sk-header--front', $html );
+	twd_sk_has( '<img class="twd-sk-header__logo-mark" src="/u/mark.png"', $html );
+	twd_sk_has( '<span class="twd-sk-header__logo-text">Calm Practice</span>', $html );
+	twd_sk_hasnt( 'twd-sk-header__logo-img', $html );
+	// On, no mark set: the full logo everywhere, larger on the front page only.
+	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'logo_id' => 50, 'logo_mark_id' => 0 ) ), array( 'front_logo' => true, 'sticky' => false ) );
+	twd_sk_has( '<img class="twd-sk-header__logo-img" src="/u/logo.png"', TWD_SK_Chrome::render_header() );
+	twd_sk_hasnt( 'twd-sk-header__logo-mark', TWD_SK_Chrome::render_header() );
+	$GLOBALS['twd_stub']['front'] = true;
+	$html = TWD_SK_Chrome::render_header();
+	twd_sk_has( ' twd-sk-header--front', $html );
+	twd_sk_hasnt( 'twd-sk-chrome--front', $html, 'not sticky, so no taller spacer' );
+	// A text-only site (no logo) never gets the front class.
+	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'logo_id' => 0 ) ), array( 'front_logo' => true ) );
+	twd_sk_hasnt( 'twd-sk-header--front', TWD_SK_Chrome::render_header() );
+	$GLOBALS['twd_stub']['front'] = false;
+	twd_sk_true( is_wp_error( TWD_SK_Chrome::save_settings( array( 'front_logo' => 'big' ) ) ) );
+	TWD_SK_Chrome::save_settings( array( 'front_logo' => false, 'sticky' => false ) );
+} );
+
+twd_sk_test( 'chrome front logo css: larger logo and a column layout on the front page, a row again once shrunk, the mark swapped in, phones use the small size, reduced motion respected', function () {
+	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-header--front\.twd-sk-header--front \.twd-sk-header__inner\.twd-sk-header__inner \{[^}]*flex-direction: column/', $raw ), 'front page stacks the logo above the menu' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-header--front\.twd-sk-header--front \.twd-sk-header__logo-img\.twd-sk-header__logo-img \{[^}]*max-height: var\(--twd-site-logo-height-front\)/', $raw ), 'the front page logo height is a token' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-header--front\.twd-sk-header--front\.twd-sk-header--shrunk\.twd-sk-header--shrunk \.twd-sk-header__inner\.twd-sk-header__inner \{[^}]*flex-direction: row/', $raw ), 'shrunk, it is a row again' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-header--shrunk\.twd-sk-header--shrunk \.twd-sk-header__logo-mark\.twd-sk-header__logo-mark \+ \.twd-sk-header__logo-img\.twd-sk-header__logo-img \{[^}]*display: none/', $raw ), 'shrunk, the mark replaces the full logo' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-chrome--sticky\.twd-sk-chrome--sticky\.twd-sk-chrome--front\.twd-sk-chrome--front \{[^}]*height: calc\(var\(--twd-site-logo-height-front\)/', $raw ), 'the spacer grows with the logo' );
+	twd_sk_true( 1 === preg_match( '/prefers-reduced-motion: reduce\)\s*\{[^@]*twd-sk-header__logo-mark[^{]*\{[^}]*transition: none/', $raw ), 'no motion when asked' );
+	twd_sk_true( 1 === preg_match( '/@media \(max-width: 900px\)[^@]*twd-sk-header__logo-img\.twd-sk-header__logo-img \{[^}]*logo-height-sm/', $raw ), 'phones use the small logo height' );
+} );
+
+twd_sk_test( 'chrome front logo: in the site brief as header.front_logo, in the export, in the site report, and the logo mark picture slot reaches the profile', function () {
+	twd_sk_true( array_key_exists( 'front_logo', TWD_SK_Brief::export()['header'] ) );
+	$plan = TWD_SK_Brief::plan( array( 'schema' => 'twd-site-brief/1', 'header' => array( 'front_logo' => true ) ), false );
+	twd_sk_eq( array( 'front_logo' => true ), $plan['changes']['chrome'] );
+	twd_sk_true( isset( TWD_SK_Pictures::slots()['logo_mark'] ) );
+	twd_sk_has( 'bigger logo on the front page', TWD_SK_Doctor::report() );
+	twd_sk_true( is_string( TWD_SK_Profile::validate( array( 'logo_mark_id' => 'x' ) )['errors'][0] ), 'a bad mark id is refused' );
 } );

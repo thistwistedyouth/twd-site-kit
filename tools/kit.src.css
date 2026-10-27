@@ -153,8 +153,22 @@
 .twd-sk-text__aside { position: sticky; top: 96px; align-self: start; }
 
 /* The default narrow text layout is one centred column. */
-.twd-sk-text:not(.twd-sk-text--aside) .twd-sk-eyebrow, .twd-sk-text:not(.twd-sk-text--aside) .twd-sk-title,
-.twd-sk-text:not(.twd-sk-text--aside) .twd-sk-text__body { text-align: center; }
+.twd-sk-text:not(.twd-sk-text--aside):not(.twd-sk-text--prose) .twd-sk-eyebrow, .twd-sk-text:not(.twd-sk-text--aside):not(.twd-sk-text--prose) .twd-sk-title,
+.twd-sk-text:not(.twd-sk-text--aside):not(.twd-sk-text--prose) .twd-sk-text__body { text-align: center; }
+/* Prose (0.14.0): a reading column. Left aligned, a little more room between paragraphs, sub-headings,
+   lists and quotes styled for long writing. Nothing moves, nothing is centred. */
+.twd-sk-text--prose .twd-sk-eyebrow, .twd-sk-text--prose .twd-sk-title, .twd-sk-text--prose .twd-sk-text__body { text-align: left; }
+.twd-sk-text--prose .twd-sk-title { margin-bottom: 28px; }
+.twd-sk-text--prose .twd-sk-text__body > * + * { margin-top: 1.3em; }
+.twd-sk-text--prose .twd-sk-text__body h3, .twd-sk-text--prose .twd-sk-text__body h4 {
+  margin-top: 2em; font-family: $font-heading; font-size: $size-h3; font-weight: $title-weight; font-style: $title-style; line-height: $line-heading; color: $color-title;
+}
+.twd-sk-text--prose .twd-sk-text__body ul, .twd-sk-text--prose .twd-sk-text__body ol { padding-left: 1.3em; list-style: disc; }
+.twd-sk-text--prose .twd-sk-text__body ol { list-style: decimal; }
+.twd-sk-text--prose .twd-sk-text__body li + li { margin-top: 0.4em; }
+.twd-sk-text--prose .twd-sk-text__body blockquote { padding: 0 0 0 1.2em; border-left: 3px solid $color-accent; color: $color-muted; }
+.twd-sk-text--prose .twd-sk-text__body .twd-sk-btn { margin-top: 8px; text-decoration: none; }
+.twd-sk-text--prose .twd-sk-text__body .twd-sk-btn--primary { color: $color-on-primary; }
 .twd-sk-text__aside > * + * { margin-top: 20px; }
 
 /* In side-by-side layouts the heading sits over left-aligned text whatever the pack's heading alignment. */
@@ -244,6 +258,24 @@
 .twd-sk-faq__item[open] > .twd-sk-faq__question::after { content: "\2212"; }
 .twd-sk-faq__answer { padding: 0 24px 20px; color: $color-body; }
 .twd-sk-faq__answer > * + * { margin-top: 1em; }
+/* Question groups (0.14.0): a row of links to each group, the groups below. No script. On a wide
+   screen one group shows at a time (the one marked --default, or the one linked to with :target);
+   on a phone, and in a browser without :has(), every group stacks under its own heading. */
+.twd-sk-faq--groups .twd-sk-title { margin-bottom: 24px; }
+.twd-sk-faq__tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 28px; padding: 0; list-style: none; }
+.twd-sk-faq__tab { display: block; }
+.twd-sk-faq__tablink {
+  display: inline-block; padding: 10px 18px; background-color: $color-surface; border: 1px solid $color-border;
+  border-radius: $radius-btn; font-family: $font-body; font-size: $size-small; font-weight: $btn-weight; color: $color-title; text-decoration: none;
+}
+.twd-sk-faq__tablink:hover, .twd-sk-faq__tablink:focus-visible { border-color: $color-primary; color: $color-primary; }
+.twd-sk-faq__group { scroll-margin-top: 120px; }
+.twd-sk-faq__group + .twd-sk-faq__group { margin-top: 40px; }
+.twd-sk-faq__groupname {
+  margin: 0 0 16px; font-family: $font-heading; font-size: $size-h3; font-weight: $title-weight;
+  font-style: $title-style; line-height: $line-heading; color: $color-title;
+}
+.twd-sk-faq__group:target .twd-sk-faq__groupname, .twd-sk-faq__groups:not(:has(.twd-sk-faq__group:target)) .twd-sk-faq__group--default .twd-sk-faq__groupname { color: $color-primary; }
 
 /* ---- services ---- */
 .twd-sk-services--cards .twd-sk-title { margin-bottom: 0; }
@@ -505,7 +537,7 @@
 
 /* ---- less motion, when the visitor asks for it ---- */
 @media (prefers-reduced-motion: reduce) {
-  .twd-sk-header--shrink .twd-sk-header__inner, .twd-sk-header--shrink .twd-sk-header__logo-img { transition: none; }
+  .twd-sk-header--shrink .twd-sk-header__inner, .twd-sk-header--shrink .twd-sk-header__logo-img, .twd-sk-header--shrink .twd-sk-header__logo-mark { transition: none; }
   .twd-sk-services--glow .twd-sk-services__item { animation: none; }
   .twd-sk-quote__track { scroll-behavior: auto; }
 }
@@ -531,12 +563,27 @@
 .twd-sk-skip:focus, .twd-sk-skip:focus-visible { width: auto; height: auto; clip-path: none; overflow: visible; }
 .twd-sk-header__inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-top: 14px; padding-bottom: 14px; }
 .twd-sk-header__logo { display: inline-flex; align-items: center; flex: 0 0 auto; color: $color-title; text-decoration: none; }
-.twd-sk-header__logo-img { display: block; width: auto; max-width: 220px; max-height: var(--twd-sk-logo-h, 48px); }
+.twd-sk-header__logo-img { display: block; width: auto; max-width: 220px; max-height: var(--twd-sk-logo-h, $logo-height); }
 /* Shrink on scroll (0.13.0): a script adds --shrunk after a small scroll. The spacer (--sticky wrapper) keeps its height, so nothing on the page moves. */
 .twd-sk-header--shrink .twd-sk-header__inner { transition: padding .2s ease; }
 .twd-sk-header--shrink .twd-sk-header__logo-img { transition: max-height .2s ease; }
-.twd-sk-header--shrunk { --twd-sk-logo-h: 32px; }
+.twd-sk-header--shrunk { --twd-sk-logo-h: $logo-height-sm; }
 .twd-sk-header--shrunk .twd-sk-header__inner { padding-top: 6px; padding-bottom: 6px; }
+/* The small logo mark (0.14.0): beside the site name on every page but the front page; on the front page it is
+   hidden until the header shrinks, when it takes the full logo's place. */
+.twd-sk-header__logo-mark { display: block; width: auto; max-width: 80px; max-height: var(--twd-sk-logo-h, $logo-height); margin-right: 10px; }
+.twd-sk-header--front .twd-sk-header__logo-mark { display: none; }
+/* Front page logo (0.14.0): the full logo, larger and centred above the menu, on the front page only. */
+&.twd-sk-chrome--sticky.twd-sk-chrome--front { height: calc(#{$logo-height-front} + 108px); }
+.twd-sk-header--front .twd-sk-header__inner { flex-direction: column; justify-content: center; gap: 12px; }
+.twd-sk-header--front .twd-sk-header__panel { margin-left: 0; flex-wrap: wrap; justify-content: center; }
+.twd-sk-header--front .twd-sk-header__menu { justify-content: center; }
+.twd-sk-header--front .twd-sk-header__logo-img { max-width: 360px; max-height: $logo-height-front; }
+.twd-sk-header--front.twd-sk-header--shrunk .twd-sk-header__inner { flex-direction: row; justify-content: space-between; }
+.twd-sk-header--front.twd-sk-header--shrunk .twd-sk-header__panel { margin-left: auto; }
+.twd-sk-header--front.twd-sk-header--shrunk .twd-sk-header__logo-img { max-height: $logo-height-sm; }
+.twd-sk-header--front.twd-sk-header--shrunk .twd-sk-header__logo-mark { display: block; }
+.twd-sk-header--front.twd-sk-header--shrunk .twd-sk-header__logo-mark + .twd-sk-header__logo-img { display: none; }
 .twd-sk-header__logo-text { font-family: $font-heading; font-size: $size-h3; font-weight: $heading-weight; font-style: $heading-style; line-height: 1.2; color: $color-title; }
 .twd-sk-header__toggle {
   display: none; align-items: center; justify-content: center; min-width: 48px; min-height: 48px; padding: 0;
@@ -595,7 +642,7 @@
 .twd-sk-footer--cols-3 .twd-sk-footer__main { grid-template-columns: 1.4fr 1fr 1fr; }
 .twd-sk-footer__col { min-width: 0; }
 .twd-sk-footer__col > * + * { margin-top: 12px; }
-.twd-sk-footer__logo-img { display: block; width: auto; max-width: 220px; max-height: 64px; }
+.twd-sk-footer__logo-img { display: block; width: auto; max-width: 220px; max-height: $footer-logo-height; }
 .twd-sk-footer__name { font-family: $font-heading; font-size: $size-h3; font-weight: $heading-weight; font-style: $heading-style; line-height: 1.2; color: $color-title; }
 .twd-sk-footer__text { font-size: $size-small; line-height: $line-body; color: $color-body; }
 .twd-sk-footer__heading { font-family: $font-heading; font-size: $size-body; font-weight: $title-weight; color: $color-title; }
@@ -674,7 +721,20 @@
   .twd-sk-header--js.twd-sk-header--split .twd-sk-header__panel { display: none; }
   .twd-sk-header--js.twd-sk-header--split.twd-sk-header--open .twd-sk-header__panel { display: flex; }
   .twd-sk-header--centered .twd-sk-header__inner { flex-direction: row; justify-content: space-between; }
+  .twd-sk-header__logo-img { max-height: var(--twd-sk-logo-h, $logo-height-sm); }
+  .twd-sk-header--front .twd-sk-header__inner { flex-direction: column; justify-content: center; }
+  .twd-sk-header--front .twd-sk-header__logo-img { max-height: calc(#{$logo-height-front} * 0.6); }
+  .twd-sk-header--js.twd-sk-header--front .twd-sk-header__inner { flex-direction: row; justify-content: space-between; }
+  .twd-sk-header--js.twd-sk-header--front .twd-sk-header__logo-img { max-height: $logo-height-sm; }
+  &.twd-sk-chrome--sticky.twd-sk-chrome--front { height: 76px; }
   .twd-sk-header__strip-inner { justify-content: center; }
   .twd-sk-footer--cols-2 .twd-sk-footer__main, .twd-sk-footer--cols-3 .twd-sk-footer__main { grid-template-columns: 1fr; }
   .twd-sk-footer__bottom-inner { flex-direction: column; align-items: flex-start; }
+}
+
+/* Question groups on a wide screen: one group at a time (0.14.0). */
+@media (min-width: 769px) {
+  .twd-sk-faq__groups:not(:has(.twd-sk-faq__group:target)) .twd-sk-faq__group:not(.twd-sk-faq__group--default) { display: none; }
+  .twd-sk-faq__groups:has(.twd-sk-faq__group:target) .twd-sk-faq__group:not(:target) { display: none; }
+  .twd-sk-faq__group + .twd-sk-faq__group { margin-top: 0; }
 }

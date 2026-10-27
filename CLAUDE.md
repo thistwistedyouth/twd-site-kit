@@ -23,6 +23,7 @@ Target site: Hello theme + Elementor + Articles plugin + Site Kit. Since 0.9.1 S
 
 ## Status
 
+- v0.14.0 (branch `studio-0.14`, in progress, NOT merged): EB Garamond and Inter bundled; the text-led pack `ink`; logo size tokens with defaults (`logo-height`, `logo-height-sm`, `logo-height-front`, `footer-logo-height`); the front page logo option (`front_logo`, with a small logo mark `logo_mark_id` for other pages); question groups (`twd-sk-faq--groups`); prose text (`twd-sk-text--prose`); unknown layouts fall back with a warning; `wp twd-sk save --pictures`. See BUILD-LOG.
 - Slice 1 (v0.1.0): plugin skeleton, components registry, sanitiser, page store with versions, `[twd_page]` shortcode, WP-CLI commands, tests.
 - Slice 2a (v0.2.0): the one-h1 rule and title hiding, 11 components with variants, component CSS, design tokens and style packs ("sage" and "grove"), bundled fonts, `starters/_gallery.html`, privacy guard.
 - Slice 2c (v0.2.1): the self-hosted updater with a sha256 check, `readme.txt`, release scripts and release consistency tests.

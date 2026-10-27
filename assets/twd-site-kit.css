@@ -449,10 +449,56 @@
   align-self: start;
 }
 /* The default narrow text layout is one centred column. */
-.twd-sk-page .twd-sk-text.twd-sk-text:not(.twd-sk-text--aside.twd-sk-text--aside) .twd-sk-eyebrow.twd-sk-eyebrow,
-.twd-sk-page .twd-sk-text.twd-sk-text:not(.twd-sk-text--aside.twd-sk-text--aside) .twd-sk-title.twd-sk-title,
-.twd-sk-page .twd-sk-text.twd-sk-text:not(.twd-sk-text--aside.twd-sk-text--aside) .twd-sk-text__body.twd-sk-text__body {
+.twd-sk-page .twd-sk-text.twd-sk-text:not(.twd-sk-text--aside.twd-sk-text--aside):not(.twd-sk-text--prose.twd-sk-text--prose) .twd-sk-eyebrow.twd-sk-eyebrow,
+.twd-sk-page .twd-sk-text.twd-sk-text:not(.twd-sk-text--aside.twd-sk-text--aside):not(.twd-sk-text--prose.twd-sk-text--prose) .twd-sk-title.twd-sk-title,
+.twd-sk-page .twd-sk-text.twd-sk-text:not(.twd-sk-text--aside.twd-sk-text--aside):not(.twd-sk-text--prose.twd-sk-text--prose) .twd-sk-text__body.twd-sk-text__body {
   text-align: center !important;
+}
+/* Prose (0.14.0): a reading column. Left aligned, a little more room between paragraphs, sub-headings,
+   lists and quotes styled for long writing. Nothing moves, nothing is centred. */
+.twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-eyebrow.twd-sk-eyebrow,
+.twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-title.twd-sk-title,
+.twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body {
+  text-align: left !important;
+}
+.twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-title.twd-sk-title {
+  margin-bottom: 28px !important;
+}
+.twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body > * + * {
+  margin-top: 1.3em !important;
+}
+.twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body h3,
+.twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body h4 {
+  margin-top: 2em !important;
+  font-family: var(--twd-site-font-heading) !important;
+  font-size: var(--twd-site-size-h3) !important;
+  font-weight: var(--twd-site-title-weight) !important;
+  font-style: var(--twd-site-title-style) !important;
+  line-height: var(--twd-site-line-heading) !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body ul,
+.twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body ol {
+  padding-left: 1.3em !important;
+  list-style: disc;
+}
+.twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body ol {
+  list-style: decimal;
+}
+.twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body li + li {
+  margin-top: 0.4em !important;
+}
+.twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body blockquote {
+  padding: 0 0 0 1.2em !important;
+  border-left: 3px solid var(--twd-site-color-accent) !important;
+  color: var(--twd-site-color-muted) !important;
+}
+.twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body .twd-sk-btn.twd-sk-btn {
+  margin-top: 8px !important;
+  text-decoration: none !important;
+}
+.twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body .twd-sk-btn--primary.twd-sk-btn--primary {
+  color: var(--twd-site-color-on-primary) !important;
 }
 .twd-sk-page .twd-sk-text__aside.twd-sk-text__aside > * + * {
   margin-top: 20px !important;
@@ -705,6 +751,59 @@
 }
 .twd-sk-page .twd-sk-faq__answer.twd-sk-faq__answer > * + * {
   margin-top: 1em !important;
+}
+/* Question groups (0.14.0): a row of links to each group, the groups below. No script. On a wide
+   screen one group shows at a time (the one marked --default, or the one linked to with :target);
+   on a phone, and in a browser without :has(), every group stacks under its own heading. */
+.twd-sk-page .twd-sk-faq--groups.twd-sk-faq--groups .twd-sk-title.twd-sk-title {
+  margin-bottom: 24px !important;
+}
+.twd-sk-page .twd-sk-faq__tabs.twd-sk-faq__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 28px !important;
+  padding: 0 !important;
+  list-style: none;
+}
+.twd-sk-page .twd-sk-faq__tab.twd-sk-faq__tab {
+  display: block;
+}
+.twd-sk-page .twd-sk-faq__tablink.twd-sk-faq__tablink {
+  display: inline-block;
+  padding: 10px 18px !important;
+  background-color: var(--twd-site-color-surface) !important;
+  border: 1px solid var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-btn) !important;
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  font-weight: var(--twd-site-btn-weight) !important;
+  color: var(--twd-site-color-title) !important;
+  text-decoration: none !important;
+}
+.twd-sk-page .twd-sk-faq__tablink.twd-sk-faq__tablink:hover,
+.twd-sk-page .twd-sk-faq__tablink.twd-sk-faq__tablink:focus-visible {
+  border-color: var(--twd-site-color-primary) !important;
+  color: var(--twd-site-color-primary) !important;
+}
+.twd-sk-page .twd-sk-faq__group.twd-sk-faq__group {
+  scroll-margin-top: 120px;
+}
+.twd-sk-page .twd-sk-faq__group.twd-sk-faq__group + .twd-sk-faq__group.twd-sk-faq__group {
+  margin-top: 40px !important;
+}
+.twd-sk-page .twd-sk-faq__groupname.twd-sk-faq__groupname {
+  margin: 0 0 16px !important;
+  font-family: var(--twd-site-font-heading) !important;
+  font-size: var(--twd-site-size-h3) !important;
+  font-weight: var(--twd-site-title-weight) !important;
+  font-style: var(--twd-site-title-style) !important;
+  line-height: var(--twd-site-line-heading) !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-sk-faq__group.twd-sk-faq__group:target .twd-sk-faq__groupname.twd-sk-faq__groupname,
+.twd-sk-page .twd-sk-faq__groups.twd-sk-faq__groups:not(:has(.twd-sk-faq__group.twd-sk-faq__group:target)) .twd-sk-faq__group--default.twd-sk-faq__group--default .twd-sk-faq__groupname.twd-sk-faq__groupname {
+  color: var(--twd-site-color-primary) !important;
 }
 /* ---- services ---- */
 .twd-sk-page .twd-sk-services--cards.twd-sk-services--cards .twd-sk-title.twd-sk-title {
@@ -1427,7 +1526,8 @@
 /* ---- less motion, when the visitor asks for it ---- */
 @media (prefers-reduced-motion: reduce) {
   .twd-sk-page .twd-sk-header--shrink.twd-sk-header--shrink .twd-sk-header__inner.twd-sk-header__inner,
-  .twd-sk-page .twd-sk-header--shrink.twd-sk-header--shrink .twd-sk-header__logo-img.twd-sk-header__logo-img {
+  .twd-sk-page .twd-sk-header--shrink.twd-sk-header--shrink .twd-sk-header__logo-img.twd-sk-header__logo-img,
+  .twd-sk-page .twd-sk-header--shrink.twd-sk-header--shrink .twd-sk-header__logo-mark.twd-sk-header__logo-mark {
     transition: none;
   }
   .twd-sk-page .twd-sk-services--glow.twd-sk-services--glow .twd-sk-services__item.twd-sk-services__item {
@@ -1527,7 +1627,7 @@
   display: block;
   width: auto;
   max-width: 220px;
-  max-height: var(--twd-sk-logo-h, 48px);
+  max-height: var(--twd-sk-logo-h, var(--twd-site-logo-height));
 }
 /* Shrink on scroll (0.13.0): a script adds --shrunk after a small scroll. The spacer (--sticky wrapper) keeps its height, so nothing on the page moves. */
 .twd-sk-page .twd-sk-header--shrink.twd-sk-header--shrink .twd-sk-header__inner.twd-sk-header__inner {
@@ -1537,11 +1637,60 @@
   transition: max-height .2s ease;
 }
 .twd-sk-page .twd-sk-header--shrunk.twd-sk-header--shrunk {
-  --twd-sk-logo-h: 32px;
+  --twd-sk-logo-h: var(--twd-site-logo-height-sm);
 }
 .twd-sk-page .twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__inner.twd-sk-header__inner {
   padding-top: 6px !important;
   padding-bottom: 6px !important;
+}
+/* The small logo mark (0.14.0): beside the site name on every page but the front page; on the front page it is
+   hidden until the header shrinks, when it takes the full logo's place. */
+.twd-sk-page .twd-sk-header__logo-mark.twd-sk-header__logo-mark {
+  display: block;
+  width: auto;
+  max-width: 80px;
+  max-height: var(--twd-sk-logo-h, var(--twd-site-logo-height));
+  margin-right: 10px !important;
+}
+.twd-sk-page .twd-sk-header--front.twd-sk-header--front .twd-sk-header__logo-mark.twd-sk-header__logo-mark {
+  display: none;
+}
+/* Front page logo (0.14.0): the full logo, larger and centred above the menu, on the front page only. */
+.twd-sk-page.twd-sk-chrome--sticky.twd-sk-chrome--sticky.twd-sk-chrome--front.twd-sk-chrome--front {
+  height: calc(var(--twd-site-logo-height-front) + 108px);
+}
+.twd-sk-page .twd-sk-header--front.twd-sk-header--front .twd-sk-header__inner.twd-sk-header__inner {
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+.twd-sk-page .twd-sk-header--front.twd-sk-header--front .twd-sk-header__panel.twd-sk-header__panel {
+  margin-left: 0 !important;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.twd-sk-page .twd-sk-header--front.twd-sk-header--front .twd-sk-header__menu.twd-sk-header__menu {
+  justify-content: center;
+}
+.twd-sk-page .twd-sk-header--front.twd-sk-header--front .twd-sk-header__logo-img.twd-sk-header__logo-img {
+  max-width: 360px;
+  max-height: var(--twd-site-logo-height-front);
+}
+.twd-sk-page .twd-sk-header--front.twd-sk-header--front.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__inner.twd-sk-header__inner {
+  flex-direction: row;
+  justify-content: space-between;
+}
+.twd-sk-page .twd-sk-header--front.twd-sk-header--front.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__panel.twd-sk-header__panel {
+  margin-left: auto !important;
+}
+.twd-sk-page .twd-sk-header--front.twd-sk-header--front.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__logo-img.twd-sk-header__logo-img {
+  max-height: var(--twd-site-logo-height-sm);
+}
+.twd-sk-page .twd-sk-header--front.twd-sk-header--front.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__logo-mark.twd-sk-header__logo-mark {
+  display: block;
+}
+.twd-sk-page .twd-sk-header--front.twd-sk-header--front.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__logo-mark.twd-sk-header__logo-mark + .twd-sk-header__logo-img.twd-sk-header__logo-img {
+  display: none;
 }
 .twd-sk-page .twd-sk-header__logo-text.twd-sk-header__logo-text {
   font-family: var(--twd-site-font-heading) !important;
@@ -1762,7 +1911,7 @@
   display: block;
   width: auto;
   max-width: 220px;
-  max-height: 64px;
+  max-height: var(--twd-site-footer-logo-height);
 }
 .twd-sk-page .twd-sk-footer__name.twd-sk-footer__name {
   font-family: var(--twd-site-font-heading) !important;
@@ -2058,6 +2207,26 @@
     flex-direction: row;
     justify-content: space-between;
   }
+  .twd-sk-page .twd-sk-header__logo-img.twd-sk-header__logo-img {
+    max-height: var(--twd-sk-logo-h, var(--twd-site-logo-height-sm));
+  }
+  .twd-sk-page .twd-sk-header--front.twd-sk-header--front .twd-sk-header__inner.twd-sk-header__inner {
+    flex-direction: column;
+    justify-content: center;
+  }
+  .twd-sk-page .twd-sk-header--front.twd-sk-header--front .twd-sk-header__logo-img.twd-sk-header__logo-img {
+    max-height: calc(var(--twd-site-logo-height-front) * 0.6);
+  }
+  .twd-sk-page .twd-sk-header--js.twd-sk-header--js.twd-sk-header--front.twd-sk-header--front .twd-sk-header__inner.twd-sk-header__inner {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  .twd-sk-page .twd-sk-header--js.twd-sk-header--js.twd-sk-header--front.twd-sk-header--front .twd-sk-header__logo-img.twd-sk-header__logo-img {
+    max-height: var(--twd-site-logo-height-sm);
+  }
+  .twd-sk-page.twd-sk-chrome--sticky.twd-sk-chrome--sticky.twd-sk-chrome--front.twd-sk-chrome--front {
+    height: 76px;
+  }
   .twd-sk-page .twd-sk-header__strip-inner.twd-sk-header__strip-inner {
     justify-content: center;
   }
@@ -2068,6 +2237,18 @@
   .twd-sk-page .twd-sk-footer__bottom-inner.twd-sk-footer__bottom-inner {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+/* Question groups on a wide screen: one group at a time (0.14.0). */
+@media (min-width: 769px) {
+  .twd-sk-page .twd-sk-faq__groups.twd-sk-faq__groups:not(:has(.twd-sk-faq__group.twd-sk-faq__group:target)) .twd-sk-faq__group.twd-sk-faq__group:not(.twd-sk-faq__group--default.twd-sk-faq__group--default) {
+    display: none;
+  }
+  .twd-sk-page .twd-sk-faq__groups.twd-sk-faq__groups:has(.twd-sk-faq__group.twd-sk-faq__group:target) .twd-sk-faq__group.twd-sk-faq__group:not(:target) {
+    display: none;
+  }
+  .twd-sk-page .twd-sk-faq__group.twd-sk-faq__group + .twd-sk-faq__group.twd-sk-faq__group {
+    margin-top: 0 !important;
   }
 }
 

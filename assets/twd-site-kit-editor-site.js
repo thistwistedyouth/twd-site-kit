@@ -230,11 +230,13 @@
 	function radiusControl(item, value) {
 		var id = 'twd-sk-site-' + item.token;
 		var m = /^(\d{1,3}(?:\.\d+)?)px$/.exec(String(value));
-		var input = el('input', { id: id, type: 'number', min: '0', max: '100', step: '1', className: 'twd-sk-ed__input' });
+		// Corners go up to 100 pixels; a logo size (0.14.0) up to 400.
+		var top = item.kind === 'size' ? 400 : 100;
+		var input = el('input', { id: id, type: 'number', min: '0', max: String(top), step: '1', className: 'twd-sk-ed__input' });
 		if (m) {
 			input.value = String(Math.round(parseFloat(m[1])));
 			input.addEventListener('input', function () {
-				var n = Math.max(0, Math.min(100, parseInt(input.value, 10) || 0));
+				var n = Math.max(0, Math.min(top, parseInt(input.value, 10) || 0));
 				setToken(item.token, n + 'px');
 			});
 		} else {
@@ -250,8 +252,8 @@
 	function renderControls() {
 		clear(ui.controls);
 		var tokens = effective();
-		var groups = { colours: 'Colours', fonts: 'Fonts', shape: 'Corners' };
-		['colours', 'fonts', 'shape'].forEach(function (group) {
+		var groups = { colours: 'Colours', fonts: 'Fonts', shape: 'Corners', logo: 'Logo sizes (pixels high)' };
+		['colours', 'fonts', 'shape', 'logo'].forEach(function (group) {
 			var grid = el('div', { className: 'twd-sk-ed__grid' });
 			S.data.editable.forEach(function (item) {
 				if (item.group !== group) {
@@ -479,6 +481,7 @@
 		var p = P.data.profile;
 		pui.name.value = p.site_name;
 		pui.logo.value = p.logo_id ? String(p.logo_id) : '';
+		pui.logoMark.value = p.logo_mark_id ? String(p.logo_mark_id) : '';
 		pui.ctaLabel.value = p.cta_label;
 		pui.ctaUrl.value = p.cta_url;
 		pui.phone.value = p.phone;
@@ -536,10 +539,15 @@
 		if (logo && !/^\d+$/.test(logo)) {
 			return { error: 'The logo must be the number of a picture in the media library.' };
 		}
+		var mark = pui.logoMark.value.trim();
+		if (mark && !/^\d+$/.test(mark)) {
+			return { error: 'The small logo mark must be the number of a picture in the media library.' };
+		}
 		return {
 			profile: {
 				site_name: pui.name.value,
 				logo_id: logo ? parseInt(logo, 10) : 0,
+				logo_mark_id: mark ? parseInt(mark, 10) : 0,
 				menu: menu.list,
 				cta_label: pui.ctaLabel.value,
 				cta_url: pui.ctaUrl.value,
@@ -582,6 +590,12 @@
 				pui.logo.value = String(id);
 			});
 		});
+		pui.logoMark = textInput('twd-sk-pf-logomark', 12);
+		pui.logoMarkBtn = button('Choose from the media library', 'secondary', function () {
+			pickMedia(function (id) {
+				pui.logoMark.value = String(id);
+			});
+		});
 		pui.ctaLabel = textInput('twd-sk-pf-ctalabel', 30);
 		pui.ctaUrl = textInput('twd-sk-pf-ctaurl', 300);
 		pui.phone = textInput('twd-sk-pf-phone', 40);
@@ -607,6 +621,8 @@
 		show(pui.reloadBtn, false);
 		var logoRow = el('div', { className: 'twd-sk-ed__inline' }, [pui.logo, pui.logoBtn]);
 		logoRow.setAttribute('id', 'twd-sk-pf-logo-row');
+		var markRow = el('div', { className: 'twd-sk-ed__inline' }, [pui.logoMark, pui.logoMarkBtn]);
+		markRow.setAttribute('id', 'twd-sk-pf-logomark-row');
 		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
 			el('h3', { className: 'twd-sk-ed__step-title', text: 'Site details' }),
 			el('p', { className: 'twd-sk-ed__help', text: 'These feed the header, the footer and the search engine details. Only add what the ' + W('person', 'therapist') + ' has given you. Leave a box empty rather than guess.' }),
@@ -614,6 +630,7 @@
 			el('div', { className: 'twd-sk-ed__grid' }, [
 				field('Site name', pui.name, 'Shown as text if there is no logo.'),
 				field('Logo picture number', logoRow, 'Optional. A picture from the media library.'),
+				field('Small logo mark picture number', markRow, 'Optional, a symbol-only version. Used beside the site name on every page but the front page when "Bigger logo on the front page" is on below.'),
 				field('Header button text', pui.ctaLabel),
 				field('Header button link', pui.ctaUrl, 'A page on this site, such as /contact.'),
 				field('Phone number', pui.phone),
@@ -648,6 +665,7 @@
 		cui.cols.value = String(c.settings.footer_columns);
 		cui.sticky.checked = !!c.settings.sticky;
 		cui.shrink.checked = !!c.settings.shrink;
+		cui.front.checked = !!c.settings.front_logo;
 		cui.button.checked = !!c.settings.show_button;
 		cui.strip.checked = !!c.settings.show_strip;
 		cui.placement.value = c.settings.placement;
@@ -698,6 +716,7 @@
 				footer_columns: parseInt(cui.cols.value, 10),
 				sticky: cui.sticky.checked,
 				shrink: cui.shrink.checked,
+				front_logo: cui.front.checked,
 				show_button: cui.button.checked,
 				show_strip: cui.strip.checked,
 				placement: cui.placement.value
@@ -740,8 +759,10 @@
 		var btn = checkbox('twd-sk-ch-button', 'Show the header button');
 		var strip = checkbox('twd-sk-ch-strip', 'Show a thin strip with the phone number and email above the header');
 		var shrink = checkbox('twd-sk-ch-shrink', 'Make the fixed header smaller when scrolling (only works with the fixed header above)');
+		var front = checkbox('twd-sk-ch-front', 'Bigger logo on the front page: the full logo, larger and centred above the menu, on the front page only. Other pages show the small logo mark (if one is set in Site details) with the site name. Sizes are in the Style section.');
 		cui.sticky = sticky.input;
 		cui.shrink = shrink.input;
+		cui.front = front.input;
 		cui.button = btn.input;
 		cui.strip = strip.input;
 		cui.placement = selectWith('twd-sk-ch-placement', {}, '');
@@ -773,6 +794,7 @@
 			]),
 			sticky.label,
 			shrink.label,
+			front.label,
 			btn.label,
 			strip.label,
 			el('div', { className: 'twd-sk-ed__actions' }, [cui.saveBtn, cui.exportBtn, cui.reloadBtn]),
@@ -909,7 +931,7 @@
 	}
 
 	function chromeSnap() {
-		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.sticky.checked, cui.shrink.checked, cui.button.checked, cui.strip.checked, cui.placement.value]);
+		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.button.checked, cui.strip.checked, cui.placement.value]);
 	}
 
 	ED.addDirtyCheck(function () {

@@ -78,6 +78,10 @@
   "shadow-card": "none",
   "shadow-image": "none",
   "image-position": "center",
-  "color-accent-on-dark": "#DDE8D6"
+  "color-accent-on-dark": "#DDE8D6",
+  "logo-height": "48px",
+  "logo-height-sm": "40px",
+  "logo-height-front": "120px",
+  "footer-logo-height": "64px"
  }
 }

@@ -5,6 +5,7 @@ function twd_sk_profile_full() {
 	return array(
 		'site_name'    => 'Calm Practice',
 		'logo_id'      => 0,
+		'logo_mark_id' => 0,
 		'menu'         => array(
 			array( 'label' => 'Home', 'url' => '/', 'children' => array() ),
 			array( 'label' => 'Services', 'url' => '/services', 'children' => array( array( 'label' => 'Anxiety', 'url' => '/services/anxiety' ) ) ),

@@ -241,7 +241,7 @@ twd_sk_test( 'setup rest: the plan route reads, the run route needs a confirmati
 	twd_sk_site_caps();
 	$plan = TWD_SK_REST::get_site_setup( twd_sk_rest_req() );
 	twd_sk_true( count( $plan['plan'] ) >= 4 );
-	twd_sk_eq( array( 'grove', 'sage' ), $plan['packs'] );
+	twd_sk_eq( array( 'grove', 'ink', 'sage' ), $plan['packs'] );
 	twd_sk_eq( array( 'home' => 0, 'about' => 0, 'contact' => 0 ), twd_sk_setup_ids(), 'reading the plan creates nothing' );
 	twd_sk_is_error( 'twd_sk_confirm_needed', TWD_SK_REST::post_site_setup( twd_sk_rest_req() ) );
 	twd_sk_is_error( 'twd_sk_confirm_needed', TWD_SK_REST::post_site_setup( twd_sk_rest_req( array( 'confirm' => false ) ) ) );

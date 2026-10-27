@@ -2,7 +2,29 @@
 
 The one place to see where this project is. Newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md. Update this file at the end of every piece of work, in the same commit.
 
-## Where we are (last updated at release 0.13.0, 15 Oct 2026)
+## Where we are (branch `studio-0.14`, 27 Oct 2026, work in progress)
+
+**On the branch `studio-0.14`, NOT merged, NOT in the update file:** 0.14.0, built overnight for the studio route (the owner's own production process, which lives in the private clients repository) and the first pilot rebuild on a staging site. Nothing on this branch reaches any site until the owner installs the branch zip by hand and merges. `main` still carries 0.13.0.
+
+**The owner lifted the verify-first rule for this build (27 Oct 2026):** he has tested most of 0.7.0 onward on a real site and reports they work well, without listing which. So 0.14.0 is built on top of 0.7.0 to 0.13.0 as they stand. The "Not yet verified" lists below still stand as the risk list until he confirms each item.
+
+| 0.14.0 piece | What it adds | State |
+|---|---|---|
+| Fonts | EB Garamond and Inter bundled (variable latin woff2, normal and italic, SIL licence texts) and registered in `TWD_SK_Packs::fonts()` | Built, tested, not on a real site |
+| Pack `ink` | Text-led: off-white and ink-black, one deep blue-green for buttons and links, EB Garamond and Inter, small corners, no shadows. Every pair passes 4.5:1 | Built, tested |
+| Logo sizes | Four tokens (`logo-height`, `logo-height-sm`, `logo-height-front`, `footer-logo-height`) with defaults, so a pack written before them still reads; the stylesheet reads them; editable in the Site tab under Logo sizes; a site can override them like any token | Built, tested |
+| Front page logo | Setting `front_logo` in `twd_sk_chrome` (off by default; brief key `header.front_logo`; Site tab tick box): on the front page the full logo prints larger and centred above the menu; a small logo mark (`logo_mark_id` in the profile, the `logo_mark` picture slot) prints with the site name on other pages and takes the full logo's place when the header shrinks | Built, tested, not on a real site |
+| Question groups | `twd-sk-faq--groups`: questions in named groups with a row of links, one group at a time on a wide screen (pure CSS, `:target` and `:has()`, a default group), all groups stacked on a phone or an older browser. No script | Built, tested |
+| Prose text | `twd-sk-text--prose`: a narrow, left-aligned reading column with styled sub-headings, lists and quotes | Built, tested |
+| Unknown layouts | A recipe or brief that names a layout this version does not know falls back to the standard layout with a plain warning instead of dropping the page | Built, tested |
+| `wp twd-sk save --pictures` | Places `src="pic:NAME"` pictures through the same engine as the build before a page is cleaned and saved | Built, tested |
+| Old pages | A page stored by 0.13 passes through the 0.14 sanitiser byte for byte (test with a fixture) | Tested |
+
+**Decisions taken while the owner was away (27 Oct 2026):** see the end of this section once the night's work is done; the full list is kept in the private clients repository's studio folder and copied here in generic form.
+
+**Waiting on other projects (new, 27 Oct 2026):** nothing new yet from this branch.
+
+## Where we are at release 0.13.0 (15 Oct 2026)
 
 **Released and live in the update file:** 0.11.0 (merged to `main` on 14 Oct 2026). **0.12.0 (Full site set up, a test option) is committed on `main` locally and is not pushed until the owner has seen the diff.** The owner lifted the verify-first rule for Tell us (0.11.0) and for the Full site set up, so both are tested together with 0.7.0 to 0.10.2 (see `docs/test-script-0.7-0.9.md`). Everything from 0.7.0 to 0.12.0 is NOT yet tried on a real site: work through that script on a fresh install first. Sites update from Plugins, "Check for updates", "update now".
 

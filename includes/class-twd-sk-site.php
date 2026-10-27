@@ -36,6 +36,11 @@ class TWD_SK_Site {
 			array( 'shape', 'radius-btn', 'Button corners', 'radius' ),
 			array( 'shape', 'radius-card', 'Card corners', 'radius' ),
 			array( 'shape', 'radius-image', 'Image corners', 'radius' ),
+			// 0.14.0: logo sizes, in pixels.
+			array( 'logo', 'logo-height', 'Header logo height', 'size' ),
+			array( 'logo', 'logo-height-sm', 'Header logo height on phones', 'size' ),
+			array( 'logo', 'logo-height-front', 'Front page logo height', 'size' ),
+			array( 'logo', 'footer-logo-height', 'Footer logo height', 'size' ),
 		);
 	}
 
