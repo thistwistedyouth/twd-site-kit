@@ -81,6 +81,49 @@ class TWD_SK_Packs {
 					array( 'file' => 'inter-latin-wght-italic.woff2', 'style' => 'italic', 'weight' => '100 900' ),
 				),
 			),
+			// 0.14.0, for restyling: a classic serif, a humanist sans, a rounded sans, a geometric sans and two display faces.
+			'Source Serif 4'     => array(
+				'stack' => 'Georgia, "Times New Roman", serif',
+				'files' => array(
+					array( 'file' => 'source-serif-4-latin-wght-normal.woff2', 'style' => 'normal', 'weight' => '200 900' ),
+					array( 'file' => 'source-serif-4-latin-wght-italic.woff2', 'style' => 'italic', 'weight' => '200 900' ),
+				),
+			),
+			'Work Sans'          => array(
+				'stack' => '"Helvetica Neue", Arial, sans-serif',
+				'files' => array(
+					array( 'file' => 'work-sans-latin-wght-normal.woff2', 'style' => 'normal', 'weight' => '100 900' ),
+					array( 'file' => 'work-sans-latin-wght-italic.woff2', 'style' => 'italic', 'weight' => '100 900' ),
+				),
+			),
+			'Nunito Sans'        => array(
+				'stack' => '"Helvetica Neue", Arial, sans-serif',
+				'files' => array(
+					array( 'file' => 'nunito-sans-latin-wght-normal.woff2', 'style' => 'normal', 'weight' => '200 1000' ),
+					array( 'file' => 'nunito-sans-latin-wght-italic.woff2', 'style' => 'italic', 'weight' => '200 1000' ),
+				),
+			),
+			'DM Sans'            => array(
+				'stack' => '"Helvetica Neue", Arial, sans-serif',
+				'files' => array(
+					array( 'file' => 'dm-sans-latin-wght-normal.woff2', 'style' => 'normal', 'weight' => '100 1000' ),
+					array( 'file' => 'dm-sans-latin-wght-italic.woff2', 'style' => 'italic', 'weight' => '100 1000' ),
+				),
+			),
+			'Fraunces'           => array(
+				'stack' => 'Georgia, "Times New Roman", serif',
+				'files' => array(
+					array( 'file' => 'fraunces-latin-wght-normal.woff2', 'style' => 'normal', 'weight' => '100 900' ),
+					array( 'file' => 'fraunces-latin-wght-italic.woff2', 'style' => 'italic', 'weight' => '100 900' ),
+				),
+			),
+			'Playfair Display'   => array(
+				'stack' => 'Georgia, "Times New Roman", serif',
+				'files' => array(
+					array( 'file' => 'playfair-display-latin-wght-normal.woff2', 'style' => 'normal', 'weight' => '400 900' ),
+					array( 'file' => 'playfair-display-latin-wght-italic.woff2', 'style' => 'italic', 'weight' => '400 900' ),
+				),
+			),
 			'System serif'       => array(
 				'stack' => 'Georgia, "Times New Roman", serif',
 				'files' => array(),
@@ -375,6 +418,10 @@ class TWD_SK_Packs {
 	public static function active_slug() {
 		$slug  = function_exists( 'get_option' ) ? get_option( self::OPTION_PACK, self::DEFAULT_PACK ) : self::DEFAULT_PACK;
 		$packs = self::packs();
+		// An administrator previewing another pack on this request (0.14.0): nothing is saved.
+		if ( class_exists( 'TWD_SK_Style' ) && '' !== TWD_SK_Style::preview_slug() && isset( $packs[ TWD_SK_Style::preview_slug() ] ) ) {
+			return TWD_SK_Style::preview_slug();
+		}
 		if ( is_string( $slug ) && isset( $packs[ $slug ] ) ) {
 			return $slug;
 		}

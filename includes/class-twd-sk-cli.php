@@ -20,6 +20,7 @@
  *   wp twd-sk snags [--status=<status>] [--type=<type>] [--format=json|markdown]  print the Tell us notes kept on this site
  *   wp twd-sk snag-status <id> <status>  set a note to new, seen, done or parked
  *   wp twd-sk snags-setting [on|off]     show, or switch, the Tell us module
+ *   wp twd-sk style status|snapshot|apply|revert|swap   restyle a built site: keep the current look, apply a pack or a kit file (dry run first), go back, change a section's layout (0.14.0)
  *   wp twd-sk build [<brief-file>] [--mode=<mode>] [--set=<slug>] [--pack=<slug>] [--pictures=<file>] [--no-ai] [--dry-run]
  *                                        set the whole site up from a brief, every page a draft
  */
@@ -429,6 +430,164 @@ class TWD_SK_CLI {
 			return;
 		}
 		WP_CLI::success( 'Built. Every page is a draft. Check each one, replace any [PLACEHOLDER], then publish.' );
+	}
+
+	/**
+	 * Restyle a built site without touching its words, pictures or structure (0.14.0).
+	 *
+	 * status: the current look and the kept snapshots. snapshot: keep the current look under a name.
+	 * apply: a pack name or a style kit file (twd-style-kit/1: pack, tokens, chrome), with --dry-run to see
+	 * what would change and the contrast result first; a snapshot is kept before anything changes. revert:
+	 * back to the newest snapshot. swap: change every section of one kind on a page from one layout to
+	 * another, only where the new layout can hold every piece; saved as a new version (undo as usual).
+	 *
+	 * ## OPTIONS
+	 *
+	 * <action>
+	 * : status, snapshot, apply, revert or swap.
+	 *
+	 * [<what>]
+	 * : For apply: a pack name or a kit file. For snapshot: a name. For swap: the page ID.
+	 *
+	 * [<component>]
+	 * : For swap: the section kind (text, image_text, faq ...).
+	 *
+	 * [<from>]
+	 * : For swap: the layout now ("" or standard for the standard one, else the class such as twd-sk-text--aside).
+	 *
+	 * [<to>]
+	 * : For swap: the layout wanted.
+	 *
+	 * [--header=<layout>]
+	 * : With apply: the header layout (bar, centered, split, minimal).
+	 *
+	 * [--footer=<layout>]
+	 * : With apply: the footer layout (columns, band, centered, simple).
+	 *
+	 * [--dry-run]
+	 * : With apply or swap: say what would change and change nothing.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk style snapshot "before the demo"
+	 *     wp twd-sk style apply grove --header=centered --footer=band --dry-run
+	 *     wp twd-sk style apply kit.json
+	 *     wp twd-sk style revert
+	 *     wp twd-sk style swap 12 text standard twd-sk-text--prose --dry-run
+	 */
+	public function style( $args, $assoc_args ) {
+		$action = isset( $args[0] ) ? strtolower( (string) $args[0] ) : 'status';
+		if ( 'status' === $action ) {
+			$now = TWD_SK_Style::current();
+			WP_CLI::log( 'Pack: ' . $now['pack'] . '; overrides: ' . ( $now['tokens'] ? implode( ', ', array_keys( $now['tokens'] ) ) : 'none' ) . '; header: ' . ( '' !== $now['chrome']['header_variant'] ? $now['chrome']['header_variant'] : 'the style\'s own' ) . '; footer: ' . ( '' !== $now['chrome']['footer_variant'] ? $now['chrome']['footer_variant'] : 'the style\'s own' ) . '.' );
+			$snaps = TWD_SK_Style::snapshots();
+			WP_CLI::log( $snaps ? count( $snaps ) . ' snapshot(s), newest first:' : 'No snapshots.' );
+			foreach ( $snaps as $s ) {
+				WP_CLI::log( '  ' . $s['at'] . '  ' . $s['pack'] . ( '' !== $s['name'] ? '  "' . $s['name'] . '"' : '' ) );
+			}
+			return;
+		}
+		if ( 'snapshot' === $action ) {
+			$s = TWD_SK_Style::snapshot( isset( $args[1] ) ? (string) $args[1] : '' );
+			WP_CLI::success( 'Kept the current look (' . $s['pack'] . ') as a snapshot. wp twd-sk style revert brings it back.' );
+			return;
+		}
+		if ( 'revert' === $action ) {
+			$s = TWD_SK_Style::revert();
+			if ( is_wp_error( $s ) ) {
+				WP_CLI::error( $s->get_error_message() );
+				return;
+			}
+			WP_CLI::success( 'Back to the look from ' . $s['at'] . ' (' . $s['pack'] . '). If the site uses a page cache, clear it.' );
+			return;
+		}
+		if ( 'apply' === $action ) {
+			$what = isset( $args[1] ) ? (string) $args[1] : '';
+			if ( '' === $what ) {
+				WP_CLI::error( 'Give a pack name or a kit file.' );
+				return;
+			}
+			if ( is_readable( $what ) && ! isset( TWD_SK_Packs::packs()[ $what ] ) ) {
+				$data = json_decode( (string) file_get_contents( $what ), true );
+				if ( ! is_array( $data ) ) {
+					WP_CLI::error( 'Could not read the kit file as JSON.' );
+					return;
+				}
+			} else {
+				$data = array( 'pack' => $what );
+			}
+			$chrome = array();
+			foreach ( array( 'header', 'footer' ) as $k ) {
+				if ( isset( $assoc_args[ $k ] ) ) {
+					$chrome[ $k ] = (string) $assoc_args[ $k ];
+				}
+			}
+			if ( $chrome ) {
+				$data['chrome'] = array_merge( isset( $data['chrome'] ) && is_array( $data['chrome'] ) ? $data['chrome'] : array(), $chrome );
+			}
+			$kit = TWD_SK_Style::read_kit( $data );
+			if ( is_wp_error( $kit ) ) {
+				WP_CLI::error( $kit->get_error_message() );
+				return;
+			}
+			foreach ( $kit['notes'] as $n ) {
+				WP_CLI::warning( $n );
+			}
+			$r = TWD_SK_Style::apply( $kit, array( 'dry_run' => isset( $assoc_args['dry-run'] ) ) );
+			if ( is_wp_error( $r ) ) {
+				WP_CLI::error( $r->get_error_message() );
+				return;
+			}
+			WP_CLI::log( $r['changes'] ? 'Changes:' : 'Nothing to change.' );
+			foreach ( $r['changes'] as $c ) {
+				WP_CLI::log( '  - ' . $c );
+			}
+			foreach ( $r['blocking'] as $b ) {
+				WP_CLI::warning( 'Hard to read: ' . $b );
+			}
+			foreach ( $r['contrast']['warnings'] as $w ) {
+				WP_CLI::log( '  look at: ' . $w['label'] . ' (' . $w['ratio'] . ':1)' );
+			}
+			if ( isset( $assoc_args['dry-run'] ) ) {
+				WP_CLI::success( 'Dry run: nothing was changed.' );
+				return;
+			}
+			if ( $r['applied'] ) {
+				WP_CLI::success( 'Applied. The look before it is kept as a snapshot: wp twd-sk style revert goes back. Clear any page cache.' );
+			} else {
+				WP_CLI::success( isset( $r['note'] ) ? $r['note'] : 'Nothing was changed.' );
+			}
+			return;
+		}
+		if ( 'swap' === $action ) {
+			$page_id = self::page_id( isset( $args[1] ) ? $args[1] : '' );
+			$comp    = isset( $args[2] ) ? (string) $args[2] : '';
+			$from    = isset( $args[3] ) ? (string) $args[3] : '';
+			$to      = isset( $args[4] ) ? (string) $args[4] : '';
+			$from    = 'standard' === $from ? '' : $from;
+			$to      = 'standard' === $to ? '' : $to;
+			$html    = TWD_SK_Store::get_current( $page_id );
+			if ( '' === $html ) {
+				WP_CLI::error( 'Page ' . $page_id . ' has no stored content.' );
+				return;
+			}
+			$r = TWD_SK_Style::swap( $html, $comp, $from, $to );
+			if ( is_wp_error( $r ) ) {
+				WP_CLI::error( $r->get_error_message() );
+				return;
+			}
+			foreach ( $r['cannot'] as $c ) {
+				WP_CLI::warning( $c );
+			}
+			WP_CLI::log( $r['changed'] . ' section(s) would change layout.' );
+			if ( isset( $assoc_args['dry-run'] ) || 0 === $r['changed'] ) {
+				WP_CLI::success( 'Nothing was changed.' );
+				return;
+			}
+			self::report( $page_id, TWD_SK_Store::save( $page_id, $r['html'], array( 'base_version' => TWD_SK_Store::get_current_version_id( $page_id ), 'note' => 'Layout change: ' . $comp . ' to ' . ( '' === $to ? 'standard' : $to ) ) ), 'Saved' );
+			return;
+		}
+		WP_CLI::error( 'Say status, snapshot, apply, revert or swap.' );
 	}
 
 	/**

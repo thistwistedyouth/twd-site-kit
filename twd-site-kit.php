@@ -67,6 +67,7 @@ require_once TWD_SK_PATH . 'includes/class-twd-sk-rest.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-editor.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-snags.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-guard.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-style.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-modules.php';
 
 add_action( 'init', array( 'TWD_SK_Page', 'init' ) );

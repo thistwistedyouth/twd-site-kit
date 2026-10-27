@@ -1,6 +1,7 @@
 Bundled fonts (self-hosted so client sites make no calls to Google Fonts).
 
-Cormorant Garamond, Lora, Jost, Nunito, and from 0.14.0 EB Garamond and Inter:
+Cormorant Garamond, Lora, Jost, Nunito, and from 0.14.0 EB Garamond, Inter, Source
+Serif 4, Work Sans, Nunito Sans, DM Sans, Fraunces and Playfair Display:
 variable fonts, Latin subset, woff2. All are licensed under the SIL Open Font
 License 1.1. The licence text for each is in the OFL-*.txt file beside it. Font
 files come from the Fontsource packages (@fontsource-variable/*, version 5.3.0

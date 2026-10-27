@@ -124,7 +124,7 @@ twd_sk_test( 'tokens: weights, line heights and keyword tokens are strict', func
 } );
 
 twd_sk_test( 'tokens: only bundled fonts or system stacks are accepted, never an arbitrary name', function () {
-	foreach ( array( 'Cormorant Garamond', 'Lora', 'Jost', 'Nunito', 'EB Garamond', 'Inter', 'System serif', 'System sans' ) as $v ) {
+	foreach ( array( 'Cormorant Garamond', 'Lora', 'Jost', 'Nunito', 'EB Garamond', 'Inter', 'Source Serif 4', 'Work Sans', 'Nunito Sans', 'DM Sans', 'Fraunces', 'Playfair Display', 'System serif', 'System sans' ) as $v ) {
 		twd_sk_true( TWD_SK_Packs::valid_token( 'font-body', $v ), $v );
 	}
 	foreach ( array( 'Comic Sans MS', 'Arial', 'x"; background:url(x)', 'Jost, serif', '', 'jost' ) as $v ) {
@@ -329,7 +329,7 @@ twd_sk_test( 'fonts: no stray font files on disk that the registry does not know
 } );
 
 twd_sk_test( 'fonts: each bundled family ships with its open font licence', function () {
-	foreach ( array( 'cormorant-garamond', 'lora', 'jost', 'nunito', 'eb-garamond', 'inter' ) as $slug ) {
+	foreach ( array( 'cormorant-garamond', 'lora', 'jost', 'nunito', 'eb-garamond', 'inter', 'source-serif-4', 'work-sans', 'nunito-sans', 'dm-sans', 'fraunces', 'playfair-display' ) as $slug ) {
 		$path = ABSPATH . 'assets/fonts/OFL-' . $slug . '.txt';
 		twd_sk_true( is_file( $path ), 'licence for ' . $slug );
 		twd_sk_has( 'SIL OPEN FONT LICENSE', strtoupper( file_get_contents( $path ) ) );

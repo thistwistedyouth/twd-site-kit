@@ -20,5 +20,6 @@ class TWD_SK_Modules {
 		TWD_SK_Images::init();
 		TWD_SK_Snags::init();
 		TWD_SK_Guard::init();
+		TWD_SK_Style::init();
 	}
 }
