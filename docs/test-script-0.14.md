@@ -1,6 +1,6 @@
 # Test script: 0.14.0 (branch `studio-0.14`)
 
-Built overnight on a branch and tested only against the plugin's own test suite (868 tests) and offline screenshots. Nothing in it has been tried on a real site. Work through it on a **staging or fresh site** first, never on a live client site. Riskiest first: if something in the first block goes wrong, stop, switch safe mode on (`wp twd-sk safe-mode on`, or the setting) and send the site report (`wp twd-sk doctor`).
+Built overnight on a branch and tested only against the plugin's own test suite (889 tests) and offline screenshots. Nothing in it has been tried on a real site. Work through it on a **staging or fresh site** first, never on a live client site. Riskiest first: if something in the first block goes wrong, stop, switch safe mode on (`wp twd-sk safe-mode on`, or the setting) and send the site report (`wp twd-sk doctor`).
 
 Before you start: install the branch zip (`dist/twd-site-kit-latest.zip` from the `studio-0.14` branch, version 0.14.0) with Plugins, Add New, Upload Plugin, "Replace current with uploaded". The Articles plugin 1.42.0 or later is recommended (its grid now renders the first cards on the server). No new setting is on by default: a site that updates and changes nothing should look exactly as before.
 

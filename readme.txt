@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.13.0
+Stable tag: 0.14.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,18 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.14.0 =
+* Built on a branch for the studio route (the owner's own production process). Nothing here is on by default: a site that updates and changes nothing looks exactly as before.
+* New style packs: Ink (text-led, off-white and black with one blue-green), Ember (warm editorial) and Slate (bold modern). Eight more bundled fonts (EB Garamond, Inter, Source Serif 4, Work Sans, Nunito Sans, DM Sans, Fraunces, Playfair Display), still with no request to any font service.
+* Logo sizes in the Site tab (header, phone, front page, footer). An option for a bigger logo on the front page with a small logo mark on other pages. An option for a transparent header over a page that opens with a full-width picture.
+* New layouts: question groups, prose text, an articles strip (a few articles from one category beside an introduction), a parallax picture hero (still on phones and for reduced motion) with overlay and alignment options, services as linked rows, steps as a timeline, questions in two columns, a logos grid, hours in a card, areas split.
+* Restyle: style kits. `wp twd-sk style apply <pack> [--header=] [--footer=] [--dry-run]` lists every change, checks contrast, keeps a snapshot and never touches a page's words or pictures; `wp twd-sk style revert` puts the old look back; `wp twd-sk style swap` moves a kind of section between layouts. An administrator can preview a pack with ?twd_sk_style=PACK without saving.
+* Visual editor: Remove and Put back for a list entry, card, button or whole section (never the first hero or the safety notice); a placeholder marker is edited as one unit.
+* Launch check: every menu link must reach a page; WordPress's own sample page, first post and suggested privacy text are flagged, with a Tidy up button that bins them; half a placeholder marker and the words TO CONFIRM count as must-fix; the Articles plugin must be active (older than 1.42.0 warns) where a page shows the grid.
+* Publishing a kit page from wp-admin while example text remains keeps it a draft with a notice and a "publish it anyway" link. A notice on a kit page's edit screen says where it is edited.
+* Full site set up: "Build a draft anyway" when questions are still open; each gap becomes a visible marker.
+* One skip link on the Hello theme. Unknown layouts in a brief fall back to the standard one with a warning. `wp twd-sk save --pictures` places pictures by name.
 
 = 0.13.0 =
 * New: Shrink on scroll. A tick box in the Site tab, Header and footer ("Make the fixed header smaller when scrolling"), off by default. With it on and the header fixed at the top, the header gets a little smaller (smaller logo, less space above and below) after a short scroll and returns to full size at the top. The page never moves when it changes size.

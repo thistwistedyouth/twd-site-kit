@@ -17,6 +17,21 @@ Two different card vocabularies exist in the wider ecosystem and they overlap:
 
 Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directory, last commit 73dcd45). It does NOT output `summary_book`. Its prompt asks for strict JSON with `title`, `seo_title`, `meta_description`, `category`, `tags`, `html` only, and the server handler passes through only those. The articles plugin's CLAUDE.md (v1.32.0) says the same ("Article Assist still doesn't produce the `summary_book` field yet"). The plugin side (`summary_book.slides` in pasted JSON) is ready and waiting.
 
+## v0.14.0 (the studio build, branch `studio-0.14`)
+
+Built in one overnight session on a branch, from the owner's "Site Kit Studio" brief, so that his own production process (private, in the clients repository) has what it needs from the plugin. The rule that every feature is verified on a real site before the next one was lifted for this build by the owner; the risk is carried as the "not on a real site" column in BUILD-LOG and the test script in `docs/test-script-0.14.md`.
+
+- **Everything additive, nothing on by default.** Every new token has a default, every new layout is a modifier class on the same pieces, every setting is off until ticked, safe mode switches it all off. A fixture proves a 0.13 page passes the 0.14 sanitiser byte for byte. This is what lets the branch be installed on one staging site without fear for the sites on `main`.
+- **Second layouts are modifier classes, not new components.** So a restyle can swap them (`TWD_SK_Style::swap`) with the words untouched, and the Visual editor, the sanitiser, the leftover check and the AI style guide need no new rules. The cost is that a layout can only rearrange the pieces a component already has.
+- **Restyle is tokens and layouts only.** `TWD_SK_Style` changes the pack, the overrides and the header and footer settings and never reads page meta (a test checks). The snapshot is taken before any change, so there is always a way back without the page history.
+- **Hero options as extra classes.** Overlay strength and alignment are plain classes beside `twd-sk-hero--image` rather than variants, because a variant is one skeleton and these combine. The pop-up does not offer them yet.
+- **The transparent header prints only over a picture.** White words on a page that opens with a plain section would be unreadable, so the option is applied per page by looking at the page's first section, never blindly. The open phone menu gets a solid panel for the same reason.
+- **The parallax hero never needs its script.** The picture stays still without it, on phones and for reduced motion; the script only sets one CSS variable. No library, no scroll hijack.
+- **Picture treatment tokens stay out of the Site tab for now.** `image-filter` is a strict pattern, not a colour or a size, and the Site tab has no control kind for it. Packs and style kits set it.
+- **Remove this.** Removable things are numbered the same way as editable text, so Save sends numbers, not markup. A wrapper left empty goes with its item (the map button case from a client site), but a section is never emptied and the first hero and the safety notice can never be removed.
+- **Launch check and the Articles plugin.** Site Kit reads only the plugin header for the version, never its code. The warning threshold is 1.42.0 because that is where the grid started drawing its first cards on the server.
+- **Fonts.** Eight more families (all SIL Open Font Licence, variable, Latin subset) so that recipes can give each client a different pairing without a request to any font service. Only the active pack's two are ever loaded.
+
 ## v0.13.0 (Shrink on scroll)
 - Setting `shrink` in `twd_sk_chrome` (default off), effective only with the fixed header (so never the centred layout, never safe mode, where the plain header prints). Also in the brief as `header.shrink`.
 - A second small visitor script, `twd-site-kit-header-shrink.js`, separate from the mobile menu script so a site without the setting loads nothing extra. One class, `twd-sk-header--shrunk`, added past 60px of scroll and removed under 20px (the gap stops flicker). The server never prints `--shrunk`.
