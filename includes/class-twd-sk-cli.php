@@ -464,6 +464,12 @@ class TWD_SK_CLI {
 	 * [--footer=<layout>]
 	 * : With apply: the footer layout (columns, band, centered, simple, feature).
 	 *
+	 * [--wordmark[=<on|off>]]
+	 * : With apply: the text wordmark header (the logo as live text, centred on every page) on or off.
+	 *
+	 * [--menu-marker=<marker>]
+	 * : With apply: how the page you are on is marked in that header's menu (dot, color, bar, none).
+	 *
 	 * [--dry-run]
 	 * : With apply or swap: say what would change and change nothing.
 	 *
@@ -472,6 +478,7 @@ class TWD_SK_CLI {
 	 *     wp twd-sk style snapshot "before the demo"
 	 *     wp twd-sk style apply grove --header=centered --footer=band --dry-run
 	 *     wp twd-sk style apply --footer=feature --dry-run
+	 *     wp twd-sk style apply --wordmark --menu-marker=dot --dry-run
 	 *     wp twd-sk style apply kit.json
 	 *     wp twd-sk style revert
 	 *     wp twd-sk style swap 12 text standard twd-sk-text--prose --dry-run
@@ -504,8 +511,8 @@ class TWD_SK_CLI {
 		}
 		if ( 'apply' === $action ) {
 			$what = isset( $args[1] ) ? (string) $args[1] : '';
-			if ( '' === $what && ! isset( $assoc_args['header'] ) && ! isset( $assoc_args['footer'] ) ) {
-				WP_CLI::error( 'Give a pack name or a kit file, or --header or --footer to change only the layouts.' );
+			if ( '' === $what && ! array_intersect( array( 'header', 'footer', 'wordmark', 'menu-marker' ), array_keys( $assoc_args ) ) ) {
+				WP_CLI::error( 'Give a pack name or a kit file, or one of --header, --footer, --wordmark or --menu-marker to change only that.' );
 				return;
 			}
 			if ( '' === $what ) {
@@ -524,6 +531,15 @@ class TWD_SK_CLI {
 				if ( isset( $assoc_args[ $k ] ) ) {
 					$chrome[ $k ] = (string) $assoc_args[ $k ];
 				}
+			}
+			if ( isset( $assoc_args['wordmark'] ) ) {
+				$w                  = $assoc_args['wordmark'];
+				$chrome['wordmark'] = ( true === $w || in_array( strtolower( (string) $w ), array( 'on', 'yes', 'true', '1' ), true ) )
+					? true
+					: ( ( false === $w || in_array( strtolower( (string) $w ), array( 'off', 'no', 'false', '0' ), true ) ) ? false : (string) $w );
+			}
+			if ( isset( $assoc_args['menu-marker'] ) ) {
+				$chrome['menu_marker'] = (string) $assoc_args['menu-marker'];
 			}
 			if ( $chrome ) {
 				$data['chrome'] = array_merge( isset( $data['chrome'] ) && is_array( $data['chrome'] ) ? $data['chrome'] : array(), $chrome );

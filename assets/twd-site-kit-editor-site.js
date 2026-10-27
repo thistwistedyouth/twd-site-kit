@@ -482,6 +482,7 @@
 		pui.name.value = p.site_name;
 		pui.logo.value = p.logo_id ? String(p.logo_id) : '';
 		pui.logoMark.value = p.logo_mark_id ? String(p.logo_mark_id) : '';
+		pui.logoLine.value = p.logo_line || '';
 		pui.ctaLabel.value = p.cta_label;
 		pui.ctaUrl.value = p.cta_url;
 		pui.phone.value = p.phone;
@@ -548,6 +549,7 @@
 				site_name: pui.name.value,
 				logo_id: logo ? parseInt(logo, 10) : 0,
 				logo_mark_id: mark ? parseInt(mark, 10) : 0,
+				logo_line: pui.logoLine.value,
 				menu: menu.list,
 				cta_label: pui.ctaLabel.value,
 				cta_url: pui.ctaUrl.value,
@@ -597,6 +599,7 @@
 			});
 		});
 		pui.ctaLabel = textInput('twd-sk-pf-ctalabel', 30);
+		pui.logoLine = textInput('twd-sk-pf-logoline', 40);
 		pui.ctaUrl = textInput('twd-sk-pf-ctaurl', 300);
 		pui.phone = textInput('twd-sk-pf-phone', 40);
 		pui.email = textInput('twd-sk-pf-email', 100);
@@ -631,6 +634,7 @@
 				field('Site name', pui.name, 'Shown as text if there is no logo.'),
 				field('Logo picture number', logoRow, 'Optional. A picture from the media library.'),
 				field('Small logo mark picture number', markRow, 'Optional, a symbol-only version. Used beside the site name on every page but the front page when "Bigger logo on the front page" is on below.'),
+				field('Second line under the name', pui.logoLine, 'Optional, a few words such as the kind of work. Shown small under the name when "Text wordmark" is ticked in Header and footer.'),
 				field('Header button text', pui.ctaLabel),
 				field('Header button link', pui.ctaUrl, 'A page on this site, such as /contact.'),
 				field('Phone number', pui.phone),
@@ -667,12 +671,14 @@
 		cui.shrink.checked = !!c.settings.shrink;
 		cui.front.checked = !!c.settings.front_logo;
 		cui.over.checked = !!c.settings.overlay;
+		cui.wordmark.checked = !!c.settings.wordmark;
+		cui.marker.value = c.settings.menu_marker;
 		cui.button.checked = !!c.settings.show_button;
 		cui.strip.checked = !!c.settings.show_strip;
 		cui.placement.value = c.settings.placement;
 		var e = c.effective;
 		cui.snap = chromeSnap();
-		cui.note.textContent = 'Now showing: ' + c.header_variants[e.header] + ' (header), ' + c.footer_variants[e.footer] + ' (footer).' + (e.sticky_note ? ' The centred header cannot be fixed to the top, so that setting is ignored.' : '');
+		cui.note.textContent = 'Now showing: ' + (e.wordmark ? 'the text wordmark header, centred' : c.header_variants[e.header]) + ' (header), ' + c.footer_variants[e.footer] + ' (footer).' + (e.sticky_note ? ' The centred header cannot be fixed to the top, so that setting is ignored.' : '');
 		fillPlacementNote();
 	}
 
@@ -719,6 +725,8 @@
 				shrink: cui.shrink.checked,
 				front_logo: cui.front.checked,
 				overlay: cui.over.checked,
+				wordmark: cui.wordmark.checked,
+				menu_marker: cui.marker.value,
 				show_button: cui.button.checked,
 				show_strip: cui.strip.checked,
 				placement: cui.placement.value
@@ -763,6 +771,9 @@
 		var shrink = checkbox('twd-sk-ch-shrink', 'Make the fixed header smaller when scrolling (only works with the fixed header above)');
 		var front = checkbox('twd-sk-ch-front', 'Bigger logo on the front page: the full logo, larger and centred above the menu, on the front page only. Other pages show the small logo mark (if one is set in Site details) with the site name. Sizes are in the Style section.');
 		var over = checkbox('twd-sk-ch-over', 'Transparent over the picture: on a page that opens with a full-width picture hero, the header sits over the picture with no background and light words. Every other page keeps the normal header. With the fixed header, it turns solid again once the page is scrolled.');
+		var wordmark = checkbox('twd-sk-ch-wordmark', 'Text wordmark: the logo as live text, centred on every page. A small symbol (the Small logo mark in Site details), the site name in capitals, and an optional second line, with the menu centred below. Scrolled, it becomes one compact row. Replaces the header layout above while it is ticked. Sizes are in the Style section.');
+		cui.marker = selectWith('twd-sk-ch-marker', {}, '');
+		cui.wordmark = wordmark.input;
 		cui.sticky = sticky.input;
 		cui.shrink = shrink.input;
 		cui.front = front.input;
@@ -798,6 +809,8 @@
 			]),
 			sticky.label,
 			shrink.label,
+			wordmark.label,
+			field('Marking the page you are on', cui.marker, 'In the text wordmark header\'s menu.'),
 			front.label,
 			over.label,
 			btn.label,
@@ -819,6 +832,9 @@
 			});
 			Object.keys(c.footer_variants).forEach(function (k) {
 				cui.footer.appendChild(el('option', { value: k, text: c.footer_variants[k] }));
+			});
+			Object.keys(c.menu_markers || {}).forEach(function (k) {
+				cui.marker.appendChild(el('option', { value: k, text: c.menu_markers[k] }));
 			});
 			fillChrome();
 		});
@@ -936,7 +952,7 @@
 	}
 
 	function chromeSnap() {
-		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.over.checked, cui.button.checked, cui.strip.checked, cui.placement.value]);
+		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.over.checked, cui.wordmark.checked, cui.marker.value, cui.button.checked, cui.strip.checked, cui.placement.value]);
 	}
 
 	ED.addDirtyCheck(function () {

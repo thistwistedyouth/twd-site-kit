@@ -160,7 +160,7 @@ class TWD_SK_Packs {
 		$s['heading-style'] = array( 'normal', 'italic' );
 		$s['title-style']   = array( 'normal', 'italic' );
 		$s['heading-align'] = array( 'left', 'center' );
-		foreach ( array( 'heading-weight', 'title-weight', 'btn-weight', 'eyebrow-weight' ) as $name ) {
+		foreach ( array( 'heading-weight', 'title-weight', 'btn-weight', 'eyebrow-weight', 'menu-weight' ) as $name ) {
 			$s[ $name ] = 'weight';
 		}
 		$s['line-body']    = 'line';
@@ -180,6 +180,13 @@ class TWD_SK_Packs {
 			'logo-height', 'logo-height-sm', 'logo-height-front', 'footer-logo-height',
 			// 0.14.0: the logo in the feature footer, much larger than the other footers' (desktop, then phones).
 			'footer-logo-height-feature', 'footer-logo-height-feature-sm',
+			// 0.14.0: the text wordmark header (symbol, name and second line sizes on the front page, other pages,
+			// phones and when scrolled), and the menu in that header (its own size, spacing and gap).
+			'wordmark-symbol-front', 'wordmark-symbol', 'wordmark-symbol-sm', 'wordmark-symbol-compact',
+			'wordmark-name-front', 'wordmark-name', 'wordmark-name-sm',
+			'wordmark-line-front', 'wordmark-line', 'wordmark-line-sm',
+			'wordmark-name-spacing', 'wordmark-line-spacing',
+			'menu-size', 'menu-spacing', 'menu-gap',
 		) as $name ) {
 			$s[ $name ] = 'length';
 		}
@@ -209,6 +216,22 @@ class TWD_SK_Packs {
 			'footer-logo-height'            => '64px',
 			'footer-logo-height-feature'    => '140px',
 			'footer-logo-height-feature-sm' => '150px',
+			'wordmark-symbol-front'         => '72px',
+			'wordmark-symbol'               => '48px',
+			'wordmark-symbol-sm'            => '44px',
+			'wordmark-symbol-compact'       => '32px',
+			'wordmark-name-front'           => '24px',
+			'wordmark-name'                 => '20px',
+			'wordmark-name-sm'              => '18px',
+			'wordmark-line-front'           => '12px',
+			'wordmark-line'                 => '11px',
+			'wordmark-line-sm'              => '12px',
+			'wordmark-name-spacing'         => '0.18em',
+			'wordmark-line-spacing'         => '0.3em',
+			'menu-size'                     => '15px',
+			'menu-weight'                   => '400',
+			'menu-spacing'                  => '0.02em',
+			'menu-gap'                      => '28px',
 			'image-filter'                  => 'none',
 			'image-tint'                    => 'transparent',
 		);

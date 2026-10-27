@@ -12,6 +12,7 @@
 	}
 	var SHRINK_AT = 60;
 	var GROW_AT = 20;
+	var COMPACT = 56; // about the height of the compact one-row text wordmark header
 	var shrunk = false;
 	var waiting = false;
 
@@ -19,10 +20,21 @@
 		return Math.max(0, window.pageYOffset || document.documentElement.scrollTop || 0);
 	}
 
+	/* The text wordmark header is much taller than the compact row it turns into, and its spacer keeps the tall
+	   height so nothing jumps. So it waits until the spacer has scrolled up to the compact row, which leaves no
+	   blank band under it. Every other header shrinks after 60px, as it always did. */
+	function shrinkAt() {
+		var wrap = header.parentNode;
+		if (wrap && wrap.classList && wrap.classList.contains('twd-sk-chrome--wordmark')) {
+			return Math.max(SHRINK_AT, wrap.offsetHeight - COMPACT);
+		}
+		return SHRINK_AT;
+	}
+
 	function update() {
 		waiting = false;
 		var y = position();
-		if (!shrunk && y > SHRINK_AT) {
+		if (!shrunk && y > shrinkAt()) {
 			shrunk = true;
 			header.classList.add('twd-sk-header--shrunk');
 		} else if (shrunk && y < GROW_AT) {

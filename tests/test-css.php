@@ -326,7 +326,7 @@ twd_sk_test( 'css: the page title fallback exists and only affects pages with th
 
 twd_sk_test( 'css: the stylesheet is a sensible size', function () {
 	$size = filesize( ABSPATH . 'assets/twd-site-kit.css' );
-	twd_sk_true( $size > 10000 && $size < 120000, 'size ' . $size );
+	twd_sk_true( $size > 10000 && $size < 130000, 'size ' . $size );
 } );
 
 twd_sk_test( 'css: the file holds no em or en dashes', function () {

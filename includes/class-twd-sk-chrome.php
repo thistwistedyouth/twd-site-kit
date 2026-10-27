@@ -158,6 +158,16 @@ class TWD_SK_Chrome {
 		);
 	}
 
+	/** How the page you are on is marked in the menu of the text wordmark header: key => label. */
+	public static function menu_markers() {
+		return array(
+			'dot'   => 'A small dot under the page you are on',
+			'color' => 'The page you are on in the accent colour and a little bolder',
+			'bar'   => 'A short bar under the page you are on',
+			'none'  => 'No marker',
+		);
+	}
+
 	/** Every CSS class this class prints. The stylesheet tests check each one is styled. */
 	public static function classes() {
 		$classes = array(
@@ -178,12 +188,18 @@ class TWD_SK_Chrome {
 			'twd-sk-footer__copy', 'twd-sk-footer__legal', 'twd-sk-footer__legal-link', 'twd-sk-skip',
 			// 0.14.0: the feature footer's own pieces (the footer text as a heading, the contact and registration groups, the two-column list).
 			'twd-sk-footer__tagline', 'twd-sk-footer__contact-group', 'twd-sk-footer__regs', 'twd-sk-footer__links--two',
+			// 0.14.0: the text wordmark header (a mark, the name and a second line as live text, centred on every page).
+			'twd-sk-header--wordmark', 'twd-sk-header--wm-front', 'twd-sk-header__mark', 'twd-sk-header__name', 'twd-sk-header__line',
+			'twd-sk-chrome--wordmark', 'twd-sk-chrome--wm-front', 'twd-sk-chrome--noline',
 		);
 		foreach ( array_keys( self::header_variants() ) as $v ) {
 			$classes[] = 'twd-sk-header--' . $v;
 		}
 		foreach ( array_keys( self::footer_variants() ) as $v ) {
 			$classes[] = 'twd-sk-footer--' . $v;
+		}
+		foreach ( array_keys( self::menu_markers() ) as $m ) {
+			$classes[] = 'twd-sk-header--mark-' . $m;
 		}
 		return $classes;
 	}
@@ -196,6 +212,8 @@ class TWD_SK_Chrome {
 			'shrink'         => false,   // 0.13.0: a fixed header gets smaller after a small scroll
 			'front_logo'     => false,   // 0.14.0: the full logo, larger and centred above the menu, on the front page only
 			'overlay'        => false,   // 0.14.0: transparent over the picture, on a page that opens with a full-width picture hero
+			'wordmark'       => false,   // 0.14.0: the logo as live text (mark, name, second line), centred on every page, with its own menu look
+			'menu_marker'    => 'dot',   // 0.14.0: how the current page is marked in that header's menu
 			'show_button'    => true,
 			'show_strip'     => false,
 			'footer_columns' => 3,
@@ -243,12 +261,20 @@ class TWD_SK_Chrome {
 				case 'shrink':
 				case 'front_logo':
 				case 'overlay':
+				case 'wordmark':
 				case 'show_button':
 				case 'show_strip':
 					if ( is_bool( $value ) || 0 === $value || 1 === $value || '0' === $value || '1' === $value ) {
 						$out['valid'][ $key ] = (bool) $value;
 					} else {
 						$out['errors'][] = 'The ' . str_replace( '_', ' ', $key ) . ' setting must be on or off.';
+					}
+					break;
+				case 'menu_marker':
+					if ( is_string( $value ) && isset( self::menu_markers()[ $value ] ) ) {
+						$out['valid'][ $key ] = $value;
+					} else {
+						$out['errors'][] = 'Choose how the page you are on is marked in the menu: ' . implode( ', ', array_keys( self::menu_markers() ) ) . '.';
 					}
 					break;
 				case 'placement':
@@ -288,8 +314,10 @@ class TWD_SK_Chrome {
 		$pack = TWD_SK_Packs::chrome_defaults();
 		$h    = '' !== $s['header_variant'] ? $s['header_variant'] : $pack['header'];
 		$f    = '' !== $s['footer_variant'] ? $s['footer_variant'] : $pack['footer'];
-		// A centred header has two rows, so it cannot be fixed to the top at a known height.
-		$sticky = (bool) $s['sticky'] && 'centered' !== $h;
+		// A centred header has two rows, so it cannot be fixed to the top at a known height. The text wordmark
+		// header can: its height is worked out from its size tokens (see the stylesheet).
+		$wm     = (bool) $s['wordmark'];
+		$sticky = (bool) $s['sticky'] && ( $wm || 'centered' !== $h );
 		return array(
 			'header'      => $h,
 			'footer'      => $f,
@@ -297,10 +325,12 @@ class TWD_SK_Chrome {
 			'shrink'      => $sticky && (bool) $s['shrink'],
 			'front_logo'  => (bool) $s['front_logo'],
 			'overlay'     => (bool) $s['overlay'],
+			'wordmark'    => $wm,
+			'menu_marker' => $s['menu_marker'],
 			'button'      => (bool) $s['show_button'],
 			'strip'       => (bool) $s['show_strip'],
 			'columns'     => (int) $s['footer_columns'],
-			'sticky_note' => (bool) $s['sticky'] && 'centered' === $h,
+			'sticky_note' => (bool) $s['sticky'] && ! $wm && 'centered' === $h,
 		);
 	}
 
@@ -399,6 +429,18 @@ class TWD_SK_Chrome {
 		return self::logo_html( $profile, 'twd-sk-header__logo-img', 'twd-sk-header__logo-text' );
 	}
 
+	/**
+	 * The text wordmark (0.14.0): the small mark picture if one is set (an empty description, because the name
+	 * is right beside it as text), the site name as live text, and the second line if there is one. The
+	 * link's name is the site name once (plus the second line). Capitals and spacing are the stylesheet's.
+	 */
+	private static function wordmark_html( $profile ) {
+		$name = self::site_name( $profile );
+		$mark = self::logo_img( $profile['logo_mark_id'], 'twd-sk-header__mark', '' !== $name ? '' : 'Home' );
+		$line = $profile['logo_line'];
+		return $mark . '<span class="twd-sk-header__name">' . self::esc( $name ) . '</span>' . ( '' !== $line ? '<span class="twd-sk-header__line">' . self::esc( $line ) . '</span>' : '' );
+	}
+
 	/** True on the site's front page (the home page), where the larger logo may show. */
 	private static function is_front() {
 		try {
@@ -473,10 +515,15 @@ class TWD_SK_Chrome {
 		}
 		$eff   = self::effective();
 		$strip = $eff['strip'] && ( '' !== $profile['phone'] || '' !== $profile['email'] );
-		$front = $eff['front_logo'] && $profile['logo_id'] && self::is_front();
+		$wm       = $eff['wordmark'];
+		$wm_front = $wm && self::is_front();
+		// The text wordmark replaces the bigger front page logo (it has its own larger front page size).
+		$front = ! $wm && $eff['front_logo'] && $profile['logo_id'] && self::is_front();
 		$over  = $eff['overlay'] && self::opens_with_picture();
-		$wrap  = 'twd-sk-page twd-sk-chrome' . ( $eff['sticky'] ? ' twd-sk-chrome--sticky' : '' ) . ( $eff['sticky'] && $strip ? ' twd-sk-chrome--strip' : '' ) . ( $eff['sticky'] && $front ? ' twd-sk-chrome--front' : '' ) . ( $over ? ' twd-sk-chrome--over' : '' );
-		$cls   = 'twd-sk-header twd-sk-header--' . $eff['header'] . ( $eff['sticky'] ? ' twd-sk-header--sticky' : '' ) . ( $eff['shrink'] ? ' twd-sk-header--shrink' : '' ) . ( $front ? ' twd-sk-header--front' : '' ) . ( $over ? ' twd-sk-header--over' : '' );
+		$wrap  = 'twd-sk-page twd-sk-chrome' . ( $eff['sticky'] ? ' twd-sk-chrome--sticky' : '' ) . ( $eff['sticky'] && $strip ? ' twd-sk-chrome--strip' : '' ) . ( $eff['sticky'] && $front ? ' twd-sk-chrome--front' : '' ) . ( $over ? ' twd-sk-chrome--over' : '' )
+			. ( $eff['sticky'] && $wm ? ' twd-sk-chrome--wordmark' . ( $wm_front ? ' twd-sk-chrome--wm-front' : '' ) . ( '' === $profile['logo_line'] ? ' twd-sk-chrome--noline' : '' ) : '' );
+		$cls   = 'twd-sk-header' . ( $wm ? ' twd-sk-header--wordmark twd-sk-header--mark-' . $eff['menu_marker'] . ( $wm_front ? ' twd-sk-header--wm-front' : '' ) : ' twd-sk-header--' . $eff['header'] )
+			. ( $eff['sticky'] ? ' twd-sk-header--sticky' : '' ) . ( $eff['shrink'] ? ' twd-sk-header--shrink' : '' ) . ( $front ? ' twd-sk-header--front' : '' ) . ( $over ? ' twd-sk-header--over' : '' );
 
 		$out  = '<div class="' . $wrap . '"><header class="' . $cls . '">' . ( $skip ? self::skip_link() : '' );
 		if ( $strip ) {
@@ -485,7 +532,7 @@ class TWD_SK_Chrome {
 				. '</div></div>';
 		}
 		$out .= '<div class="twd-sk-inner twd-sk-header__inner">';
-		$out .= '<a class="twd-sk-header__logo" href="' . self::url( self::home() ) . '">' . self::header_logo_html( $profile, $front, $eff['front_logo'] && $profile['logo_id'] ) . '</a>';
+		$out .= '<a class="twd-sk-header__logo" href="' . self::url( self::home() ) . '">' . ( $wm ? self::wordmark_html( $profile ) : self::header_logo_html( $profile, $front, $eff['front_logo'] && $profile['logo_id'] ) ) . '</a>';
 		$out .= '<button type="button" class="twd-sk-header__toggle" aria-expanded="false" aria-controls="' . self::NAV_ID . '" hidden>'
 			. '<span class="twd-sk-visually-hidden">Menu</span><span class="twd-sk-header__bars" aria-hidden="true"></span></button>';
 		$out .= '<div class="twd-sk-header__panel"><nav id="' . self::NAV_ID . '" class="twd-sk-header__nav" aria-label="Main"><ul class="twd-sk-header__menu">';

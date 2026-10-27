@@ -31,6 +31,7 @@ class TWD_SK_Profile {
 			'site_name'    => '',
 			'logo_id'      => 0,
 			'logo_mark_id' => 0,   // 0.14.0: a small symbol-only mark for the header on pages other than the front page
+			'logo_line'    => '',  // 0.14.0: the small second line under the name in the text wordmark header (a descriptor)
 			'menu'         => array(),
 			'cta_label'    => '',
 			'cta_url'      => '',
@@ -130,6 +131,8 @@ class TWD_SK_Profile {
 				return is_string( $value ) ? array( self::text( $value, 80 ) ) : 'The site name must be text.';
 			case 'footer_text':
 				return is_string( $value ) ? array( self::text( $value, 300 ) ) : 'The footer text must be text.';
+			case 'logo_line':
+				return is_string( $value ) ? array( self::text( $value, 40 ) ) : 'The second line under the name must be text.';
 			case 'phone':
 				return is_string( $value ) ? array( self::text( $value, 40 ) ) : 'The phone number must be text.';
 			case 'area_served':
@@ -349,6 +352,7 @@ class TWD_SK_Profile {
 			'site_name'    => TWD_SK_Mode::w( 'ph_site_name' ),
 			'logo_id'      => 0,
 			'logo_mark_id' => 0,
+			'logo_line'    => '',
 			'menu'         => array(
 				array( 'label' => 'Home', 'url' => '/', 'children' => array() ),
 				array( 'label' => 'About', 'url' => '/about', 'children' => array() ),

@@ -610,12 +610,19 @@
 &.twd-sk-chrome { position: relative; z-index: 50; }
 &.twd-sk-chrome--sticky { height: 76px; }
 &.twd-sk-chrome--sticky.twd-sk-chrome--strip { height: 112px; }
+/* The text wordmark header's fixed spacer (0.14.0): its height is worked out from the size tokens (the way the front page logo's is),
+   with the symbol, name and second line sizes for the page it is on, the menu line, and the paddings below. No second line takes its 20px out. */
+&.twd-sk-chrome--wordmark { --twd-sk-wm-s: $wordmark-symbol; --twd-sk-wm-n: $wordmark-name; --twd-sk-wm-l: $wordmark-line; --twd-sk-wm-pad: 85px; --twd-sk-wm-strip: 0px; }
+&.twd-sk-chrome--wm-front { --twd-sk-wm-s: $wordmark-symbol-front; --twd-sk-wm-n: $wordmark-name-front; --twd-sk-wm-l: $wordmark-line-front; }
+&.twd-sk-chrome--noline { --twd-sk-wm-l: 0px; --twd-sk-wm-pad: 79px; }
+&.twd-sk-chrome--wordmark.twd-sk-chrome--strip { --twd-sk-wm-strip: 36px; }
+&.twd-sk-chrome--sticky.twd-sk-chrome--wordmark { height: calc(var(--twd-sk-wm-s) + var(--twd-sk-wm-n) * 1.2 + var(--twd-sk-wm-l) * 1.3 + #{$menu-size} * 1.3 + var(--twd-sk-wm-pad) + var(--twd-sk-wm-strip)); }
 .twd-sk-header { position: relative; background-color: $color-surface; border-bottom: 1px solid $color-border; color: $color-title; }
 /* Transparent over the picture (0.14.0): printed only on a page that opens with a full-width picture hero.
    The wrapper has no height, so the picture starts at the top and the header floats over its overlay in the
    on-image colour. The --sticky rule below still wins on position when both are set. When the fixed header
    shrinks after a scroll it turns back into the normal surface-coloured bar, so the menu stays readable. */
-&.twd-sk-chrome--over, &.twd-sk-chrome--sticky.twd-sk-chrome--over, &.twd-sk-chrome--sticky.twd-sk-chrome--strip.twd-sk-chrome--over, &.twd-sk-chrome--sticky.twd-sk-chrome--front.twd-sk-chrome--over { height: 0; }
+&.twd-sk-chrome--over, &.twd-sk-chrome--sticky.twd-sk-chrome--over, &.twd-sk-chrome--sticky.twd-sk-chrome--strip.twd-sk-chrome--over, &.twd-sk-chrome--sticky.twd-sk-chrome--front.twd-sk-chrome--over, &.twd-sk-chrome--sticky.twd-sk-chrome--wordmark.twd-sk-chrome--over { height: 0; }
 .twd-sk-header--over { position: absolute; top: var(--wp-admin--admin-bar--height, 0px); left: 0; right: 0; z-index: 900; background-color: transparent; border-bottom-color: transparent; color: $color-on-image; }
 .twd-sk-header--over .twd-sk-header__link, .twd-sk-header--over .twd-sk-header__logo, .twd-sk-header--over .twd-sk-header__logo-text { color: $color-on-image; }
 .twd-sk-header--over .twd-sk-header__link:hover, .twd-sk-header--over .twd-sk-header__link:focus-visible { color: $color-accent-on-dark; }
@@ -699,6 +706,42 @@
 .twd-sk-header--split .twd-sk-header__cta { grid-column: 3; grid-row: 1; justify-self: end; }
 .twd-sk-header--minimal .twd-sk-header__panel { flex-direction: column; align-items: flex-start; }
 .twd-sk-header--minimal .twd-sk-header__menu { flex-direction: column; align-items: flex-start; }
+
+/* The text wordmark header (0.14.0): a small mark, the name and a second line as live text, centred on every page, the menu centred
+   below. Printed only when the setting is on, with these classes in place of the layout's own, so nothing else changes. */
+.twd-sk-header--wordmark .twd-sk-header__inner { position: relative; flex-direction: column; justify-content: center; align-items: center; gap: 0; padding-top: 20px; padding-bottom: 12px; text-align: center; }
+.twd-sk-header--wordmark .twd-sk-header__logo { flex: 0 1 auto; flex-direction: column; justify-content: center; min-width: 0; max-width: 100%; text-align: center; }
+.twd-sk-header--wordmark .twd-sk-header__mark { display: block; width: auto; max-width: 160px; height: $wordmark-symbol; margin: 0 auto 10px; object-fit: contain; }
+.twd-sk-header--wordmark .twd-sk-header__name { display: block; padding-left: $wordmark-name-spacing; font-family: $font-heading; font-size: $wordmark-name; font-weight: $heading-weight; font-style: normal; line-height: 1.2; letter-spacing: $wordmark-name-spacing; text-transform: uppercase; color: $color-heading; overflow-wrap: break-word; }
+.twd-sk-header--wordmark .twd-sk-header__line { display: block; margin: 6px 0 0; padding-left: $wordmark-line-spacing; font-family: $font-body; font-size: $wordmark-line; font-weight: 400; line-height: 1.3; letter-spacing: $wordmark-line-spacing; text-transform: uppercase; color: $color-heading; }
+.twd-sk-header--wm-front .twd-sk-header__mark { height: $wordmark-symbol-front; }
+.twd-sk-header--wm-front .twd-sk-header__name { font-size: $wordmark-name-front; }
+.twd-sk-header--wm-front .twd-sk-header__line { font-size: $wordmark-line-front; }
+.twd-sk-header--wordmark .twd-sk-header__panel { flex-wrap: wrap; justify-content: center; margin: 16px 0 0; }
+.twd-sk-header--wordmark .twd-sk-header__menu { justify-content: center; gap: 4px $menu-gap; }
+/* The header button sits in the menu's row at the menu's size, never taller than a menu link, so the row (and the fixed header's spacer) is the same with or without it. */
+.twd-sk-header--wordmark .twd-sk-header__cta { padding-top: 8px; padding-bottom: 8px; font-size: $menu-size; letter-spacing: $menu-spacing; }
+.twd-sk-header--wordmark .twd-sk-header__link { position: relative; padding: 10px 2px; font-size: $menu-size; font-weight: $menu-weight; line-height: 1.3; letter-spacing: $menu-spacing; text-decoration: none; }
+.twd-sk-header--wordmark .twd-sk-header__link:hover, .twd-sk-header--wordmark .twd-sk-header__link:focus-visible { text-decoration: none; }
+.twd-sk-header--wordmark .twd-sk-header__link[aria-current="page"] { color: inherit; text-decoration: none; }
+/* The page you are on: a dot or a bar under the link in the link's own colour (so it follows the transparent and scrolled states), or colour and weight, or nothing. */
+.twd-sk-header--mark-dot .twd-sk-header__link[aria-current="page"]::after, .twd-sk-header--mark-bar .twd-sk-header__link[aria-current="page"]::after { content: ""; position: absolute; left: 50%; transform: translateX(-50%); background-color: currentColor; }
+.twd-sk-header--mark-dot .twd-sk-header__link[aria-current="page"]::after { bottom: 1px; width: 5px; height: 5px; border-radius: 50%; }
+.twd-sk-header--mark-bar .twd-sk-header__link[aria-current="page"]::after { bottom: 3px; width: 18px; height: 2px; border-radius: 1px; }
+.twd-sk-header--mark-color .twd-sk-header__link[aria-current="page"] { color: $color-accent-text; font-weight: 600; }
+.twd-sk-header--mark-none .twd-sk-header__link[aria-current="page"] { text-decoration: none; }
+/* Scrolled: one centred row, a small symbol and the name on one line, the second line gone. */
+.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__inner { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 4px 40px; padding-top: 6px; padding-bottom: 6px; }
+.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__logo { flex-direction: row; }
+.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__mark { height: $wordmark-symbol-compact; margin: 0 12px 0 0; }
+.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__name { font-size: $wordmark-name; }
+.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__line { display: none; }
+.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__panel { margin: 0; }
+/* Over a picture: the name and second line take the on-image colour; scrolled, the header is solid again. */
+.twd-sk-header--over.twd-sk-header--wordmark .twd-sk-header__name, .twd-sk-header--over.twd-sk-header--wordmark .twd-sk-header__line { color: $color-on-image; }
+.twd-sk-header--over.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__name, .twd-sk-header--over.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__line { color: $color-heading; }
+.twd-sk-header--over.twd-sk-header--mark-color .twd-sk-header__link[aria-current="page"] { color: $color-accent-on-dark; }
+.twd-sk-header--over.twd-sk-header--shrunk.twd-sk-header--mark-color .twd-sk-header__link[aria-current="page"] { color: $color-accent-text; }
 
 /* the menu button and the collapsed menu: only once the script has run, so with no script the menu just shows */
 .twd-sk-header--js.twd-sk-header--minimal .twd-sk-header__toggle { display: inline-flex; }
@@ -837,6 +880,28 @@
   .twd-sk-footer--feature .twd-sk-footer__main { grid-template-columns: 1fr; gap: $gap-md; padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
   .twd-sk-footer--feature .twd-sk-footer__logo-img { height: $footer-logo-height-feature-sm; }
   .twd-sk-footer--feature .twd-sk-footer__tagline { font-size: $size-h2-sm; }
+}
+
+/* The text wordmark header on a phone (0.14.0): the stack stays centred, the menu button sits at the corner, scrolled it is one row. */
+@media (max-width: 900px) {
+  .twd-sk-header--wordmark .twd-sk-header__inner { padding-top: 16px; padding-bottom: 14px; }
+  .twd-sk-header--wordmark .twd-sk-header__mark { height: $wordmark-symbol-sm; margin-bottom: 8px; }
+  .twd-sk-header--wordmark .twd-sk-header__name { font-size: $wordmark-name-sm; }
+  .twd-sk-header--wordmark .twd-sk-header__line { margin: 4px 0 0; font-size: $wordmark-line-sm; }
+  .twd-sk-header--wordmark .twd-sk-header__panel { align-items: center; margin: 12px 0 0; }
+  .twd-sk-header--wordmark .twd-sk-header__menu { align-items: center; }
+  .twd-sk-header--wordmark .twd-sk-header__link { padding: 12px 2px; }
+  .twd-sk-header--js.twd-sk-header--wordmark .twd-sk-header__toggle { position: absolute; top: 10px; right: $gutter-sm; }
+  .twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__inner { flex-wrap: nowrap; justify-content: space-between; }
+  .twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__name { font-size: $wordmark-name-sm; }
+  .twd-sk-header--js.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__toggle { position: static; }
+  &.twd-sk-chrome--wordmark { --twd-sk-wm-s: $wordmark-symbol-sm; --twd-sk-wm-n: $wordmark-name-sm; --twd-sk-wm-l: $wordmark-line-sm; --twd-sk-wm-pad: 43px; }
+  &.twd-sk-chrome--noline { --twd-sk-wm-l: 0px; --twd-sk-wm-pad: 39px; }
+  &.twd-sk-chrome--sticky.twd-sk-chrome--wordmark { height: calc(var(--twd-sk-wm-s) + var(--twd-sk-wm-n) * 1.2 + var(--twd-sk-wm-l) * 1.3 + var(--twd-sk-wm-pad) + var(--twd-sk-wm-strip)); }
+}
+/* After the transitions above, so it wins the tie: the scroll size change does not animate for people who ask for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  .twd-sk-header--shrink .twd-sk-header__inner, .twd-sk-header--shrink .twd-sk-header__logo-img, .twd-sk-header--shrink .twd-sk-header__logo-mark { transition: none; }
 }
 
 /* Question groups on a wide screen: one group at a time (0.14.0). */

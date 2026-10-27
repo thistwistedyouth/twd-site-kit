@@ -1096,6 +1096,7 @@ class TWD_SK_REST {
 				'effective'       => $eff,
 				'header_variants' => TWD_SK_Chrome::header_variants(),
 				'footer_variants' => TWD_SK_Chrome::footer_variants(),
+				'menu_markers'    => TWD_SK_Chrome::menu_markers(),
 				'pack_defaults'   => TWD_SK_Packs::chrome_defaults(),
 				'placements'      => TWD_SK_Chrome::placements(),
 				'placed_by'       => TWD_SK_Chrome::placement_status(),
