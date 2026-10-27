@@ -426,7 +426,13 @@ twd_sk_test( 'sections: a page outline is a list of real sections, starting with
 	twd_sk_eq( array( array( 'hero', 'twd-sk-hero--compact' ), array( 'faq', '' ), array( 'text', '' ) ), $ok );
 	twd_sk_has( 'starts with a hero', TWD_SK_Recipes::clean_parts( array( 'text', 'hero' ) )->get_error_message() );
 	twd_sk_has( 'not one of the kit', TWD_SK_Recipes::clean_parts( array( 'hero', 'carousel' ) )->get_error_message() );
-	twd_sk_has( 'does not have that layout', TWD_SK_Recipes::clean_parts( array( 'hero', array( 'text', 'twd-sk-made-up' ) ) )->get_error_message() );
+	// 0.14.0: a layout this version does not know falls back to the standard one, with a plain warning, so a
+	// newer recipe never fails a page on an older plugin.
+	twd_sk_eq( array( array( 'hero', '' ), array( 'text', '' ) ), TWD_SK_Recipes::clean_parts( array( 'hero', array( 'text', 'twd-sk-made-up' ) ) ) );
+	$w = TWD_SK_Recipes::warnings();
+	twd_sk_eq( 1, count( $w ) );
+	twd_sk_has( 'does not have the layout "twd-sk-made-up"', $w[0] );
+	twd_sk_eq( array(), TWD_SK_Recipes::warnings(), 'warnings are forgotten once read' );
 	twd_sk_has( 'up to 12', TWD_SK_Recipes::clean_parts( array_merge( array( 'hero' ), array_fill( 0, 12, 'text' ) ) )->get_error_message() );
 	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Recipes::clean_parts( array() ) );
 	$menu = TWD_SK_Recipes::parts_menu();

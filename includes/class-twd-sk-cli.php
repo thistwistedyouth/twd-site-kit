@@ -361,6 +361,9 @@ class TWD_SK_CLI {
 		foreach ( $plan['errors'] as $e ) {
 			WP_CLI::warning( $e );
 		}
+		foreach ( $plan['ignored'] as $e ) {
+			WP_CLI::log( 'Note: ' . $e );
+		}
 		foreach ( $plan['blocking'] as $b ) {
 			WP_CLI::warning( 'Hard to read: ' . $b );
 		}

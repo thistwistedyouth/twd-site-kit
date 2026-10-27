@@ -392,6 +392,9 @@ class TWD_SK_Brief {
 						continue;
 					}
 					$in = TWD_SK_Recipes::inputs( $pg );
+					foreach ( TWD_SK_Recipes::warnings() as $w ) {
+						$ignored[] = 'Page ' . ( $i + 1 ) . ': ' . $w;
+					}
 					if ( is_wp_error( $in ) ) {
 						$errors[] = 'Page ' . ( $i + 1 ) . ': ' . $in->get_error_message() . ' It was dropped.';
 						continue;

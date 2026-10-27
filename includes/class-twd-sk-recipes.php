@@ -19,6 +19,16 @@ class TWD_SK_Recipes {
 	const MAX_NOTES    = 1500;
 	const MAX_SECTIONS = 12;
 
+	/** Plain sentences about layouts that were not understood and fell back to the standard one (0.14.0). */
+	private static $warnings = array();
+
+	/** The warnings gathered since the last call, and forget them. */
+	public static function warnings() {
+		$out            = self::$warnings;
+		self::$warnings = array();
+		return $out;
+	}
+
 	public static function types() {
 		$starters = TWD_SK_Starters::pages();
 		return array(
@@ -155,7 +165,10 @@ class TWD_SK_Recipes {
 				return new WP_Error( 'twd_sk_bad_input', 'Section ' . ( $i + 1 ) . ' is not one of the kit\'s sections.' );
 			}
 			if ( '' !== $variant && ! isset( $c['variants'][ $variant ] ) ) {
-				return new WP_Error( 'twd_sk_bad_input', 'Section ' . ( $i + 1 ) . ' (' . $c['label'] . ') does not have that layout.' );
+				// A layout this version does not know (for example one from a newer recipe) falls back to the
+				// standard layout instead of failing the whole page, and says so (0.14.0).
+				self::$warnings[] = 'Section ' . ( $i + 1 ) . ' (' . $c['label'] . ') does not have the layout "' . TWD_SK_Profile::text( $variant, 60 ) . '" in this version, so its standard layout is used.';
+				$variant          = '';
 			}
 			$out[] = array( $id, $variant );
 		}
