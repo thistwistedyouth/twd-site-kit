@@ -41,3 +41,6 @@ body.twd-sk-inline-on img[data-twd-sk-p][src*="/your-badge"],
 body.twd-sk-inline-on img[data-twd-sk-p][src*="/your-logo"] {
   min-width: 8rem; min-height: 8rem; background-color: rgba(34, 113, 177, 0.06) !important;
 }
+
+/* Removed while editing (0.14.0): hidden until Save; Put back shows it again. */
+body.twd-sk-inline-on [data-twd-sk-r][hidden] { display: none !important; }

@@ -20,7 +20,7 @@
 	var show = ED.show;
 	var BLOCKS_WITH_BREAKS = { P: 1, LI: 1, DD: 1, FIGCAPTION: 1, BLOCKQUOTE: 1 };
 	var PICTURE_TYPES = /^image\/(jpeg|png|gif|webp|avif)$/;
-	var S = { on: false, texts: [], pics: [], spots: [], orig: {}, origText: {}, origPic: {}, hrefs: {}, picks: {}, spotPicks: {}, range: null, linkTarget: null, target: null, saving: false, uploading: false };
+	var S = { on: false, texts: [], pics: [], spots: [], orig: {}, origText: {}, origPic: {}, hrefs: {}, picks: {}, spotPicks: {}, removes: {}, removeOrder: [], last: null, range: null, linkTarget: null, target: null, saving: false, uploading: false };
 	var ui = {};
 
 	function texts() {
@@ -72,7 +72,58 @@
 				n++;
 			}
 		});
-		return n + Object.keys(S.picks).length + Object.keys(S.spotPicks).length;
+		return n + Object.keys(S.picks).length + Object.keys(S.spotPicks).length + Object.keys(S.removes).length;
+	}
+
+	/* ---- removing a section, an item or a button (0.14.0) ----
+	   Hidden on screen until Save; Put back undoes it here, and every save is a version the history can restore. */
+
+	function removableOf(node) {
+		var n = node && node.nodeType === 1 ? node : (node ? node.parentNode : null);
+		var r = n && n.closest ? n.closest('[data-twd-sk-r]') : null;
+		return r && !r.hasAttribute('hidden') ? r : null;
+	}
+
+	function kindOf(node) {
+		if (node.tagName === 'SECTION') {
+			return 'section';
+		}
+		if (node.tagName === 'A' && node.classList.contains('twd-sk-btn')) {
+			return 'button';
+		}
+		return 'item';
+	}
+
+	function removeThis() {
+		var node = removableOf(S.last);
+		if (!node) {
+			status('Click the list entry, card, button or section you want to remove, then press Remove.');
+			return;
+		}
+		var key = node.getAttribute('data-twd-sk-r');
+		node.setAttribute('hidden', '');
+		S.removes[key] = node;
+		S.removeOrder.push(key);
+		S.last = null;
+		counter();
+		status('Removed a ' + kindOf(node) + '. Put back undoes it; Save makes it final (every save is a version you can go back to).');
+		ui.putBack.disabled = false;
+	}
+
+	function putBack() {
+		var key = S.removeOrder.pop();
+		if (key === undefined) {
+			status('Nothing to put back.');
+			return;
+		}
+		var node = S.removes[key];
+		delete S.removes[key];
+		if (node) {
+			node.removeAttribute('hidden');
+		}
+		counter();
+		status('Put back.');
+		ui.putBack.disabled = !S.removeOrder.length;
 	}
 
 	function status(text) {
@@ -81,7 +132,7 @@
 
 	function counter() {
 		var n = changedCount();
-		status(n ? n + ' change' + (n === 1 ? '' : 's') + ' not saved yet.' : 'Click any words to change them. Click a picture to change it' + (S.spots.length ? ', or a dashed Add a picture box to put one there.' : '.'));
+		status(n ? n + ' change' + (n === 1 ? '' : 's') + ' not saved yet.' : 'Click any words to change them. Click a picture to change it' + (S.spots.length ? ', or a dashed Add a picture box to put one there.' : '.') + ' Click something, then Remove, to take it out.');
 		ui.save.disabled = !n || S.saving || S.uploading;
 		adminBar();
 	}
@@ -164,6 +215,9 @@
 			format('italic');
 		});
 		ui.link = toolButton('Link', 'Add or change a link', openLink);
+		ui.remove = toolButton('Remove', 'Remove this list entry, card, button or section', removeThis);
+		ui.putBack = toolButton('Put back', 'Put back the last thing removed', putBack);
+		ui.putBack.disabled = true;
 		ui.linkInput = el('input', { type: 'text', id: 'twd-sk-inline-link', className: 'twd-sk-ed__input', placeholder: '/contact, or a full web address', autocomplete: 'off' });
 		ui.linkPanel = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' }, [
 			el('label', { 'for': 'twd-sk-inline-link', text: 'Link address' }),
@@ -192,7 +246,7 @@
 		]);
 		ui.confirm = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' });
 		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar', role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '' }, [
-			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.bold, ui.italic, ui.link]),
+			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.bold, ui.italic, ui.link, ui.remove, ui.putBack]),
 			el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.save, ui.cancel]),
 			ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.confirm
 		]);
@@ -603,6 +657,7 @@
 		if (!S.on || (ui.bar && ui.bar.contains(e.target))) {
 			return;
 		}
+		S.last = e.target;
 		var target = pictureTarget(e.target);
 		if (target) {
 			e.preventDefault();
@@ -636,7 +691,13 @@
 		S.hrefs = {};
 		S.picks = {};
 		S.spotPicks = {};
+		S.removes = {};
+		S.removeOrder = [];
+		S.last = null;
 		S.target = null;
+		if (ui.putBack) {
+			ui.putBack.disabled = true;
+		}
 		S.texts.forEach(function (t) {
 			var i = t.getAttribute('data-twd-sk-t');
 			S.orig[i] = copyChildren(t);
@@ -715,8 +776,13 @@
 			}
 			spot.removeAttribute('data-twd-sk-filled');
 		});
+		Object.keys(S.removes).forEach(function (k) {
+			S.removes[k].removeAttribute('hidden');
+		});
 		S.picks = {};
 		S.spotPicks = {};
+		S.removes = {};
+		S.removeOrder = [];
 		stop();
 	}
 
@@ -766,7 +832,10 @@
 		Object.keys(S.spotPicks).forEach(function (k) {
 			body.spots.push(S.spotPicks[k]);
 		});
-		if (!body.texts.length && !body.pictures.length && !body.spots.length) {
+		body.removes = Object.keys(S.removes).map(function (k) {
+			return parseInt(k, 10);
+		});
+		if (!body.texts.length && !body.pictures.length && !body.spots.length && !body.removes.length) {
 			status('Nothing has changed yet.');
 			return;
 		}
@@ -829,6 +898,11 @@
 	document.addEventListener('paste', onPaste, true);
 	document.addEventListener('input', onInput, true);
 	document.addEventListener('click', onClick, true);
+	document.addEventListener('focusin', function (e) {
+		if (S.on && ui.bar && !ui.bar.contains(e.target)) {
+			S.last = e.target;
+		}
+	});
 	// The Edit with AI pop-up offers the same, from its Edit this page tab.
 	ED.startInline = function () {
 		start();

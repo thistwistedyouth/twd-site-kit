@@ -946,11 +946,18 @@ class TWD_SK_REST {
 		if ( $base !== (int) TWD_SK_Store::get_current_version_id( $id ) ) {
 			return self::error( 'twd_sk_conflict', 'This page changed since you opened it. Reload the page and make the change again.', 409 );
 		}
-		$out = TWD_SK_Inline::apply( TWD_SK_Store::get_current( $id ), $request->get_param( 'texts' ), $request->get_param( 'pictures' ), $request->get_param( 'spots' ) );
+		$out = TWD_SK_Inline::apply( TWD_SK_Store::get_current( $id ), $request->get_param( 'texts' ), $request->get_param( 'pictures' ), $request->get_param( 'spots' ), $request->get_param( 'removes' ) );
 		if ( is_wp_error( $out ) ) {
 			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_conflict' === $out->get_error_code() ? 409 : 400 );
 		}
-		$note  = 'Changed on the page (' . (int) $out['changed'] . ' piece' . ( 1 === (int) $out['changed'] ? '' : 's' ) . ')';
+		$parts = array();
+		if ( $out['changed'] ) {
+			$parts[] = (int) $out['changed'] . ' piece' . ( 1 === (int) $out['changed'] ? '' : 's' );
+		}
+		if ( ! empty( $out['removed'] ) ) {
+			$parts[] = (int) $out['removed'] . ' removed';
+		}
+		$note = 'Changed on the page (' . implode( ', ', $parts ) . ')';
 		$saved = TWD_SK_Store::save( $id, $out['html'], array( 'base_version' => $base, 'note' => $note ) );
 		return self::after_write( $id, $saved );
 	}

@@ -28,6 +28,9 @@ class TWD_SK_Inline {
 	const TEXT_ATTR = 'data-twd-sk-t';
 	const PIC_ATTR  = 'data-twd-sk-p';
 	const SPOT_ATTR = 'data-twd-sk-s';
+	// 0.14.0: things that can be removed (a section, a repeated item such as a list entry or card, a button).
+	const REMOVE_ATTR  = 'data-twd-sk-r';
+	const MAX_REMOVES  = 50;
 	const MAX_EDITS = 400;
 	const MAX_TEXT  = 6000;
 	const MAX_ALT   = 200;
@@ -192,7 +195,82 @@ class TWD_SK_Inline {
 	private static function targets( DOMElement $root ) {
 		$found = array( 'text' => array(), 'pics' => array(), 'spots' => array() );
 		self::walk( $root, $found );
+		$found['removes'] = self::removables( $root );
 		return $found;
+	}
+
+	// -- Things that can be removed (0.14.0) --------------------------------------------
+
+	/** Elements with a brother or sister of the same tag and classes under the same parent (one of several alike). */
+	private static function has_like_sibling( DOMElement $el ) {
+		$tag   = strtolower( $el->nodeName );
+		$class = trim( $el->getAttribute( 'class' ) );
+		foreach ( $el->parentNode->childNodes as $other ) {
+			if ( $other !== $el && $other instanceof DOMElement && strtolower( $other->nodeName ) === $tag && trim( $other->getAttribute( 'class' ) ) === $class ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * What may be removed, in document order: a top-level section (not the one holding the page's h1, not a
+	 * locked one), any button, and any element that is one of several alike (a list entry, a card, a row, a
+	 * question, a picture in a grid). Nothing inside a piece of text, a locked section or a shortcode holder.
+	 */
+	private static function removables( DOMElement $root ) {
+		$list = array();
+		foreach ( $root->childNodes as $child ) {
+			if ( ! $child instanceof DOMElement ) {
+				continue;
+			}
+			if ( 'section' === strtolower( $child->nodeName ) ) {
+				if ( self::section_locked( $child ) ) {
+					continue;
+				}
+				if ( 0 === $child->getElementsByTagName( 'h1' )->length ) {
+					$list[] = $child;
+				}
+			}
+			self::walk_removables( $child, $list );
+		}
+		return $list;
+	}
+
+	private static function walk_removables( DOMElement $node, array &$list ) {
+		foreach ( $node->childNodes as $child ) {
+			if ( ! $child instanceof DOMElement ) {
+				continue;
+			}
+			$tag = strtolower( $child->nodeName );
+			if ( 'section' === $tag && self::section_locked( $child ) ) {
+				continue;
+			}
+			$text = self::is_text( $child );
+			if ( ( self::is_button( $child ) || ( 'img' !== $tag && 'section' !== $tag && self::has_like_sibling( $child ) ) ) && ! self::holds_shortcode( $child ) ) {
+				$list[] = $child;
+			}
+			// Inside a piece of text (a paragraph, a button, a list entry) nothing smaller is removed on its own.
+			if ( ! $text ) {
+				self::walk_removables( $child, $list );
+			}
+		}
+	}
+
+	private static function holds_shortcode( DOMElement $el ) {
+		$codes = array_keys( TWD_SK_Registry::allowed_shortcodes() );
+		return $codes && 1 === preg_match( '/\[(?:' . implode( '|', array_map( 'preg_quote', $codes ) ) . ')[\s\]]/i', (string) $el->textContent );
+	}
+
+	/** Take an element out, then any wrapper it leaves empty, up to (never including) its section. */
+	private static function remove_node( DOMElement $el ) {
+		$parent = $el->parentNode;
+		$parent->removeChild( $el );
+		while ( $parent instanceof DOMElement && 'section' !== strtolower( $parent->nodeName ) && '' === trim( (string) $parent->textContent ) && 0 === $parent->getElementsByTagName( 'img' )->length && $parent->parentNode instanceof DOMElement && 'body' !== strtolower( $parent->parentNode->nodeName ) ) {
+			$up = $parent->parentNode;
+			$up->removeChild( $parent );
+			$parent = $up;
+		}
 	}
 
 	// -- Drawing the page for someone who can edit it ---------------------------------
@@ -223,6 +301,9 @@ class TWD_SK_Inline {
 		foreach ( $found['pics'] as $i => $el ) {
 			$el->setAttribute( self::PIC_ATTR, (string) $i );
 		}
+		foreach ( $found['removes'] as $i => $el ) {
+			$el->setAttribute( self::REMOVE_ATTR, (string) $i );
+		}
 		foreach ( $found['spots'] as $i => $node ) {
 			if ( $node instanceof DOMText ) {
 				// Only in what this person's browser receives: the stored page is unchanged.
@@ -240,10 +321,10 @@ class TWD_SK_Inline {
 	public static function count( $html ) {
 		$loaded = self::load( (string) $html );
 		if ( ! $loaded ) {
-			return array( 'text' => 0, 'pics' => 0, 'spots' => 0 );
+			return array( 'text' => 0, 'pics' => 0, 'spots' => 0, 'removes' => 0 );
 		}
 		$found = self::targets( $loaded[1] );
-		return array( 'text' => count( $found['text'] ), 'pics' => count( $found['pics'] ), 'spots' => count( $found['spots'] ) );
+		return array( 'text' => count( $found['text'] ), 'pics' => count( $found['pics'] ), 'spots' => count( $found['spots'] ), 'removes' => count( $found['removes'] ) );
 	}
 
 	// -- Saving the changes ------------------------------------------------------------
@@ -255,14 +336,24 @@ class TWD_SK_Inline {
 	 * @param array  $texts List of { i, html, href? }.
 	 * @param array  $pics  List of { i, id, alt }. An id of 0 keeps the picture and changes only its description.
 	 * @param array  $spots List of { i, id, alt }: a picture for a spot.
-	 * @return array|WP_Error { html, changed }
+	 * @param array  $removes List of numbers of things to remove (0.14.0), as the page was drawn.
+	 * @return array|WP_Error { html, changed, removed }
 	 */
-	public static function apply( $html, $texts, $pics, $spots = array() ) {
-		$texts = is_array( $texts ) ? array_values( $texts ) : array();
-		$pics  = is_array( $pics ) ? array_values( $pics ) : array();
-		$spots = is_array( $spots ) ? array_values( $spots ) : array();
-		if ( ! $texts && ! $pics && ! $spots ) {
+	public static function apply( $html, $texts, $pics, $spots = array(), $removes = array() ) {
+		$texts   = is_array( $texts ) ? array_values( $texts ) : array();
+		$pics    = is_array( $pics ) ? array_values( $pics ) : array();
+		$spots   = is_array( $spots ) ? array_values( $spots ) : array();
+		$removes = is_array( $removes ) ? array_values( $removes ) : array();
+		if ( ! $texts && ! $pics && ! $spots && ! $removes ) {
 			return new WP_Error( 'twd_sk_bad_input', 'There are no changes to save.' );
+		}
+		if ( count( $removes ) > self::MAX_REMOVES ) {
+			return new WP_Error( 'twd_sk_bad_input', 'That is too many things to remove at once. Save some, then carry on.' );
+		}
+		foreach ( $removes as $r ) {
+			if ( ! is_numeric( $r ) ) {
+				return new WP_Error( 'twd_sk_bad_input', 'A removal could not be read. Reload the page and try again.' );
+			}
 		}
 		if ( count( $texts ) + count( $pics ) + count( $spots ) > self::MAX_EDITS ) {
 			return new WP_Error( 'twd_sk_bad_input', 'That is too many changes to save at once. Save some, then carry on.' );
@@ -367,7 +458,26 @@ class TWD_SK_Inline {
 			}
 			$changed++;
 		}
-		return array( 'html' => self::save( $doc, $root ), 'changed' => $changed );
+
+		// Removals last, biggest number first, so an item inside a section that also goes is simply gone.
+		$removed = 0;
+		$numbers = array_unique( array_map( 'intval', $removes ) );
+		rsort( $numbers );
+		foreach ( $numbers as $i ) {
+			if ( ! isset( $found['removes'][ $i ] ) ) {
+				return new WP_Error( 'twd_sk_conflict', 'The page changed since it was opened, so the thing to remove could not be matched. Reload the page and try again.' );
+			}
+			$el = $found['removes'][ $i ];
+			if ( ! $el->parentNode ) {
+				continue; // Already gone with its section.
+			}
+			self::remove_node( $el );
+			$removed++;
+		}
+		if ( $removed && 0 === $root->getElementsByTagName( 'section' )->length ) {
+			return new WP_Error( 'twd_sk_bad_input', 'A page cannot lose every section.' );
+		}
+		return array( 'html' => self::save( $doc, $root ), 'changed' => $changed, 'removed' => $removed );
 	}
 
 	/** The address of a picture in the media library, at the large size when there is one. */

@@ -59,7 +59,7 @@ twd_sk_test( 'inline: the safety notice and the enquiry form are never editable 
 
 twd_sk_test( 'inline: numbering changes nothing else on the page', function () {
 	$stored = twd_sk_inline_page( twd_sk_inline_sample() );
-	$plain  = preg_replace( '/ data-twd-sk-[tp]="\d+"/', '', TWD_SK_Inline::mark( $stored ) );
+	$plain  = preg_replace( '/ data-twd-sk-[tpr]="\d+"/', '', TWD_SK_Inline::mark( $stored ) );
 	twd_sk_eq( $stored, $plain );
 	twd_sk_eq( '', TWD_SK_Inline::mark( '' ) );
 } );
@@ -234,12 +234,12 @@ twd_sk_test( 'inline spots: a picture marker is a place for a picture; caption a
 	$stored = twd_sk_inline_page( twd_sk_spot_sample() );
 	$marked = TWD_SK_Inline::mark( $stored );
 	twd_sk_has( '<p data-twd-sk-s="0">[PLACEHOLDER: image needed]</p>', $marked );
-	twd_sk_has( '<figure class="twd-sk-pictures__item"><span data-twd-sk-s="1">[PLACEHOLDER: picture of the steps]</span><figcaption', $marked, 'a bare marker beside a caption is wrapped for the editor' );
+	twd_sk_has( '<figure class="twd-sk-pictures__item" data-twd-sk-r="3"><span data-twd-sk-s="1">[PLACEHOLDER: picture of the steps]</span><figcaption', $marked, 'a bare marker beside a caption is wrapped for the editor' );
 	twd_sk_has( '<figure class="twd-sk-image-text__media" data-twd-sk-s="2">[PLACEHOLDER: photo of the van on the drive]</figure>', $marked, 'a figure holding only a marker is the place itself' );
 	twd_sk_true( 1 === preg_match( '/<figcaption class="twd-sk-pictures__caption" data-twd-sk-t="\d+">\[PLACEHOLDER: caption/', $marked ), 'the caption marker is still words to type over' );
 	twd_sk_true( 1 === preg_match( '/<p data-twd-sk-t="\d+">\[PLACEHOLDER: describe the picture above\]<\/p>/', $marked ) );
-	twd_sk_eq( array( 'text' => 6, 'pics' => 1, 'spots' => 3 ), TWD_SK_Inline::count( $stored ) );
-	$plain = preg_replace( array( '/ data-twd-sk-[tps]="\d+"/', '/<span>(\[PLACEHOLDER[^<]*)<\/span>/' ), array( '', '$1' ), $marked );
+	twd_sk_eq( array( 'text' => 6, 'pics' => 1, 'spots' => 3, 'removes' => 5 ), TWD_SK_Inline::count( $stored ) );
+	$plain = preg_replace( array( '/ data-twd-sk-[tpsr]="\d+"/', '/<span>(\[PLACEHOLDER[^<]*)<\/span>/' ), array( '', '$1' ), $marked );
 	twd_sk_eq( $stored, $plain, 'numbering changes nothing else' );
 } );
 
@@ -310,4 +310,97 @@ twd_sk_test( 'inline spots: the save route takes spots, and the editor knows whe
 	$data = $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data'];
 	twd_sk_true( isset( $data['canUpload'], $data['mediaUrl'] ) );
 	twd_sk_has( 'wp/v2/media', $data['mediaUrl'] );
+} );
+
+// -- 0.14.0: Remove this --------------------------------------------------------------------
+
+twd_sk_test( 'inline remove: sections (not the one with the h1, not the notice), buttons and one-of-several items are numbered; nothing inside a piece of text or a shortcode holder', function () {
+	$stored = twd_sk_inline_page( twd_sk_inline_sample() );
+	$marked = TWD_SK_Inline::mark( $stored );
+	preg_match_all( '/<([a-z0-9]+)[^>]*data-twd-sk-r="(\d+)"/', $marked, $m, PREG_SET_ORDER );
+	$by = array();
+	foreach ( $m as $hit ) {
+		$by[ (int) $hit[2] ] = $hit[1];
+	}
+	twd_sk_eq( range( 0, count( $by ) - 1 ), array_keys( $by ), 'numbered in order from 0' );
+	// The hero holds the h1, so it is not removable; its button is. The services section and its four cards are.
+	twd_sk_true( 1 !== preg_match( '/<section class="twd-sk-hero[^"]*" data-twd-sk-r=/', $marked ), 'the hero with the h1 stays' );
+	twd_sk_true( 1 === preg_match( '/<a class="twd-sk-btn twd-sk-btn--primary"[^>]*data-twd-sk-r="0"/', $marked ), 'the hero button is the first removable' );
+	twd_sk_true( 1 === preg_match( '/<section class="twd-sk-services[^"]*"[^>]*data-twd-sk-r="1"/', $marked ), 'the services section is next' );
+	twd_sk_eq( 4, preg_match_all( '/<a class="twd-sk-card twd-sk-card--accent twd-sk-services__item" href="\/service-\d"[^>]*data-twd-sk-r=/', $marked ), 'each card' );
+	twd_sk_true( 1 !== preg_match( '/<section class="twd-sk-notice[^"]*" data-twd-sk-r=/', $marked ), 'the safety notice never' );
+	twd_sk_true( 1 !== preg_match( '/twd-sk-notice__[^"]*"[^>]*data-twd-sk-r=/', $marked ), 'nor anything inside it' );
+	twd_sk_true( 1 === preg_match( '/<section class="twd-sk-enquiry[^"]*" data-twd-sk-r=/', $marked ), 'the enquiry section can go as a whole' );
+	twd_sk_true( 1 !== preg_match( '/<div class="twd-sk-inner"[^>]*data-twd-sk-r=/', $marked ), 'a lone wrapper is not one of several' );
+	twd_sk_eq( count( $by ), TWD_SK_Inline::count( $stored )['removes'] );
+	// Visitors never get the numbers: mark() is only run for an editor (tested below with the page render).
+	twd_sk_hasnt( 'data-twd-sk-r', $stored );
+	// Words inside a paragraph are never removable on their own, and a single list entry is not either.
+	$one = twd_sk_inline_page( '<section class="twd-sk-text twd-sk-tone-base"><div class="twd-sk-inner"><h2 class="twd-sk-title">One</h2><p>Some <strong>bold</strong> and <em>more</em> words.</p><ul class="twd-sk-list"><li>Only entry</li></ul></div></section>' );
+	twd_sk_eq( 1, TWD_SK_Inline::count( $one )['removes'], 'only the section itself' );
+} );
+
+twd_sk_test( 'inline remove: a list entry, a button (and the wrapper it leaves empty) and a whole section are removed; words elsewhere untouched; unknown numbers are a conflict; limits hold', function () {
+	$stored = twd_sk_inline_page( '<section class="twd-sk-hero twd-sk-hero--split twd-sk-tone-base"><div class="twd-sk-inner"><h1 class="twd-sk-hero__title">Hire</h1></div></section>'
+		. '<section class="twd-sk-areas twd-sk-tone-tint"><div class="twd-sk-inner"><h2 class="twd-sk-title">Where we go</h2><ul class="twd-sk-areas__list"><li class="twd-sk-areas__item">Northvale</li><li class="twd-sk-areas__item">Elmbridge</li><li class="twd-sk-areas__item">Area name here</li></ul><div class="twd-sk-areas__actions"><a class="twd-sk-btn twd-sk-btn--outline" href="https://www.example.com/map">See the area on a map</a></div></div></section>'
+		. '<section class="twd-sk-text twd-sk-tone-base"><div class="twd-sk-inner"><h2 class="twd-sk-title">Old words</h2><p>To go.</p></div></section>' );
+	$marked = TWD_SK_Inline::mark( $stored );
+	preg_match( '/<li class="twd-sk-areas__item"[^>]*data-twd-sk-r="(\d+)"[^>]*>Area name here/', $marked, $li );
+	preg_match( '/<a class="twd-sk-btn twd-sk-btn--outline"[^>]*data-twd-sk-r="(\d+)"/', $marked, $btn );
+	preg_match( '/<section class="twd-sk-text twd-sk-tone-base" data-twd-sk-r="(\d+)"/', $marked, $sec );
+	twd_sk_true( $li && $btn && $sec, 'all three numbered' );
+	// Only removals, nothing else: allowed.
+	$out = TWD_SK_Inline::apply( $stored, array(), array(), array(), array( (int) $li[1], (int) $btn[1], (int) $sec[1] ) );
+	twd_sk_true( ! is_wp_error( $out ), is_wp_error( $out ) ? $out->get_error_message() : '' );
+	twd_sk_eq( 3, $out['removed'] );
+	twd_sk_eq( 0, $out['changed'] );
+	twd_sk_hasnt( 'Area name here', $out['html'] );
+	twd_sk_has( '<li class="twd-sk-areas__item">Elmbridge</li></ul>', $out['html'] );
+	twd_sk_hasnt( 'See the area on a map', $out['html'] );
+	twd_sk_hasnt( 'twd-sk-areas__actions', $out['html'], 'the wrapper the button left empty goes too' );
+	twd_sk_hasnt( 'Old words', $out['html'] );
+	twd_sk_has( '<h1 class="twd-sk-hero__title">Hire</h1>', $out['html'] );
+	twd_sk_has( 'Where we go', $out['html'] );
+	twd_sk_eq( 2, substr_count( $out['html'], '<section' ) );
+	twd_sk_eq( TWD_SK_Sanitizer::clean( $out['html'] ), $out['html'], 'still clean' );
+	// A text change and a removal together; the removal numbers are those of the page as drawn.
+	$out = TWD_SK_Inline::apply( $stored, array( array( 'i' => 1, 'html' => 'Where we travel' ) ), array(), array(), array( (int) $li[1] ) );
+	twd_sk_has( 'Where we travel', $out['html'] );
+	twd_sk_eq( 1, $out['removed'] );
+	twd_sk_eq( 1, $out['changed'] );
+	// Removing a section and an item inside it: the item is simply gone with it.
+	preg_match( '/<section class="twd-sk-areas twd-sk-tone-tint" data-twd-sk-r="(\d+)"/', $marked, $areas );
+	$out = TWD_SK_Inline::apply( $stored, array(), array(), array(), array( (int) $li[1], (int) $areas[1] ) );
+	twd_sk_eq( 2, $out['removed'] );
+	twd_sk_hasnt( 'twd-sk-areas', $out['html'] );
+	// Refusals.
+	twd_sk_is_error( 'twd_sk_conflict', TWD_SK_Inline::apply( $stored, array(), array(), array(), array( 999 ) ) );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Inline::apply( $stored, array(), array(), array(), array( 'x' ) ) );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Inline::apply( $stored, array(), array(), array(), range( 0, TWD_SK_Inline::MAX_REMOVES ) ) );
+	// The page can never lose its h1 section (never numbered) and so never every section.
+	twd_sk_true( 1 !== preg_match( '/<section class="twd-sk-hero[^"]*" data-twd-sk-r=/', $marked ) );
+} );
+
+twd_sk_test( 'inline remove: the save route takes removes and says so in the note; undo puts it back; the script and the marks know about it', function () {
+	twd_sk_rest_setup( array( 'edit_pages', 'edit_post:12' ) );
+	TWD_SK_Store::save( 12, twd_sk_inline_sample() );
+	$base = TWD_SK_Store::get_current_version_id( 12 );
+	$out  = TWD_SK_REST::post_inline( twd_sk_rest_req( array( 'base_version' => $base, 'removes' => array( 0 ) ) ) );
+	twd_sk_true( is_array( $out ), is_wp_error( $out ) ? $out->get_error_message() : '' );
+	twd_sk_hasnt( 'Check your date', TWD_SK_Store::get_current( 12 ), 'the hero button is gone' );
+	twd_sk_hasnt( 'twd-sk-hero__actions', TWD_SK_Store::get_current( 12 ), 'and its empty wrapper' );
+	twd_sk_eq( 'Changed on the page (1 removed)', TWD_SK_Store::list_versions( 12 )[0]['note'] );
+	TWD_SK_Store::undo( 12, array( 'base_version' => TWD_SK_Store::get_current_version_id( 12 ) ) );
+	twd_sk_has( 'Check your date', TWD_SK_Store::get_current( 12 ), 'undo brings it back' );
+	$base = TWD_SK_Store::get_current_version_id( 12 );
+	$out  = TWD_SK_REST::post_inline( twd_sk_rest_req( array( 'base_version' => $base, 'texts' => array( array( 'i' => 0, 'html' => 'Van hire' ) ), 'removes' => array( 0 ) ) ) );
+	twd_sk_eq( 'Changed on the page (1 piece, 1 removed)', TWD_SK_Store::list_versions( 12 )[0]['note'] );
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
+	twd_sk_has( "toolButton('Remove'", $js );
+	twd_sk_has( "toolButton('Put back'", $js );
+	twd_sk_has( "closest('[data-twd-sk-r]')", $js );
+	twd_sk_has( "node.setAttribute('hidden', '')", $js, 'hidden on screen until Save' );
+	twd_sk_has( 'body.removes = Object.keys(S.removes)', $js );
+	twd_sk_has( 'S.removes[k].removeAttribute(\'hidden\')', $js, 'Cancel puts everything back' );
+	twd_sk_has( 'body.twd-sk-inline-on [data-twd-sk-r][hidden] { display: none !important; }', file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.css' ) );
 } );
