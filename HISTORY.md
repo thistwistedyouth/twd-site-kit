@@ -19,6 +19,8 @@ Checked 2026-09-30 against `15 TRD Article Assist.php` (therapy-resource-directo
 
 ## v0.14.0 (the studio build, branch `studio-0.14`)
 
+**The owner's answers (27 Oct 2026, evening):** the Five Keys stay articles in the Articles plugin; a JPEG logo is a warning in the studio's readiness check, not a gap; a restyle must stay reversible (it is: snapshot then apply, revert puts it back); packs keep `ember`, and `slate` became `midnight`; the SSH alias and WordPress folder are recorded once per client in the private repo, never a key.
+
 Built in one overnight session on a branch, from the owner's "Site Kit Studio" brief, so that his own production process (private, in the clients repository) has what it needs from the plugin. The rule that every feature is verified on a real site before the next one was lifted for this build by the owner; the risk is carried as the "not on a real site" column in BUILD-LOG and the test script in `docs/test-script-0.14.md`.
 
 - **Everything additive, nothing on by default.** Every new token has a default, every new layout is a modifier class on the same pieces, every setting is off until ticked, safe mode switches it all off. A fixture proves a 0.13 page passes the 0.14 sanitiser byte for byte. This is what lets the branch be installed on one staging site without fear for the sites on `main`.

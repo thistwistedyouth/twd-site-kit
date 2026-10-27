@@ -185,7 +185,7 @@ twd_sk_test( 'cli: pack with no name lists the packs and marks the active one', 
 	foreach ( $data['rows'] as $row ) {
 		$by[ $row['pack'] ] = $row['active'];
 	}
-	twd_sk_eq( array( 'ember' => '', 'grove' => '', 'ink' => '', 'sage' => 'yes', 'slate' => '' ), $by );
+	twd_sk_eq( array( 'ember' => '', 'grove' => '', 'ink' => '', 'midnight' => '', 'sage' => 'yes' ), $by );
 } );
 
 twd_sk_test( 'cli: pack with a name switches the active pack and says what to do about caches', function () {

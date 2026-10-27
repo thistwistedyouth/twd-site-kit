@@ -176,9 +176,9 @@ twd_sk_test( 'picture treatment tokens (0.14.0): image-filter and image-tint hav
 	twd_sk_has( '--twd-site-image-filter:none', TWD_SK_Packs::tokens_css( TWD_SK_Packs::packs()['sage']['tokens'] ) );
 } );
 
-twd_sk_test( 'packs ember and slate (0.14.0): warm editorial and bold modern, bundled fonts only, every pair readable, valid layouts, ember tints its pictures', function () {
+twd_sk_test( 'packs ember and midnight (0.14.0): warm editorial and bold modern, bundled fonts only, every pair readable, valid layouts, ember tints its pictures', function () {
 	$e = TWD_SK_Packs::packs()['ember'];
-	$s = TWD_SK_Packs::packs()['slate'];
+	$s = TWD_SK_Packs::packs()['midnight'];
 	twd_sk_eq( 'Fraunces', $e['tokens']['font-heading'] );
 	twd_sk_eq( 'Work Sans', $e['tokens']['font-body'] );
 	twd_sk_eq( 'DM Sans', $s['tokens']['font-heading'] );
