@@ -181,11 +181,162 @@ class TWD_SK_Launch {
 			$items[] = $found['header'] && $found['footer'] ? self::item( 'chrome', 'ok', 'The header and footer templates are in place' ) : self::item( 'chrome', 'warn', 'The kit header or footer template is missing', 'Import them from the Site tab, Header and footer, and set their display condition to the entire site. Or let Site Kit place them on the Hello theme.' );
 		}
 
+		// Every menu link reaches a page (0.14.0).
+		$menu = self::menu_links( $p['menu'] );
+		if ( $menu['checked'] ) {
+			if ( $menu['missing'] ) {
+				$items[] = self::item( 'menu', 'fail', count( $menu['missing'] ) . ' menu link' . ( 1 === count( $menu['missing'] ) ? ' goes' : 's go' ) . ' nowhere', 'No page answers to: ' . implode( ', ', $menu['missing'] ) . '. Make the page, or take the link out of the menu in the Site tab.' );
+			} elseif ( $menu['drafts'] ) {
+				$items[] = self::item( 'menu', 'warn', count( $menu['drafts'] ) . ' menu link' . ( 1 === count( $menu['drafts'] ) ? ' points' : 's point' ) . ' at a draft', 'Fine once published: ' . implode( ', ', $menu['drafts'] ) . '.' );
+			} else {
+				$items[] = self::item( 'menu', 'ok', 'Every menu link reaches a page' );
+			}
+		}
+
+		// WordPress's own leftovers (0.14.0): the sample page, the first post and the suggested privacy text.
+		$wp = self::wp_leftovers();
+		if ( $wp['sample'] || $wp['hello'] ) {
+			$what = array();
+			if ( $wp['sample'] ) {
+				$what[] = 'the "Sample Page"';
+			}
+			if ( $wp['hello'] ) {
+				$what[] = 'the "Hello world!" post';
+			}
+			$items[] = self::item( 'wp_leftovers', 'fail', 'WordPress\'s own ' . implode( ' and ', $what ) . ( 1 === count( $what ) ? ' is' : ' are' ) . ' still live', 'Move them to the bin (the Tidy up button here, or wp twd-sk launch-check --tidy).' );
+		} else {
+			$items[] = self::item( 'wp_leftovers', 'ok', 'No sample page or first post left over' );
+		}
+		if ( $wp['privacy_default'] ) {
+			$items[] = self::item( 'privacy_text', 'fail', 'The privacy policy is still WordPress\'s suggested text', 'Replace it with the site\'s own policy before launch (Settings, Privacy, then edit the page).' );
+		}
+
 		$counts = array( 'fail' => 0, 'warn' => 0, 'ok' => 0 );
 		foreach ( $items as $i ) {
 			$counts[ $i['status'] ]++;
 		}
 		return array( 'items' => $items, 'pages' => $pages, 'ready' => 0 === $counts['fail'], 'counts' => $counts );
+	}
+
+	/**
+	 * Check every menu link (0.14.0): a link to a page on this site must reach a page; a draft is fine once
+	 * published; an address elsewhere is asked for with one HEAD request when the site can make one.
+	 *
+	 * @return array { checked: int, missing: [label (url)], drafts: [label], external_bad: [label] }
+	 */
+	public static function menu_links( $menu ) {
+		$out  = array( 'checked' => 0, 'missing' => array(), 'drafts' => array(), 'external_bad' => array() );
+		$home = function_exists( 'home_url' ) ? (string) home_url( '/' ) : '';
+		$flat = array();
+		foreach ( (array) $menu as $item ) {
+			$flat[] = $item;
+			foreach ( isset( $item['children'] ) && is_array( $item['children'] ) ? $item['children'] : array() as $child ) {
+				$flat[] = $child;
+			}
+		}
+		foreach ( $flat as $item ) {
+			$url   = isset( $item['url'] ) ? (string) $item['url'] : '';
+			$label = isset( $item['label'] ) ? (string) $item['label'] : $url;
+			if ( '' === $url || '#' === $url[0] || 0 === strpos( $url, 'mailto:' ) || 0 === strpos( $url, 'tel:' ) ) {
+				continue;
+			}
+			$path = $url;
+			if ( '' !== $home && 0 === strpos( $url, $home ) ) {
+				$path = '/' . ltrim( substr( $url, strlen( $home ) ), '/' );
+			}
+			if ( '/' === $path || 0 === strpos( $path, '/#' ) ) {
+				continue; // The home page.
+			}
+			$out['checked']++;
+			if ( preg_match( '#^https?://#i', $path ) ) {
+				if ( function_exists( 'wp_safe_remote_head' ) ) {
+					$r    = wp_safe_remote_head( $path, array( 'timeout' => 5, 'redirection' => 3 ) );
+					$code = is_wp_error( $r ) ? 0 : (int) wp_remote_retrieve_response_code( $r );
+					if ( $code < 200 || $code >= 400 ) {
+						$out['external_bad'][] = $label . ' (' . $path . ')';
+						$out['missing'][]      = $label . ' (' . $path . ')';
+					}
+				}
+				continue;
+			}
+			$slug = trim( (string) parse_url( $path, PHP_URL_PATH ), '/' );
+			if ( '' === $slug ) {
+				continue; // The home page.
+			}
+			$post = self::page_by_slug( $slug );
+			if ( ! $post ) {
+				$out['missing'][] = $label . ' (' . $path . ')';
+			} elseif ( 'publish' !== $post->post_status ) {
+				$out['drafts'][] = $label;
+			}
+		}
+		return $out;
+	}
+
+	/** A page or post by its slug (the last part of a path), any status but the bin, or null. */
+	private static function page_by_slug( $slug ) {
+		$last = basename( $slug );
+		foreach ( array( 'page', 'post' ) as $type ) {
+			foreach ( (array) get_posts( array( 'post_type' => $type, 'post_status' => 'any', 'numberposts' => self::MAX_PAGES, 'fields' => 'ids' ) ) as $id ) {
+				$post = get_post( (int) $id );
+				if ( $post && 'trash' !== $post->post_status && isset( $post->post_name ) && ( $post->post_name === $slug || $post->post_name === $last ) ) {
+					return $post;
+				}
+			}
+		}
+		return null;
+	}
+
+	/** WordPress's own leftovers (0.14.0): the live sample page, the live first post, the suggested privacy text. */
+	public static function wp_leftovers() {
+		$out = array( 'sample' => 0, 'hello' => 0, 'privacy_default' => false );
+		foreach ( (array) get_posts( array( 'post_type' => 'page', 'post_status' => 'any', 'numberposts' => self::MAX_PAGES, 'fields' => 'ids' ) ) as $id ) {
+			$post = get_post( (int) $id );
+			if ( $post && 'publish' === $post->post_status && isset( $post->post_name ) && 'sample-page' === $post->post_name && ! TWD_SK_Page::is_kit_page( (int) $id ) ) {
+				$out['sample'] = (int) $id;
+			}
+		}
+		foreach ( (array) get_posts( array( 'post_type' => 'post', 'post_status' => 'any', 'numberposts' => self::MAX_PAGES, 'fields' => 'ids' ) ) as $id ) {
+			$post = get_post( (int) $id );
+			if ( $post && 'publish' === $post->post_status && isset( $post->post_name ) && 'hello-world' === $post->post_name ) {
+				$out['hello'] = (int) $id;
+			}
+		}
+		$privacy_id = (int) get_option( 'wp_page_for_privacy_policy', 0 );
+		if ( $privacy_id > 0 ) {
+			$content = (string) get_post_field( 'post_content', $privacy_id );
+			if ( false !== stripos( $content, 'Suggested text' ) || false !== stripos( $content, 'suggested-text' ) ) {
+				$out['privacy_default'] = true;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Move the sample page and the first post to the bin (never a permanent delete). Needs delete rights.
+	 *
+	 * @return array { trashed: [title], refused: [reason] }
+	 */
+	public static function tidy() {
+		$out = array( 'trashed' => array(), 'refused' => array() );
+		$wp  = self::wp_leftovers();
+		foreach ( array( 'sample' => 'delete_pages', 'hello' => 'delete_posts' ) as $key => $cap ) {
+			$id = (int) $wp[ $key ];
+			if ( ! $id ) {
+				continue;
+			}
+			$title = (string) get_post( $id )->post_title;
+			if ( ! current_user_can( $cap ) || ! current_user_can( 'delete_post', $id ) ) {
+				$out['refused'][] = 'You cannot move "' . $title . '" to the bin.';
+				continue;
+			}
+			if ( function_exists( 'wp_trash_post' ) && wp_trash_post( $id ) ) {
+				$out['trashed'][] = $title;
+			} else {
+				$out['refused'][] = '"' . $title . '" could not be moved to the bin.';
+			}
+		}
+		return $out;
 	}
 
 	/**

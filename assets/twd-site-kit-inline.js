@@ -792,6 +792,37 @@
 	buildBar();
 	buildAdminBar();
 	ui.open = el('button', { type: 'button', id: 'twd-sk-ed-text', className: 'twd-sk-ed__open twd-sk-ed__open--text', text: 'Visual editor' });
+	/* A placeholder marker is edited as one unit (0.14.0): when the cursor lands inside [PLACEHOLDER: ...] the
+	   whole marker is selected, so typing replaces all of it and never leaves half a marker on the page. */
+	var MARKER = /\[PLACEHOLDER(?::[^\[\]]{0,60})?\]/g;
+	function selectMarker() {
+		if (!S.on) {
+			return;
+		}
+		var sel = window.getSelection();
+		if (!sel || !sel.rangeCount || !sel.isCollapsed) {
+			return;
+		}
+		var node = sel.anchorNode;
+		if (!node || node.nodeType !== 3 || !editableOf(node)) {
+			return;
+		}
+		var text = node.nodeValue;
+		var off = sel.anchorOffset;
+		var m;
+		MARKER.lastIndex = 0;
+		while ((m = MARKER.exec(text))) {
+			if (off > m.index && off < m.index + m[0].length) {
+				var r = document.createRange();
+				r.setStart(node, m.index);
+				r.setEnd(node, m.index + m[0].length);
+				sel.removeAllRanges();
+				sel.addRange(r);
+				return;
+			}
+		}
+	}
+	document.addEventListener('selectionchange', selectMarker);
 	ui.open.addEventListener('click', start);
 	root.appendChild(ui.open);
 	document.addEventListener('keydown', onKey, true);

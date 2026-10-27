@@ -19,6 +19,12 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 | Unknown layouts | A recipe or brief that names a layout this version does not know falls back to the standard layout with a plain warning instead of dropping the page | Built, tested |
 | `wp twd-sk save --pictures` | Places `src="pic:NAME"` pictures through the same engine as the build before a page is cleaned and saved | Built, tested |
 | Old pages | A page stored by 0.13 passes through the 0.14 sanitiser byte for byte (test with a fixture) | Tested |
+| One skip link | Hello's own skip link is switched off (filter `hello_elementor_enable_skip_link`, written from memory, so check on a real Hello install) while Site Kit places the header, so a page has one | Built, tested, hook name unverified |
+| Marker fragments | Half a marker left by a hand edit (the word without its brackets, an opener with no closer, a stray closing bracket) and the studio's `TO CONFIRM` are must-fix leftovers, so they block publishing and show in the launch check; in the Visual editor a marker is selected as one unit when the cursor lands in it | Built, tested (the editor part not on a real browser) |
+| Menu links | The launch check follows every menu link: a page on this site must exist (a draft only warns), an address elsewhere gets one HEAD request | Built, tested |
+| Publish guard | `TWD_SK_Guard`: publishing a kit page from wp-admin (editor, Quick Edit, bulk) while must-fix text remains keeps it a draft with a notice and a one-click "publish it anyway"; the kit's own routes are unchanged; a notice on a kit page's edit screen says it is edited on the site | Built, tested, not on a real site |
+| WordPress leftovers | The launch check flags the live Sample Page, the Hello world post and the suggested privacy text; Tidy up (setup page button, `POST /site/launch/tidy`, `wp twd-sk launch-check --tidy`) moves the first two to the bin, never deleting | Built, tested |
+| Build a draft anyway | Full site set up: with questions still open, a tick box prepares the draft anyway; each open question becomes `[PLACEHOLDER: key words of the question]` in the facts and the strict prompt tells the AI to copy it where that fact belongs; `full_anyway` and `full_markers` in the draft | Built, tested, needs a real key to see end to end |
 
 **Decisions taken while the owner was away (27 Oct 2026):** see the end of this section once the night's work is done; the full list is kept in the private clients repository's studio folder and copied here in generic form.
 

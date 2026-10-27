@@ -211,7 +211,14 @@ class TWD_SK_Template {
 		}
 
 		if ( $post->post_status !== $status ) {
+			// The kit's own publish path has already asked or refused, so the wp-admin guard stands aside (0.14.0).
+			if ( class_exists( 'TWD_SK_Guard' ) ) {
+				TWD_SK_Guard::$allow = true;
+			}
 			$result = wp_update_post( array( 'ID' => $post_id, 'post_status' => $status ), true );
+			if ( class_exists( 'TWD_SK_Guard' ) ) {
+				TWD_SK_Guard::$allow = false;
+			}
 			if ( is_wp_error( $result ) ) {
 				return $result;
 			}

@@ -574,14 +574,31 @@ class TWD_SK_Full {
 	 * @return array|WP_Error { brief, pages, left_out }
 	 */
 	public static function prepare( $draft ) {
-		$check = isset( $draft['full_check'] ) && is_array( $draft['full_check'] ) ? $draft['full_check'] : null;
-		if ( ! $check || empty( $check['ready'] ) ) {
-			return new WP_Error( 'twd_sk_not_ready', 'Answer the questions first. The site cannot be built while anything is missing.' );
+		$check  = isset( $draft['full_check'] ) && is_array( $draft['full_check'] ) ? $draft['full_check'] : null;
+		$anyway = ! empty( $draft['full_anyway'] );
+		if ( ! $check ) {
+			return new WP_Error( 'twd_sk_not_ready', 'Press Check first. The site cannot be built before the notes have been read.' );
+		}
+		if ( empty( $check['ready'] ) && ! $anyway ) {
+			return new WP_Error( 'twd_sk_not_ready', 'Answer the questions first. The site cannot be built while anything is missing, unless you tick "Build a draft anyway".' );
 		}
 		if ( ! isset( $check['hash'] ) || $check['hash'] !== self::inputs_hash( $draft ) ) {
 			return new WP_Error( 'twd_sk_not_ready', 'The notes or answers have changed since they were last checked. Press Check first.' );
 		}
+		// Building anyway (0.14.0): the design questions take the recipe's defaults, and every unanswered
+		// question becomes a marker in the facts, which the pages carry where that fact would go.
+		$markers = array();
+		if ( empty( $check['ready'] ) && $anyway ) {
+			foreach ( isset( $check['missing'] ) && is_array( $check['missing'] ) ? $check['missing'] : array() as $m ) {
+				if ( ! empty( $m['key'] ) && ! self::answered( (array) $draft['full_answers'], $m['key'] ) ) {
+					$markers[] = self::gap_marker( $m['key'], isset( $m['question'] ) ? $m['question'] : '' );
+				}
+			}
+		}
 		$text = self::notes_text( $draft, true );
+		if ( $markers ) {
+			$text .= "\n\nSTILL TO ANSWER (keep each marker exactly where that fact would go):\n" . implode( "\n", $markers );
+		}
 		// Read in the type chosen on the first step, which is not saved to the site until the build starts.
 		$out  = TWD_SK_Mode::using( $draft['mode'], function () use ( $text ) {
 			return TWD_SK_Brief::from_notes( $text );
@@ -607,9 +624,23 @@ class TWD_SK_Full {
 		if ( '' !== $tone ) {
 			$brief['facts'] = rtrim( isset( $brief['facts'] ) && is_string( $brief['facts'] ) ? $brief['facts'] : '' ) . "\n\nTONE OF VOICE\n" . $tone;
 		}
+		if ( $markers ) {
+			$brief['facts'] = rtrim( isset( $brief['facts'] ) && is_string( $brief['facts'] ) ? $brief['facts'] : '' ) . "\n\nSTILL TO ANSWER\n" . implode( "\n", $markers );
+		}
 		$pages = self::pages_for( $draft, isset( $brief['pages'] ) ? $brief['pages'] : array() );
 		$brief['pages'] = array();
-		return array( 'brief' => $brief, 'pages' => $pages, 'left_out' => $check['left_out'] );
+		return array( 'brief' => $brief, 'pages' => $pages, 'left_out' => $check['left_out'], 'markers' => $markers );
+	}
+
+	/** A marker for an unanswered question: its key (the same id the question list shows) and a few words of it. */
+	public static function gap_marker( $key, $question ) {
+		$key   = preg_replace( '/[^a-z0-9_]/', '', strtolower( (string) $key ) );
+		$words = trim( preg_replace( '/[\[\]]+/', '', (string) $question ) );
+		$room  = self::MARKER_MAX - strlen( $key ) - 1;
+		if ( strlen( $words ) > $room ) {
+			$words = self::cut( $words, max( 6, $room ) );
+		}
+		return '[PLACEHOLDER: ' . $key . ( '' !== $words ? ' ' . $words : '' ) . ']';
 	}
 
 	// -- After a page is written: picture spots and checks -------------------------------------------

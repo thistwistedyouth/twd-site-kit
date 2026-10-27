@@ -101,3 +101,90 @@ twd_sk_test( 'launch rest and cli: needs confirm and a list; the command publish
 	twd_sk_has( "confirmInline(host, 'Publish '", $js );
 	twd_sk_has( "api('GET', '/site/launch')", file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' ) );
 } );
+
+// -- 0.14.0: menu links, WordPress leftovers, tidy ----------------------------------------------
+
+twd_sk_test( 'launch check: every menu link must reach a page; a draft target only warns; home, anchors, mailto and tel are not checked', function () {
+	twd_sk_launch_site( true );
+	$GLOBALS['twd_stub']['posts'][22]->post_name = 'contact';
+	TWD_SK_Profile::save( array( 'menu' => array(
+		array( 'label' => 'Home', 'url' => '/', 'children' => array() ),
+		array( 'label' => 'Contact', 'url' => '/contact', 'children' => array( array( 'label' => 'Call', 'url' => 'tel:01234567890' ) ) ),
+		array( 'label' => 'Top', 'url' => '#twd-sk-top', 'children' => array() ),
+	) ) );
+	$m = TWD_SK_Launch::menu_links( TWD_SK_Profile::get()['menu'] );
+	twd_sk_eq( 1, $m['checked'], 'only the contact link needs checking' );
+	twd_sk_eq( array(), $m['missing'] );
+	twd_sk_eq( array( 'Contact' ), $m['drafts'] );
+	twd_sk_eq( 'warn', twd_sk_launch_item( TWD_SK_Launch::check(), 'menu' )['status'] );
+	$GLOBALS['twd_stub']['posts'][22]->post_status = 'publish';
+	twd_sk_eq( 'ok', twd_sk_launch_item( TWD_SK_Launch::check(), 'menu' )['status'] );
+	// Two links to pages that were never made: the real case from a client build.
+	TWD_SK_Profile::save( array( 'menu' => array( array( 'label' => 'Events', 'url' => '/events', 'children' => array() ), array( 'label' => 'Our story', 'url' => '/our-story', 'children' => array() ) ) ) );
+	$c = TWD_SK_Launch::check();
+	$it = twd_sk_launch_item( $c, 'menu' );
+	twd_sk_eq( 'fail', $it['status'] );
+	twd_sk_has( 'Events (/events)', $it['detail'] );
+	twd_sk_has( 'Our story (/our-story)', $it['detail'] );
+	twd_sk_true( ! $c['ready'] );
+	// An address elsewhere is asked for once; a 404 is a missing link, a 200 is fine.
+	$GLOBALS['twd_stub']['http']['https://elsewhere.example/gone'] = array( 'code' => 404, 'body' => '' );
+	$GLOBALS['twd_stub']['http']['https://elsewhere.example/fine'] = array( 'code' => 200, 'body' => '' );
+	$m = TWD_SK_Launch::menu_links( array( array( 'label' => 'Gone', 'url' => 'https://elsewhere.example/gone', 'children' => array() ), array( 'label' => 'Fine', 'url' => 'https://elsewhere.example/fine', 'children' => array() ) ) );
+	twd_sk_eq( array( 'Gone (https://elsewhere.example/gone)' ), $m['missing'] );
+} );
+
+twd_sk_test( 'launch check: the live sample page, the first post and the suggested privacy text are flagged, and tidy moves the first two to the bin, never deleting', function () {
+	twd_sk_launch_site( true );
+	twd_sk_eq( 'ok', twd_sk_launch_item( TWD_SK_Launch::check(), 'wp_leftovers' )['status'] );
+	twd_stub_add_post( 2, 'page', 'Sample page content' );
+	$GLOBALS['twd_stub']['posts'][2]->post_name  = 'sample-page';
+	$GLOBALS['twd_stub']['posts'][2]->post_title = 'Sample Page';
+	twd_stub_add_post( 1, 'post', 'Welcome to WordPress.' );
+	$GLOBALS['twd_stub']['posts'][1]->post_name  = 'hello-world';
+	$GLOBALS['twd_stub']['posts'][1]->post_title = 'Hello world!';
+	twd_stub_add_post( 3, 'page', '<h2>Suggested text:</h2><p>Our website address is...</p>' );
+	update_option( 'wp_page_for_privacy_policy', 3 );
+	$c = TWD_SK_Launch::check();
+	$it = twd_sk_launch_item( $c, 'wp_leftovers' );
+	twd_sk_eq( 'fail', $it['status'] );
+	twd_sk_has( 'Sample Page', $it['label'] );
+	twd_sk_has( 'Hello world', $it['label'] );
+	twd_sk_eq( 'fail', twd_sk_launch_item( $c, 'privacy_text' )['status'] );
+	$t = TWD_SK_Launch::tidy();
+	twd_sk_eq( array( 'Sample Page', 'Hello world!' ), $t['trashed'] );
+	twd_sk_eq( array(), $t['refused'] );
+	twd_sk_eq( 'trash', get_post( 2 )->post_status, 'in the bin, not deleted' );
+	twd_sk_true( null !== get_post( 1 ), 'the post still exists' );
+	twd_sk_eq( 'ok', twd_sk_launch_item( TWD_SK_Launch::check(), 'wp_leftovers' )['status'] );
+	// Without delete rights nothing moves.
+	twd_stub_add_post( 4, 'page', 'x' );
+	$GLOBALS['twd_stub']['posts'][4]->post_name = 'sample-page';
+	$GLOBALS['twd_stub']['caps'] = array( 'edit_pages' );
+	$t = TWD_SK_Launch::tidy();
+	twd_sk_eq( array(), $t['trashed'] );
+	twd_sk_eq( 1, count( $t['refused'] ) );
+	twd_sk_eq( 'publish', get_post( 4 )->post_status );
+	$GLOBALS['twd_stub']['caps'] = true;
+	update_option( 'wp_page_for_privacy_policy', 0 );
+} );
+
+twd_sk_test( 'rest and cli: the tidy route needs confirm and administrator rights; launch-check --tidy does the same', function () {
+	twd_sk_launch_site( true );
+	twd_stub_add_post( 2, 'page', 'Sample' );
+	$GLOBALS['twd_stub']['posts'][2]->post_name  = 'sample-page';
+	$GLOBALS['twd_stub']['posts'][2]->post_title = 'Sample Page';
+	twd_sk_is_error( 'twd_sk_confirm_needed', TWD_SK_REST::post_site_launch_tidy( twd_sk_rest_req( array() ) ) );
+	twd_sk_eq( 'publish', get_post( 2 )->post_status );
+	$out = TWD_SK_REST::post_site_launch_tidy( twd_sk_rest_req( array( 'confirm' => true ) ) );
+	twd_sk_eq( array( 'Sample Page' ), $out['trashed'] );
+	twd_sk_true( isset( $out['check']['items'] ) );
+	$GLOBALS['twd_stub']['routes'] = array();
+	TWD_SK_REST::register_routes();
+	$routes = array_filter( $GLOBALS['twd_stub']['routes'], function ( $r ) {
+		return '/site/launch/tidy' === $r['route'];
+	} );
+	twd_sk_true( 1 === count( $routes ) );
+	$r = array_values( $routes )[0];
+	twd_sk_eq( array( 'TWD_SK_REST', 'can_manage_site' ), $r['args']['permission_callback'] );
+} );

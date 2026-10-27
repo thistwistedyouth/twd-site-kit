@@ -644,3 +644,19 @@ twd_sk_test( 'chrome front logo: in the site brief as header.front_logo, in the 
 	twd_sk_has( 'bigger logo on the front page', TWD_SK_Doctor::report() );
 	twd_sk_true( is_string( TWD_SK_Profile::validate( array( 'logo_mark_id' => 'x' ) )['errors'][0] ), 'a bad mark id is refused' );
 } );
+
+twd_sk_test( 'chrome (0.14.0): one skip link: Hello\'s own is switched off through its filter only while Site Kit places the header', function () {
+	twd_stub_reset();
+	TWD_SK_Chrome::init();
+	twd_sk_true( isset( $GLOBALS['twd_stub']['hooks']['hello_elementor_enable_skip_link'] ), 'the filter is hooked' );
+	$GLOBALS['twd_stub']['template'] = 'hello-elementor';
+	TWD_SK_Chrome::save_settings( array( 'placement' => 'kit' ) );
+	twd_sk_eq( false, apply_filters( 'hello_elementor_enable_skip_link', true ), 'placing: Hello prints no skip link, ours is in the header' );
+	twd_sk_has( 'class="twd-sk-skip" href="#content"', TWD_SK_Chrome::render_header( true ) );
+	TWD_SK_Chrome::save_settings( array( 'placement' => 'elementor' ) );
+	twd_sk_eq( true, apply_filters( 'hello_elementor_enable_skip_link', true ), 'standing aside: Hello keeps its own' );
+	TWD_SK_Chrome::save_settings( array( 'placement' => 'kit' ) );
+	TWD_SK_Safe::set( true );
+	twd_sk_eq( true, apply_filters( 'hello_elementor_enable_skip_link', true ), 'safe mode: Hello keeps its own' );
+	TWD_SK_Safe::set( false );
+} );

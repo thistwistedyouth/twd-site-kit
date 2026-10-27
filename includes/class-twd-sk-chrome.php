@@ -40,6 +40,8 @@ class TWD_SK_Chrome {
 		add_shortcode( 'twd_footer', array( __CLASS__, 'shortcode_footer' ) );
 		// Placing them on the Hello theme. Each callback decides for itself, so safe mode simply turns it off.
 		add_filter( 'hello_elementor_header_footer', array( __CLASS__, 'filter_hello' ), 20 );
+		// One skip link (0.14.0): ours prints inside the header, so Hello's own is switched off while Site Kit places it.
+		add_filter( 'hello_elementor_enable_skip_link', array( __CLASS__, 'filter_hello' ), 20 );
 		add_action( 'wp_body_open', array( __CLASS__, 'print_header' ), 5 );
 		add_action( 'get_footer', array( __CLASS__, 'print_footer' ), 5 );
 	}

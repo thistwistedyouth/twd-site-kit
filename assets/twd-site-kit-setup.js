@@ -895,20 +895,38 @@
 		var checkBtn = button(chk ? 'Check again' : 'Check what is missing', !(chk && chk.ready), runCheck);
 		checkBtn.disabled = !info.ai;
 		var row = el('p', { className: 'twd-sk-setup__actions' }, [checkBtn]);
-		if (chk && chk.ready) {
-			proceed = button('Looks right, continue', true, function () {
+		// Build a draft anyway (0.14.0): with gaps left, every unanswered question becomes a marker on the pages.
+		var anyway = null;
+		if (chk && !chk.ready && chk.missing && chk.missing.length) {
+			anyway = el('input', { type: 'checkbox', id: 'twd-sk-setup-anyway' });
+			anyway.checked = !!d.full_anyway;
+			body.appendChild(el('p', {}, [el('label', { 'for': 'twd-sk-setup-anyway' }, [anyway, el('span', { text: ' Build a draft anyway. Each question still open becomes a marker on the pages, with the same id as the list above, so you can see exactly where each answer will go. The pages cannot be published until every marker is filled.' })])]));
+			anyway.addEventListener('change', function () {
+				if (proceed) {
+					proceed.disabled = !anyway.checked;
+				}
+			});
+		}
+		if (chk && (chk.ready || anyway)) {
+			proceed = button(chk.ready ? 'Looks right, continue' : 'Prepare the draft anyway', true, function () {
 				proceed.disabled = true;
 				message('Preparing the pages...', true);
-				api('POST', '/site/full/prepare', {}).then(function (data) {
+				var first = anyway ? save({ full_anyway: anyway.checked }) : Promise.resolve();
+				first.then(function () {
+					return api('POST', '/site/full/prepare', {});
+				}).then(function (data) {
 					S.data = data;
 					S.step = data.draft.step || 'pictures';
 					render();
-					message('Prepared. Add photos if you have them, or go straight on to Build.', true);
+					message(data.draft.full_markers ? 'Prepared with gaps: each open question is a marker on the pages. Add photos if you have them, or go straight on to Build.' : 'Prepared. Add photos if you have them, or go straight on to Build.', true);
 				}, function (err) {
 					proceed.disabled = false;
 					message(err.message, false);
 				});
 			});
+			if (anyway && !chk.ready) {
+				proceed.disabled = !anyway.checked;
+			}
 			row.appendChild(proceed);
 		}
 		body.appendChild(row);
@@ -1201,6 +1219,21 @@
 				ul.appendChild(li);
 			});
 			host.appendChild(ul);
+			if (check.items.some(function (it) { return it.id === 'wp_leftovers' && it.status === 'fail'; })) {
+				var tidy = button('Tidy up: move the sample page and first post to the bin', false, function () {
+					confirmInline(host, 'Move WordPress\'s own "Sample Page" and "Hello world!" post to the bin? Nothing is deleted for good.', 'Yes, move them', function () {
+						tidy.disabled = true;
+						api('POST', '/site/launch/tidy', { confirm: true }).then(function (out) {
+							draw(out.check);
+							message(out.trashed.length ? 'Moved to the bin: ' + out.trashed.join(', ') + '.' : (out.refused.join(' ') || 'Nothing to tidy.'), !out.refused.length);
+						}, function (err) {
+							tidy.disabled = false;
+							message(err.message, false);
+						});
+					});
+				});
+				host.appendChild(el('p', {}, [tidy]));
+			}
 
 			host.appendChild(el('h3', { text: 'Pages' }));
 			if (!check.pages.length) {

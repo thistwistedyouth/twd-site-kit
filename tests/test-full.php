@@ -470,3 +470,34 @@ twd_sk_test( 'full: the notes are read in the type chosen on the first step with
 twd_sk_test( 'full: years and short numbers are not mistaken for phone numbers', function () {
 	twd_sk_eq( array(), TWD_SK_Full::unsupported( '<p>Working since 2010 2020, over 2000 sessions, open 9 5.</p>', 'Nothing here.' ) );
 } );
+
+twd_sk_test( 'full (0.14.0): build a draft anyway: with gaps left and the tick on, prepare goes ahead, each open question becomes a marker with its key in the facts, the pages are written with markers allowed; with the tick off it still refuses', function () {
+	$d = twd_sk_full_draft( array( 'full_answers' => array( 'style' => 'sage', 'tone' => 'warm', 'photos' => 'mine' ) ) );
+	twd_sk_ai_provider( twd_sk_full_reply( array( 'found' => array( 'registration' => '' ) ) ) );
+	$c = TWD_SK_Full::check( $d );
+	twd_sk_true( ! $c['ready'] );
+	twd_sk_eq( array( 'registration' ), array_column( $c['missing'], 'key' ) );
+	TWD_SK_Build::store_full_check( $c );
+	twd_sk_is_error( 'twd_sk_not_ready', TWD_SK_Full::prepare( TWD_SK_Build::draft() ), 'refused without the tick' );
+	TWD_SK_Build::save_draft( array( 'full_anyway' => true ) );
+	$d = TWD_SK_Build::draft();
+	twd_sk_true( $d['full_anyway'] );
+	twd_sk_true( ! $d['full_prepared'], 'ticking the box does not prepare by itself' );
+	twd_sk_ai_provider( json_encode( array( 'schema' => 'twd-site-brief/1', 'site' => array( 'name' => 'Example Calm' ), 'facts' => 'WHO I AM\nAlex Example.' ) ) );
+	$p = TWD_SK_Full::prepare( $d );
+	twd_sk_true( ! is_wp_error( $p ), is_wp_error( $p ) ? $p->get_error_message() : '' );
+	twd_sk_eq( array( '[PLACEHOLDER: registration Are you registered with a professional body?]' ), $p['markers'] );
+	twd_sk_has( "STILL TO ANSWER\n[PLACEHOLDER: registration", $p['brief']['facts'] );
+	twd_sk_true( strlen( $p['markers'][0] ) <= 14 + 60 + 1, 'fits the marker limit' );
+	TWD_SK_Build::store_prepared( $p );
+	$d = TWD_SK_Build::draft();
+	twd_sk_true( $d['full_prepared'] && $d['full_markers'] );
+	// The strict prompt then allows exactly those markers, and nothing else.
+	$prompt = TWD_SK_AI::page_system_prompt( false, 'markers' );
+	twd_sk_has( 'STILL TO ANSWER', $prompt );
+	twd_sk_has( 'Never write any other [PLACEHOLDER]', $prompt );
+	twd_sk_hasnt( 'STILL TO ANSWER', TWD_SK_AI::page_system_prompt( false, true ) );
+	// The marker helper keeps the key and shortens long questions.
+	twd_sk_eq( '[PLACEHOLDER: service_1_detail Tell me about it]', TWD_SK_Full::gap_marker( 'service_1_detail', 'Tell me about it' ) );
+	twd_sk_true( strlen( TWD_SK_Full::gap_marker( 'about', str_repeat( 'word ', 40 ) ) ) <= 14 + 60 + 1 );
+} );

@@ -513,7 +513,8 @@ twd_sk_test( 'leftovers: every example marker is found, case-insensitively, and 
 		. '<a href="/contact">CONTACT me about a first session</a><a href="/s">Find out about my services</a><a href="/a">Read more about this approach</a><a href="tel:1">Call me to arrange a first session</a>'
 		. '<p>Question here?</p><p>Answer here.</p><p>Topic one</p><p>Short description here.</p><p>Short introduction here.</p><h3>Service name here</h3><p>A short statement in your own words.</p>'
 		. '<p>[PLACEHOLDER: fee]</p><p>[PLACEHOLDER]</p>'
-		. '<img src="/wp-content/uploads/your-logo.png" alt="Describe the logo"><p>Caption here</p><p>Price here</p><p>Short note here.</p><p>Day here</p><p>Times here</p><p>Area name here</p><a href="/c">Ask about this</a><a href="/m">See the area on a map</a>';
+		. '<img src="/wp-content/uploads/your-logo.png" alt="Describe the logo"><p>Caption here</p><p>Price here</p><p>Short note here.</p><p>Day here</p><p>Times here</p><p>Area name here</p><a href="/c">Ask about this</a><a href="/m">See the area on a map</a>'
+		. '<p>PLACEHOLDER: fee]</p><p>the price, or say "ask"]</p><p>Fees: TO CONFIRM</p>';
 	$found = TWD_SK_Sanitizer::find_leftovers( $html );
 	foreach ( TWD_SK_Sanitizer::leftover_markers() as $marker ) {
 		twd_sk_true( isset( $found[ $marker ] ), 'marker not found: ' . $marker );
@@ -603,4 +604,24 @@ twd_sk_test( 'leftover levels: find_leftovers_by_level splits what find_leftover
 	twd_sk_eq( TWD_SK_Sanitizer::find_leftovers( $html ), $by['must'] + $by['check'] );
 	twd_sk_eq( array( 'must' => array(), 'check' => array() ), TWD_SK_Sanitizer::find_leftovers_by_level( '<p>Real words.</p>' ) );
 	twd_sk_eq( array( 'must' => array(), 'check' => array() ), TWD_SK_Sanitizer::find_leftovers_by_level( '' ) );
+} );
+
+twd_sk_test( 'leftovers (0.14.0): half a marker left by a hand edit, a stray closing bracket and TO CONFIRM are must fix; whole markers and shortcodes are not fragments', function () {
+	// The real case: the opening "[PLACEHOLDER: " was deleted by hand, leaving the rest of the sentence and its bracket.
+	$f = TWD_SK_Sanitizer::find_leftovers( '<p>On-site fire tending price, or say "price on request"]</p>' );
+	twd_sk_eq( 1, $f['stray ]'] );
+	twd_sk_true( ! isset( $f['[PLACEHOLDER'] ) );
+	twd_sk_eq( 'must', TWD_SK_Sanitizer::leftover_level( 'stray ]' ) );
+	// The word on its own, and an opener with no closer.
+	$f = TWD_SK_Sanitizer::find_leftovers( '<p>PLACEHOLDER: registration number</p><p>[PLACEHOLDER: the closing bracket went missing from this one</p>' );
+	twd_sk_eq( 2, $f['PLACEHOLDER fragment'] );
+	twd_sk_eq( 'must', TWD_SK_Sanitizer::leftover_level( 'PLACEHOLDER fragment' ) );
+	// Whole markers, the kit's shortcodes and ordinary brackets in a link address are not fragments.
+	$ok = TWD_SK_Sanitizer::find_leftovers( '<p>[PLACEHOLDER: fee]</p><p>[PLACEHOLDER]</p>[twd_articles count="6" columns="3"][twd_enquiry]<p>See [PLACEHOLDER: P2 picture for home] here</p>' );
+	twd_sk_true( ! isset( $ok['PLACEHOLDER fragment'] ) && ! isset( $ok['stray ]'] ), json_encode( $ok ) );
+	twd_sk_eq( 3, $ok['[PLACEHOLDER'] );
+	// TO CONFIRM, in any case, is must fix and blocks publishing.
+	$f = TWD_SK_Sanitizer::find_leftovers( '<p>Insurer: to confirm</p>' );
+	twd_sk_eq( 1, $f['TO CONFIRM'] );
+	twd_sk_eq( 'must', TWD_SK_Sanitizer::leftover_level( 'TO CONFIRM' ) );
 } );

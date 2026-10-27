@@ -182,6 +182,12 @@ class TWD_SK_Sanitizer {
 			'Area name here'                    => null,
 			'/service-N'                        => '#href\s*=\s*["\']/service-\d+["\'/?\#]#i',
 			'[PLACEHOLDER'                      => null,
+			// 0.14.0: half a marker left after an edit by hand (the word without its opening bracket, an opener
+			// with no closing bracket within a marker's length, or a closing bracket with no opening one in the
+			// same run of text), and the studio's TO CONFIRM note. All must be fixed before publishing.
+			'PLACEHOLDER fragment'              => '/(?<![\[\w])PLACEHOLDER\b|\[PLACEHOLDER\b(?![^\[\]<>]{0,64}\])/',
+			'stray ]'                           => '/>[^<\[\]]*\][^<]*</',
+			'TO CONFIRM'                        => null,
 			// The example link texts in the style guide. Real links need the therapist's own words.
 			'Contact me about a first session'  => null,
 			'Find out about my services'        => null,

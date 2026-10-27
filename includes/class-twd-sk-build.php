@@ -75,6 +75,9 @@ class TWD_SK_Build {
 			'full_answers'  => TWD_SK_Full::clean_answers( isset( $d['full_answers'] ) ? $d['full_answers'] : array() ),
 			'full_check'    => isset( $d['full_check'] ) && is_array( $d['full_check'] ) ? $d['full_check'] : null,
 			'full_prepared' => ! empty( $d['full_prepared'] ),
+			// 0.14.0: build a draft anyway: unanswered questions become markers on the pages.
+			'full_anyway'   => ! empty( $d['full_anyway'] ),
+			'full_markers'  => ! empty( $d['full_markers'] ),
 			// Chosen with the "Photos?" question: pages are built with layouts that have no picture spots.
 			'no_photos'     => ! empty( $d['no_photos'] ),
 			// What each page of the last full build still needs a look at, by page slug.
@@ -169,6 +172,9 @@ class TWD_SK_Build {
 				}
 			}
 		}
+		if ( array_key_exists( 'full_anyway', $in ) ) {
+			$d['full_anyway'] = (bool) $in['full_anyway'] && 'false' !== $in['full_anyway'] && '0' !== $in['full_anyway'];
+		}
 		if ( array_key_exists( 'full_answers', $in ) ) {
 			$answers = TWD_SK_Full::clean_answers( $in['full_answers'] );
 			if ( $answers !== $d['full_answers'] ) {
@@ -253,6 +259,7 @@ class TWD_SK_Build {
 		$d['brief_text']    = function_exists( 'wp_json_encode' ) ? wp_json_encode( $prepared['brief'], $flags ) : json_encode( $prepared['brief'], $flags );
 		$d['pages']         = $pages;
 		$d['full_prepared'] = true;
+		$d['full_markers']  = ! empty( $prepared['markers'] );
 		$d['flags']         = array();
 		$d['step']          = 'pictures';
 		return self::write_draft( $d );
@@ -625,8 +632,9 @@ class TWD_SK_Build {
 		$in     = array( 'type' => $pg['type'], 'title' => $pg['title'], 'topic' => $pg['topic'], 'notes' => $pg['notes'], 'parts' => $pg['parts'] );
 		$full   = ! empty( $draft['full'] );
 		if ( $full ) {
-			// Only the supplied facts, and no [PLACEHOLDER] for text (0.12.0).
-			$in['strict'] = true;
+			// Only the supplied facts, and no [PLACEHOLDER] for text (0.12.0), unless the draft was prepared
+			// with gaps on purpose (0.14.0): then the facts carry a marker per gap, copied where it belongs.
+			$in['strict'] = ! empty( $draft['full_markers'] ) ? 'markers' : true;
 			$use_ai       = true;
 		}
 		$report = array();

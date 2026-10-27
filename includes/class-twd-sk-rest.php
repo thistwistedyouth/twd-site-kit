@@ -243,6 +243,11 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_site_launch_publish' ),
 			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 		) );
+		register_rest_route( self::ROUTE_NS, '/site/launch/tidy', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_launch_tidy' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
 		register_rest_route( self::ROUTE_NS, '/site/brand', array(
 			'methods'             => 'GET',
 			'callback'            => array( __CLASS__, 'get_site_brand' ),
@@ -629,6 +634,16 @@ class TWD_SK_REST {
 		return $out;
 	}
 
+	/** Move WordPress's sample page and first post to the bin (0.14.0). Needs confirm. Nothing is deleted for good. */
+	public static function post_site_launch_tidy( $request ) {
+		if ( ! self::truthy( $request->get_param( 'confirm' ) ) ) {
+			return self::error( 'twd_sk_confirm_needed', 'Please confirm first.', 400 );
+		}
+		$out          = TWD_SK_Launch::tidy();
+		$out['check'] = TWD_SK_Launch::check();
+		return $out;
+	}
+
 	// -- Colours from the logo -----------------------------------------------
 
 	/** Proposed colours from the logo (or another picture). Nothing is saved: the Site tab previews them. */
@@ -707,7 +722,7 @@ class TWD_SK_REST {
 	/** Save some of the setup page's choices. Good values are kept even when another is refused. */
 	public static function post_site_build_draft( $request ) {
 		$in = array();
-		foreach ( array( 'step', 'mode', 'set', 'pack', 'brand', 'brief_text', 'pictures', 'pages', 'reset_pages', 'full', 'full_notes', 'full_answers' ) as $k ) {
+		foreach ( array( 'step', 'mode', 'set', 'pack', 'brand', 'brief_text', 'pictures', 'pages', 'reset_pages', 'full', 'full_notes', 'full_answers', 'full_anyway' ) as $k ) {
 			$v = $request->get_param( $k );
 			if ( null !== $v ) {
 				$in[ $k ] = $v;

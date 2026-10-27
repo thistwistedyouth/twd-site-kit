@@ -191,6 +191,7 @@ function do_shortcode( $content ) {
 // -- Updater stubs ------------------------------------------------------------
 
 define( 'DAY_IN_SECONDS', 86400 );
+define( 'MINUTE_IN_SECONDS', 60 );
 define( 'HOUR_IN_SECONDS', 3600 );
 
 class TWD_SK_Stub_Redirect extends Exception {}
@@ -558,6 +559,19 @@ function get_header() {
 function get_footer() {
 	echo '[FOOTER]';
 }
+/** Moves a post to the bin in the stand-in store (never deletes). */
+function wp_trash_post( $id ) {
+	$post = get_post( (int) $id );
+	if ( ! $post ) {
+		return false;
+	}
+	$post->post_status = 'trash';
+	return $post;
+}
+/** A head request in the stand-in: answers from the same table as wp_safe_remote_get. */
+function wp_safe_remote_head( $url, $args = array() ) {
+	return wp_safe_remote_get( $url, $args );
+}
 function get_page_template_slug() {
 	return get_post_meta( get_queried_object_id(), '_wp_page_template', true );
 }
@@ -636,6 +650,7 @@ require_once ABSPATH . 'includes/class-twd-sk-preview.php';
 require_once ABSPATH . 'includes/class-twd-sk-rest.php';
 require_once ABSPATH . 'includes/class-twd-sk-editor.php';
 require_once ABSPATH . 'includes/class-twd-sk-snags.php';
+require_once ABSPATH . 'includes/class-twd-sk-guard.php';
 require_once ABSPATH . 'includes/class-twd-sk-modules.php';
 
 // Tiny assertion helpers ---------------------------------------------------

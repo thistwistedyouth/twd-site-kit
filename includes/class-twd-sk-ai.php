@@ -405,6 +405,10 @@ class TWD_SK_AI {
 			} ) );
 			$rules[] = 'Use only the facts in the page, the ' . TWD_SK_Mode::w( 'facts' ) . ' and the site details the ' . TWD_SK_Mode::w( 'person' ) . ' supplied. Never invent a ' . TWD_SK_Mode::w( 'invent_list' ) . '.';
 			$rules[] = 'Follow the outline: keep its components and their order. Replace every [PLACEHOLDER] in the outline with real wording written ONLY from the ' . TWD_SK_Mode::w( 'facts' ) . ' and the site details, in the ' . TWD_SK_Mode::w( 'persons' ) . ' own voice. Never write a [PLACEHOLDER] for any text. If the facts do not support a sentence, a heading, a card or a list item, leave it out and let the page be shorter: delete a whole card or list item rather than inventing it.';
+			if ( 'markers' === $strict ) {
+				// A draft built with gaps on purpose (0.14.0): the facts hold one marker per gap.
+				$rules[] = 'One exception: the facts list some things STILL TO ANSWER, each as a [PLACEHOLDER: ...] marker. Copy such a marker, exactly as written, into the one place on the page where that fact would go, and nowhere else. Never write any other [PLACEHOLDER].';
+			}
 			$rules[] = 'Never invent names, qualifications, registrations, prices, fees, contact details, addresses, opening times, reviews, statistics or claims. Use contact details exactly as given. If there is no phone number, remove the phone button or row completely. If there is no postal address, write where the ' . TWD_SK_Mode::w( 'person' ) . ' works (the area served, or online) in its place.';
 		} else {
 			$rules[] = 'Follow the outline: keep its components and their order. Replace every [PLACEHOLDER] in the outline with real wording written from the ' . TWD_SK_Mode::w( 'facts' ) . ', in the ' . TWD_SK_Mode::w( 'persons' ) . ' own voice. Where the facts do not say what is needed, keep a [PLACEHOLDER: what is needed] there.';

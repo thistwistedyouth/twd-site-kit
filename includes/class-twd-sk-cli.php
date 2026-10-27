@@ -486,14 +486,30 @@ class TWD_SK_CLI {
 	 * [--publish]
 	 * : Publish every kit page that is ready.
 	 *
+	 * [--tidy]
+	 * : Move WordPress's own "Sample Page" and "Hello world!" post to the bin (not deleted for good).
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp twd-sk launch-check
 	 *     wp twd-sk launch-check --publish
+	 *     wp twd-sk launch-check --tidy
 	 *
 	 * @subcommand launch-check
 	 */
 	public function launch_check( $args, $assoc_args ) {
+		if ( isset( $assoc_args['tidy'] ) ) {
+			$t = TWD_SK_Launch::tidy();
+			foreach ( $t['trashed'] as $title ) {
+				WP_CLI::success( 'Moved "' . $title . '" to the bin.' );
+			}
+			foreach ( $t['refused'] as $r ) {
+				WP_CLI::warning( $r );
+			}
+			if ( ! $t['trashed'] && ! $t['refused'] ) {
+				WP_CLI::log( 'Nothing of WordPress\'s own left to tidy.' );
+			}
+		}
 		$check = TWD_SK_Launch::check();
 		foreach ( TWD_SK_Launch::lines( $check ) as $line ) {
 			WP_CLI::log( $line );
