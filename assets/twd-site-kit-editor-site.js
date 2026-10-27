@@ -111,7 +111,7 @@
 	/* ---- live preview ---- */
 
 	function cssValue(name, value) {
-		if (name === 'font-heading' || name === 'font-body') {
+		if (name === 'font-heading' || name === 'font-body' || name === 'menu-font') {
 			return (S.data.font_css && S.data.font_css[value]) || '';
 		}
 		return value;
@@ -672,13 +672,14 @@
 		cui.front.checked = !!c.settings.front_logo;
 		cui.over.checked = !!c.settings.overlay;
 		cui.wordmark.checked = !!c.settings.wordmark;
+		cui.wmname.checked = !!c.settings.wordmark_scrolled_name;
 		cui.marker.value = c.settings.menu_marker;
 		cui.button.checked = !!c.settings.show_button;
 		cui.strip.checked = !!c.settings.show_strip;
 		cui.placement.value = c.settings.placement;
 		var e = c.effective;
 		cui.snap = chromeSnap();
-		cui.note.textContent = 'Now showing: ' + (e.wordmark ? 'the text wordmark header, centred' : c.header_variants[e.header]) + ' (header), ' + c.footer_variants[e.footer] + ' (footer).' + (e.sticky_note ? ' The centred header cannot be fixed to the top, so that setting is ignored.' : '');
+		cui.note.textContent = 'Now showing: ' + (e.wordmark ? 'the text wordmark header (stacked on the front page, one row elsewhere)' : c.header_variants[e.header]) + ' (header), ' + c.footer_variants[e.footer] + ' (footer).' + (e.sticky_note ? ' The centred header cannot be fixed to the top, so that setting is ignored.' : '');
 		fillPlacementNote();
 	}
 
@@ -726,6 +727,7 @@
 				front_logo: cui.front.checked,
 				overlay: cui.over.checked,
 				wordmark: cui.wordmark.checked,
+				wordmark_scrolled_name: cui.wmname.checked,
 				menu_marker: cui.marker.value,
 				show_button: cui.button.checked,
 				show_strip: cui.strip.checked,
@@ -771,9 +773,11 @@
 		var shrink = checkbox('twd-sk-ch-shrink', 'Make the fixed header smaller when scrolling (only works with the fixed header above)');
 		var front = checkbox('twd-sk-ch-front', 'Bigger logo on the front page: the full logo, larger and centred above the menu, on the front page only. Other pages show the small logo mark (if one is set in Site details) with the site name. Sizes are in the Style section.');
 		var over = checkbox('twd-sk-ch-over', 'Transparent over the picture: on a page that opens with a full-width picture hero, the header sits over the picture with no background and light words. Every other page keeps the normal header. With the fixed header, it turns solid again once the page is scrolled.');
-		var wordmark = checkbox('twd-sk-ch-wordmark', 'Text wordmark: the logo as live text, centred on every page. A small symbol (the Small logo mark in Site details), the site name in capitals, and an optional second line, with the menu centred below. Scrolled, it becomes one compact row. Replaces the header layout above while it is ticked. Sizes are in the Style section.');
+		var wordmark = checkbox('twd-sk-ch-wordmark', 'Text wordmark: the logo as live text. On the front page a centred stack: a small symbol (the Small logo mark in Site details), the site name in capitals, an optional second line, and the menu centred below. On every other page one row: the symbol and the name at the left, the menu at the right. The menu gets its own smaller look. Replaces the header layout above while it is ticked. Sizes are in the Style section.');
+		var wmname = checkbox('twd-sk-ch-wmname', 'Keep the name when the front page header is scrolled (otherwise only the small symbol stays, beside the menu). Only works with the fixed header and the smaller-when-scrolling option above.');
 		cui.marker = selectWith('twd-sk-ch-marker', {}, '');
 		cui.wordmark = wordmark.input;
+		cui.wmname = wmname.input;
 		cui.sticky = sticky.input;
 		cui.shrink = shrink.input;
 		cui.front = front.input;
@@ -810,6 +814,7 @@
 			sticky.label,
 			shrink.label,
 			wordmark.label,
+			wmname.label,
 			field('Marking the page you are on', cui.marker, 'In the text wordmark header\'s menu.'),
 			front.label,
 			over.label,
@@ -952,7 +957,7 @@
 	}
 
 	function chromeSnap() {
-		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.over.checked, cui.wordmark.checked, cui.marker.value, cui.button.checked, cui.strip.checked, cui.placement.value]);
+		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.over.checked, cui.wordmark.checked, cui.wmname.checked, cui.marker.value, cui.button.checked, cui.strip.checked, cui.placement.value]);
 	}
 
 	ED.addDirtyCheck(function () {

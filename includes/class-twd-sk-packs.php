@@ -157,6 +157,8 @@ class TWD_SK_Packs {
 		}
 		$s['font-heading']  = 'font';
 		$s['font-body']     = 'font';
+		$s['menu-font']      = 'font';                         // 0.14.0: the font of the menu in the text wordmark header
+		$s['menu-transform'] = array( 'none', 'uppercase' );   // 0.14.0: capitals or not
 		$s['heading-style'] = array( 'normal', 'italic' );
 		$s['title-style']   = array( 'normal', 'italic' );
 		$s['heading-align'] = array( 'left', 'center' );
@@ -180,11 +182,11 @@ class TWD_SK_Packs {
 			'logo-height', 'logo-height-sm', 'logo-height-front', 'footer-logo-height',
 			// 0.14.0: the logo in the feature footer, much larger than the other footers' (desktop, then phones).
 			'footer-logo-height-feature', 'footer-logo-height-feature-sm',
-			// 0.14.0: the text wordmark header (symbol, name and second line sizes on the front page, other pages,
-			// phones and when scrolled), and the menu in that header (its own size, spacing and gap).
-			'wordmark-symbol-front', 'wordmark-symbol', 'wordmark-symbol-sm', 'wordmark-symbol-compact',
-			'wordmark-name-front', 'wordmark-name', 'wordmark-name-sm',
-			'wordmark-line-front', 'wordmark-line', 'wordmark-line-sm',
+			// 0.14.0: the text wordmark header: the stacked front page lockup (symbol, name and second line, on a computer
+			// and on a phone), the one-row bar on other pages (symbol and name), and the menu's own size, spacing and gap.
+			'wordmark-symbol-front', 'wordmark-symbol-front-sm', 'wordmark-symbol', 'wordmark-symbol-sm',
+			'wordmark-name-front', 'wordmark-name-front-sm', 'wordmark-name', 'wordmark-name-sm',
+			'wordmark-line-front', 'wordmark-line-front-sm',
 			'wordmark-name-spacing', 'wordmark-line-spacing',
 			'menu-size', 'menu-spacing', 'menu-gap',
 		) as $name ) {
@@ -217,21 +219,23 @@ class TWD_SK_Packs {
 			'footer-logo-height-feature'    => '140px',
 			'footer-logo-height-feature-sm' => '150px',
 			'wordmark-symbol-front'         => '72px',
-			'wordmark-symbol'               => '48px',
-			'wordmark-symbol-sm'            => '44px',
-			'wordmark-symbol-compact'       => '32px',
-			'wordmark-name-front'           => '24px',
-			'wordmark-name'                 => '20px',
+			'wordmark-symbol-front-sm'      => '44px',
+			'wordmark-symbol'               => '36px',
+			'wordmark-symbol-sm'            => '32px',
+			'wordmark-name-front'           => '26px',
+			'wordmark-name-front-sm'        => '20px',
+			'wordmark-name'                 => '18px',
 			'wordmark-name-sm'              => '18px',
 			'wordmark-line-front'           => '12px',
-			'wordmark-line'                 => '11px',
-			'wordmark-line-sm'              => '12px',
+			'wordmark-line-front-sm'        => '12px',
 			'wordmark-name-spacing'         => '0.18em',
-			'wordmark-line-spacing'         => '0.3em',
-			'menu-size'                     => '15px',
+			'wordmark-line-spacing'         => '0.32em',
+			'menu-size'                     => '13px',
 			'menu-weight'                   => '400',
-			'menu-spacing'                  => '0.02em',
-			'menu-gap'                      => '28px',
+			'menu-spacing'                  => '0.12em',
+			'menu-gap'                      => '26px',
+			'menu-font'                     => 'System sans', // a pack from before this takes its body font instead (see read_pack_file)
+			'menu-transform'                => 'uppercase',
 			'image-filter'                  => 'none',
 			'image-tint'                    => 'transparent',
 		);
@@ -427,12 +431,17 @@ class TWD_SK_Packs {
 				$chrome['footer'] = $data['chrome']['footer'];
 			}
 		}
+		// A token the pack does not define (added in a later version) takes its default. The menu font of the
+		// text wordmark header, when a pack does not say, is the pack's own body font.
+		$tokens = array_merge( self::defaults(), $check['valid'] );
+		if ( ! isset( $check['valid']['menu-font'] ) && isset( $tokens['font-body'] ) ) {
+			$tokens['menu-font'] = $tokens['font-body'];
+		}
 		return array(
 			'slug'        => $slug,
 			'name'        => $data['name'],
 			'description' => isset( $data['description'] ) && is_string( $data['description'] ) ? $data['description'] : '',
-			// A token the pack does not define (added in a later version) takes its default.
-			'tokens'      => array_merge( self::defaults(), $check['valid'] ),
+			'tokens'      => $tokens,
 			'chrome'      => $chrome,
 		);
 	}
@@ -561,7 +570,7 @@ class TWD_SK_Packs {
 				continue;
 			}
 			$value = $tokens[ $name ];
-			if ( 'font-heading' === $name || 'font-body' === $name ) {
+			if ( 'font-heading' === $name || 'font-body' === $name || 'menu-font' === $name ) {
 				$value = self::font_css_value( $value );
 			}
 			$css .= self::VAR_PREFIX . $name . ':' . $value . ';';
@@ -578,7 +587,7 @@ class TWD_SK_Packs {
 	public static function font_face_css( $tokens, $base_url ) {
 		$fonts = self::fonts();
 		$used  = array();
-		foreach ( array( 'font-heading', 'font-body' ) as $name ) {
+		foreach ( array( 'font-heading', 'font-body', 'menu-font' ) as $name ) {
 			if ( isset( $tokens[ $name ] ) && isset( $fonts[ $tokens[ $name ] ] ) ) {
 				$used[ $tokens[ $name ] ] = true;
 			}

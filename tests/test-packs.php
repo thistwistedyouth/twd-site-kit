@@ -279,6 +279,7 @@ twd_sk_test( 'output: system fonts need no @font-face at all', function () {
 	$t               = twd_sk_good_tokens();
 	$t['font-heading'] = 'System serif';
 	$t['font-body']    = 'System sans';
+	$t['menu-font']    = 'System sans'; // 0.14.0: the menu of the text wordmark header has a font of its own
 	twd_sk_eq( '', TWD_SK_Packs::font_face_css( $t, 'https://example.test/' ) );
 } );
 

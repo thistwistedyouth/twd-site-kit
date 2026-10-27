@@ -1800,28 +1800,27 @@
 .twd-sk-page.twd-sk-chrome--sticky.twd-sk-chrome--sticky.twd-sk-chrome--strip.twd-sk-chrome--strip {
   height: 112px;
 }
-/* The text wordmark header's fixed spacer (0.14.0): its height is worked out from the size tokens (the way the front page logo's is),
-   with the symbol, name and second line sizes for the page it is on, the menu line, and the paddings below. No second line takes its 20px out. */
+/* The text wordmark header's fixed spacer (0.14.0). On the front page the header is the tall stacked lockup, so its height is worked out
+   from the size tokens (the way the front page logo's is): symbol, name, second line and menu line, plus the paddings (no second line
+   takes its space out). On every other page it is the one-row bar: the taller of the symbol and a menu link, plus the paddings. */
 .twd-sk-page.twd-sk-chrome--wordmark.twd-sk-chrome--wordmark {
-  --twd-sk-wm-s: var(--twd-site-wordmark-symbol);
-  --twd-sk-wm-n: var(--twd-site-wordmark-name);
-  --twd-sk-wm-l: var(--twd-site-wordmark-line);
-  --twd-sk-wm-pad: 85px;
-  --twd-sk-wm-strip: 0px;
-}
-.twd-sk-page.twd-sk-chrome--wm-front.twd-sk-chrome--wm-front {
   --twd-sk-wm-s: var(--twd-site-wordmark-symbol-front);
   --twd-sk-wm-n: var(--twd-site-wordmark-name-front);
   --twd-sk-wm-l: var(--twd-site-wordmark-line-front);
+  --twd-sk-wm-pad: 93px;
+  --twd-sk-wm-strip: 0px;
 }
 .twd-sk-page.twd-sk-chrome--noline.twd-sk-chrome--noline {
   --twd-sk-wm-l: 0px;
-  --twd-sk-wm-pad: 79px;
+  --twd-sk-wm-pad: 85px;
 }
 .twd-sk-page.twd-sk-chrome--wordmark.twd-sk-chrome--wordmark.twd-sk-chrome--strip.twd-sk-chrome--strip {
   --twd-sk-wm-strip: 36px;
 }
 .twd-sk-page.twd-sk-chrome--sticky.twd-sk-chrome--sticky.twd-sk-chrome--wordmark.twd-sk-chrome--wordmark {
+  height: calc(max(var(--twd-site-wordmark-symbol), var(--twd-site-menu-size) * 1.3 + 20px) + 29px + var(--twd-sk-wm-strip));
+}
+.twd-sk-page.twd-sk-chrome--sticky.twd-sk-chrome--sticky.twd-sk-chrome--wordmark.twd-sk-chrome--wordmark.twd-sk-chrome--wm-front.twd-sk-chrome--wm-front {
   height: calc(var(--twd-sk-wm-s) + var(--twd-sk-wm-n) * 1.2 + var(--twd-sk-wm-l) * 1.3 + var(--twd-site-menu-size) * 1.3 + var(--twd-sk-wm-pad) + var(--twd-sk-wm-strip));
 }
 .twd-sk-page .twd-sk-header.twd-sk-header {
@@ -2185,37 +2184,24 @@
   flex-direction: column;
   align-items: flex-start;
 }
-/* The text wordmark header (0.14.0): a small mark, the name and a second line as live text, centred on every page, the menu centred
-   below. Printed only when the setting is on, with these classes in place of the layout's own, so nothing else changes. */
-.twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__inner.twd-sk-header__inner {
-  position: relative;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 0;
-  padding-top: 20px !important;
-  padding-bottom: 12px !important;
-  text-align: center !important;
-}
+/* The text wordmark header (0.14.0). Printed only when the setting is on, with these classes in place of the layout's own, so nothing else
+   changes. The front page is a centred stack: a small mark, the name and a second line as live text, the menu centred below. Every other
+   page is the one-row bar: the mark and the name at the left, the menu at the right. */
 .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__logo.twd-sk-header__logo {
   flex: 0 1 auto;
-  flex-direction: column;
-  justify-content: center;
   min-width: 0;
   max-width: 100%;
-  text-align: center !important;
 }
 .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__mark.twd-sk-header__mark {
   display: block;
   width: auto;
   max-width: 160px;
   height: var(--twd-site-wordmark-symbol);
-  margin: 0 auto 10px !important;
+  margin: 0 12px 0 0 !important;
   object-fit: contain;
 }
 .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__name.twd-sk-header__name {
   display: block;
-  padding-left: var(--twd-site-wordmark-name-spacing) !important;
   font-family: var(--twd-site-font-heading) !important;
   font-size: var(--twd-site-wordmark-name) !important;
   font-weight: var(--twd-site-heading-weight) !important;
@@ -2228,49 +2214,42 @@
 }
 .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__line.twd-sk-header__line {
   display: block;
-  margin: 6px 0 0 !important;
+  margin: 8px 0 0 !important;
   padding-left: var(--twd-site-wordmark-line-spacing) !important;
   font-family: var(--twd-site-font-body) !important;
-  font-size: var(--twd-site-wordmark-line) !important;
+  font-size: var(--twd-site-wordmark-line-front) !important;
   font-weight: 400 !important;
   line-height: 1.3 !important;
   letter-spacing: var(--twd-site-wordmark-line-spacing) !important;
   text-transform: uppercase !important;
   color: var(--twd-site-color-heading) !important;
 }
-.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__mark.twd-sk-header__mark {
-  height: var(--twd-site-wordmark-symbol-front);
-}
-.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__name.twd-sk-header__name {
-  font-size: var(--twd-site-wordmark-name-front) !important;
-}
-.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__line.twd-sk-header__line {
-  font-size: var(--twd-site-wordmark-line-front) !important;
-}
-.twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__panel.twd-sk-header__panel {
+.twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark.twd-sk-header--bar.twd-sk-header--bar .twd-sk-header__inner.twd-sk-header__inner {
   flex-wrap: wrap;
-  justify-content: center;
-  margin: 16px 0 0 !important;
+  row-gap: 4px;
 }
+/* The menu, on every page: its own font, size, weight, spacing, capitals and gap, never the body size. */
 .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__menu.twd-sk-header__menu {
-  justify-content: center;
   gap: 4px var(--twd-site-menu-gap);
-}
-/* The header button sits in the menu's row at the menu's size, never taller than a menu link, so the row (and the fixed header's spacer) is the same with or without it. */
-.twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__cta.twd-sk-header__cta {
-  padding-top: 8px !important;
-  padding-bottom: 8px !important;
-  font-size: var(--twd-site-menu-size) !important;
-  letter-spacing: var(--twd-site-menu-spacing) !important;
 }
 .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__link.twd-sk-header__link {
   position: relative;
   padding: 10px 2px !important;
+  font-family: var(--twd-site-menu-font) !important;
   font-size: var(--twd-site-menu-size) !important;
   font-weight: var(--twd-site-menu-weight) !important;
   line-height: 1.3 !important;
   letter-spacing: var(--twd-site-menu-spacing) !important;
+  text-transform: var(--twd-site-menu-transform) !important;
   text-decoration: none !important;
+}
+/* The header button sits in the menu's row at the menu's size, never taller than a menu link, so the row (and the fixed header's spacer) is the same with or without it. */
+.twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__cta.twd-sk-header__cta {
+  padding: 8px 18px !important;
+  font-family: var(--twd-site-menu-font) !important;
+  font-size: var(--twd-site-menu-size) !important;
+  letter-spacing: var(--twd-site-menu-spacing) !important;
+  text-transform: var(--twd-site-menu-transform) !important;
 }
 .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__link.twd-sk-header__link:hover,
 .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__link.twd-sk-header__link:focus-visible {
@@ -2308,30 +2287,88 @@
 .twd-sk-page .twd-sk-header--mark-none.twd-sk-header--mark-none .twd-sk-header__link.twd-sk-header__link[aria-current="page"] {
   text-decoration: none !important;
 }
-/* Scrolled: one centred row, a small symbol and the name on one line, the second line gone. */
-.twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__inner.twd-sk-header__inner {
+/* The front page: the centred stack. */
+.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__inner.twd-sk-header__inner {
+  position: relative;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  padding-top: 22px !important;
+  padding-bottom: 12px !important;
+  text-align: center !important;
+}
+.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__logo.twd-sk-header__logo {
+  flex-direction: column;
+  justify-content: center;
+  text-align: center !important;
+}
+.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__mark.twd-sk-header__mark {
+  height: var(--twd-site-wordmark-symbol-front);
+  margin: 0 auto 12px !important;
+}
+.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__name.twd-sk-header__name {
+  padding-left: var(--twd-site-wordmark-name-spacing) !important;
+  font-size: var(--twd-site-wordmark-name-front) !important;
+}
+.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__panel.twd-sk-header__panel {
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 18px 0 0 !important;
+}
+.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__menu.twd-sk-header__menu {
+  justify-content: center;
+}
+/* The front page scrolled: one centred row, the small symbol directly left of the menu. The name leaves the eye but never the screen
+   reader, unless the setting keeps it: then the symbol and name sit at the left and the menu at the right, like the other pages. */
+.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__inner.twd-sk-header__inner {
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 4px 40px;
+  gap: 4px 32px;
   padding-top: 6px !important;
   padding-bottom: 6px !important;
 }
-.twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__logo.twd-sk-header__logo {
+.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__logo.twd-sk-header__logo {
   flex-direction: row;
 }
-.twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__mark.twd-sk-header__mark {
-  height: var(--twd-site-wordmark-symbol-compact);
-  margin: 0 12px 0 0 !important;
+.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__mark.twd-sk-header__mark {
+  height: var(--twd-site-wordmark-symbol);
+  margin: 0 !important;
 }
-.twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__name.twd-sk-header__name {
-  font-size: var(--twd-site-wordmark-name) !important;
+.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__name.twd-sk-header__name {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0 !important;
+  clip-path: inset(50%);
+  overflow: clip;
+  white-space: nowrap;
 }
-.twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__line.twd-sk-header__line {
+.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__line.twd-sk-header__line {
   display: none;
 }
-.twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__panel.twd-sk-header__panel {
+.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__panel.twd-sk-header__panel {
   margin: 0 !important;
+}
+.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front.twd-sk-header--wm-name.twd-sk-header--wm-name.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__inner.twd-sk-header__inner {
+  justify-content: space-between;
+}
+.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front.twd-sk-header--wm-name.twd-sk-header--wm-name.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__mark.twd-sk-header__mark {
+  margin: 0 12px 0 0 !important;
+}
+.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front.twd-sk-header--wm-name.twd-sk-header--wm-name.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__name.twd-sk-header__name {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0 !important;
+  clip-path: none;
+  overflow: visible;
+  white-space: normal;
+  font-size: var(--twd-site-wordmark-name) !important;
+}
+.twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front.twd-sk-header--wm-name.twd-sk-header--wm-name.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__panel.twd-sk-header__panel {
+  margin-left: auto !important;
 }
 /* Over a picture: the name and second line take the on-image colour; scrolled, the header is solid again. */
 .twd-sk-page .twd-sk-header--over.twd-sk-header--over.twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__name.twd-sk-header__name,
@@ -2858,52 +2895,66 @@
     font-size: var(--twd-site-size-h2-sm) !important;
   }
 }
-/* The text wordmark header on a phone (0.14.0): the stack stays centred, the menu button sits at the corner, scrolled it is one row. */
+/* The text wordmark header on a phone (0.14.0): the bar keeps the symbol and name readable beside the menu button; the front page stack stays
+   centred with the menu button at the corner; scrolled, the symbol (and the name, if kept) sits at the left and the menu button at the right. */
 @media (max-width: 900px) {
-  .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__inner.twd-sk-header__inner {
-    padding-top: 16px !important;
-    padding-bottom: 14px !important;
-  }
   .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__mark.twd-sk-header__mark {
     height: var(--twd-site-wordmark-symbol-sm);
-    margin-bottom: 8px !important;
+    margin-right: 10px !important;
   }
   .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__name.twd-sk-header__name {
     font-size: var(--twd-site-wordmark-name-sm) !important;
   }
-  .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__line.twd-sk-header__line {
-    margin: 4px 0 0 !important;
-    font-size: var(--twd-site-wordmark-line-sm) !important;
-  }
-  .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__panel.twd-sk-header__panel {
-    align-items: center;
-    margin: 12px 0 0 !important;
-  }
-  .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__menu.twd-sk-header__menu {
-    align-items: center;
-  }
   .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__link.twd-sk-header__link {
     padding: 12px 2px !important;
   }
-  .twd-sk-page .twd-sk-header--js.twd-sk-header--js.twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__toggle.twd-sk-header__toggle {
+  .twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__inner.twd-sk-header__inner {
+    padding-top: 16px !important;
+    padding-bottom: 14px !important;
+  }
+  .twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__mark.twd-sk-header__mark {
+    height: var(--twd-site-wordmark-symbol-front-sm);
+    margin: 0 auto 8px !important;
+  }
+  .twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__name.twd-sk-header__name {
+    font-size: var(--twd-site-wordmark-name-front-sm) !important;
+  }
+  .twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__line.twd-sk-header__line {
+    margin: 4px 0 0 !important;
+    font-size: var(--twd-site-wordmark-line-front-sm) !important;
+  }
+  .twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__panel.twd-sk-header__panel {
+    align-items: center;
+    margin: 12px 0 0 !important;
+  }
+  .twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__menu.twd-sk-header__menu {
+    align-items: center;
+  }
+  .twd-sk-page .twd-sk-header--js.twd-sk-header--js.twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__toggle.twd-sk-header__toggle {
     position: absolute;
     top: 10px;
     right: var(--twd-site-gutter-sm);
   }
-  .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__inner.twd-sk-header__inner {
+  .twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__inner.twd-sk-header__inner {
     flex-wrap: nowrap;
     justify-content: space-between;
   }
-  .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__name.twd-sk-header__name {
+  .twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__mark.twd-sk-header__mark {
+    height: var(--twd-site-wordmark-symbol-sm);
+  }
+  .twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front.twd-sk-header--wm-name.twd-sk-header--wm-name.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__mark.twd-sk-header__mark {
+    margin: 0 10px 0 0 !important;
+  }
+  .twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front.twd-sk-header--wm-name.twd-sk-header--wm-name.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__name.twd-sk-header__name {
     font-size: var(--twd-site-wordmark-name-sm) !important;
   }
-  .twd-sk-page .twd-sk-header--js.twd-sk-header--js.twd-sk-header--wordmark.twd-sk-header--wordmark.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__toggle.twd-sk-header__toggle {
+  .twd-sk-page .twd-sk-header--js.twd-sk-header--js.twd-sk-header--wm-front.twd-sk-header--wm-front.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__toggle.twd-sk-header__toggle {
     position: static;
   }
   .twd-sk-page.twd-sk-chrome--wordmark.twd-sk-chrome--wordmark {
-    --twd-sk-wm-s: var(--twd-site-wordmark-symbol-sm);
-    --twd-sk-wm-n: var(--twd-site-wordmark-name-sm);
-    --twd-sk-wm-l: var(--twd-site-wordmark-line-sm);
+    --twd-sk-wm-s: var(--twd-site-wordmark-symbol-front-sm);
+    --twd-sk-wm-n: var(--twd-site-wordmark-name-front-sm);
+    --twd-sk-wm-l: var(--twd-site-wordmark-line-front-sm);
     --twd-sk-wm-pad: 43px;
   }
   .twd-sk-page.twd-sk-chrome--noline.twd-sk-chrome--noline {
@@ -2911,6 +2962,9 @@
     --twd-sk-wm-pad: 39px;
   }
   .twd-sk-page.twd-sk-chrome--sticky.twd-sk-chrome--sticky.twd-sk-chrome--wordmark.twd-sk-chrome--wordmark {
+    height: calc(77px + var(--twd-sk-wm-strip));
+  }
+  .twd-sk-page.twd-sk-chrome--sticky.twd-sk-chrome--sticky.twd-sk-chrome--wordmark.twd-sk-chrome--wordmark.twd-sk-chrome--wm-front.twd-sk-chrome--wm-front {
     height: calc(var(--twd-sk-wm-s) + var(--twd-sk-wm-n) * 1.2 + var(--twd-sk-wm-l) * 1.3 + var(--twd-sk-wm-pad) + var(--twd-sk-wm-strip));
   }
 }

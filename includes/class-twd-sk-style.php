@@ -139,6 +139,7 @@ class TWD_SK_Style {
 				'front_logo'     => $c['front_logo'],
 				'overlay'        => $c['overlay'],
 				'wordmark'       => $c['wordmark'],
+				'wordmark_scrolled_name' => $c['wordmark_scrolled_name'],
 				'menu_marker'    => $c['menu_marker'],
 				'show_button'    => $c['show_button'],
 				'show_strip'     => $c['show_strip'],

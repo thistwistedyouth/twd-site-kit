@@ -610,13 +610,14 @@
 &.twd-sk-chrome { position: relative; z-index: 50; }
 &.twd-sk-chrome--sticky { height: 76px; }
 &.twd-sk-chrome--sticky.twd-sk-chrome--strip { height: 112px; }
-/* The text wordmark header's fixed spacer (0.14.0): its height is worked out from the size tokens (the way the front page logo's is),
-   with the symbol, name and second line sizes for the page it is on, the menu line, and the paddings below. No second line takes its 20px out. */
-&.twd-sk-chrome--wordmark { --twd-sk-wm-s: $wordmark-symbol; --twd-sk-wm-n: $wordmark-name; --twd-sk-wm-l: $wordmark-line; --twd-sk-wm-pad: 85px; --twd-sk-wm-strip: 0px; }
-&.twd-sk-chrome--wm-front { --twd-sk-wm-s: $wordmark-symbol-front; --twd-sk-wm-n: $wordmark-name-front; --twd-sk-wm-l: $wordmark-line-front; }
-&.twd-sk-chrome--noline { --twd-sk-wm-l: 0px; --twd-sk-wm-pad: 79px; }
+/* The text wordmark header's fixed spacer (0.14.0). On the front page the header is the tall stacked lockup, so its height is worked out
+   from the size tokens (the way the front page logo's is): symbol, name, second line and menu line, plus the paddings (no second line
+   takes its space out). On every other page it is the one-row bar: the taller of the symbol and a menu link, plus the paddings. */
+&.twd-sk-chrome--wordmark { --twd-sk-wm-s: $wordmark-symbol-front; --twd-sk-wm-n: $wordmark-name-front; --twd-sk-wm-l: $wordmark-line-front; --twd-sk-wm-pad: 93px; --twd-sk-wm-strip: 0px; }
+&.twd-sk-chrome--noline { --twd-sk-wm-l: 0px; --twd-sk-wm-pad: 85px; }
 &.twd-sk-chrome--wordmark.twd-sk-chrome--strip { --twd-sk-wm-strip: 36px; }
-&.twd-sk-chrome--sticky.twd-sk-chrome--wordmark { height: calc(var(--twd-sk-wm-s) + var(--twd-sk-wm-n) * 1.2 + var(--twd-sk-wm-l) * 1.3 + #{$menu-size} * 1.3 + var(--twd-sk-wm-pad) + var(--twd-sk-wm-strip)); }
+&.twd-sk-chrome--sticky.twd-sk-chrome--wordmark { height: calc(max(#{$wordmark-symbol}, #{$menu-size} * 1.3 + 20px) + 29px + var(--twd-sk-wm-strip)); }
+&.twd-sk-chrome--sticky.twd-sk-chrome--wordmark.twd-sk-chrome--wm-front { height: calc(var(--twd-sk-wm-s) + var(--twd-sk-wm-n) * 1.2 + var(--twd-sk-wm-l) * 1.3 + #{$menu-size} * 1.3 + var(--twd-sk-wm-pad) + var(--twd-sk-wm-strip)); }
 .twd-sk-header { position: relative; background-color: $color-surface; border-bottom: 1px solid $color-border; color: $color-title; }
 /* Transparent over the picture (0.14.0): printed only on a page that opens with a full-width picture hero.
    The wrapper has no height, so the picture starts at the top and the header floats over its overlay in the
@@ -707,21 +708,19 @@
 .twd-sk-header--minimal .twd-sk-header__panel { flex-direction: column; align-items: flex-start; }
 .twd-sk-header--minimal .twd-sk-header__menu { flex-direction: column; align-items: flex-start; }
 
-/* The text wordmark header (0.14.0): a small mark, the name and a second line as live text, centred on every page, the menu centred
-   below. Printed only when the setting is on, with these classes in place of the layout's own, so nothing else changes. */
-.twd-sk-header--wordmark .twd-sk-header__inner { position: relative; flex-direction: column; justify-content: center; align-items: center; gap: 0; padding-top: 20px; padding-bottom: 12px; text-align: center; }
-.twd-sk-header--wordmark .twd-sk-header__logo { flex: 0 1 auto; flex-direction: column; justify-content: center; min-width: 0; max-width: 100%; text-align: center; }
-.twd-sk-header--wordmark .twd-sk-header__mark { display: block; width: auto; max-width: 160px; height: $wordmark-symbol; margin: 0 auto 10px; object-fit: contain; }
-.twd-sk-header--wordmark .twd-sk-header__name { display: block; padding-left: $wordmark-name-spacing; font-family: $font-heading; font-size: $wordmark-name; font-weight: $heading-weight; font-style: normal; line-height: 1.2; letter-spacing: $wordmark-name-spacing; text-transform: uppercase; color: $color-heading; overflow-wrap: break-word; }
-.twd-sk-header--wordmark .twd-sk-header__line { display: block; margin: 6px 0 0; padding-left: $wordmark-line-spacing; font-family: $font-body; font-size: $wordmark-line; font-weight: 400; line-height: 1.3; letter-spacing: $wordmark-line-spacing; text-transform: uppercase; color: $color-heading; }
-.twd-sk-header--wm-front .twd-sk-header__mark { height: $wordmark-symbol-front; }
-.twd-sk-header--wm-front .twd-sk-header__name { font-size: $wordmark-name-front; }
-.twd-sk-header--wm-front .twd-sk-header__line { font-size: $wordmark-line-front; }
-.twd-sk-header--wordmark .twd-sk-header__panel { flex-wrap: wrap; justify-content: center; margin: 16px 0 0; }
-.twd-sk-header--wordmark .twd-sk-header__menu { justify-content: center; gap: 4px $menu-gap; }
+/* The text wordmark header (0.14.0). Printed only when the setting is on, with these classes in place of the layout's own, so nothing else
+   changes. The front page is a centred stack: a small mark, the name and a second line as live text, the menu centred below. Every other
+   page is the one-row bar: the mark and the name at the left, the menu at the right. */
+.twd-sk-header--wordmark .twd-sk-header__logo { flex: 0 1 auto; min-width: 0; max-width: 100%; }
+.twd-sk-header--wordmark .twd-sk-header__mark { display: block; width: auto; max-width: 160px; height: $wordmark-symbol; margin: 0 12px 0 0; object-fit: contain; }
+.twd-sk-header--wordmark .twd-sk-header__name { display: block; font-family: $font-heading; font-size: $wordmark-name; font-weight: $heading-weight; font-style: normal; line-height: 1.2; letter-spacing: $wordmark-name-spacing; text-transform: uppercase; color: $color-heading; overflow-wrap: break-word; }
+.twd-sk-header--wordmark .twd-sk-header__line { display: block; margin: 8px 0 0; padding-left: $wordmark-line-spacing; font-family: $font-body; font-size: $wordmark-line-front; font-weight: 400; line-height: 1.3; letter-spacing: $wordmark-line-spacing; text-transform: uppercase; color: $color-heading; }
+.twd-sk-header--wordmark.twd-sk-header--bar .twd-sk-header__inner { flex-wrap: wrap; row-gap: 4px; }
+/* The menu, on every page: its own font, size, weight, spacing, capitals and gap, never the body size. */
+.twd-sk-header--wordmark .twd-sk-header__menu { gap: 4px $menu-gap; }
+.twd-sk-header--wordmark .twd-sk-header__link { position: relative; padding: 10px 2px; font-family: $menu-font; font-size: $menu-size; font-weight: $menu-weight; line-height: 1.3; letter-spacing: $menu-spacing; text-transform: $menu-transform; text-decoration: none; }
 /* The header button sits in the menu's row at the menu's size, never taller than a menu link, so the row (and the fixed header's spacer) is the same with or without it. */
-.twd-sk-header--wordmark .twd-sk-header__cta { padding-top: 8px; padding-bottom: 8px; font-size: $menu-size; letter-spacing: $menu-spacing; }
-.twd-sk-header--wordmark .twd-sk-header__link { position: relative; padding: 10px 2px; font-size: $menu-size; font-weight: $menu-weight; line-height: 1.3; letter-spacing: $menu-spacing; text-decoration: none; }
+.twd-sk-header--wordmark .twd-sk-header__cta { padding: 8px 18px; font-family: $menu-font; font-size: $menu-size; letter-spacing: $menu-spacing; text-transform: $menu-transform; }
 .twd-sk-header--wordmark .twd-sk-header__link:hover, .twd-sk-header--wordmark .twd-sk-header__link:focus-visible { text-decoration: none; }
 .twd-sk-header--wordmark .twd-sk-header__link[aria-current="page"] { color: inherit; text-decoration: none; }
 /* The page you are on: a dot or a bar under the link in the link's own colour (so it follows the transparent and scrolled states), or colour and weight, or nothing. */
@@ -730,13 +729,25 @@
 .twd-sk-header--mark-bar .twd-sk-header__link[aria-current="page"]::after { bottom: 3px; width: 18px; height: 2px; border-radius: 1px; }
 .twd-sk-header--mark-color .twd-sk-header__link[aria-current="page"] { color: $color-accent-text; font-weight: 600; }
 .twd-sk-header--mark-none .twd-sk-header__link[aria-current="page"] { text-decoration: none; }
-/* Scrolled: one centred row, a small symbol and the name on one line, the second line gone. */
-.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__inner { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 4px 40px; padding-top: 6px; padding-bottom: 6px; }
-.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__logo { flex-direction: row; }
-.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__mark { height: $wordmark-symbol-compact; margin: 0 12px 0 0; }
-.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__name { font-size: $wordmark-name; }
-.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__line { display: none; }
-.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__panel { margin: 0; }
+/* The front page: the centred stack. */
+.twd-sk-header--wm-front .twd-sk-header__inner { position: relative; flex-direction: column; justify-content: center; align-items: center; gap: 0; padding-top: 22px; padding-bottom: 12px; text-align: center; }
+.twd-sk-header--wm-front .twd-sk-header__logo { flex-direction: column; justify-content: center; text-align: center; }
+.twd-sk-header--wm-front .twd-sk-header__mark { height: $wordmark-symbol-front; margin: 0 auto 12px; }
+.twd-sk-header--wm-front .twd-sk-header__name { padding-left: $wordmark-name-spacing; font-size: $wordmark-name-front; }
+.twd-sk-header--wm-front .twd-sk-header__panel { flex-wrap: wrap; justify-content: center; margin: 18px 0 0; }
+.twd-sk-header--wm-front .twd-sk-header__menu { justify-content: center; }
+/* The front page scrolled: one centred row, the small symbol directly left of the menu. The name leaves the eye but never the screen
+   reader, unless the setting keeps it: then the symbol and name sit at the left and the menu at the right, like the other pages. */
+.twd-sk-header--wm-front.twd-sk-header--shrunk .twd-sk-header__inner { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 4px 32px; padding-top: 6px; padding-bottom: 6px; }
+.twd-sk-header--wm-front.twd-sk-header--shrunk .twd-sk-header__logo { flex-direction: row; }
+.twd-sk-header--wm-front.twd-sk-header--shrunk .twd-sk-header__mark { height: $wordmark-symbol; margin: 0; }
+.twd-sk-header--wm-front.twd-sk-header--shrunk .twd-sk-header__name { position: absolute; width: 1px; height: 1px; padding: 0; clip-path: inset(50%); overflow: clip; white-space: nowrap; }
+.twd-sk-header--wm-front.twd-sk-header--shrunk .twd-sk-header__line { display: none; }
+.twd-sk-header--wm-front.twd-sk-header--shrunk .twd-sk-header__panel { margin: 0; }
+.twd-sk-header--wm-front.twd-sk-header--wm-name.twd-sk-header--shrunk .twd-sk-header__inner { justify-content: space-between; }
+.twd-sk-header--wm-front.twd-sk-header--wm-name.twd-sk-header--shrunk .twd-sk-header__mark { margin: 0 12px 0 0; }
+.twd-sk-header--wm-front.twd-sk-header--wm-name.twd-sk-header--shrunk .twd-sk-header__name { position: static; width: auto; height: auto; padding: 0; clip-path: none; overflow: visible; white-space: normal; font-size: $wordmark-name; }
+.twd-sk-header--wm-front.twd-sk-header--wm-name.twd-sk-header--shrunk .twd-sk-header__panel { margin-left: auto; }
 /* Over a picture: the name and second line take the on-image colour; scrolled, the header is solid again. */
 .twd-sk-header--over.twd-sk-header--wordmark .twd-sk-header__name, .twd-sk-header--over.twd-sk-header--wordmark .twd-sk-header__line { color: $color-on-image; }
 .twd-sk-header--over.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__name, .twd-sk-header--over.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__line { color: $color-heading; }
@@ -882,22 +893,28 @@
   .twd-sk-footer--feature .twd-sk-footer__tagline { font-size: $size-h2-sm; }
 }
 
-/* The text wordmark header on a phone (0.14.0): the stack stays centred, the menu button sits at the corner, scrolled it is one row. */
+/* The text wordmark header on a phone (0.14.0): the bar keeps the symbol and name readable beside the menu button; the front page stack stays
+   centred with the menu button at the corner; scrolled, the symbol (and the name, if kept) sits at the left and the menu button at the right. */
 @media (max-width: 900px) {
-  .twd-sk-header--wordmark .twd-sk-header__inner { padding-top: 16px; padding-bottom: 14px; }
-  .twd-sk-header--wordmark .twd-sk-header__mark { height: $wordmark-symbol-sm; margin-bottom: 8px; }
+  .twd-sk-header--wordmark .twd-sk-header__mark { height: $wordmark-symbol-sm; margin-right: 10px; }
   .twd-sk-header--wordmark .twd-sk-header__name { font-size: $wordmark-name-sm; }
-  .twd-sk-header--wordmark .twd-sk-header__line { margin: 4px 0 0; font-size: $wordmark-line-sm; }
-  .twd-sk-header--wordmark .twd-sk-header__panel { align-items: center; margin: 12px 0 0; }
-  .twd-sk-header--wordmark .twd-sk-header__menu { align-items: center; }
   .twd-sk-header--wordmark .twd-sk-header__link { padding: 12px 2px; }
-  .twd-sk-header--js.twd-sk-header--wordmark .twd-sk-header__toggle { position: absolute; top: 10px; right: $gutter-sm; }
-  .twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__inner { flex-wrap: nowrap; justify-content: space-between; }
-  .twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__name { font-size: $wordmark-name-sm; }
-  .twd-sk-header--js.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__toggle { position: static; }
-  &.twd-sk-chrome--wordmark { --twd-sk-wm-s: $wordmark-symbol-sm; --twd-sk-wm-n: $wordmark-name-sm; --twd-sk-wm-l: $wordmark-line-sm; --twd-sk-wm-pad: 43px; }
+  .twd-sk-header--wm-front .twd-sk-header__inner { padding-top: 16px; padding-bottom: 14px; }
+  .twd-sk-header--wm-front .twd-sk-header__mark { height: $wordmark-symbol-front-sm; margin: 0 auto 8px; }
+  .twd-sk-header--wm-front .twd-sk-header__name { font-size: $wordmark-name-front-sm; }
+  .twd-sk-header--wm-front .twd-sk-header__line { margin: 4px 0 0; font-size: $wordmark-line-front-sm; }
+  .twd-sk-header--wm-front .twd-sk-header__panel { align-items: center; margin: 12px 0 0; }
+  .twd-sk-header--wm-front .twd-sk-header__menu { align-items: center; }
+  .twd-sk-header--js.twd-sk-header--wm-front .twd-sk-header__toggle { position: absolute; top: 10px; right: $gutter-sm; }
+  .twd-sk-header--wm-front.twd-sk-header--shrunk .twd-sk-header__inner { flex-wrap: nowrap; justify-content: space-between; }
+  .twd-sk-header--wm-front.twd-sk-header--shrunk .twd-sk-header__mark { height: $wordmark-symbol-sm; }
+  .twd-sk-header--wm-front.twd-sk-header--wm-name.twd-sk-header--shrunk .twd-sk-header__mark { margin: 0 10px 0 0; }
+  .twd-sk-header--wm-front.twd-sk-header--wm-name.twd-sk-header--shrunk .twd-sk-header__name { font-size: $wordmark-name-sm; }
+  .twd-sk-header--js.twd-sk-header--wm-front.twd-sk-header--shrunk .twd-sk-header__toggle { position: static; }
+  &.twd-sk-chrome--wordmark { --twd-sk-wm-s: $wordmark-symbol-front-sm; --twd-sk-wm-n: $wordmark-name-front-sm; --twd-sk-wm-l: $wordmark-line-front-sm; --twd-sk-wm-pad: 43px; }
   &.twd-sk-chrome--noline { --twd-sk-wm-l: 0px; --twd-sk-wm-pad: 39px; }
-  &.twd-sk-chrome--sticky.twd-sk-chrome--wordmark { height: calc(var(--twd-sk-wm-s) + var(--twd-sk-wm-n) * 1.2 + var(--twd-sk-wm-l) * 1.3 + var(--twd-sk-wm-pad) + var(--twd-sk-wm-strip)); }
+  &.twd-sk-chrome--sticky.twd-sk-chrome--wordmark { height: calc(77px + var(--twd-sk-wm-strip)); }
+  &.twd-sk-chrome--sticky.twd-sk-chrome--wordmark.twd-sk-chrome--wm-front { height: calc(var(--twd-sk-wm-s) + var(--twd-sk-wm-n) * 1.2 + var(--twd-sk-wm-l) * 1.3 + var(--twd-sk-wm-pad) + var(--twd-sk-wm-strip)); }
 }
 /* After the transitions above, so it wins the tie: the scroll size change does not animate for people who ask for less motion. */
 @media (prefers-reduced-motion: reduce) {
