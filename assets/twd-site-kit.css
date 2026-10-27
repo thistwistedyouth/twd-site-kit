@@ -376,6 +376,26 @@
   object-fit: cover;
   object-position: var(--twd-site-image-position);
 }
+/* Picture treatment (0.14.0): a pack may soften or desaturate every kit picture (image-filter) and lay a
+   gentle tint over the hero and image-and-text pictures (image-tint). Both default to nothing. */
+.twd-sk-page .twd-sk-hero__img.twd-sk-hero__img,
+.twd-sk-page .twd-sk-hero__bg.twd-sk-hero__bg,
+.twd-sk-page .twd-sk-pictures__img.twd-sk-pictures__img {
+  filter: var(--twd-site-image-filter);
+}
+.twd-sk-page .twd-sk-hero__media.twd-sk-hero__media,
+.twd-sk-page .twd-sk-image-text__media.twd-sk-image-text__media {
+  position: relative;
+}
+.twd-sk-page .twd-sk-hero__media.twd-sk-hero__media::after,
+.twd-sk-page .twd-sk-image-text__media.twd-sk-image-text__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-color: var(--twd-site-image-tint) !important;
+  border-radius: var(--twd-site-radius-image) !important;
+}
 .twd-sk-page .twd-sk-hero--compact.twd-sk-hero--compact .twd-sk-hero__title.twd-sk-hero__title {
   font-size: var(--twd-site-size-page-title) !important;
   text-align: var(--twd-site-heading-align) !important;
@@ -422,6 +442,40 @@
 }
 .twd-sk-page .twd-sk-hero--image.twd-sk-hero--image .twd-sk-accent.twd-sk-accent {
   color: var(--twd-site-color-accent-on-dark) !important;
+}
+/* Image hero options (0.14.0): a lighter overlay, a stronger one (a second layer of the same colour),
+   the words set to the left, and the parallax picture (the script moves the --twd-sk-parallax value;
+   with no script, on phones and for less motion the picture simply stays put). */
+.twd-sk-page .twd-sk-hero--overlay-light.twd-sk-hero--overlay-light .twd-sk-hero__overlay.twd-sk-hero__overlay {
+  opacity: 0.55;
+}
+.twd-sk-page .twd-sk-hero--overlay-strong.twd-sk-hero--overlay-strong .twd-sk-hero__overlay.twd-sk-hero__overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: var(--twd-site-color-overlay-mid) !important;
+}
+.twd-sk-page .twd-sk-hero--left.twd-sk-hero--left {
+  justify-content: flex-start;
+}
+.twd-sk-page .twd-sk-hero--left.twd-sk-hero--left .twd-sk-hero__content.twd-sk-hero__content {
+  max-width: var(--twd-site-container);
+  padding-left: var(--twd-site-gutter) !important;
+  padding-right: var(--twd-site-gutter) !important;
+}
+.twd-sk-page .twd-sk-hero--left.twd-sk-hero--left .twd-sk-eyebrow.twd-sk-eyebrow,
+.twd-sk-page .twd-sk-hero--left.twd-sk-hero--left .twd-sk-hero__title.twd-sk-hero__title,
+.twd-sk-page .twd-sk-hero--left.twd-sk-hero--left .twd-sk-hero__lead.twd-sk-hero__lead {
+  text-align: left !important;
+}
+.twd-sk-page .twd-sk-hero--left.twd-sk-hero--left .twd-sk-hero__actions.twd-sk-hero__actions {
+  justify-content: flex-start;
+}
+.twd-sk-page .twd-sk-hero--parallax.twd-sk-hero--parallax .twd-sk-hero__bg.twd-sk-hero__bg {
+  top: -12%;
+  bottom: -12%;
+  height: auto;
+  transform: translate3d(0, var(--twd-sk-parallax, 0px), 0);
 }
 /* ---- text ---- */
 .twd-sk-page .twd-sk-text__body.twd-sk-text__body > * + * {
@@ -554,6 +608,7 @@
   border-radius: var(--twd-site-radius-image) !important;
   object-fit: cover;
   object-position: var(--twd-site-image-position);
+  filter: var(--twd-site-image-filter);
 }
 .twd-sk-page .twd-sk-image-text__badge.twd-sk-image-text__badge {
   width: 100%;
@@ -808,6 +863,16 @@
 .twd-sk-page .twd-sk-faq__groups.twd-sk-faq__groups:not(:has(.twd-sk-faq__group.twd-sk-faq__group:target)) .twd-sk-faq__group--default.twd-sk-faq__group--default .twd-sk-faq__groupname.twd-sk-faq__groupname {
   color: var(--twd-site-color-primary) !important;
 }
+/* Two columns (0.14.0): a long list of questions side by side on a wide screen. */
+.twd-sk-page .twd-sk-faq--two.twd-sk-faq--two .twd-sk-faq__list.twd-sk-faq__list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+.twd-sk-page .twd-sk-faq--two.twd-sk-faq--two .twd-sk-faq__list.twd-sk-faq__list > * + * {
+  margin-top: 0 !important;
+}
 /* ---- services ---- */
 .twd-sk-page .twd-sk-services--cards.twd-sk-services--cards .twd-sk-title.twd-sk-title {
   margin-bottom: 0 !important;
@@ -847,6 +912,52 @@
   justify-content: center;
   gap: 12px;
   margin-top: 8px !important;
+}
+/* Links (0.14.0): a plain list of linked rows with an arrow. */
+.twd-sk-page .twd-sk-services--links.twd-sk-services--links .twd-sk-title.twd-sk-title {
+  margin-bottom: 8px !important;
+}
+.twd-sk-page .twd-sk-services__links.twd-sk-services__links {
+  list-style: none;
+  margin: 32px 0 0 !important;
+  padding: 0 !important;
+  border-top: 1px solid var(--twd-site-color-border) !important;
+}
+.twd-sk-page .twd-sk-services__row.twd-sk-services__row {
+  margin: 0 !important;
+  padding: 0 !important;
+  border-bottom: 1px solid var(--twd-site-color-border) !important;
+}
+.twd-sk-page .twd-sk-services__link.twd-sk-services__link {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 24px;
+  align-items: center;
+  padding: 20px 4px !important;
+  text-decoration: none !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-sk-services__link.twd-sk-services__link .twd-sk-services__name.twd-sk-services__name {
+  display: block;
+  grid-column: 1;
+  margin: 0 !important;
+}
+.twd-sk-page .twd-sk-services__link.twd-sk-services__link .twd-sk-services__desc.twd-sk-services__desc {
+  display: block;
+  grid-column: 1;
+  margin: 4px 0 0 !important;
+}
+.twd-sk-page .twd-sk-services__link.twd-sk-services__link::after {
+  content: "\2192";
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  font-family: var(--twd-site-font-heading) !important;
+  font-size: var(--twd-site-size-title) !important;
+  color: var(--twd-site-color-accent-text) !important;
+}
+.twd-sk-page .twd-sk-services__link.twd-sk-services__link:hover .twd-sk-services__name.twd-sk-services__name,
+.twd-sk-page .twd-sk-services__link.twd-sk-services__link:focus-visible .twd-sk-services__name.twd-sk-services__name {
+  color: var(--twd-site-color-primary) !important;
 }
 /* Glow (0.10.0): boxes whose outline colour moves slowly between the heading and accent colours.
    The outline is animated rather than the border, because visual properties carry !important and
@@ -903,6 +1014,50 @@
 }
 .twd-sk-page .twd-sk-steps__text.twd-sk-steps__text {
   color: var(--twd-site-color-body) !important;
+}
+/* Timeline (0.14.0): the steps one under the other, numbered discs on a line. */
+.twd-sk-page .twd-sk-steps--timeline.twd-sk-steps--timeline .twd-sk-steps__list.twd-sk-steps__list {
+  grid-template-columns: 1fr;
+  gap: 0;
+  max-width: var(--twd-site-container-narrow);
+}
+.twd-sk-page .twd-sk-steps--timeline.twd-sk-steps--timeline .twd-sk-steps__item.twd-sk-steps__item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  column-gap: 20px;
+  padding-bottom: 32px !important;
+}
+.twd-sk-page .twd-sk-steps--timeline.twd-sk-steps--timeline .twd-sk-steps__item.twd-sk-steps__item::before {
+  grid-row: 1 / span 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 !important;
+  border-radius: var(--twd-site-radius-pill) !important;
+  background-color: var(--twd-site-color-primary) !important;
+  font-size: var(--twd-site-size-title) !important;
+  color: var(--twd-site-color-on-primary) !important;
+}
+.twd-sk-page .twd-sk-steps--timeline.twd-sk-steps--timeline .twd-sk-steps__item.twd-sk-steps__item::after {
+  content: "";
+  position: absolute;
+  left: 27px;
+  top: 56px;
+  bottom: 0;
+  border-left: 2px solid var(--twd-site-color-border) !important;
+}
+.twd-sk-page .twd-sk-steps--timeline.twd-sk-steps--timeline .twd-sk-steps__item.twd-sk-steps__item:last-child::after {
+  display: none;
+}
+.twd-sk-page .twd-sk-steps--timeline.twd-sk-steps--timeline .twd-sk-steps__name.twd-sk-steps__name {
+  grid-column: 2;
+  margin-top: 14px !important;
+}
+.twd-sk-page .twd-sk-steps--timeline.twd-sk-steps--timeline .twd-sk-steps__text.twd-sk-steps__text {
+  grid-column: 2;
 }
 /* ---- call to action ---- */
 .twd-sk-page .twd-sk-cta.twd-sk-cta {
@@ -1317,6 +1472,24 @@
   height: 64px;
   object-fit: contain;
 }
+/* Grid (0.14.0): each logo in its own bordered box. */
+.twd-sk-page .twd-sk-logos--grid.twd-sk-logos--grid .twd-sk-logos__list.twd-sk-logos__list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--twd-site-gap-sm);
+}
+.twd-sk-page .twd-sk-logos--grid.twd-sk-logos--grid .twd-sk-logos__item.twd-sk-logos__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px !important;
+  background-color: var(--twd-site-color-surface) !important;
+  border: 1px solid var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-card) !important;
+}
+.twd-sk-page .twd-sk-logos--grid.twd-sk-logos--grid .twd-sk-logos__img.twd-sk-logos__img {
+  max-width: 100%;
+}
 /* ---- prices (0.8.0) ---- */
 .twd-sk-page .twd-sk-pricing__grid.twd-sk-pricing__grid {
   display: grid;
@@ -1402,6 +1575,21 @@
   font-size: var(--twd-site-size-small) !important;
   color: var(--twd-site-color-muted) !important;
 }
+/* Card (0.14.0): the hours in a card on a tinted band. */
+.twd-sk-page .twd-sk-hours--card.twd-sk-hours--card .twd-sk-title.twd-sk-title,
+.twd-sk-page .twd-sk-hours--card.twd-sk-hours--card .twd-sk-hours__note.twd-sk-hours__note {
+  text-align: center !important;
+}
+.twd-sk-page .twd-sk-hours--card.twd-sk-hours--card .twd-sk-hours__list.twd-sk-hours__list {
+  margin-top: 32px !important;
+  padding: var(--twd-site-card-pad-sm) var(--twd-site-card-pad) !important;
+  background-color: var(--twd-site-color-surface) !important;
+  border-radius: var(--twd-site-radius-card) !important;
+  box-shadow: var(--twd-site-shadow-card) !important;
+}
+.twd-sk-page .twd-sk-hours--card.twd-sk-hours--card .twd-sk-hours__row.twd-sk-hours__row:last-child {
+  border-bottom: 0 !important;
+}
 /* ---- areas covered (0.8.0) ---- */
 .twd-sk-page .twd-sk-areas__list.twd-sk-areas__list {
   display: flex;
@@ -1423,6 +1611,31 @@
   display: flex;
   justify-content: flex-start;
   margin-top: 28px !important;
+}
+/* Split (0.14.0): the introduction on the left, the areas and the map link on the right. */
+.twd-sk-page .twd-sk-areas--split.twd-sk-areas--split .twd-sk-inner.twd-sk-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px var(--twd-site-gap-lg);
+  align-items: start;
+}
+.twd-sk-page .twd-sk-areas--split.twd-sk-areas--split .twd-sk-title.twd-sk-title,
+.twd-sk-page .twd-sk-areas--split.twd-sk-areas--split .twd-sk-lead.twd-sk-lead {
+  grid-column: 1;
+  text-align: left !important;
+}
+.twd-sk-page .twd-sk-areas--split.twd-sk-areas--split .twd-sk-lead.twd-sk-lead {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+.twd-sk-page .twd-sk-areas--split.twd-sk-areas--split .twd-sk-areas__list.twd-sk-areas__list {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  margin-top: 0 !important;
+}
+.twd-sk-page .twd-sk-areas--split.twd-sk-areas--split .twd-sk-areas__actions.twd-sk-areas__actions {
+  grid-column: 2;
+  margin-top: 0 !important;
 }
 /* ---- enquiry form (0.8.1): rendered by the plugin from [twd_enquiry] ---- */
 .twd-sk-page .twd-sk-enquiry.twd-sk-enquiry {
@@ -1567,6 +1780,9 @@
   .twd-sk-page .twd-sk-services--glow.twd-sk-services--glow .twd-sk-services__item.twd-sk-services__item {
     animation: none;
   }
+  .twd-sk-page .twd-sk-hero--parallax.twd-sk-hero--parallax .twd-sk-hero__bg.twd-sk-hero__bg {
+    transform: none;
+  }
   .twd-sk-page .twd-sk-quote__track.twd-sk-quote__track {
     scroll-behavior: auto;
   }
@@ -1589,6 +1805,65 @@
   background-color: var(--twd-site-color-surface) !important;
   border-bottom: 1px solid var(--twd-site-color-border) !important;
   color: var(--twd-site-color-title) !important;
+}
+/* Transparent over the picture (0.14.0): printed only on a page that opens with a full-width picture hero.
+   The wrapper has no height, so the picture starts at the top and the header floats over its overlay in the
+   on-image colour. The --sticky rule below still wins on position when both are set. When the fixed header
+   shrinks after a scroll it turns back into the normal surface-coloured bar, so the menu stays readable. */
+.twd-sk-page.twd-sk-chrome--over.twd-sk-chrome--over,
+.twd-sk-page.twd-sk-chrome--sticky.twd-sk-chrome--sticky.twd-sk-chrome--over.twd-sk-chrome--over,
+.twd-sk-page.twd-sk-chrome--sticky.twd-sk-chrome--sticky.twd-sk-chrome--strip.twd-sk-chrome--strip.twd-sk-chrome--over.twd-sk-chrome--over,
+.twd-sk-page.twd-sk-chrome--sticky.twd-sk-chrome--sticky.twd-sk-chrome--front.twd-sk-chrome--front.twd-sk-chrome--over.twd-sk-chrome--over {
+  height: 0;
+}
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over {
+  position: absolute;
+  top: var(--wp-admin--admin-bar--height, 0px);
+  left: 0;
+  right: 0;
+  z-index: 900;
+  background-color: transparent !important;
+  border-bottom-color: transparent !important;
+  color: var(--twd-site-color-on-image) !important;
+}
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over .twd-sk-header__link.twd-sk-header__link,
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over .twd-sk-header__logo.twd-sk-header__logo,
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over .twd-sk-header__logo-text.twd-sk-header__logo-text {
+  color: var(--twd-site-color-on-image) !important;
+}
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over .twd-sk-header__link.twd-sk-header__link:hover,
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over .twd-sk-header__link.twd-sk-header__link:focus-visible {
+  color: var(--twd-site-color-accent-on-dark) !important;
+}
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over .twd-sk-header__toggle.twd-sk-header__toggle {
+  background-color: transparent !important;
+  border-color: var(--twd-site-color-on-image) !important;
+  color: var(--twd-site-color-on-image) !important;
+}
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over .twd-sk-header__bars.twd-sk-header__bars,
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over .twd-sk-header__bars.twd-sk-header__bars::before,
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over .twd-sk-header__bars.twd-sk-header__bars::after {
+  background-color: var(--twd-site-color-on-image) !important;
+}
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over.twd-sk-header--shrunk.twd-sk-header--shrunk {
+  background-color: var(--twd-site-color-surface) !important;
+  border-bottom-color: var(--twd-site-color-border) !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__link.twd-sk-header__link,
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__logo.twd-sk-header__logo,
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__logo-text.twd-sk-header__logo-text {
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__toggle.twd-sk-header__toggle {
+  background-color: var(--twd-site-color-surface) !important;
+  border-color: var(--twd-site-color-border) !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__bars.twd-sk-header__bars,
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__bars.twd-sk-header__bars::before,
+.twd-sk-page .twd-sk-header--over.twd-sk-header--over.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__bars.twd-sk-header__bars::after {
+  background-color: var(--twd-site-color-title) !important;
 }
 .twd-sk-page .twd-sk-header--sticky.twd-sk-header--sticky {
   position: fixed;
@@ -2096,6 +2371,25 @@
     max-width: 120px;
     height: 48px;
   }
+  .twd-sk-page .twd-sk-logos--grid.twd-sk-logos--grid .twd-sk-logos__list.twd-sk-logos__list {
+    grid-template-columns: 1fr 1fr;
+  }
+  .twd-sk-page .twd-sk-faq--two.twd-sk-faq--two .twd-sk-faq__list.twd-sk-faq__list {
+    grid-template-columns: 1fr;
+  }
+  .twd-sk-page .twd-sk-areas--split.twd-sk-areas--split .twd-sk-inner.twd-sk-inner {
+    grid-template-columns: 1fr;
+  }
+  .twd-sk-page .twd-sk-areas--split.twd-sk-areas--split .twd-sk-areas__list.twd-sk-areas__list,
+  .twd-sk-page .twd-sk-areas--split.twd-sk-areas--split .twd-sk-areas__actions.twd-sk-areas__actions {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .twd-sk-page .twd-sk-hero--parallax.twd-sk-hero--parallax .twd-sk-hero__bg.twd-sk-hero__bg {
+    top: 0;
+    bottom: 0;
+    transform: none;
+  }
   .twd-sk-page .twd-sk-hero--compact.twd-sk-hero--compact {
     padding-bottom: var(--twd-site-gap-sm) !important;
   }
@@ -2196,6 +2490,16 @@
   }
   .twd-sk-page .twd-sk-header--js.twd-sk-header--js.twd-sk-header--open.twd-sk-header--open .twd-sk-header__panel.twd-sk-header__panel {
     display: flex;
+  }
+  /* On a transparent header the open phone menu gets a solid panel, so its links are readable over any picture. */
+  .twd-sk-page .twd-sk-header--over.twd-sk-header--over.twd-sk-header--js.twd-sk-header--js .twd-sk-header__panel.twd-sk-header__panel {
+    padding: 14px !important;
+    background-color: var(--twd-site-color-surface) !important;
+    border: 1px solid var(--twd-site-color-border) !important;
+    border-radius: var(--twd-site-radius-card) !important;
+  }
+  .twd-sk-page .twd-sk-header--over.twd-sk-header--over.twd-sk-header--js.twd-sk-header--js .twd-sk-header__panel.twd-sk-header__panel .twd-sk-header__link.twd-sk-header__link {
+    color: var(--twd-site-color-title) !important;
   }
   .twd-sk-page .twd-sk-header--js.twd-sk-header--js.twd-sk-header--sticky.twd-sk-header--sticky .twd-sk-header__panel.twd-sk-header__panel {
     position: absolute;

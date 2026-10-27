@@ -165,6 +165,8 @@ class TWD_SK_Chrome {
 			'twd-sk-header__logo', 'twd-sk-header__logo-img', 'twd-sk-header__logo-text', 'twd-sk-header__toggle', 'twd-sk-header__bars',
 			// 0.14.0: the front page's larger stacked logo, and the small mark used elsewhere.
 			'twd-sk-header--front', 'twd-sk-header__logo-mark', 'twd-sk-chrome--front',
+			// 0.14.0: the header laid transparent over a page's opening full-width picture.
+			'twd-sk-header--over', 'twd-sk-chrome--over',
 			'twd-sk-header__panel', 'twd-sk-header__nav', 'twd-sk-header__menu', 'twd-sk-header__item', 'twd-sk-header__item--parent',
 			'twd-sk-header__link', 'twd-sk-header__sub', 'twd-sk-header__sublink', 'twd-sk-header__cta',
 			'twd-sk-footer', 'twd-sk-footer--cols-1', 'twd-sk-footer--cols-2', 'twd-sk-footer--cols-3',
@@ -189,6 +191,7 @@ class TWD_SK_Chrome {
 			'sticky'         => false,
 			'shrink'         => false,   // 0.13.0: a fixed header gets smaller after a small scroll
 			'front_logo'     => false,   // 0.14.0: the full logo, larger and centred above the menu, on the front page only
+			'overlay'        => false,   // 0.14.0: transparent over the picture, on a page that opens with a full-width picture hero
 			'show_button'    => true,
 			'show_strip'     => false,
 			'footer_columns' => 3,
@@ -235,6 +238,7 @@ class TWD_SK_Chrome {
 				case 'sticky':
 				case 'shrink':
 				case 'front_logo':
+				case 'overlay':
 				case 'show_button':
 				case 'show_strip':
 					if ( is_bool( $value ) || 0 === $value || 1 === $value || '0' === $value || '1' === $value ) {
@@ -288,6 +292,7 @@ class TWD_SK_Chrome {
 			'sticky'      => $sticky,
 			'shrink'      => $sticky && (bool) $s['shrink'],
 			'front_logo'  => (bool) $s['front_logo'],
+			'overlay'     => (bool) $s['overlay'],
 			'button'      => (bool) $s['show_button'],
 			'strip'       => (bool) $s['show_strip'],
 			'columns'     => (int) $s['footer_columns'],
@@ -399,6 +404,27 @@ class TWD_SK_Chrome {
 		}
 	}
 
+	/**
+	 * True when the page being shown opens with a full-width picture hero (0.14.0), the only place the
+	 * transparent header is readable: white words need the picture's overlay behind them. On any other
+	 * page the normal header prints, so the option can never leave a menu unreadable.
+	 */
+	public static function opens_with_picture() {
+		try {
+			$id = function_exists( 'get_queried_object_id' ) ? (int) get_queried_object_id() : 0;
+			if ( $id <= 0 && function_exists( 'get_the_ID' ) ) {
+				$id = (int) get_the_ID();
+			}
+			if ( $id <= 0 || ! class_exists( 'TWD_SK_Page' ) ) {
+				return false;
+			}
+			$html = ltrim( TWD_SK_Page::current_html( $id ) );
+			return 1 === preg_match( '/^<section\b[^>]*class="[^"]*\btwd-sk-hero--image\b/', $html );
+		} catch ( \Throwable $e ) {
+			return false;
+		}
+	}
+
 	/** A phone number as a link when it has digits, else as plain text (a starter holds a placeholder). */
 	private static function phone_html( $phone, $class ) {
 		$digits = preg_replace( '/[^0-9+]/', '', (string) $phone );
@@ -444,8 +470,9 @@ class TWD_SK_Chrome {
 		$eff   = self::effective();
 		$strip = $eff['strip'] && ( '' !== $profile['phone'] || '' !== $profile['email'] );
 		$front = $eff['front_logo'] && $profile['logo_id'] && self::is_front();
-		$wrap  = 'twd-sk-page twd-sk-chrome' . ( $eff['sticky'] ? ' twd-sk-chrome--sticky' : '' ) . ( $eff['sticky'] && $strip ? ' twd-sk-chrome--strip' : '' ) . ( $eff['sticky'] && $front ? ' twd-sk-chrome--front' : '' );
-		$cls   = 'twd-sk-header twd-sk-header--' . $eff['header'] . ( $eff['sticky'] ? ' twd-sk-header--sticky' : '' ) . ( $eff['shrink'] ? ' twd-sk-header--shrink' : '' ) . ( $front ? ' twd-sk-header--front' : '' );
+		$over  = $eff['overlay'] && self::opens_with_picture();
+		$wrap  = 'twd-sk-page twd-sk-chrome' . ( $eff['sticky'] ? ' twd-sk-chrome--sticky' : '' ) . ( $eff['sticky'] && $strip ? ' twd-sk-chrome--strip' : '' ) . ( $eff['sticky'] && $front ? ' twd-sk-chrome--front' : '' ) . ( $over ? ' twd-sk-chrome--over' : '' );
+		$cls   = 'twd-sk-header twd-sk-header--' . $eff['header'] . ( $eff['sticky'] ? ' twd-sk-header--sticky' : '' ) . ( $eff['shrink'] ? ' twd-sk-header--shrink' : '' ) . ( $front ? ' twd-sk-header--front' : '' ) . ( $over ? ' twd-sk-header--over' : '' );
 
 		$out  = '<div class="' . $wrap . '"><header class="' . $cls . '">' . ( $skip ? self::skip_link() : '' );
 		if ( $strip ) {

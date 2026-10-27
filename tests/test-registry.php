@@ -173,7 +173,7 @@ twd_sk_test( 'registry: style_guide_data() is plain data keyed on id, with varia
 	twd_sk_eq( TWD_SK_Registry::ids(), array_keys( $g['components'] ) );
 	twd_sk_eq( array( 'twd_articles' ), $g['components']['resources']['shortcodes'] );
 	twd_sk_true( is_string( $g['components']['hero']['skeleton'] ) );
-	twd_sk_eq( array( 'twd-sk-hero--split', 'twd-sk-hero--image', 'twd-sk-hero--compact' ), array_keys( $g['components']['hero']['variants'] ) );
+	twd_sk_eq( array( 'twd-sk-hero--split', 'twd-sk-hero--image', 'twd-sk-hero--compact', 'twd-sk-hero--parallax' ), array_keys( $g['components']['hero']['variants'] ) );
 	twd_sk_eq( TWD_SK_Registry::shared_classes(), $g['shared'] );
 } );
 

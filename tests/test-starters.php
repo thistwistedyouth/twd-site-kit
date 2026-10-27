@@ -52,7 +52,7 @@ twd_sk_test( 'gallery: also shows the plain image row, which is not a named vari
 twd_sk_test( 'gallery: has exactly one h1, in the first hero, and later hero titles are h2', function () {
 	$html = twd_sk_gallery_file();
 	twd_sk_eq( 1, substr_count( $html, '<h1' ) );
-	twd_sk_eq( 3, substr_count( $html, 'class="twd-sk-hero__title"' ), 'three hero titles in all' );
+	twd_sk_eq( 4, substr_count( $html, 'class="twd-sk-hero__title"' ), 'four hero titles in all (split, image, compact, parallax)' );
 	twd_sk_true( strpos( $html, '<h1' ) < strpos( $html, 'twd-sk-hero--image' ), 'the h1 is in the first hero' );
 	twd_sk_eq( 1, substr_count( TWD_SK_Sanitizer::clean( $html ), '<h1' ), 'and the sanitiser keeps it' );
 } );

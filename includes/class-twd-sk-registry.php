@@ -78,9 +78,11 @@ class TWD_SK_Registry {
 	// -- Skeleton builders (one per component, one branch per variant) ------
 
 	private static function hero( $variant ) {
-		if ( 'image' === $variant ) {
+		if ( 'image' === $variant || 'parallax' === $variant ) {
+			// Parallax (0.14.0): the same full-width picture, moving a little slower than the page when a
+			// small script is loaded; still without it, on phones, and for visitors who ask for less motion.
 			return self::lines( array(
-				'<section class="twd-sk-hero twd-sk-hero--image">',
+				'<section class="twd-sk-hero twd-sk-hero--image' . ( 'parallax' === $variant ? ' twd-sk-hero--parallax' : '' ) . '">',
 				'<img class="twd-sk-hero__bg" src="/wp-content/uploads/your-image.jpg" alt="">',
 				'<div class="twd-sk-hero__overlay"></div>',
 				'<div class="twd-sk-hero__content">',
@@ -333,8 +335,8 @@ class TWD_SK_Registry {
 			) );
 		}
 		return self::lines( array(
-			'<section class="twd-sk-faq twd-sk-tone-surface">',
-			'<div class="twd-sk-inner twd-sk-inner--narrow">',
+			'<section class="twd-sk-faq' . ( 'two' === $variant ? ' twd-sk-faq--two' : '' ) . ' twd-sk-tone-surface">',
+			'<div class="twd-sk-inner' . ( 'two' === $variant ? '' : ' twd-sk-inner--narrow' ) . '">',
 			'<h2 class="twd-sk-title">Frequently asked questions</h2>',
 			'<div class="twd-sk-faq__list">',
 			'<details class="twd-sk-faq__item">',
@@ -375,6 +377,31 @@ class TWD_SK_Registry {
 				$items,
 				array(
 					'</div>',
+					'</div>',
+					'</section>',
+				)
+			) );
+		}
+		if ( 'links' === $variant ) {
+			// Links (0.14.0): a plain list of linked rows, one per page, for a site with many services.
+			$rows = array();
+			for ( $i = 1; $i <= 4; $i++ ) {
+				$rows[] = '<li class="twd-sk-services__row"><a class="twd-sk-services__link" href="/service-' . $i . '">';
+				$rows[] = '<span class="twd-sk-services__name">Service name here</span>';
+				$rows[] = '<span class="twd-sk-services__desc">Short description here.</span>';
+				$rows[] = '</a></li>';
+			}
+			return self::lines( array_merge(
+				array(
+					'<section class="twd-sk-services twd-sk-services--links twd-sk-tone-base">',
+					'<div class="twd-sk-inner twd-sk-inner--narrow">',
+					'<span class="twd-sk-eyebrow">Short label here</span>',
+					'<h2 class="twd-sk-title">What I offer <span class="twd-sk-accent">to you</span></h2>',
+					'<ul class="twd-sk-services__links">',
+				),
+				$rows,
+				array(
+					'</ul>',
 					'</div>',
 					'</section>',
 				)
@@ -425,7 +452,7 @@ class TWD_SK_Registry {
 		) );
 	}
 
-	private static function steps() {
+	private static function steps( $variant = '' ) {
 		$items = array();
 		foreach ( array( 'First', 'Second', 'Third' ) as $n ) {
 			$items[] = '<li class="twd-sk-steps__item">';
@@ -435,7 +462,7 @@ class TWD_SK_Registry {
 		}
 		return self::lines( array_merge(
 			array(
-				'<section class="twd-sk-steps twd-sk-tone-surface">',
+				'<section class="twd-sk-steps' . ( 'timeline' === $variant ? ' twd-sk-steps--timeline' : '' ) . ' twd-sk-tone-surface">',
 				'<div class="twd-sk-inner">',
 				'<span class="twd-sk-eyebrow">Getting started</span>',
 				'<h2 class="twd-sk-title">How it <span class="twd-sk-accent">works</span></h2>',
@@ -625,14 +652,14 @@ class TWD_SK_Registry {
 	}
 
 	/** A strip of small logos: accreditations, memberships, partners (0.8.0). */
-	private static function logos() {
+	private static function logos( $variant = '' ) {
 		$items = array();
 		for ( $i = 0; $i < 4; $i++ ) {
 			$items[] = '<li class="twd-sk-logos__item"><img class="twd-sk-logos__img" src="/wp-content/uploads/your-logo.png" alt="Describe the logo"></li>';
 		}
 		return self::lines( array_merge(
 			array(
-				'<section class="twd-sk-logos twd-sk-tone-surface">',
+				'<section class="twd-sk-logos' . ( 'grid' === $variant ? ' twd-sk-logos--grid' : '' ) . ' twd-sk-tone-surface">',
 				'<div class="twd-sk-inner">',
 				'<span class="twd-sk-eyebrow">Short label here</span>',
 				'<ul class="twd-sk-logos__list">',
@@ -705,14 +732,14 @@ class TWD_SK_Registry {
 	}
 
 	/** Opening hours as day and time rows (0.8.0). */
-	private static function hours() {
+	private static function hours( $variant = '' ) {
 		$rows = array();
 		for ( $i = 0; $i < 3; $i++ ) {
 			$rows[] = '<div class="twd-sk-hours__row"><dt class="twd-sk-hours__day">Day here</dt><dd class="twd-sk-hours__time">Times here</dd></div>';
 		}
 		return self::lines( array_merge(
 			array(
-				'<section class="twd-sk-hours twd-sk-tone-base">',
+				'<section class="twd-sk-hours' . ( 'card' === $variant ? ' twd-sk-hours--card twd-sk-tone-tint' : ' twd-sk-tone-base' ) . '">',
 				'<div class="twd-sk-inner twd-sk-inner--narrow">',
 				'<h2 class="twd-sk-title">Heading here</h2>',
 				'<dl class="twd-sk-hours__list">',
@@ -728,14 +755,14 @@ class TWD_SK_Registry {
 	}
 
 	/** Areas covered, with a link to a map (no embedded map: no iframes) (0.8.0). */
-	private static function areas() {
+	private static function areas( $variant = '' ) {
 		$items = array();
 		for ( $i = 0; $i < 4; $i++ ) {
 			$items[] = '<li class="twd-sk-areas__item">Area name here</li>';
 		}
 		return self::lines( array_merge(
 			array(
-				'<section class="twd-sk-areas twd-sk-tone-tint">',
+				'<section class="twd-sk-areas' . ( 'split' === $variant ? ' twd-sk-areas--split' : '' ) . ' twd-sk-tone-tint">',
 				'<div class="twd-sk-inner">',
 				'<h2 class="twd-sk-title">Heading here</h2>',
 				'<p class="twd-sk-lead">Short introduction here.</p>',
@@ -821,7 +848,7 @@ class TWD_SK_Registry {
 			'hero'       => array(
 				'id'          => 'hero',
 				'label'       => 'Hero',
-				'description' => 'The top of the page. The only place the page heading (h1) may appear, and only once.',
+				'description' => 'The top of the page. The only place the page heading (h1) may appear, and only once. On the image layout the extra classes twd-sk-hero--overlay-light, twd-sk-hero--overlay-strong and twd-sk-hero--left change the overlay strength and set the words to the left.',
 				'skeleton'    => self::hero( 'split' ),
 				'variants'    => array(
 					'twd-sk-hero--split'   => array(
@@ -836,12 +863,22 @@ class TWD_SK_Registry {
 						'label'    => 'Compact: a page title band, no image',
 						'skeleton' => self::hero( 'compact' ),
 					),
+					'twd-sk-hero--parallax' => array(
+						'label'    => 'Parallax: the full-width picture moves a little slower than the page (off on phones and for visitors who ask for less motion)',
+						'skeleton' => self::hero( 'parallax' ),
+					),
 				),
 				'classes'     => array(
 					'twd-sk-hero',
 					'twd-sk-hero--split',
 					'twd-sk-hero--image',
 					'twd-sk-hero--compact',
+					// Options on the image hero (0.14.0), added beside twd-sk-hero--image: a lighter or a
+					// stronger overlay over the picture, and the words set to the left instead of centred.
+					'twd-sk-hero--parallax',
+					'twd-sk-hero--overlay-light',
+					'twd-sk-hero--overlay-strong',
+					'twd-sk-hero--left',
 					'twd-sk-hero__grid',
 					'twd-sk-hero__text',
 					'twd-sk-hero__title',
@@ -987,9 +1024,15 @@ class TWD_SK_Registry {
 				'label'       => 'Logos strip',
 				'description' => 'A row of small logos, for example accreditations, memberships or partners. Use only logos you are entitled to show, each with alt text naming it.',
 				'skeleton'    => self::logos(),
-				'variants'    => array(),
+				'variants'    => array(
+					'twd-sk-logos--grid' => array(
+						'label'    => 'Grid: each logo in its own bordered box',
+						'skeleton' => self::logos( 'grid' ),
+					),
+				),
 				'classes'     => array(
 					'twd-sk-logos',
+					'twd-sk-logos--grid',
 					'twd-sk-logos__list',
 					'twd-sk-logos__item',
 					'twd-sk-logos__img',
@@ -1007,9 +1050,14 @@ class TWD_SK_Registry {
 						'label'    => 'Groups: questions in named groups, one group shown at a time on a wide screen, each with its own link',
 						'skeleton' => self::faq( 'groups' ),
 					),
+					'twd-sk-faq--two' => array(
+						'label'    => 'Two columns: the questions in two columns on a wide screen, for a long list',
+						'skeleton' => self::faq( 'two' ),
+					),
 				),
 				'classes'     => array(
 					'twd-sk-faq',
+					'twd-sk-faq--two',
 					'twd-sk-faq__list',
 					'twd-sk-faq__item',
 					'twd-sk-faq__question',
@@ -1030,7 +1078,7 @@ class TWD_SK_Registry {
 			'services'   => array(
 				'id'          => 'services',
 				'label'       => 'Services list',
-				'description' => 'What is offered, as linked cards, boxes with a softly moving border, or a row of short topic pills.',
+				'description' => 'What is offered, as linked cards, boxes with a softly moving border, a row of short topic pills, or a plain list of linked rows.',
 				'skeleton'    => self::services( 'cards' ),
 				'variants'    => array(
 					'twd-sk-services--cards' => array(
@@ -1045,12 +1093,20 @@ class TWD_SK_Registry {
 						'label'    => 'Glow: boxes with a softly moving border in the site\'s colours',
 						'skeleton' => self::services( 'glow' ),
 					),
+					'twd-sk-services--links' => array(
+						'label'    => 'Links: a plain list of linked rows, one per page, for many services',
+						'skeleton' => self::services( 'links' ),
+					),
 				),
 				'classes'     => array(
 					'twd-sk-services',
 					'twd-sk-services--cards',
 					'twd-sk-services--pills',
 					'twd-sk-services--glow',
+					'twd-sk-services--links',
+					'twd-sk-services__links',
+					'twd-sk-services__row',
+					'twd-sk-services__link',
 					'twd-sk-services__list',
 					'twd-sk-services__item',
 					'twd-sk-services__name',
@@ -1092,9 +1148,15 @@ class TWD_SK_Registry {
 				'label'       => 'Steps',
 				'description' => 'A short numbered list of how to get started. The numbers are added automatically.',
 				'skeleton'    => self::steps(),
-				'variants'    => array(),
+				'variants'    => array(
+					'twd-sk-steps--timeline' => array(
+						'label'    => 'Timeline: the steps down the page on a line, one under the other',
+						'skeleton' => self::steps( 'timeline' ),
+					),
+				),
 				'classes'     => array(
 					'twd-sk-steps',
+					'twd-sk-steps--timeline',
 					'twd-sk-steps__list',
 					'twd-sk-steps__item',
 					'twd-sk-steps__name',
@@ -1167,9 +1229,15 @@ class TWD_SK_Registry {
 				'label'       => 'Opening hours',
 				'description' => 'Days and times as rows, with a short note underneath, for example about bank holidays.',
 				'skeleton'    => self::hours(),
-				'variants'    => array(),
+				'variants'    => array(
+					'twd-sk-hours--card' => array(
+						'label'    => 'Card: the hours in a card on a tinted band',
+						'skeleton' => self::hours( 'card' ),
+					),
+				),
 				'classes'     => array(
 					'twd-sk-hours',
+					'twd-sk-hours--card',
 					'twd-sk-hours__list',
 					'twd-sk-hours__row',
 					'twd-sk-hours__day',
@@ -1184,9 +1252,15 @@ class TWD_SK_Registry {
 				'label'       => 'Areas covered',
 				'description' => 'The towns or areas served as a list, with a button that opens a map in a new page. No map is embedded in the page.',
 				'skeleton'    => self::areas(),
-				'variants'    => array(),
+				'variants'    => array(
+					'twd-sk-areas--split' => array(
+						'label'    => 'Split: the introduction on the left, the areas and the map link on the right',
+						'skeleton' => self::areas( 'split' ),
+					),
+				),
 				'classes'     => array(
 					'twd-sk-areas',
+					'twd-sk-areas--split',
 					'twd-sk-areas__list',
 					'twd-sk-areas__item',
 					'twd-sk-areas__actions',

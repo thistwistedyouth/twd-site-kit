@@ -82,6 +82,8 @@
   "logo-height": "44px",
   "logo-height-sm": "36px",
   "logo-height-front": "140px",
-  "footer-logo-height": "72px"
+  "footer-logo-height": "72px",
+  "image-filter": "none",
+  "image-tint": "transparent"
  }
 }

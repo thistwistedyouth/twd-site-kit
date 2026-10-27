@@ -125,6 +125,11 @@
   width: 100%; height: auto; border-radius: $radius-image; box-shadow: $shadow-image;
   object-fit: cover; object-position: $image-position;
 }
+/* Picture treatment (0.14.0): a pack may soften or desaturate every kit picture (image-filter) and lay a
+   gentle tint over the hero and image-and-text pictures (image-tint). Both default to nothing. */
+.twd-sk-hero__img, .twd-sk-hero__bg, .twd-sk-pictures__img { filter: $image-filter; }
+.twd-sk-hero__media, .twd-sk-image-text__media { position: relative; }
+.twd-sk-hero__media::after, .twd-sk-image-text__media::after { content: ""; position: absolute; inset: 0; pointer-events: none; background-color: $image-tint; border-radius: $radius-image; }
 .twd-sk-hero--compact .twd-sk-hero__title { font-size: $size-page-title; text-align: $heading-align; margin-bottom: 8px; }
 .twd-sk-hero--compact .twd-sk-hero__lead { text-align: $heading-align; margin-bottom: 0; }
 .twd-sk-hero--image {
@@ -141,6 +146,16 @@
 .twd-sk-hero__content { position: relative; z-index: 2; width: 100%; max-width: $container-narrow; padding: 24px; text-align: center; color: $color-on-image; }
 .twd-sk-hero--image .twd-sk-eyebrow, .twd-sk-hero--image .twd-sk-hero__title, .twd-sk-hero--image .twd-sk-hero__lead { text-align: center; color: $color-on-image; }
 .twd-sk-hero--image .twd-sk-accent { color: $color-accent-on-dark; }
+/* Image hero options (0.14.0): a lighter overlay, a stronger one (a second layer of the same colour),
+   the words set to the left, and the parallax picture (the script moves the --twd-sk-parallax value;
+   with no script, on phones and for less motion the picture simply stays put). */
+.twd-sk-hero--overlay-light .twd-sk-hero__overlay { opacity: 0.55; }
+.twd-sk-hero--overlay-strong .twd-sk-hero__overlay::after { content: ""; position: absolute; inset: 0; background-color: $color-overlay-mid; }
+.twd-sk-hero--left { justify-content: flex-start; }
+.twd-sk-hero--left .twd-sk-hero__content { max-width: $container; padding-left: $gutter; padding-right: $gutter; }
+.twd-sk-hero--left .twd-sk-eyebrow, .twd-sk-hero--left .twd-sk-hero__title, .twd-sk-hero--left .twd-sk-hero__lead { text-align: left; }
+.twd-sk-hero--left .twd-sk-hero__actions { justify-content: flex-start; }
+.twd-sk-hero--parallax .twd-sk-hero__bg { top: -12%; bottom: -12%; height: auto; transform: translate3d(0, var(--twd-sk-parallax, 0px), 0); }
 
 /* ---- text ---- */
 .twd-sk-text__body > * + * { margin-top: 1em; }
@@ -188,7 +203,7 @@
 .twd-sk-image-text--badge .twd-sk-image-text__media { grid-template-rows: minmax(0, 1fr) auto; }
 .twd-sk-image-text__img {
   width: 100%; height: 100%; min-height: 260px; border-radius: $radius-image;
-  object-fit: cover; object-position: $image-position;
+  object-fit: cover; object-position: $image-position; filter: $image-filter;
 }
 .twd-sk-image-text__badge { width: 100%; max-width: 220px; height: auto; }
 .twd-sk-image-text__body { align-self: center; }
@@ -276,6 +291,9 @@
   font-style: $title-style; line-height: $line-heading; color: $color-title;
 }
 .twd-sk-faq__group:target .twd-sk-faq__groupname, .twd-sk-faq__groups:not(:has(.twd-sk-faq__group:target)) .twd-sk-faq__group--default .twd-sk-faq__groupname { color: $color-primary; }
+/* Two columns (0.14.0): a long list of questions side by side on a wide screen. */
+.twd-sk-faq--two .twd-sk-faq__list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+.twd-sk-faq--two .twd-sk-faq__list > * + * { margin-top: 0; }
 
 /* ---- services ---- */
 .twd-sk-services--cards .twd-sk-title { margin-bottom: 0; }
@@ -289,6 +307,15 @@
 }
 .twd-sk-services__desc { color: $color-body; }
 .twd-sk-services__pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 8px; }
+/* Links (0.14.0): a plain list of linked rows with an arrow. */
+.twd-sk-services--links .twd-sk-title { margin-bottom: 8px; }
+.twd-sk-services__links { list-style: none; margin: 32px 0 0; padding: 0; border-top: 1px solid $color-border; }
+.twd-sk-services__row { margin: 0; padding: 0; border-bottom: 1px solid $color-border; }
+.twd-sk-services__link { display: grid; grid-template-columns: 1fr auto; column-gap: 24px; align-items: center; padding: 20px 4px; text-decoration: none; color: $color-title; }
+.twd-sk-services__link .twd-sk-services__name { display: block; grid-column: 1; margin: 0; }
+.twd-sk-services__link .twd-sk-services__desc { display: block; grid-column: 1; margin: 4px 0 0; }
+.twd-sk-services__link::after { content: "\2192"; grid-column: 2; grid-row: 1 / span 2; font-family: $font-heading; font-size: $size-title; color: $color-accent-text; }
+.twd-sk-services__link:hover .twd-sk-services__name, .twd-sk-services__link:focus-visible .twd-sk-services__name { color: $color-primary; }
 /* Glow (0.10.0): boxes whose outline colour moves slowly between the heading and accent colours.
    The outline is animated rather than the border, because visual properties carry !important and
    an animation cannot change an !important value. Still for visitors who ask for less motion. */
@@ -317,6 +344,17 @@
   font-weight: $title-weight; font-style: $title-style; line-height: $line-heading; color: $color-title;
 }
 .twd-sk-steps__text { color: $color-body; }
+/* Timeline (0.14.0): the steps one under the other, numbered discs on a line. */
+.twd-sk-steps--timeline .twd-sk-steps__list { grid-template-columns: 1fr; gap: 0; max-width: $container-narrow; }
+.twd-sk-steps--timeline .twd-sk-steps__item { position: relative; display: grid; grid-template-columns: 56px 1fr; column-gap: 20px; padding-bottom: 32px; }
+.twd-sk-steps--timeline .twd-sk-steps__item::before {
+  grid-row: 1 / span 2; display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; margin: 0;
+  border-radius: $radius-pill; background-color: $color-primary; font-size: $size-title; color: $color-on-primary;
+}
+.twd-sk-steps--timeline .twd-sk-steps__item::after { content: ""; position: absolute; left: 27px; top: 56px; bottom: 0; border-left: 2px solid $color-border; }
+.twd-sk-steps--timeline .twd-sk-steps__item:last-child::after { display: none; }
+.twd-sk-steps--timeline .twd-sk-steps__name { grid-column: 2; margin-top: 14px; }
+.twd-sk-steps--timeline .twd-sk-steps__text { grid-column: 2; }
 
 /* ---- call to action ---- */
 .twd-sk-cta { position: relative; }
@@ -464,6 +502,10 @@
 .twd-sk-logos__list { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: $gap-md; margin-top: 16px; }
 .twd-sk-logos__item { display: block; }
 .twd-sk-logos__img { width: auto; max-width: 160px; height: 64px; object-fit: contain; }
+/* Grid (0.14.0): each logo in its own bordered box. */
+.twd-sk-logos--grid .twd-sk-logos__list { display: grid; grid-template-columns: repeat(4, 1fr); gap: $gap-sm; }
+.twd-sk-logos--grid .twd-sk-logos__item { display: flex; align-items: center; justify-content: center; padding: 20px; background-color: $color-surface; border: 1px solid $color-border; border-radius: $radius-card; }
+.twd-sk-logos--grid .twd-sk-logos__img { max-width: 100%; }
 
 /* ---- prices (0.8.0) ---- */
 .twd-sk-pricing__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: $gap-sm; margin-top: 32px; align-items: stretch; }
@@ -491,6 +533,10 @@
 .twd-sk-hours__day { margin: 0; font-weight: 600; color: $color-title; }
 .twd-sk-hours__time { margin: 0; color: $color-body; }
 .twd-sk-hours__note { margin-top: 20px; font-size: $size-small; color: $color-muted; }
+/* Card (0.14.0): the hours in a card on a tinted band. */
+.twd-sk-hours--card .twd-sk-title, .twd-sk-hours--card .twd-sk-hours__note { text-align: center; }
+.twd-sk-hours--card .twd-sk-hours__list { margin-top: 32px; padding: $card-pad-sm $card-pad; background-color: $color-surface; border-radius: $radius-card; box-shadow: $shadow-card; }
+.twd-sk-hours--card .twd-sk-hours__row:last-child { border-bottom: 0; }
 
 /* ---- areas covered (0.8.0) ---- */
 .twd-sk-areas__list { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 12px; margin-top: 8px; }
@@ -499,6 +545,12 @@
   border-radius: $radius-pill; font-size: $size-small; font-weight: $btn-weight; color: $color-title;
 }
 .twd-sk-areas__actions { display: flex; justify-content: flex-start; margin-top: 28px; }
+/* Split (0.14.0): the introduction on the left, the areas and the map link on the right. */
+.twd-sk-areas--split .twd-sk-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 16px $gap-lg; align-items: start; }
+.twd-sk-areas--split .twd-sk-title, .twd-sk-areas--split .twd-sk-lead { grid-column: 1; text-align: left; }
+.twd-sk-areas--split .twd-sk-lead { margin-left: 0; margin-right: 0; }
+.twd-sk-areas--split .twd-sk-areas__list { grid-column: 2; grid-row: 1 / span 2; margin-top: 0; }
+.twd-sk-areas--split .twd-sk-areas__actions { grid-column: 2; margin-top: 0; }
 
 /* ---- enquiry form (0.8.1): rendered by the plugin from [twd_enquiry] ---- */
 .twd-sk-enquiry { padding-top: $section-y; padding-bottom: $section-y; }
@@ -548,6 +600,7 @@
 @media (prefers-reduced-motion: reduce) {
   .twd-sk-header--shrink .twd-sk-header__inner, .twd-sk-header--shrink .twd-sk-header__logo-img, .twd-sk-header--shrink .twd-sk-header__logo-mark { transition: none; }
   .twd-sk-services--glow .twd-sk-services__item { animation: none; }
+  .twd-sk-hero--parallax .twd-sk-hero__bg { transform: none; }
   .twd-sk-quote__track { scroll-behavior: auto; }
 }
 
@@ -558,6 +611,20 @@
 &.twd-sk-chrome--sticky { height: 76px; }
 &.twd-sk-chrome--sticky.twd-sk-chrome--strip { height: 112px; }
 .twd-sk-header { position: relative; background-color: $color-surface; border-bottom: 1px solid $color-border; color: $color-title; }
+/* Transparent over the picture (0.14.0): printed only on a page that opens with a full-width picture hero.
+   The wrapper has no height, so the picture starts at the top and the header floats over its overlay in the
+   on-image colour. The --sticky rule below still wins on position when both are set. When the fixed header
+   shrinks after a scroll it turns back into the normal surface-coloured bar, so the menu stays readable. */
+&.twd-sk-chrome--over, &.twd-sk-chrome--sticky.twd-sk-chrome--over, &.twd-sk-chrome--sticky.twd-sk-chrome--strip.twd-sk-chrome--over, &.twd-sk-chrome--sticky.twd-sk-chrome--front.twd-sk-chrome--over { height: 0; }
+.twd-sk-header--over { position: absolute; top: var(--wp-admin--admin-bar--height, 0px); left: 0; right: 0; z-index: 900; background-color: transparent; border-bottom-color: transparent; color: $color-on-image; }
+.twd-sk-header--over .twd-sk-header__link, .twd-sk-header--over .twd-sk-header__logo, .twd-sk-header--over .twd-sk-header__logo-text { color: $color-on-image; }
+.twd-sk-header--over .twd-sk-header__link:hover, .twd-sk-header--over .twd-sk-header__link:focus-visible { color: $color-accent-on-dark; }
+.twd-sk-header--over .twd-sk-header__toggle { background-color: transparent; border-color: $color-on-image; color: $color-on-image; }
+.twd-sk-header--over .twd-sk-header__bars, .twd-sk-header--over .twd-sk-header__bars::before, .twd-sk-header--over .twd-sk-header__bars::after { background-color: $color-on-image; }
+.twd-sk-header--over.twd-sk-header--shrunk { background-color: $color-surface; border-bottom-color: $color-border; color: $color-title; }
+.twd-sk-header--over.twd-sk-header--shrunk .twd-sk-header__link, .twd-sk-header--over.twd-sk-header--shrunk .twd-sk-header__logo, .twd-sk-header--over.twd-sk-header--shrunk .twd-sk-header__logo-text { color: $color-title; }
+.twd-sk-header--over.twd-sk-header--shrunk .twd-sk-header__toggle { background-color: $color-surface; border-color: $color-border; color: $color-title; }
+.twd-sk-header--over.twd-sk-header--shrunk .twd-sk-header__bars, .twd-sk-header--over.twd-sk-header--shrunk .twd-sk-header__bars::before, .twd-sk-header--over.twd-sk-header--shrunk .twd-sk-header__bars::after { background-color: $color-title; }
 .twd-sk-header--sticky { position: fixed; top: var(--wp-admin--admin-bar--height, 0px); left: 0; right: 0; z-index: 900; }
 .twd-sk-header__strip { background-color: $color-band; color: $color-on-band; font-size: $size-small; }
 .twd-sk-header__strip-inner { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 24px; padding-top: 8px; padding-bottom: 8px; }
@@ -687,6 +754,11 @@
   .twd-sk-resources, .twd-sk-pictures, .twd-sk-pricing, .twd-sk-hours, .twd-sk-areas, .twd-sk-enquiry { padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
   .twd-sk-pictures__grid, .twd-sk-pricing__grid { grid-template-columns: 1fr 1fr; }
   .twd-sk-logos__img { max-width: 120px; height: 48px; }
+  .twd-sk-logos--grid .twd-sk-logos__list { grid-template-columns: 1fr 1fr; }
+  .twd-sk-faq--two .twd-sk-faq__list { grid-template-columns: 1fr; }
+  .twd-sk-areas--split .twd-sk-inner { grid-template-columns: 1fr; }
+  .twd-sk-areas--split .twd-sk-areas__list, .twd-sk-areas--split .twd-sk-areas__actions { grid-column: 1; grid-row: auto; }
+  .twd-sk-hero--parallax .twd-sk-hero__bg { top: 0; bottom: 0; transform: none; }
   .twd-sk-hero--compact { padding-bottom: $gap-sm; }
   .twd-sk-image-text--band { padding-top: 0; padding-bottom: 0; height: 180px; }
   .twd-sk-cta--band { padding-top: calc(#{$section-y-sm} * 1.4); padding-bottom: calc(#{$section-y-sm} * 1.4); }
@@ -719,6 +791,9 @@
     display: none; width: 100%; flex-direction: column; align-items: flex-start; gap: 12px; padding-bottom: 14px;
   }
   .twd-sk-header--js.twd-sk-header--open .twd-sk-header__panel { display: flex; }
+  /* On a transparent header the open phone menu gets a solid panel, so its links are readable over any picture. */
+  .twd-sk-header--over.twd-sk-header--js .twd-sk-header__panel { padding: 14px; background-color: $color-surface; border: 1px solid $color-border; border-radius: $radius-card; }
+  .twd-sk-header--over.twd-sk-header--js .twd-sk-header__panel .twd-sk-header__link { color: $color-title; }
   .twd-sk-header--js.twd-sk-header--sticky .twd-sk-header__panel {
     position: absolute; top: 100%; left: 0; right: 0; width: auto; padding: 14px; background-color: $color-surface; border-bottom: 1px solid $color-border;
   }

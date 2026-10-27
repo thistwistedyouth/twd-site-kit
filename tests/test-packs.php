@@ -23,8 +23,8 @@ function twd_sk_pack_slugs() {
 	return array_keys( TWD_SK_Packs::packs() );
 }
 
-twd_sk_test( 'packs: the shipped packs are sage, grove and ink (0.14.0), and all are valid', function () {
-	twd_sk_eq( array( 'grove', 'ink', 'sage' ), twd_sk_pack_slugs() );
+twd_sk_test( 'packs: the shipped packs are sage, grove, ink, ember and slate (0.14.0), and all are valid', function () {
+	twd_sk_eq( array( 'ember', 'grove', 'ink', 'sage', 'slate' ), twd_sk_pack_slugs() );
 	foreach ( twd_sk_pack_slugs() as $slug ) {
 		twd_sk_true( is_array( twd_sk_pack( $slug ) ), $slug );
 	}

@@ -666,6 +666,7 @@
 		cui.sticky.checked = !!c.settings.sticky;
 		cui.shrink.checked = !!c.settings.shrink;
 		cui.front.checked = !!c.settings.front_logo;
+		cui.over.checked = !!c.settings.overlay;
 		cui.button.checked = !!c.settings.show_button;
 		cui.strip.checked = !!c.settings.show_strip;
 		cui.placement.value = c.settings.placement;
@@ -717,6 +718,7 @@
 				sticky: cui.sticky.checked,
 				shrink: cui.shrink.checked,
 				front_logo: cui.front.checked,
+				overlay: cui.over.checked,
 				show_button: cui.button.checked,
 				show_strip: cui.strip.checked,
 				placement: cui.placement.value
@@ -760,9 +762,11 @@
 		var strip = checkbox('twd-sk-ch-strip', 'Show a thin strip with the phone number and email above the header');
 		var shrink = checkbox('twd-sk-ch-shrink', 'Make the fixed header smaller when scrolling (only works with the fixed header above)');
 		var front = checkbox('twd-sk-ch-front', 'Bigger logo on the front page: the full logo, larger and centred above the menu, on the front page only. Other pages show the small logo mark (if one is set in Site details) with the site name. Sizes are in the Style section.');
+		var over = checkbox('twd-sk-ch-over', 'Transparent over the picture: on a page that opens with a full-width picture hero, the header sits over the picture with no background and light words. Every other page keeps the normal header. With the fixed header, it turns solid again once the page is scrolled.');
 		cui.sticky = sticky.input;
 		cui.shrink = shrink.input;
 		cui.front = front.input;
+		cui.over = over.input;
 		cui.button = btn.input;
 		cui.strip = strip.input;
 		cui.placement = selectWith('twd-sk-ch-placement', {}, '');
@@ -795,6 +799,7 @@
 			sticky.label,
 			shrink.label,
 			front.label,
+			over.label,
 			btn.label,
 			strip.label,
 			el('div', { className: 'twd-sk-ed__actions' }, [cui.saveBtn, cui.exportBtn, cui.reloadBtn]),
@@ -931,7 +936,7 @@
 	}
 
 	function chromeSnap() {
-		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.button.checked, cui.strip.checked, cui.placement.value]);
+		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.over.checked, cui.button.checked, cui.strip.checked, cui.placement.value]);
 	}
 
 	ED.addDirtyCheck(function () {

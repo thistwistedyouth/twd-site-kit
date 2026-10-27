@@ -184,6 +184,10 @@ class TWD_SK_Packs {
 		$s['shadow-card']    = 'shadow';
 		$s['shadow-image']   = 'shadow';
 		$s['image-position'] = 'position';
+		// 0.14.0: picture treatment. A filter on every kit picture (none, or up to three of grayscale, sepia,
+		// saturate, contrast and brightness) and a tint laid over the hero and image-and-text pictures.
+		$s['image-filter']   = 'filter';
+		$s['image-tint']     = 'color';
 		return $s;
 	}
 
@@ -201,6 +205,8 @@ class TWD_SK_Packs {
 			'logo-height-sm'     => '40px',
 			'logo-height-front'  => '120px',
 			'footer-logo-height' => '64px',
+			'image-filter'       => 'none',
+			'image-tint'         => 'transparent',
 		);
 	}
 
@@ -245,6 +251,15 @@ class TWD_SK_Packs {
 		}
 		$len = '(?:0|-?\d{1,3}(?:\.\d{1,2})?px)';
 		return 1 === preg_match( '/^' . $len . '\s+' . $len . '\s+' . $len . '(?:\s+' . $len . ')?\s+' . self::color_pattern() . '$/', $v );
+	}
+
+	/** none, or one to three picture filters with a plain number or percentage each (0.14.0). */
+	private static function valid_filter( $v ) {
+		if ( 'none' === $v ) {
+			return true;
+		}
+		$one = '(?:grayscale|sepia|saturate|contrast|brightness)\((?:0|1|0?\.\d{1,3}|1\.\d{1,3}|2|\d{1,3}%)\)';
+		return 1 === preg_match( '/^' . $one . '(?: ' . $one . '){0,2}$/', $v );
 	}
 
 	private static function valid_position( $v ) {
@@ -302,6 +317,8 @@ class TWD_SK_Packs {
 				return self::valid_shadow( $value );
 			case 'position':
 				return self::valid_position( $value );
+			case 'filter':
+				return self::valid_filter( $value );
 		}
 		return false;
 	}

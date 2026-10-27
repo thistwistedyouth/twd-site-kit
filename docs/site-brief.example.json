@@ -24,6 +24,7 @@
     "sticky": false,
     "shrink": false,
     "front_logo": false,
+    "overlay": false,
     "show_button": true,
     "show_strip": false
   },
