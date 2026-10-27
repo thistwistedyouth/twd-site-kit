@@ -1,0 +1,38 @@
+# Test script: 0.14.0 (branch `studio-0.14`)
+
+Built overnight on a branch and tested only against the plugin's own test suite (868 tests) and offline screenshots. Nothing in it has been tried on a real site. Work through it on a **staging or fresh site** first, never on a live client site. Riskiest first: if something in the first block goes wrong, stop, switch safe mode on (`wp twd-sk safe-mode on`, or the setting) and send the site report (`wp twd-sk doctor`).
+
+Before you start: install the branch zip (`dist/twd-site-kit-latest.zip` from the `studio-0.14` branch, version 0.14.0) with Plugins, Add New, Upload Plugin, "Replace current with uploaded". The Articles plugin 1.42.0 or later is recommended (its grid now renders the first cards on the server). No new setting is on by default: a site that updates and changes nothing should look exactly as before.
+
+## 1. Riskiest: things that change what visitors see on every page
+
+1. **Nothing changed by the update.** On a site already built with 0.13 or earlier: update, clear any page cache, open three pages as a visitor and compare with before. Header, footer, logo size, colours and every section should be the same. The site report should say 0.14.0.
+2. **One skip link.** As a visitor on the Hello theme with Site Kit placing the header, press Tab once from the top of a page: one "Skip to content" box appears, not two. (The Hello filter name was written from memory; if two still show, note it.)
+3. **Logo sizes.** Site tab, Style, Logo sizes: change Header logo height from 48 to 90, Save style. The header logo grows on every page; on a phone it stays the phone size. Reset puts it back. `wp twd-sk pack` still lists sage, grove and ink.
+4. **Bigger logo on the front page.** Site details: choose a small symbol-only picture as the Small logo mark. Header and footer: tick Bigger logo on the front page, Save. Front page: the full logo, larger, centred above the menu. Other pages: the small mark beside the site name. With Keep the header fixed and Make it smaller when scrolling on: scroll the front page and the full logo gives way to the small mark in a row; scroll back up and it returns. Phone: the front page shows the mark in a row, not the big logo, so the heading is not pushed down. Reduced motion on the device: no animation. Untick and everything returns to the one logo everywhere.
+5. **Publishing from wp-admin is held back.** Open a kit page that still has a [PLACEHOLDER] in the WordPress page editor and press Publish. It stays a draft with a notice saying what is left and a "publish it anyway" link; the link publishes it. Quick Edit and the bulk Publish action behave the same. A page with nothing left publishes normally. The Pages tab, the launch check and `wp twd-sk launch-check --publish` behave exactly as before.
+6. **Safe mode.** `wp twd-sk safe-mode on`: the guard, the front page logo and the launch additions go quiet, pages still show, Hello's own header and skip link come back. Off again.
+
+## 2. Middle: new layouts and the launch check
+
+7. **Question groups.** Edit with AI on a page, Add a section, FAQ, layout Groups. A row of three links and three groups appear; on a wide screen only the first (default) group shows, clicking a link shows that group and the address gains `#twd-sk-questions-2`; on a phone all three stack under their headings; the questions still open and close. The Visual editor can change the group headings and questions (the tab link words are not editable yet: note it).
+8. **Prose text.** Add a section, Text, layout Prose: a narrow left-aligned column. Add a sub-heading and a list in the Visual editor: they are styled.
+9. **The ink style.** Site tab, Style, choose Ink, Save. Off-white page, black text, one blue-green for buttons and links, Garamond headings, Inter body. Every button and band is readable (the contrast check passes). Switch back.
+10. **Marker as one unit.** Visual editor on a page with `[PLACEHOLDER: ...]` text: click inside the marker and the whole marker is selected; typing replaces all of it. Delete only its opening bracket by hand on purpose (use the WordPress editor's plain text or a careful selection), Save, then run the launch check: it names a PLACEHOLDER fragment and the page cannot be published until fixed. The word TO CONFIRM on a page does the same.
+11. **Menu links.** Add a menu item `/does-not-exist` in Site details. The launch check fails with the link named. Point it at a draft page: warns. Remove it: ok.
+12. **WordPress leftovers.** On a site that still has the Sample Page and Hello world live: the launch check fails on them; the Tidy up button (setup page, Launch step) or `wp twd-sk launch-check --tidy` moves both to the bin (check the bin, nothing is deleted). The suggested privacy text fails until replaced.
+13. **Where a kit page is edited.** Open a kit page in the WordPress page editor: a notice says it is edited on the site with a link. An ordinary page gets no notice.
+14. **Unknown layout in a brief.** In a site brief, give a page a section with `"variant": "twd-sk-made-up"`. Check it: the plan lists a note that the standard layout is used, and the build still makes the page.
+15. **`wp twd-sk save --pictures`.** Write a page file with `<img ... src="pic:river">`, a pictures file naming `river`, and save with `--pictures=`. The stored page has the real address and alt text; an unknown name becomes the sample picture and is flagged.
+
+## 3. Lower risk: the Full site set up with gaps (needs the AI key)
+
+16. **Build a draft anyway.** Settings, Set up site, Full site set up with notes that leave something out (no registration, say). Check: questions appear and the build is off. Tick "Build a draft anyway": Prepare the draft anyway is on. Build. Each page carries `[PLACEHOLDER: registration ...]` where the fact would go and nothing else is invented; the pages cannot be published until it is filled. Answer the question, Check again, Prepare, Build again: the marker is gone.
+
+## 4. Speed and accessibility
+
+17. On a built page, run PageSpeed (mobile). Performance, Accessibility, Best Practices and SEO should not be worse than before the update (the reference site scores 98, 96, 100, 100). No request should go to any font service or other domain.
+
+## If something is wrong
+
+Safe mode first (`wp twd-sk safe-mode on`). Then the site report (`wp twd-sk doctor`). Then roll back by uploading the 0.13.0 zip from `main` (Plugins, Add New, Upload Plugin, replace). Pages, versions and settings are untouched by a rollback.
