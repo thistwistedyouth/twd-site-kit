@@ -408,6 +408,8 @@
 .twd-sk-page .twd-sk-hero__content.twd-sk-hero__content {
   position: relative;
   z-index: 2;
+  width: 100%;
+  max-width: var(--twd-site-container-narrow);
   padding: 24px !important;
   text-align: center !important;
   color: var(--twd-site-color-on-image) !important;
@@ -467,6 +469,7 @@
 .twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body > * + * {
   margin-top: 1.3em !important;
 }
+.twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body h2,
 .twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body h3,
 .twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body h4 {
   margin-top: 2em !important;

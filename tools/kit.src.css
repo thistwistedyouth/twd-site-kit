@@ -138,7 +138,7 @@
   position: absolute; inset: 0;
   background: linear-gradient(180deg, $color-overlay-top 0%, $color-overlay-mid 50%, $color-overlay-bottom 100%);
 }
-.twd-sk-hero__content { position: relative; z-index: 2; padding: 24px; text-align: center; color: $color-on-image; }
+.twd-sk-hero__content { position: relative; z-index: 2; width: 100%; max-width: $container-narrow; padding: 24px; text-align: center; color: $color-on-image; }
 .twd-sk-hero--image .twd-sk-eyebrow, .twd-sk-hero--image .twd-sk-hero__title, .twd-sk-hero--image .twd-sk-hero__lead { text-align: center; color: $color-on-image; }
 .twd-sk-hero--image .twd-sk-accent { color: $color-accent-on-dark; }
 
@@ -160,7 +160,7 @@
 .twd-sk-text--prose .twd-sk-eyebrow, .twd-sk-text--prose .twd-sk-title, .twd-sk-text--prose .twd-sk-text__body { text-align: left; }
 .twd-sk-text--prose .twd-sk-title { margin-bottom: 28px; }
 .twd-sk-text--prose .twd-sk-text__body > * + * { margin-top: 1.3em; }
-.twd-sk-text--prose .twd-sk-text__body h3, .twd-sk-text--prose .twd-sk-text__body h4 {
+.twd-sk-text--prose .twd-sk-text__body h2, .twd-sk-text--prose .twd-sk-text__body h3, .twd-sk-text--prose .twd-sk-text__body h4 {
   margin-top: 2em; font-family: $font-heading; font-size: $size-h3; font-weight: $title-weight; font-style: $title-style; line-height: $line-heading; color: $color-title;
 }
 .twd-sk-text--prose .twd-sk-text__body ul, .twd-sk-text--prose .twd-sk-text__body ol { padding-left: 1.3em; list-style: disc; }
