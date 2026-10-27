@@ -721,7 +721,9 @@
 .twd-sk-header--wordmark .twd-sk-header__link { position: relative; padding: 10px 2px; font-family: $menu-font; font-size: $menu-size; font-weight: $menu-weight; line-height: 1.3; letter-spacing: $menu-spacing; text-transform: $menu-transform; text-decoration: none; }
 /* The header button sits in the menu's row at the menu's size, never taller than a menu link, so the row (and the fixed header's spacer) is the same with or without it. */
 .twd-sk-header--wordmark .twd-sk-header__cta { padding: 8px 18px; font-family: $menu-font; font-size: $menu-size; letter-spacing: $menu-spacing; text-transform: $menu-transform; }
-.twd-sk-header--wordmark .twd-sk-header__link:hover, .twd-sk-header--wordmark .twd-sk-header__link:focus-visible { text-decoration: none; }
+/* The sub-menu links (a dropdown on a computer, listed under their parent on a phone) take the same menu look, and lose the underline too. */
+.twd-sk-header--wordmark .twd-sk-header__sublink { font-family: $menu-font; font-size: $menu-size; font-weight: $menu-weight; letter-spacing: $menu-spacing; text-transform: $menu-transform; }
+.twd-sk-header--wordmark .twd-sk-header__link:hover, .twd-sk-header--wordmark .twd-sk-header__link:focus-visible, .twd-sk-header--wordmark .twd-sk-header__sublink:hover, .twd-sk-header--wordmark .twd-sk-header__sublink:focus-visible, .twd-sk-header--wordmark .twd-sk-header__sublink[aria-current="page"] { text-decoration: none; }
 .twd-sk-header--wordmark .twd-sk-header__link[aria-current="page"] { color: inherit; text-decoration: none; }
 /* The page you are on: a dot or a bar under the link in the link's own colour (so it follows the transparent and scrolled states), or colour and weight, or nothing. */
 .twd-sk-header--mark-dot .twd-sk-header__link[aria-current="page"]::after, .twd-sk-header--mark-bar .twd-sk-header__link[aria-current="page"]::after { content: ""; position: absolute; left: 50%; transform: translateX(-50%); background-color: currentColor; }
@@ -905,6 +907,8 @@
   .twd-sk-header--wm-front .twd-sk-header__line { margin: 4px 0 0; font-size: $wordmark-line-front-sm; }
   .twd-sk-header--wm-front .twd-sk-header__panel { align-items: center; margin: 12px 0 0; }
   .twd-sk-header--wm-front .twd-sk-header__menu { align-items: center; }
+  .twd-sk-header--wm-front .twd-sk-header__sub { padding: 0; }
+  .twd-sk-header--js.twd-sk-header--sticky.twd-sk-header--wm-front .twd-sk-header__panel { margin-top: 0; }
   .twd-sk-header--js.twd-sk-header--wm-front .twd-sk-header__toggle { position: absolute; top: 10px; right: $gutter-sm; }
   .twd-sk-header--wm-front.twd-sk-header--shrunk .twd-sk-header__inner { flex-wrap: nowrap; justify-content: space-between; }
   .twd-sk-header--wm-front.twd-sk-header--shrunk .twd-sk-header__mark { height: $wordmark-symbol-sm; }
