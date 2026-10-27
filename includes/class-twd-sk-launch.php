@@ -155,6 +155,19 @@ class TWD_SK_Launch {
 			$items[] = '' === TWD_SK_Enquiry::recipient() ? self::item( 'enquiry', 'fail', 'The enquiry form has no valid email address to send to', 'Add the email address in the Site tab, Site details.' ) : self::item( 'enquiry', 'warn', 'Send yourself a test message through the enquiry form', 'Some hosts block email from websites. If it does not arrive (check the spam folder), set up an SMTP plugin.' );
 		}
 
+		// The articles grid needs the Articles plugin (0.14.0). Before its 1.42.0 the first cards were drawn by
+		// the browser, so search engines and speed tests saw an empty section.
+		if ( false !== strpos( $all, '[twd_articles' ) ) {
+			$av = self::articles_version();
+			if ( '' === $av ) {
+				$items[] = self::item( 'articles', 'fail', 'A page shows the articles grid but the Articles plugin is not active', 'Install and activate the Articles plugin, or take the Resources section off the page.' );
+			} elseif ( version_compare( $av, '1.42.0', '<' ) ) {
+				$items[] = self::item( 'articles', 'warn', 'The Articles plugin is older than 1.42.0 (' . $av . ' is installed)', 'Before 1.42.0 the grid is drawn by the browser, so search engines and speed tests see an empty section. Update the Articles plugin, then look at the Resources page again.' );
+			} else {
+				$items[] = self::item( 'articles', 'ok', 'The Articles plugin ' . $av . ' draws the articles grid' );
+			}
+		}
+
 		// The support lines are public information but must be checked by a person before launch.
 		if ( false !== strpos( $all, 'twd-sk-notice' ) ) {
 			$items[] = self::item( 'notice', 'warn', 'Check the support line numbers and times by hand', 'The safety notice lists national support lines. Check each one against its official website before launch.' );
@@ -285,6 +298,27 @@ class TWD_SK_Launch {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * The active Articles plugin's version, or '' when it is not active (0.14.0). Read from the plugin
+	 * header like the site report does: Site Kit never calls that plugin's code.
+	 */
+	public static function articles_version() {
+		if ( ! function_exists( 'get_plugins' ) && defined( 'ABSPATH' ) && file_exists( ABSPATH . 'wp-admin/includes/plugin.php' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+		if ( ! function_exists( 'get_plugins' ) ) {
+			return '';
+		}
+		$all = (array) get_plugins();
+		foreach ( (array) get_option( 'active_plugins', array() ) as $file ) {
+			if ( is_string( $file ) && 0 === strpos( $file, 'twd-article-publisher/' ) && isset( $all[ $file ]['Version'] ) ) {
+				$v = preg_replace( '/[^0-9.]/', '', (string) $all[ $file ]['Version'] );
+				return '' === $v ? '0' : $v;
+			}
+		}
+		return '';
 	}
 
 	/** WordPress's own leftovers (0.14.0): the live sample page, the live first post, the suggested privacy text. */

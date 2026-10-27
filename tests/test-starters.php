@@ -85,9 +85,10 @@ twd_sk_test( 'gallery: placeholder text only, no real names, details or addresse
 	twd_sk_hasnt( '[', preg_replace( '/\[twd_articles [^\]]*\]|\[twd_enquiry\]/', '', $html ), 'no square brackets except the two registry shortcodes' );
 } );
 
-twd_sk_test( 'gallery: holds the articles shortcode once and no script, form, button or inline style', function () {
+twd_sk_test( 'gallery: holds the articles shortcode twice (the grid and the strip) and no script, form, button or inline style', function () {
 	$html = twd_sk_gallery_file();
-	twd_sk_eq( 1, substr_count( $html, '[twd_articles' ) );
+	twd_sk_eq( 2, substr_count( $html, '[twd_articles' ) );
+	twd_sk_has( '[twd_articles category="your-topic" count="3" columns="3"]', $html );
 	foreach ( array( '<script', '<form', '<button', '<iframe', 'style=', 'onclick', 'javascript:', 'sms:' ) as $bad ) {
 		twd_sk_hasnt( $bad, $html );
 	}
@@ -119,8 +120,9 @@ twd_sk_test( 'gallery: renders through [twd_page] with only the two registry sho
 	$GLOBALS['twd_stub']['post_id'] = 13;
 	$out = TWD_SK_Page::render();
 	twd_sk_has( '<RUN:twd_articles count="6" columns="3">', $out );
+	twd_sk_has( '<RUN:twd_articles category="your-topic" count="3" columns="3">', $out );
 	twd_sk_has( '<RUN:twd_enquiry>', $out );
-	twd_sk_eq( 2, substr_count( $out, '<RUN:' ) );
+	twd_sk_eq( 3, substr_count( $out, '<RUN:' ) );
 	twd_sk_true( 0 === strpos( $out, '<div class="twd-sk-page">' ) );
 } );
 

@@ -180,6 +180,8 @@ class TWD_SK_Sanitizer {
 			'Day here'                          => null,
 			'Times here'                        => null,
 			'Area name here'                    => null,
+			// 0.14.0: the sample category in the articles strip.
+			'your-topic'                        => null,
 			'/service-N'                        => '#href\s*=\s*["\']/service-\d+["\'/?\#]#i',
 			'[PLACEHOLDER'                      => null,
 			// 0.14.0: half a marker left after an edit by hand (the word without its opening bracket, an opener

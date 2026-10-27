@@ -188,3 +188,32 @@ twd_sk_test( 'rest and cli: the tidy route needs confirm and administrator right
 	$r = array_values( $routes )[0];
 	twd_sk_eq( array( 'TWD_SK_REST', 'can_manage_site' ), $r['args']['permission_callback'] );
 } );
+
+twd_sk_test( 'launch check: a page with the articles grid needs the Articles plugin; older than 1.42.0 warns (the first cards were drawn by the browser); 1.42.0 or later is ok; no grid, no item (0.14.0)', function () {
+	twd_stub_reset();
+	twd_sk_launch_site( true );
+	twd_sk_eq( null, twd_sk_launch_item( TWD_SK_Launch::check(), 'articles' ), 'no grid on any page' );
+	TWD_SK_Store::save( 21, TWD_SK_Store::get_current( 21 ) . '<section class="twd-sk-resources twd-sk-resources--strip twd-sk-tone-tint"><div class="twd-sk-inner"><div class="twd-sk-resources__row"><div class="twd-sk-resources__intro"><h2 class="twd-sk-title">Reading</h2></div><div class="twd-sk-resources__grid">[twd_articles category="five-keys" count="3" columns="3"]</div></div></div></section>' );
+	twd_sk_eq( '', TWD_SK_Launch::articles_version() );
+	$i = twd_sk_launch_item( TWD_SK_Launch::check(), 'articles' );
+	twd_sk_eq( 'fail', $i['status'] );
+	twd_sk_has( 'not active', $i['label'] );
+	$GLOBALS['twd_stub']['plugins'] = array( 'twd-article-publisher/twd-article-publisher.php' => array( 'Name' => 'Articles', 'Version' => '1.37.1' ), 'b/b.php' => array( 'Name' => 'Off Plugin', 'Version' => '9' ) );
+	update_option( 'active_plugins', array( 'b/b.php' ) );
+	twd_sk_eq( '', TWD_SK_Launch::articles_version(), 'installed but not active' );
+	update_option( 'active_plugins', array( 'b/b.php', 'twd-article-publisher/twd-article-publisher.php' ) );
+	twd_sk_eq( '1.37.1', TWD_SK_Launch::articles_version() );
+	$i = twd_sk_launch_item( TWD_SK_Launch::check(), 'articles' );
+	twd_sk_eq( 'warn', $i['status'] );
+	twd_sk_has( '1.37.1 is installed', $i['label'] );
+	twd_sk_has( 'drawn by the browser', $i['detail'] );
+	$GLOBALS['twd_stub']['plugins']['twd-article-publisher/twd-article-publisher.php']['Version'] = '1.42.0';
+	$i = twd_sk_launch_item( TWD_SK_Launch::check(), 'articles' );
+	twd_sk_eq( 'ok', $i['status'] );
+	twd_sk_has( '1.42.0', $i['label'] );
+	$GLOBALS['twd_stub']['plugins']['twd-article-publisher/twd-article-publisher.php']['Version'] = '1.50.2';
+	twd_sk_eq( 'ok', twd_sk_launch_item( TWD_SK_Launch::check(), 'articles' )['status'] );
+	// The launch class never calls into that plugin.
+	$src = file_get_contents( ABSPATH . 'includes/class-twd-sk-launch.php' );
+	twd_sk_hasnt( 'TWD_AP_', $src );
+} );

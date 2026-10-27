@@ -29,10 +29,15 @@ The one place to see where this project is. Newest at the top. Rules live in CLA
 | Layout swap (level 2) | `TWD_SK_Style::swap( html, component, from, to )` changes the layout class of a kind of section when the new layout has a place for every piece it holds; a section it cannot hold keeps its layout and is named. Words and pictures unchanged. CLI only for now (`wp twd-sk style swap`) | Built, tested |
 | Style preview | `?twd_sk_style=PACK` on any front-end page shows that pack to a signed-in administrator only (never cached, ignored for visitors, in wp-admin, for an unknown pack and in safe mode). Nothing is saved | Built, tested, not on a real site |
 | Six more fonts | Source Serif 4, Work Sans, Nunito Sans, DM Sans, Fraunces, Playfair Display (variable latin woff2, normal and italic, SIL licence texts), so the two packs still to come (`ember`, `slate`) and the Site tab have a wider choice. Only the two fonts the active pack uses are ever loaded | Built, tested |
+| Articles strip | `twd-sk-resources--strip`: a few articles from one category (`[twd_articles category="..." count="3"]`) beside a short introduction and a link to the full list, for the foot of a service page; the grid's own search box, category list and Load more are hidden in it by the stylesheet; the sample category `your-topic` is a must-fix leftover. Offered in Add a section and as a page part | Built, tested, not on a real site |
+| Articles plugin check | The launch check, on a site with the articles grid on a page: fails when the Articles plugin is not active, warns when it is older than 1.42.0 (its grid was drawn by the browser before that, so search engines and speed tests saw an empty section), ok from 1.42.0. Read from the plugin header only, never its code | Built, tested |
+| Stylesheet size | The generated stylesheet passed 90 KB with the 0.14 layouts (now about 91 KB, roughly 15 KB compressed); the test's ceiling is 110 KB. Worth a look if it keeps growing | Noted |
 
 **Decisions taken while the owner was away (27 Oct 2026):** see the end of this section once the night's work is done; the full list is kept in the private clients repository's studio folder and copied here in generic form.
 
-**Waiting on other projects (new, 27 Oct 2026):** nothing new yet from this branch.
+**Waiting on other projects (new, 27 Oct 2026):**
+- Articles plugin (`twd-article-publisher`, read only from here): nothing to change. Its 1.42.0 already draws the first grid cards on the server (the fix the studio needed for a Resources page that search engines and speed tests can read). Sites still on an older version get a warning from the launch check from 0.14.0; the pilot staging site runs 1.37.1 and should be updated to 1.42.0 before its Resources page is judged.
+- Articles plugin, a wish (not needed for 0.14.0): a shortcode attribute to hide the grid's search box and category list (`filters="no"` or similar) so the articles strip would not need to hide them with CSS. Brief for the owner: "In `[twd_articles]`, add an attribute that switches off the toolbar (search and category select) for one grid, validated like `intro`." Until then the strip hides them in the stylesheet.
 
 ## Where we are at release 0.13.0 (15 Oct 2026)
 

@@ -270,3 +270,26 @@ twd_sk_test( 'registry: the prose text layout is a narrow left-aligned reading c
 	twd_sk_true( 1 === preg_match( '/twd-sk-text--prose\.twd-sk-text--prose \.twd-sk-text__body\.twd-sk-text__body \{[^}]*text-align: left/', $raw ), 'left aligned' );
 	twd_sk_true( 1 === preg_match( '/twd-sk-text\.twd-sk-text:not\(\.twd-sk-text--aside\.twd-sk-text--aside\):not\(\.twd-sk-text--prose\.twd-sk-text--prose\)/', $raw ), 'the centred rule leaves prose alone' );
 } );
+
+twd_sk_test( 'registry: the articles strip is a few articles from one category beside an introduction; its sample category is flagged; the grid controls are hidden in it (0.14.0)', function () {
+	$v = TWD_SK_Registry::get( 'resources' )['variants']['twd-sk-resources--strip'];
+	twd_sk_has( 'class="twd-sk-resources twd-sk-resources--strip', $v['skeleton'] );
+	twd_sk_has( '[twd_articles category="your-topic" count="3" columns="3"]', $v['skeleton'] );
+	twd_sk_has( 'twd-sk-resources__intro', $v['skeleton'] );
+	twd_sk_has( 'twd-sk-resources__grid', $v['skeleton'] );
+	twd_sk_hasnt( '<h1', $v['skeleton'] );
+	// The sanitiser keeps it whole, the shortcode included, and the sample category is must-fix.
+	twd_sk_eq( $v['skeleton'], TWD_SK_Sanitizer::clean( $v['skeleton'] ) );
+	$left = TWD_SK_Sanitizer::find_leftovers( $v['skeleton'] );
+	twd_sk_true( isset( $left['your-topic'] ) );
+	twd_sk_eq( 'must', TWD_SK_Sanitizer::leftover_level( 'your-topic' ) );
+	// A real category is not flagged.
+	twd_sk_true( ! isset( TWD_SK_Sanitizer::find_leftovers( str_replace( 'your-topic', 'five-keys', $v['skeleton'] ) )['your-topic'] ) );
+	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-resources__row\.twd-sk-resources__row \{[^}]*grid-template-columns: 1fr 2fr/', $raw ), 'side by side on a wide screen' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-resources__grid\.twd-sk-resources__grid \.twd-ap-articles-toolbar[^{]*\{[^}]*display: none/', $raw ), 'search box and category list hidden' );
+	twd_sk_has( '.twd-ap-articles-loadmore-row', $raw );
+	// Offered as a layout in the pop-up's Add a section menu and accepted as a page part.
+	$parts = TWD_SK_Recipes::clean_parts( array( array( 'hero', '' ), array( 'resources', 'twd-sk-resources--strip' ) ) );
+	twd_sk_eq( 'twd-sk-resources--strip', $parts[1][1] );
+} );

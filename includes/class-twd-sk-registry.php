@@ -766,7 +766,28 @@ class TWD_SK_Registry {
 		) );
 	}
 
-	private static function resources() {
+	private static function resources( $variant = '' ) {
+		if ( 'strip' === $variant ) {
+			// A few articles from one category beside a short introduction (0.14.0). The grid's own
+			// search box, category list and Load more button are hidden by the stylesheet in this layout.
+			return self::lines( array(
+				'<section class="twd-sk-resources twd-sk-resources--strip twd-sk-tone-tint">',
+				'<div class="twd-sk-inner">',
+				'<div class="twd-sk-resources__row">',
+				'<div class="twd-sk-resources__intro">',
+				'<span class="twd-sk-eyebrow">Short label here</span>',
+				'<h2 class="twd-sk-title">Heading here</h2>',
+				'<p class="twd-sk-lead">Short introduction here.</p>',
+				'<a class="twd-sk-btn twd-sk-btn--outline" href="/resources">Read more about this approach</a>',
+				'</div>',
+				'<div class="twd-sk-resources__grid">',
+				'[twd_articles category="your-topic" count="3" columns="3"]',
+				'</div>',
+				'</div>',
+				'</div>',
+				'</section>',
+			) );
+		}
 		return self::lines( array(
 			'<section class="twd-sk-resources twd-sk-tone-base">',
 			'<div class="twd-sk-inner">',
@@ -1225,11 +1246,21 @@ class TWD_SK_Registry {
 			'resources'  => array(
 				'id'          => 'resources',
 				'label'       => 'Resources',
-				'description' => 'A heading above the articles grid. Only wraps the twd_articles shortcode.',
+				'description' => 'A heading above the articles grid. Only wraps the twd_articles shortcode. The strip layout shows a few articles from one category beside a short introduction, for the foot of a service page.',
 				'skeleton'    => self::resources(),
-				'variants'    => array(),
+				'variants'    => array(
+					'twd-sk-resources--strip' => array(
+						'label'    => 'Strip: a few articles from one category beside a short introduction and a link to the full list',
+						'skeleton' => self::resources( 'strip' ),
+					),
+				),
 				'classes'     => array(
 					'twd-sk-resources',
+					// The strip layout (0.14.0).
+					'twd-sk-resources--strip',
+					'twd-sk-resources__row',
+					'twd-sk-resources__intro',
+					'twd-sk-resources__grid',
 				),
 				'shortcodes'  => array(
 					'twd_articles' => self::articles_shortcode_attrs(),

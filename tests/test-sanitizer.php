@@ -514,7 +514,8 @@ twd_sk_test( 'leftovers: every example marker is found, case-insensitively, and 
 		. '<p>Question here?</p><p>Answer here.</p><p>Topic one</p><p>Short description here.</p><p>Short introduction here.</p><h3>Service name here</h3><p>A short statement in your own words.</p>'
 		. '<p>[PLACEHOLDER: fee]</p><p>[PLACEHOLDER]</p>'
 		. '<img src="/wp-content/uploads/your-logo.png" alt="Describe the logo"><p>Caption here</p><p>Price here</p><p>Short note here.</p><p>Day here</p><p>Times here</p><p>Area name here</p><a href="/c">Ask about this</a><a href="/m">See the area on a map</a>'
-		. '<p>PLACEHOLDER: fee]</p><p>the price, or say "ask"]</p><p>Fees: TO CONFIRM</p>';
+		. '<p>PLACEHOLDER: fee]</p><p>the price, or say "ask"]</p><p>Fees: TO CONFIRM</p>'
+		. '[twd_articles category="your-topic" count="3"]';
 	$found = TWD_SK_Sanitizer::find_leftovers( $html );
 	foreach ( TWD_SK_Sanitizer::leftover_markers() as $marker ) {
 		twd_sk_true( isset( $found[ $marker ] ), 'marker not found: ' . $marker );

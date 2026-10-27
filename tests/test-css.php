@@ -326,7 +326,7 @@ twd_sk_test( 'css: the page title fallback exists and only affects pages with th
 
 twd_sk_test( 'css: the stylesheet is a sensible size', function () {
 	$size = filesize( ABSPATH . 'assets/twd-site-kit.css' );
-	twd_sk_true( $size > 10000 && $size < 90000, 'size ' . $size );
+	twd_sk_true( $size > 10000 && $size < 110000, 'size ' . $size );
 } );
 
 twd_sk_test( 'css: the file holds no em or en dashes', function () {
@@ -400,7 +400,9 @@ twd_sk_test( 'css: the articles grid rules are all scoped under .twd-sk-page, do
 			twd_sk_true( 0 === strpos( $sel, '.twd-sk-page ' ), 'unscoped articles rule: ' . $sel );
 		}
 		foreach ( $rule['decls'] as $d ) {
-			if ( false !== strpos( $rule['selectors'][0], '.twd-ap-' ) ) {
+			// Every visual value comes from a token. The articles strip hides the grid's own search box and
+			// Load more button (0.14.0): a layout rule, so no token.
+			if ( false !== strpos( $rule['selectors'][0], '.twd-ap-' ) && 'display' !== $d['prop'] ) {
 				twd_sk_true( false !== strpos( $d['value'], 'var(--twd-site-' ), 'literal in articles rule: ' . $d['prop'] . ': ' . $d['value'] );
 			}
 		}

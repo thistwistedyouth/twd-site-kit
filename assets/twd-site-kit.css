@@ -1065,6 +1065,37 @@
   border-color: var(--twd-site-color-primary-hover) !important;
   color: var(--twd-site-color-on-primary) !important;
 }
+/* ---- articles strip (0.14.0): a few articles from one category beside a short introduction ---- */
+.twd-sk-page .twd-sk-resources--strip.twd-sk-resources--strip {
+  padding-top: var(--twd-site-section-y-sm) !important;
+  padding-bottom: var(--twd-site-section-y-sm) !important;
+}
+.twd-sk-page .twd-sk-resources__row.twd-sk-resources__row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--twd-site-gap-lg);
+  align-items: start;
+}
+.twd-sk-page .twd-sk-resources__intro.twd-sk-resources__intro,
+.twd-sk-page .twd-sk-resources__grid.twd-sk-resources__grid {
+  min-width: 0;
+}
+.twd-sk-page .twd-sk-resources__intro.twd-sk-resources__intro .twd-sk-eyebrow.twd-sk-eyebrow,
+.twd-sk-page .twd-sk-resources__intro.twd-sk-resources__intro .twd-sk-title.twd-sk-title,
+.twd-sk-page .twd-sk-resources__intro.twd-sk-resources__intro .twd-sk-lead.twd-sk-lead {
+  text-align: left !important;
+}
+.twd-sk-page .twd-sk-resources__intro.twd-sk-resources__intro .twd-sk-lead.twd-sk-lead {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+.twd-sk-page .twd-sk-resources__intro.twd-sk-resources__intro .twd-sk-btn.twd-sk-btn {
+  margin-top: var(--twd-site-gap-sm) !important;
+}
+.twd-sk-page .twd-sk-resources__grid.twd-sk-resources__grid .twd-ap-articles-toolbar.twd-ap-articles-toolbar,
+.twd-sk-page .twd-sk-resources__grid.twd-sk-resources__grid .twd-ap-articles-loadmore-row.twd-ap-articles-loadmore-row {
+  display: none;
+}
 /* ---- contact ---- */
 .twd-sk-page .twd-sk-contact__grid.twd-sk-contact__grid {
   display: grid;
@@ -2252,6 +2283,10 @@
   }
   .twd-sk-page .twd-sk-faq__group.twd-sk-faq__group + .twd-sk-faq__group.twd-sk-faq__group {
     margin-top: 0 !important;
+  }
+  /* The articles strip: introduction beside the cards (0.14.0). */
+  .twd-sk-page .twd-sk-resources__row.twd-sk-resources__row {
+    grid-template-columns: 1fr 2fr;
   }
 }
 

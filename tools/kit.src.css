@@ -384,6 +384,15 @@
   background-color: $color-primary-hover; border-color: $color-primary-hover; color: $color-on-primary;
 }
 
+/* ---- articles strip (0.14.0): a few articles from one category beside a short introduction ---- */
+.twd-sk-resources--strip { padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
+.twd-sk-resources__row { display: grid; grid-template-columns: 1fr; gap: $gap-lg; align-items: start; }
+.twd-sk-resources__intro, .twd-sk-resources__grid { min-width: 0; }
+.twd-sk-resources__intro .twd-sk-eyebrow, .twd-sk-resources__intro .twd-sk-title, .twd-sk-resources__intro .twd-sk-lead { text-align: left; }
+.twd-sk-resources__intro .twd-sk-lead { margin-left: 0; margin-right: 0; }
+.twd-sk-resources__intro .twd-sk-btn { margin-top: $gap-sm; }
+.twd-sk-resources__grid .twd-ap-articles-toolbar, .twd-sk-resources__grid .twd-ap-articles-loadmore-row { display: none; }
+
 /* ---- contact ---- */
 .twd-sk-contact__grid { display: grid; grid-template-columns: 1fr; gap: $gap-lg; }
 .twd-sk-contact--split .twd-sk-contact__grid { grid-template-columns: 1fr 1fr; align-items: start; }
@@ -737,4 +746,6 @@
   .twd-sk-faq__groups:not(:has(.twd-sk-faq__group:target)) .twd-sk-faq__group:not(.twd-sk-faq__group--default) { display: none; }
   .twd-sk-faq__groups:has(.twd-sk-faq__group:target) .twd-sk-faq__group:not(:target) { display: none; }
   .twd-sk-faq__group + .twd-sk-faq__group { margin-top: 0; }
+  /* The articles strip: introduction beside the cards (0.14.0). */
+  .twd-sk-resources__row { grid-template-columns: 1fr 2fr; }
 }
