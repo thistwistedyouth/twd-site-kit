@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.14.0
+Stable tag: 0.14.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -23,8 +23,10 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 
 == Changelog ==
 
-= 0.14.0 =
-* Built on a branch for the studio route (the owner's own production process). Nothing here is on by default: a site that updates and changes nothing looks exactly as before.
+= 0.14.1 =
+* A larger update. Nothing here is on by default: a site that updates and changes nothing looks exactly as before. Update one site first and look at it.
+* New: a large footer layout (`feature`). The logo large, the footer text as a heading, a Contact label with the email, phone and address, the registration lines, the page links in two columns, and a slim dark strip below with only the copyright and the legal links. Choose it in the Site tab, Header and footer, or with `wp twd-sk style apply --footer=feature`. Its logo sizes are their own settings, so the other footers do not change.
+* New: a text wordmark header, off until ticked in the Site tab. The logo as live text: on the front page a centred stack (a small symbol, the site name in capitals, an optional second line, the menu below), on every other page one row (symbol and name at the left, menu at the right), and a compact row when scrolled. The menu gets its own smaller look (capitals, 13px by default, all set by tokens), and the page you are on is marked by a small dot instead of an underline (or colour, a short bar or nothing). Also in a style kit, the site brief and `wp twd-sk style apply --wordmark`.
 * New style packs: Ink (text-led, off-white and black with one blue-green), Ember (warm editorial) and Midnight (bold modern). Eight more bundled fonts (EB Garamond, Inter, Source Serif 4, Work Sans, Nunito Sans, DM Sans, Fraunces, Playfair Display), still with no request to any font service.
 * Logo sizes in the Site tab (header, phone, front page, footer). An option for a bigger logo on the front page with a small logo mark on other pages. An option for a transparent header over a page that opens with a full-width picture.
 * New layouts: question groups, prose text, an articles strip (a few articles from one category beside an introduction), a parallax picture hero (still on phones and for reduced motion) with overlay and alignment options, services as linked rows, steps as a timeline, questions in two columns, a logos grid, hours in a card, areas split.
@@ -34,6 +36,8 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 * Publishing a kit page from wp-admin while example text remains keeps it a draft with a notice and a "publish it anyway" link. A notice on a kit page's edit screen says where it is edited.
 * Full site set up: "Build a draft anyway" when questions are still open; each gap becomes a visible marker.
 * One skip link on the Hello theme. Unknown layouts in a brief fall back to the standard one with a warning. `wp twd-sk save --pictures` places pictures by name.
+* `wp twd-sk style apply` can change only the header or footer layout (`--header`, `--footer`, `--wordmark`, `--scrolled-name`, `--menu-marker`) with no pack name.
+* Fixed: the less-motion setting now really stops the fixed header's size change on scroll. A style snapshot now also keeps the transparent header setting, so a revert restores it.
 
 = 0.13.0 =
 * New: Shrink on scroll. A tick box in the Site tab, Header and footer ("Make the fixed header smaller when scrolling"), off by default. With it on and the header fixed at the top, the header gets a little smaller (smaller logo, less space above and below) after a short scroll and returns to full size at the top. The page never moves when it changes size.
