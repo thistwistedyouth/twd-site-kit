@@ -7,7 +7,7 @@
  * the words and links come from the site profile (TWD_SK_Profile). Variants live here, in the
  * plugin, so a new site needs no layout work.
  *
- * Header variants: bar, centered, split, minimal. Footer variants: columns, band, centered, simple, feature.
+ * Header variants: bar, centered, split, minimal. Footer variants: columns, band, centered, simple, feature, compact (0.14.1).
  *
  * Placement (0.9.1): on the Hello theme, Site Kit places the header and footer itself, with no
  * Elementor Pro needed. It switches off Hello's own basic header and footer (the filter
@@ -155,6 +155,7 @@ class TWD_SK_Chrome {
 			'simple'   => 'Just the copyright, legal links and registration lines',
 			// 0.14.0: the large logo, footer text as a heading, contact and registration, links in two columns, a dark strip below.
 			'feature'  => 'Large logo with contact and registration, links in two columns, dark strip below',
+			'compact'  => 'Tagline on top, logo left, links right, and a dark bar for the small print',
 		);
 	}
 
@@ -176,7 +177,7 @@ class TWD_SK_Chrome {
 			'twd-sk-header__strip', 'twd-sk-header__strip-inner', 'twd-sk-header__strip-link', 'twd-sk-header__inner',
 			'twd-sk-header__logo', 'twd-sk-header__logo-img', 'twd-sk-header__logo-text', 'twd-sk-header__toggle', 'twd-sk-header__bars',
 			// 0.14.0: the front page's larger stacked logo, and the small mark used elsewhere.
-			'twd-sk-header--front', 'twd-sk-header__logo-mark', 'twd-sk-chrome--front',
+			'twd-sk-header--front', 'twd-sk-header__logo-mark', 'twd-sk-header__logo-name', 'twd-sk-chrome--front',
 			// 0.14.0: the header laid transparent over a page's opening full-width picture.
 			'twd-sk-header--over', 'twd-sk-chrome--over',
 			'twd-sk-header__panel', 'twd-sk-header__nav', 'twd-sk-header__menu', 'twd-sk-header__item', 'twd-sk-header__item--parent',
@@ -191,6 +192,9 @@ class TWD_SK_Chrome {
 			// 0.14.0: the text wordmark header (a mark, the name and a second line as live text, centred on every page).
 			'twd-sk-header--wordmark', 'twd-sk-header--wm-front', 'twd-sk-header--wm-name', 'twd-sk-header__mark', 'twd-sk-header__name', 'twd-sk-header__line',
 			'twd-sk-chrome--wordmark', 'twd-sk-chrome--wm-front', 'twd-sk-chrome--noline',
+			// 0.14.1: the compact footer (tagline on top, logo left, links right, a bar for the small print).
+			'twd-sk-footer__top', 'twd-sk-footer__tagline', 'twd-sk-footer__row', 'twd-sk-footer__brand', 'twd-sk-footer__links--row',
+			'twd-sk-footer__bottom--bar', 'twd-sk-footer__meta',
 		);
 		foreach ( array_keys( self::header_variants() ) as $v ) {
 			$classes[] = 'twd-sk-header--' . $v;
@@ -424,7 +428,10 @@ class TWD_SK_Chrome {
 		if ( $front ) {
 			$full = self::logo_img( $profile['logo_id'], 'twd-sk-header__logo-img', $name );
 			if ( '' !== $full ) {
-				return $mark . $full;
+				// 0.14.1: the site name beside the mark, shown only once the header shrinks (the stylesheet
+				// hides it and the mark on the front page until then), as on every other page.
+				$label = '' !== $mark ? '<span class="twd-sk-header__logo-text twd-sk-header__logo-name">' . self::esc( $name ) . '</span>' : '';
+				return $mark . $full . $label;
 			}
 		} elseif ( '' !== $mark ) {
 			return $mark . '<span class="twd-sk-header__logo-text">' . self::esc( $name ) . '</span>';
@@ -612,6 +619,9 @@ class TWD_SK_Chrome {
 		}
 		$eff     = self::effective();
 		$variant = $eff['footer'];
+		if ( 'compact' === $variant ) {
+			return self::render_compact_footer( $profile );
+		}
 
 		$bottom = '<div class="twd-sk-footer__bottom"><div class="twd-sk-inner twd-sk-footer__bottom-inner">' . self::copyright( $profile ) . self::legal_links( $profile ) . '</div></div>';
 		if ( 'feature' === $variant ) {
@@ -734,6 +744,48 @@ class TWD_SK_Chrome {
 
 		return '<div class="twd-sk-page twd-sk-chrome"><footer class="twd-sk-footer twd-sk-footer--feature twd-sk-footer--cols-' . ( '' !== $links ? 2 : 1 ) . '">'
 			. $main . $bottom . '</footer></div>';
+	}
+
+	/**
+	 * The compact footer (0.14.1): the tagline centred on top, the logo (or the name) on the left with the menu
+	 * links beside it on the right, then one dark bar for the small print: the copyright, the registration
+	 * lines, the phone, email and address when the profile has them, and the legal links. No headings.
+	 */
+	private static function render_compact_footer( $profile ) {
+		$out = '<div class="twd-sk-page twd-sk-chrome"><footer class="twd-sk-footer twd-sk-footer--compact twd-sk-footer--cols-1">';
+		if ( '' !== $profile['footer_text'] ) {
+			$out .= '<div class="twd-sk-inner twd-sk-footer__top"><p class="twd-sk-footer__tagline">' . self::esc( $profile['footer_text'] ) . '</p></div>';
+		}
+		$out .= '<div class="twd-sk-inner twd-sk-footer__row"><div class="twd-sk-footer__brand">'
+			. self::logo_html( $profile, 'twd-sk-footer__logo-img', 'twd-sk-footer__name', true ) . '</div>';
+		if ( $profile['menu'] ) {
+			$out .= '<nav aria-label="Footer"><ul class="twd-sk-footer__links twd-sk-footer__links--row">';
+			foreach ( $profile['menu'] as $item ) {
+				$out .= '<li><a class="twd-sk-footer__link" href="' . self::url( $item['url'] ) . '">' . self::esc( $item['label'] ) . '</a></li>';
+			}
+			$out .= '</ul></nav>';
+		}
+		$out .= '</div>';
+
+		$meta = array();
+		foreach ( $profile['registration'] as $line ) {
+			$meta[] = '<span class="twd-sk-footer__reg-line">' . self::esc( $line ) . '</span>';
+		}
+		if ( '' !== $profile['phone'] ) {
+			$meta[] = '<span class="twd-sk-footer__contact">' . self::phone_html( $profile['phone'], 'twd-sk-footer__link' ) . '</span>';
+		}
+		if ( '' !== $profile['email'] ) {
+			$meta[] = '<span class="twd-sk-footer__contact">' . self::email_html( $profile['email'], 'twd-sk-footer__link' ) . '</span>';
+		}
+		if ( $profile['address'] ) {
+			$meta[] = '<span class="twd-sk-footer__contact">' . self::esc( implode( ', ', $profile['address'] ) ) . '</span>';
+		}
+		$out .= '<div class="twd-sk-footer__bottom twd-sk-footer__bottom--bar"><div class="twd-sk-inner twd-sk-footer__bottom-inner">'
+			. self::copyright( $profile )
+			. ( $meta ? '<div class="twd-sk-footer__meta">' . implode( '', $meta ) . '</div>' : '' )
+			. self::legal_links( $profile )
+			. '</div></div></footer></div>';
+		return $out;
 	}
 
 	public static function render_minimal_footer() {

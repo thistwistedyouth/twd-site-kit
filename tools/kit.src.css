@@ -689,7 +689,10 @@
 .twd-sk-header--front.twd-sk-header--shrunk .twd-sk-header__panel { margin-left: auto; }
 .twd-sk-header--front.twd-sk-header--shrunk .twd-sk-header__logo-img { max-height: $logo-height-sm; }
 .twd-sk-header--front.twd-sk-header--shrunk .twd-sk-header__logo-mark { display: block; }
-.twd-sk-header--front.twd-sk-header--shrunk .twd-sk-header__logo-mark + .twd-sk-header__logo-img { display: none; }
+.twd-sk-header--front.twd-sk-header--shrunk .twd-sk-header__logo-mark ~ .twd-sk-header__logo-img { display: none; }
+/* 0.14.1: the site name beside the mark once shrunk, as on every other page. Hidden on the front page until then. */
+.twd-sk-header--front .twd-sk-header__logo-name { display: none; }
+.twd-sk-header--front.twd-sk-header--shrunk .twd-sk-header__logo-name { display: block; }
 .twd-sk-header__logo-text { font-family: $font-heading; font-size: $size-h3; font-weight: $heading-weight; font-style: $heading-style; line-height: 1.2; color: $color-title; }
 .twd-sk-header__toggle {
   display: none; align-items: center; justify-content: center; min-width: 48px; min-height: 48px; padding: 0;
@@ -838,12 +841,28 @@
 .twd-sk-footer--feature .twd-sk-footer__bottom-inner { padding-top: 12px; padding-bottom: 12px; }
 .twd-sk-footer--feature .twd-sk-footer__copy, .twd-sk-footer--feature .twd-sk-footer__legal { color: $color-on-band; }
 .twd-sk-footer--feature .twd-sk-footer__legal-link { color: $color-accent-on-dark; }
+/* The compact footer (0.14.1): the tagline centred on top, the logo left and the links right, then a dark bar for the
+   small print (copyright, registration, email, legal links). No headings, little height. */
+.twd-sk-footer--compact { border-top: 1px solid $color-border; }
+.twd-sk-footer__top { padding-top: $gap-md; }
+.twd-sk-footer--compact .twd-sk-footer__tagline { margin: 0; text-align: center; font-family: $font-heading; font-size: $size-h3; font-weight: $heading-weight; font-style: $heading-style; line-height: 1.3; color: $color-title; }
+.twd-sk-footer__row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: $gap-sm $gap-lg; padding-top: 18px; padding-bottom: $gap-sm; }
+.twd-sk-footer__brand { margin: 0; }
+.twd-sk-footer__links--row { display: grid; grid-auto-flow: column; grid-template-rows: repeat(3, auto); gap: 8px 40px; }
+.twd-sk-footer__links--row > li + li { margin-top: 0; }
+.twd-sk-footer--compact .twd-sk-footer__bottom--bar { border-top: 0; background-color: $color-band; color: $color-on-band; }
+.twd-sk-footer--compact .twd-sk-footer__bottom-inner { gap: 6px 28px; padding-top: 14px; padding-bottom: 14px; }
+.twd-sk-footer__meta { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 20px; }
+.twd-sk-footer--compact .twd-sk-footer__copy, .twd-sk-footer--compact .twd-sk-footer__reg-line, .twd-sk-footer--compact .twd-sk-footer__contact { margin: 0; font-size: $size-small; line-height: $line-body; color: $color-on-band; }
+.twd-sk-footer--compact .twd-sk-footer__bottom--bar .twd-sk-footer__link, .twd-sk-footer--compact .twd-sk-footer__bottom--bar .twd-sk-footer__legal-link { color: $color-accent-on-dark; }
 
 @media (max-width: 900px) {
   .twd-sk-text__grid, .twd-sk-contact--split .twd-sk-contact__grid { grid-template-columns: 1fr; }
   .twd-sk-text__aside { position: static; }
 }
 @media (max-width: 768px) {
+  .twd-sk-footer__row { flex-direction: column; align-items: flex-start; }
+  .twd-sk-footer__meta { justify-content: flex-start; flex-basis: 100%; }
   .twd-sk-inner { padding-left: $gutter-sm; padding-right: $gutter-sm; }
   & > :not(section):not(.twd-sk-inner):not(.twd-sk-gallery-label):not(.twd-sk-header):not(.twd-sk-footer) { padding-left: $gutter-sm; padding-right: $gutter-sm; }
   .twd-sk-hero--split, .twd-sk-hero--compact, .twd-sk-text, .twd-sk-image-text, .twd-sk-quote,

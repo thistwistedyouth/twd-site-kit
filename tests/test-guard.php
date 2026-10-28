@@ -82,3 +82,138 @@ twd_sk_test( 'guard: started from the modules (so off in safe mode) and hooked o
 	TWD_SK_Guard::init();
 	twd_sk_true( ! empty( $GLOBALS['twd_stub']['hooks']['wp_insert_post_data'] ) );
 } );
+
+// ---- Elementor and a kit page (0.14.1) ----
+
+function twd_sk_guard_elementor_page() {
+	twd_sk_guard_page( '<section class="twd-sk-hero"><h1 class="twd-sk-hero__title">Welcome</h1></section>' );
+	twd_stub_add_post( 33, 'page', 'An ordinary page with nothing from the kit' );
+	$GLOBALS['twd_stub']['caps']   = array( 'edit_pages', 'edit_post:31', 'edit_post:33' );
+	$_REQUEST = array( 'post' => '31', 'action' => 'elementor' );
+	$_GET     = array( 'post' => '31', 'action' => 'elementor' );
+}
+function twd_sk_guard_elementor_door() {
+	try {
+		TWD_SK_Guard::block_elementor_editor();
+	} catch ( TWD_SK_Stub_Die $e ) {
+		return $e->getMessage();
+	}
+	return null;
+}
+
+twd_sk_test( 'guard elementor: the editor door shows a plain card on a kit page, with a way back and no way on for an editor', function () {
+	twd_sk_guard_elementor_page();
+	$card = twd_sk_guard_elementor_door();
+	twd_sk_true( null !== $card, 'Elementor\'s editor is replaced' );
+	twd_sk_has( 'This page is edited on the page itself', $card );
+	twd_sk_has( 'press Visual editor', $card );
+	twd_sk_has( 'TWD Kit Page template', $card );
+	twd_sk_has( 'href="https://example.test/?page_id=31"', $card, 'a link back to the page' );
+	twd_sk_hasnt( 'open Elementor anyway', $card, 'an editor cannot carry on' );
+	twd_sk_hasnt( 'twd_sk_elementor_ok', $card );
+	twd_sk_eq( 200, $GLOBALS['twd_stub']['die_args']['response'] );
+	twd_sk_true( 1 !== preg_match( '/[\x{2013}\x{2014}]/u', $card ), 'no em or en dashes' );
+	// Even with the administrator's link and a good nonce, an editor is stopped.
+	$_GET['twd_sk_elementor_ok'] = '1';
+	$_GET['_wpnonce']            = 'good-nonce';
+	$GLOBALS['twd_stub']['nonce_actions'] = array( 'twd_sk_elementor_ok_31' );
+	twd_sk_true( null !== twd_sk_guard_elementor_door(), 'the override needs manage_options' );
+} );
+
+twd_sk_test( 'guard elementor: an administrator sees the same card with one more click, and only that exact link (this page, a good nonce) lets Elementor open', function () {
+	twd_sk_guard_elementor_page();
+	$GLOBALS['twd_stub']['caps'] = true;
+	$card = twd_sk_guard_elementor_door();
+	twd_sk_true( null !== $card );
+	twd_sk_has( 'Administrators only:', $card );
+	twd_sk_has( 'open Elementor anyway', $card );
+	twd_sk_has( 'post.php?post=31&amp;action=elementor&amp;twd_sk_elementor_ok=1&amp;_wpnonce=NONCE_twd_sk_elementor_ok_31', $card, 'the link names this page and carries its own nonce action' );
+	// The link is followed.
+	$GLOBALS['twd_stub']['nonce_actions'] = array( 'twd_sk_elementor_ok_31' );
+	$_GET['twd_sk_elementor_ok'] = '1';
+	$_GET['_wpnonce']            = 'good-nonce';
+	twd_sk_eq( null, twd_sk_guard_elementor_door(), 'Elementor may open' );
+	// A wrong nonce, no nonce, a nonce for another page, and ok=0 all still show the card.
+	$_GET['_wpnonce'] = 'bad';
+	twd_sk_true( null !== twd_sk_guard_elementor_door(), 'wrong nonce' );
+	unset( $_GET['_wpnonce'] );
+	twd_sk_true( null !== twd_sk_guard_elementor_door(), 'no nonce' );
+	$_GET['_wpnonce'] = 'good-nonce';
+	$GLOBALS['twd_stub']['nonce_actions'] = array( 'twd_sk_elementor_ok_99' );
+	twd_sk_true( null !== twd_sk_guard_elementor_door(), 'a nonce for another page' );
+	$GLOBALS['twd_stub']['nonce_actions'] = array( 'twd_sk_elementor_ok_31' );
+	$_GET['twd_sk_elementor_ok'] = '0';
+	twd_sk_true( null !== twd_sk_guard_elementor_door(), 'ok is not 1' );
+	$GLOBALS['twd_stub']['nonce_actions'] = array();
+} );
+
+twd_sk_test( 'guard elementor: a page that is not a kit page, a missing page and a request with no page are never touched', function () {
+	twd_sk_guard_elementor_page();
+	$GLOBALS['twd_stub']['caps'] = true;
+	$_REQUEST['post'] = '33';
+	twd_sk_eq( null, twd_sk_guard_elementor_door(), 'an ordinary page opens in Elementor as usual' );
+	$_REQUEST['post'] = '999';
+	twd_sk_eq( null, twd_sk_guard_elementor_door(), 'a page that does not exist' );
+	unset( $_REQUEST['post'] );
+	twd_sk_eq( null, twd_sk_guard_elementor_door(), 'no page given' );
+	$_REQUEST['post'] = '-31';
+	twd_sk_true( null !== twd_sk_guard_elementor_door(), 'a negative number is made positive first (absint), so it can only ever mean page 31, never skip the check' );
+	$_REQUEST = array();
+	$_GET     = array();
+} );
+
+twd_sk_test( 'guard elementor: the Edit with Elementor link in the pages list and the classic edit screen button are hidden on kit pages from an editor, and kept for an administrator and on other pages', function () {
+	twd_sk_guard_elementor_page();
+	$kit   = get_post( 31 );
+	$plain = get_post( 33 );
+	$acts  = array( 'edit' => '<a>Edit</a>', 'edit_with_elementor' => '<a>Edit with Elementor</a>', 'trash' => '<a>Trash</a>' );
+	$out   = TWD_SK_Guard::row_actions( $acts, $kit );
+	twd_sk_true( ! isset( $out['edit_with_elementor'] ), 'hidden from an editor on a kit page' );
+	twd_sk_eq( array( 'edit', 'trash' ), array_keys( $out ), 'nothing else is touched' );
+	twd_sk_true( isset( TWD_SK_Guard::row_actions( $acts, $plain )['edit_with_elementor'] ), 'kept on another page' );
+	$only = array( 'edit' => '<a>Edit</a>' );
+	twd_sk_eq( $only, TWD_SK_Guard::row_actions( $only, $kit ), 'no link to remove, no change' );
+	$GLOBALS['twd_stub']['caps'] = true;
+	twd_sk_true( isset( TWD_SK_Guard::row_actions( $acts, $kit )['edit_with_elementor'] ), 'kept for an administrator' );
+
+	// The big button: removed from Elementor's own admin object, only for an editor on a kit page.
+	$GLOBALS['twd_stub']['caps']            = array( 'edit_pages', 'edit_post:31', 'edit_post:33' );
+	$GLOBALS['twd_stub']['removed_actions'] = array();
+	TWD_SK_Guard::hide_elementor_button( $kit );
+	twd_sk_eq( array(), $GLOBALS['twd_stub']['removed_actions'], 'with no Elementor active there is nothing to remove' );
+	if ( ! class_exists( 'Elementor\Plugin' ) ) {
+		eval( 'namespace Elementor { class Plugin { public static $instance; } class StubAdmin { public function print_switch_mode_button() {} } }' ); // phpcs:ignore Squiz.PHP.Eval.Discouraged
+	}
+	\Elementor\Plugin::$instance        = new stdClass();
+	\Elementor\Plugin::$instance->admin = new \Elementor\StubAdmin();
+	TWD_SK_Guard::hide_elementor_button( $kit );
+	$removed = $GLOBALS['twd_stub']['removed_actions'];
+	twd_sk_eq( 1, count( $removed ) );
+	twd_sk_eq( 'edit_form_after_title', $removed[0]['hook'] );
+	twd_sk_eq( 'print_switch_mode_button', $removed[0]['callback'][1] );
+	twd_sk_eq( 10, $removed[0]['priority'], 'Elementor adds it at the default priority' );
+	$GLOBALS['twd_stub']['removed_actions'] = array();
+	TWD_SK_Guard::hide_elementor_button( $plain );
+	twd_sk_eq( array(), $GLOBALS['twd_stub']['removed_actions'], 'not on another page' );
+	$GLOBALS['twd_stub']['caps'] = true;
+	TWD_SK_Guard::hide_elementor_button( $kit );
+	twd_sk_eq( array(), $GLOBALS['twd_stub']['removed_actions'], 'not for an administrator' );
+	\Elementor\Plugin::$instance = null;
+} );
+
+twd_sk_test( 'guard elementor: hooked on the editor door at priority 1 (before Elementor\'s 10), the row actions at 12 (after its 11) and the edit screen at 1, only in admin', function () {
+	twd_stub_reset();
+	$GLOBALS['twd_stub']['admin'] = false;
+	TWD_SK_Guard::init();
+	twd_sk_true( empty( $GLOBALS['twd_stub']['hooks']['admin_action_elementor'] ), 'nothing on the front end' );
+	$GLOBALS['twd_stub']['admin'] = true;
+	TWD_SK_Guard::init();
+	foreach ( array( 'admin_action_elementor' => 1, 'page_row_actions' => 12, 'edit_form_after_title' => 1 ) as $hook => $priority ) {
+		twd_sk_true( ! empty( $GLOBALS['twd_stub']['hooks'][ $hook ] ), $hook . ' is hooked' );
+		twd_sk_eq( $priority, $GLOBALS['twd_stub']['hook_priority'][ $hook ][0], $hook . ' priority' );
+	}
+	$src = file_get_contents( ABSPATH . 'includes/class-twd-sk-guard.php' );
+	twd_sk_hasnt( 'wp_redirect', $src, 'no redirect to be followed or abused' );
+	twd_sk_hasnt( "\$_REQUEST['post']\n", $src );
+	twd_sk_has( 'absint( $_REQUEST[\'post\'] )', $src, 'the page number is a whole number' );
+} );

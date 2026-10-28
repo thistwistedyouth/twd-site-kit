@@ -50,7 +50,7 @@ twd_sk_test( 'chrome: the shortcodes are registered by init (and init does not l
 
 twd_sk_test( 'chrome: four header and five footer variants, each with a label', function () {
 	twd_sk_eq( array( 'bar', 'centered', 'split', 'minimal' ), array_keys( TWD_SK_Chrome::header_variants() ) );
-	twd_sk_eq( array( 'columns', 'band', 'centered', 'simple', 'feature' ), array_keys( TWD_SK_Chrome::footer_variants() ) );
+	twd_sk_eq( array( 'columns', 'band', 'centered', 'simple', 'feature', 'compact' ), array_keys( TWD_SK_Chrome::footer_variants() ) );
 	foreach ( array_merge( TWD_SK_Chrome::header_variants(), TWD_SK_Chrome::footer_variants() ) as $label ) {
 		twd_sk_true( strlen( $label ) > 10 );
 	}
@@ -246,9 +246,9 @@ twd_sk_test( 'chrome header: the menu script is enqueued only when the full head
 	twd_sk_eq( array(), $GLOBALS['twd_stub']['scripts'] );
 } );
 
-twd_sk_test( 'chrome footer: columns, band, centred, simple and feature', function () {
+twd_sk_test( 'chrome footer: columns, band, centred, simple, feature and compact', function () {
 	twd_sk_chrome_setup();
-	foreach ( array( 'columns', 'band', 'centered', 'simple', 'feature' ) as $v ) {
+	foreach ( array( 'columns', 'band', 'centered', 'simple', 'feature', 'compact' ) as $v ) {
 		TWD_SK_Chrome::save_settings( array( 'footer_variant' => $v ) );
 		$html = TWD_SK_Chrome::render_footer();
 		twd_sk_has( 'twd-sk-footer twd-sk-footer--' . $v, $html, $v );
@@ -601,7 +601,9 @@ twd_sk_test( 'chrome front logo (0.14.0): off by default; on, the front page get
 	twd_sk_has( 'twd-sk-chrome--sticky twd-sk-chrome--front', $html, 'the spacer knows the header is taller' );
 	twd_sk_true( strpos( $html, 'twd-sk-header__logo-mark' ) < strpos( $html, 'twd-sk-header__logo-img' ), 'mark first, then the full logo' );
 	twd_sk_has( '<img class="twd-sk-header__logo-mark" src="/u/mark.png" alt=""', $html );
-	twd_sk_hasnt( 'twd-sk-header__logo-text', $html );
+	// 0.14.1: the site name comes after the full logo, for the shrunk header (the stylesheet hides it until then).
+	twd_sk_has( '<span class="twd-sk-header__logo-text twd-sk-header__logo-name">Calm Practice</span>', $html );
+	twd_sk_true( strpos( $html, 'twd-sk-header__logo-img' ) < strpos( $html, 'twd-sk-header__logo-name' ), 'name after the full logo, so the sibling rule can hide the logo' );
 	// On, another page: the mark and the site name as text, no full logo.
 	$GLOBALS['twd_stub']['front'] = false;
 	$html = TWD_SK_Chrome::render_header();
@@ -630,7 +632,9 @@ twd_sk_test( 'chrome front logo css: larger logo and a column layout on the fron
 	twd_sk_true( 1 === preg_match( '/twd-sk-header--front\.twd-sk-header--front \.twd-sk-header__inner\.twd-sk-header__inner \{[^}]*flex-direction: column/', $raw ), 'front page stacks the logo above the menu' );
 	twd_sk_true( 1 === preg_match( '/twd-sk-header--front\.twd-sk-header--front \.twd-sk-header__logo-img\.twd-sk-header__logo-img \{[^}]*max-height: var\(--twd-site-logo-height-front\)/', $raw ), 'the front page logo height is a token' );
 	twd_sk_true( 1 === preg_match( '/twd-sk-header--front\.twd-sk-header--front\.twd-sk-header--shrunk\.twd-sk-header--shrunk \.twd-sk-header__inner\.twd-sk-header__inner \{[^}]*flex-direction: row/', $raw ), 'shrunk, it is a row again' );
-	twd_sk_true( 1 === preg_match( '/twd-sk-header--shrunk\.twd-sk-header--shrunk \.twd-sk-header__logo-mark\.twd-sk-header__logo-mark \+ \.twd-sk-header__logo-img\.twd-sk-header__logo-img \{[^}]*display: none/', $raw ), 'shrunk, the mark replaces the full logo' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-header--shrunk\.twd-sk-header--shrunk \.twd-sk-header__logo-mark\.twd-sk-header__logo-mark ~ \.twd-sk-header__logo-img\.twd-sk-header__logo-img \{[^}]*display: none/', $raw ), 'shrunk, the mark replaces the full logo' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-header--front\.twd-sk-header--front \.twd-sk-header__logo-name\.twd-sk-header__logo-name \{[^}]*display: none/', $raw ), '0.14.1: the name beside the mark is hidden on the front page until shrunk' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-header--front\.twd-sk-header--front\.twd-sk-header--shrunk\.twd-sk-header--shrunk \.twd-sk-header__logo-name\.twd-sk-header__logo-name \{[^}]*display: block/', $raw ), '0.14.1: and shown once shrunk' );
 	twd_sk_true( 1 === preg_match( '/twd-sk-chrome--sticky\.twd-sk-chrome--sticky\.twd-sk-chrome--front\.twd-sk-chrome--front \{[^}]*height: calc\(var\(--twd-site-logo-height-front\)/', $raw ), 'the spacer grows with the logo' );
 	twd_sk_true( 1 === preg_match( '/prefers-reduced-motion: reduce\)\s*\{[^@]*twd-sk-header__logo-mark[^{]*\{[^}]*transition: none/', $raw ), 'no motion when asked' );
 	twd_sk_true( 1 === preg_match( '/@media \(max-width: 900px\)[^@]*twd-sk-header__logo-img\.twd-sk-header__logo-img \{[^}]*logo-height-sm/', $raw ), 'phones use the small logo height' );
@@ -830,4 +834,70 @@ twd_sk_test( 'chrome footer feature tokens: a large logo on desktop, 150px or mo
 		return $b['id'];
 	}, TWD_SK_Contrast::check( $tokens )['blocking'] );
 	twd_sk_true( in_array( 'band_text', $ids, true ) && in_array( 'band_accent', $ids, true ) );
+} );
+
+// ---- The compact footer (0.14.1) ----
+
+twd_sk_test( 'chrome footer compact: the tagline on top, the logo or name then the menu links, and one bar for the small print; no headings, no columns', function () {
+	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'registration' => array( '[PLACEHOLDER: Q09 registration number]' ) ) ), array( 'footer_variant' => 'compact', 'footer_columns' => 3 ) );
+	$html = TWD_SK_Chrome::render_footer();
+	twd_sk_has( 'twd-sk-footer twd-sk-footer--compact twd-sk-footer--cols-1', $html );
+	twd_sk_has( '<p class="twd-sk-footer__tagline">Gentle, practical therapy.</p>', $html );
+	twd_sk_hasnt( 'twd-sk-footer__heading', $html, 'no Explore or Contact headings' );
+	twd_sk_hasnt( 'Explore', $html );
+	twd_sk_hasnt( 'twd-sk-footer__col', $html, 'no columns' );
+	$order = array( 'twd-sk-footer__top', 'twd-sk-footer__row', 'twd-sk-footer__brand', 'twd-sk-footer__links--row', 'twd-sk-footer__bottom--bar' );
+	$last  = -1;
+	foreach ( $order as $c ) {
+		$at = strpos( $html, $c );
+		twd_sk_true( false !== $at && $at > $last, $c . ' comes after the one before it' );
+		$last = (int) $at;
+	}
+	// The top level of the menu only, as links; the sub menu stays out of the footer.
+	twd_sk_has( '<a class="twd-sk-footer__link" href="/about">About</a>', $html );
+	twd_sk_has( '<a class="twd-sk-footer__link" href="/services">Services</a>', $html );
+	twd_sk_hasnt( 'Anxiety', $html );
+	// The bar: copyright, registration, phone, email, address, legal links.
+	$bar = substr( $html, strpos( $html, 'twd-sk-footer__bottom--bar' ) );
+	twd_sk_has( '&copy; ' . gmdate( 'Y' ) . ' Calm Practice', $bar );
+	twd_sk_has( '<span class="twd-sk-footer__reg-line">[PLACEHOLDER: Q09 registration number]</span>', $bar, 'the registration marker is still visible, so the publish check still holds the page' );
+	twd_sk_has( 'href="mailto:hello@calm.example"', $bar );
+	twd_sk_has( 'href="tel:01234567890"', $bar );
+	twd_sk_has( '1 High Street', $bar );
+	twd_sk_has( '>Privacy</a>', $bar );
+	twd_sk_hasnt( 'twd-sk-footer__reg"', $html, 'the separate registration block is not used' );
+} );
+
+twd_sk_test( 'chrome footer compact: with no tagline, no menu or no logo it still prints something sensible, and empty details leave nothing behind', function () {
+	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'footer_text' => '', 'phone' => '', 'email' => '', 'address' => array(), 'registration' => array() ) ), array( 'footer_variant' => 'compact' ) );
+	$html = TWD_SK_Chrome::render_footer();
+	twd_sk_hasnt( 'twd-sk-footer__top', $html, 'no tagline, no top block' );
+	twd_sk_hasnt( 'twd-sk-footer__tagline', $html );
+	twd_sk_hasnt( 'twd-sk-footer__meta', $html, 'nothing for the small print but the copyright and legal links' );
+	twd_sk_has( '<span class="twd-sk-footer__name">Calm Practice</span>', $html, 'the name stands in for a logo' );
+	$GLOBALS['twd_stub']['attachments'][50] = array( 'url' => '/u/logo.png', 'w' => 200, 'h' => 80, 'is_image' => true );
+	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'logo_id' => 50 ) ), array( 'footer_variant' => 'compact' ) );
+	twd_sk_has( '<img class="twd-sk-footer__logo-img" src="/u/logo.png"', TWD_SK_Chrome::render_footer(), 'the logo, lazy-loaded' );
+	twd_sk_has( 'loading="lazy"', TWD_SK_Chrome::render_footer() );
+	// Safe mode and an empty profile still give the plain footer, never the compact one.
+	TWD_SK_Safe::set( true );
+	twd_sk_hasnt( 'twd-sk-footer--compact', TWD_SK_Chrome::render_footer() );
+	TWD_SK_Safe::set( false );
+	TWD_SK_Chrome::save_settings( array( 'footer_variant' => 'columns' ) );
+} );
+
+twd_sk_test( 'chrome footer compact css: a dark bar from the band colour, the links in two or more columns of three, the tagline centred, stacked on a phone; the ink pack prefers it', function () {
+	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-footer--compact\.twd-sk-footer--compact \.twd-sk-footer__bottom--bar\.twd-sk-footer__bottom--bar \{[^}]*background-color: var\(--twd-site-color-band\)/', $raw ), 'the bar uses the band colour' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-footer__links--row\.twd-sk-footer__links--row \{[^}]*grid-auto-flow: column;[^}]*grid-template-rows: repeat\(3, auto\)/', $raw ), 'links fill down in rows of three' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-footer--compact\.twd-sk-footer--compact \.twd-sk-footer__tagline\.twd-sk-footer__tagline \{[^}]*text-align: center/', $raw ), 'the tagline is centred, in the compact footer only' );
+	preg_match_all( '/\.twd-sk-footer__tagline\.twd-sk-footer__tagline \{[^}]*\}/', $raw, $all );
+	foreach ( $all[0] as $rule ) {
+		twd_sk_true( false !== strpos( $raw, 'twd-sk-footer--compact.twd-sk-footer--compact ' . $rule ) || false === strpos( $rule, 'text-align' ), 'no unscoped tagline rule centres the feature footer heading' );
+	}
+	twd_sk_true( 1 === preg_match( '/@media \(max-width: 768px\) \{\s*\.twd-sk-page \.twd-sk-footer__row\.twd-sk-footer__row \{[^}]*flex-direction: column/s', $raw ), 'stacked on a phone' );
+	twd_sk_eq( 'compact', TWD_SK_Packs::packs()['ink']['chrome']['footer'], 'the text-led pack prefers the compact footer' );
+	foreach ( array( 'sage', 'grove', 'ember', 'midnight' ) as $slug ) {
+		twd_sk_true( 'compact' !== TWD_SK_Packs::packs()[ $slug ]['chrome']['footer'], $slug . ' keeps its own footer' );
+	}
 } );

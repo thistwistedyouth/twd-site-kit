@@ -49,6 +49,12 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_create_page' ),
 			'permission_callback' => array( __CLASS__, 'can_create_page' ),
 		) );
+		// The editing tools switch (0.14.1): a per-person preference, so it works in safe mode too.
+		register_rest_route( self::ROUTE_NS, '/editor/tools', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_editor_tools' ),
+			'permission_callback' => array( __CLASS__, 'can_use_editor' ),
+		) );
 		if ( ! TWD_SK_Safe::on() ) {
 			self::register_site_routes();
 		}
@@ -102,6 +108,12 @@ class TWD_SK_REST {
 			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/inline', array(
 				'methods'             => 'POST',
 				'callback'            => array( __CLASS__, 'post_inline' ),
+				'permission_callback' => array( __CLASS__, 'can_write_page' ),
+			) );
+			// Add a section and move a section on the page itself, no AI (0.14.1).
+			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/structure', array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_structure' ),
 				'permission_callback' => array( __CLASS__, 'can_write_page' ),
 			) );
 			// The one-box planner (0.10.0): a plan (one AI call), then one change per request.
@@ -407,6 +419,11 @@ class TWD_SK_REST {
 		return self::guard( $request, 'read', false, 'manage_options' );
 	}
 
+	/** Anything about the editor itself (not a page) needs only edit_pages: the editing tools switch. */
+	public static function can_use_editor( $request ) {
+		return self::guard( $request, 'write', false );
+	}
+
 	/** New draft pages need only edit_pages, and no page ID. */
 	public static function can_create_page( $request ) {
 		return self::guard( $request, 'create', false );
@@ -515,6 +532,13 @@ class TWD_SK_REST {
 	/**
 	 * Where a page stands: status, template, publish readiness. Read only.
 	 */
+	/** The editing tools switch (0.14.1): remember, for this person, that the launchers are hidden or shown. */
+	public static function post_editor_tools( $request ) {
+		$off = self::truthy( $request->get_param( 'off' ) );
+		TWD_SK_Editor::set_tools_off( $off );
+		return array( 'off' => $off );
+	}
+
 	public static function get_info( $request ) {
 		return self::info_payload( (int) $request->get_param( 'id' ) );
 	}
@@ -1092,6 +1116,39 @@ class TWD_SK_REST {
 		$note = 'Changed on the page (' . implode( ', ', $parts ) . ')';
 		$saved = TWD_SK_Store::save( $id, $out['html'], array( 'base_version' => $base, 'note' => $note ) );
 		return self::after_write( $id, $saved );
+	}
+
+	/**
+	 * Add a section or move one (0.14.1): the change is made on the stored page, cleaned and saved as one version,
+	 * and the new place of the section comes back (`at`) so the page can reload with it in view.
+	 */
+	public static function post_structure( $request ) {
+		$id   = (int) $request->get_param( 'id' );
+		$base = self::base_version( $request );
+		if ( is_wp_error( $base ) ) {
+			return $base;
+		}
+		if ( $base !== (int) TWD_SK_Store::get_current_version_id( $id ) ) {
+			return self::error( 'twd_sk_conflict', 'This page changed since you opened it. Reload the page and try again.', 409 );
+		}
+		$op = $request->get_param( 'op' );
+		if ( 'add' === $op ) {
+			$out = TWD_SK_Structure::add( $id, array(
+				'after'     => $request->get_param( 'after' ),
+				'component' => $request->get_param( 'component' ),
+				'variant'   => $request->get_param( 'variant' ),
+			) );
+		} elseif ( 'move' === $op ) {
+			$out = TWD_SK_Structure::move( $id, array( 'index' => $request->get_param( 'index' ), 'dir' => $request->get_param( 'dir' ) ) );
+		} else {
+			return self::error( 'twd_sk_bad_input', 'Choose to add a section or move one.', 400 );
+		}
+		if ( is_wp_error( $out ) ) {
+			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_empty_page' === $out->get_error_code() || 'twd_sk_bad_input' === $out->get_error_code() ? 400 : 502 );
+		}
+		$saved = TWD_SK_Store::save( $id, $out['html'], array( 'base_version' => $base, 'note' => $out['note'] ) );
+		$done  = self::after_write( $id, $saved );
+		return is_wp_error( $done ) ? $done : $done + array( 'at' => (int) $out['at'] );
 	}
 
 	/** The checklist of changes for a request. Nothing is changed. */

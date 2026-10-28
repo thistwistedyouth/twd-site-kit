@@ -29,6 +29,28 @@
 .twd-sk-ed__open--tellus:hover, .twd-sk-ed__open--tellus:focus-visible { background-color: $color-title; border-color: $color-title; color: $color-surface; }
 .twd-sk-ed__open--tellus.twd-sk-ed__open--low { bottom: 84px; }
 
+/* ---- the editing tools switch (0.14.1) ----
+   The switch hides the launchers only: the floating buttons, the Edit header and footer pills and the version
+   label. The pop-up and the editing card are other classes, so a session already open is never hidden. */
+&[data-twd-sk-tools="off"] .twd-sk-ed__open, &[data-twd-sk-tools="off"] .twd-sk-ed__pill, &[data-twd-sk-tools="off"] .twd-sk-ed__version { display: none; }
+.twd-sk-ed__switch {
+  position: fixed; left: 24px; bottom: 204px; z-index: 99990; display: inline-flex; align-items: center; gap: 10px; min-height: 44px;
+  padding: 0 14px 0 10px; border: 1.5px solid $color-border; border-radius: $radius-pill; background-color: $color-surface;
+  box-shadow: $shadow-card; font-family: $font-body; font-size: $size-small; font-weight: $btn-weight; line-height: 1.2; color: $color-title; cursor: pointer;
+}
+.twd-sk-ed__switch:focus-visible { outline: 2px solid $color-accent-text; outline-offset: 2px; }
+.twd-sk-ed__switch-track { position: relative; display: inline-block; width: 36px; height: 20px; border-radius: $radius-pill; background-color: $color-muted; }
+.twd-sk-ed__switch-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: $radius-pill; background-color: $color-surface; }
+.twd-sk-ed__switch[aria-checked="true"] .twd-sk-ed__switch-track { background-color: $color-primary; }
+.twd-sk-ed__switch[aria-checked="true"] .twd-sk-ed__switch-knob { left: 18px; }
+/* With the buttons gone it drops to the corner, where the stack started. */
+&[data-twd-sk-tools="off"] .twd-sk-ed__switch { bottom: 24px; }
+/* With an admin bar item it only shows on a phone, where WordPress hides most admin bar items. */
+&[data-twd-sk-ab] .twd-sk-ed__switch { display: none; }
+@media (max-width: 782px) {
+  &[data-twd-sk-ab] .twd-sk-ed__switch { display: inline-flex; }
+}
+
 /* ---- the in-place editing card (0.10.2: bottom left, where the floating buttons sit, clear of other
    plugins' buttons on the right; full width on a phone, above them while editing) ---- */
 .twd-sk-ed__inlinebar {
@@ -39,6 +61,7 @@
 }
 .twd-sk-ed__inlinebar .twd-sk-ed__btn { margin: 0; }
 .twd-sk-ed__inlinetools, .twd-sk-ed__inlineactions { display: flex; flex-wrap: nowrap; gap: 8px; }
+.twd-sk-ed__inlinetools { flex-wrap: wrap; }
 .twd-sk-ed__inlineactions { margin-left: auto; }
 .twd-sk-ed__tool {
   min-width: 44px; min-height: 44px; padding: 0 12px; background-color: $color-surface; border: 1px solid $color-border;
@@ -47,8 +70,9 @@
 .twd-sk-ed__tool:hover, .twd-sk-ed__tool:focus-visible { border-color: $color-primary; color: $color-primary; }
 .twd-sk-ed__tool:focus-visible { outline: 2px solid $color-accent-text; outline-offset: 2px; }
 .twd-sk-ed__inlinestatus { order: 1; flex: 1 1 100%; font-size: $size-small; color: $color-title; }
-.twd-sk-ed__inlinepanel { order: 2; flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid $color-border; }
+.twd-sk-ed__inlinepanel { order: 2; flex: 1 1 100%; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid $color-border; }
 .twd-sk-ed__inlinepanel .twd-sk-ed__input { flex: 1 1 240px; width: auto; }
+.twd-sk-ed__inlinepanel .twd-sk-ed__select { flex: 1 1 240px; width: auto; min-width: 0; max-width: 100%; }
 .twd-sk-ed__inlinepanel label { flex: 1 1 100%; font-size: $size-small; font-weight: 600; color: $color-title; }
 .twd-sk-ed__inlinehead { flex: 1 1 100%; margin: 0; font-size: $size-small; font-weight: 600; color: $color-title; }
 

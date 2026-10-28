@@ -127,19 +127,19 @@ twd_sk_test( 'looks: the editor\'s numbering marks each top-level section and th
 	$html   = twd_sk_looks_page();
 	$marked = TWD_SK_Inline::mark( $html );
 	foreach ( array( 0, 1, 2, 3, 4, 5, 6 ) as $i ) {
-		twd_sk_true( false !== strpos( $marked, 'data-twd-sk-o="' . $i . '"' ), 'section ' . $i . ' is numbered' );
+		twd_sk_true( false !== strpos( $marked, 'data-twd-sk-sec="' . $i . '"' ), 'section ' . $i . ' is numbered' );
 	}
-	twd_sk_true( 1 === preg_match( '/<section class="twd-sk-services twd-sk-services--cards[^"]*" id="twd-sk-services"[^>]*data-twd-sk-lay="twd-sk-services--cards twd-sk-services--glow"|<section[^>]*data-twd-sk-o="1"[^>]*data-twd-sk-lay="twd-sk-services--cards twd-sk-services--glow"/', $marked ), 'cards and glow can swap' );
-	twd_sk_true( 1 === preg_match( '/<section[^>]*data-twd-sk-o="2"[^>]*data-twd-sk-lay="_ twd-sk-faq--two"/', $marked ), 'the standard faq can become two columns' );
-	twd_sk_true( 1 !== preg_match( '/<section[^>]*data-twd-sk-o="4"[^>]*data-twd-sk-lay/', $marked ), 'pills have no twin' );
-	twd_sk_true( 1 !== preg_match( '/<section[^>]*data-twd-sk-o="6"[^>]*data-twd-sk-lay/', $marked ), 'the notice has none' );
+	twd_sk_true( 1 === preg_match( '/<section class="twd-sk-services twd-sk-services--cards[^"]*" id="twd-sk-services"[^>]*data-twd-sk-lay="twd-sk-services--cards twd-sk-services--glow"|<section[^>]*data-twd-sk-sec="1"[^>]*data-twd-sk-lay="twd-sk-services--cards twd-sk-services--glow"/', $marked ), 'cards and glow can swap' );
+	twd_sk_true( 1 === preg_match( '/<section[^>]*data-twd-sk-sec="2"[^>]*data-twd-sk-lay="_ twd-sk-faq--two"/', $marked ), 'the standard faq can become two columns' );
+	twd_sk_true( 1 !== preg_match( '/<section[^>]*data-twd-sk-sec="4"[^>]*data-twd-sk-lay/', $marked ), 'pills have no twin' );
+	twd_sk_true( 1 !== preg_match( '/<section[^>]*data-twd-sk-sec="6"[^>]*data-twd-sk-lay/', $marked ), 'the notice has none' );
 	// The numbers match the way the page is cut for the server (so a save names the same section).
 	twd_sk_eq( 7, count( TWD_SK_Sections::split( $html )['sections'] ) );
 	// A section inside another section is not numbered on its own.
 	$nested = '<section class="twd-sk-text"><div class="twd-sk-inner"><section class="twd-sk-text"><p>Inner</p></section></div></section><section class="twd-sk-faq"><p>x</p></section>';
 	$m = TWD_SK_Inline::mark( $nested );
-	twd_sk_eq( 2, substr_count( $m, 'data-twd-sk-o=' ) );
-	twd_sk_true( false !== strpos( $m, 'data-twd-sk-o="1"' ) );
+	twd_sk_eq( 2, substr_count( $m, 'data-twd-sk-sec=' ) );
+	twd_sk_true( false !== strpos( $m, 'data-twd-sk-sec="1"' ) );
 	// Nothing about it is stored: the sanitiser removes every data attribute.
 	twd_sk_hasnt( 'data-twd-sk', TWD_SK_Sanitizer::clean( $marked ) );
 } );
@@ -196,7 +196,7 @@ twd_sk_test( 'looks: the pop-up gets the choices only on a kit page outside safe
 	$php = file_get_contents( ABSPATH . 'includes/class-twd-sk-editor.php' );
 	twd_sk_has( "'look'           => ( (bool) \$context['is_kit_page'] && ! TWD_SK_Safe::on() ) ? TWD_SK_Looks::config() : array(),", $php );
 	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
-	foreach ( array( "toolButton('Look'", 'cfg.look', 'data-twd-sk-o', 'data-twd-sk-lay', 'body.looks = ', 'function lookClasses(', 'S.origLook', "'Look of this section: '" ) as $needle ) {
+	foreach ( array( "toolButton('Look'", 'cfg.look', 'data-twd-sk-sec', 'data-twd-sk-lay', 'body.looks = ', 'function lookClasses(', 'S.origLook', "'Look of this section: '" ) as $needle ) {
 		twd_sk_has( $needle, $js );
 	}
 	twd_sk_hasnt( 'innerHTML', $js );

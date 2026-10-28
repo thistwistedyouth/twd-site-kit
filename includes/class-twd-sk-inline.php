@@ -30,8 +30,9 @@ class TWD_SK_Inline {
 	const SPOT_ATTR = 'data-twd-sk-s';
 	// 0.14.0: things that can be removed (a section, a repeated item such as a list entry or card, a button).
 	const REMOVE_ATTR  = 'data-twd-sk-r';
-	// 0.15.0: each top-level section, numbered as TWD_SK_Sections counts them (for its look), and the layouts it can move to.
-	const SECTION_ATTR = 'data-twd-sk-o';
+	// 0.14.1: each top-level section's number, counted as TWD_SK_Sections counts, so Add, Move and Look name a section.
+	const SECTION_ATTR = 'data-twd-sk-sec';
+	// 0.15.0: the layouts that section can move to, for the Look tool.
 	const LAYOUT_ATTR  = 'data-twd-sk-lay';
 	const MAX_REMOVES  = 50;
 	const MAX_EDITS = 400;
@@ -373,26 +374,25 @@ class TWD_SK_Inline {
 		foreach ( $found['removes'] as $i => $el ) {
 			$el->setAttribute( self::REMOVE_ATTR, (string) $i );
 		}
-		// Each top-level section, in the order TWD_SK_Sections counts them, with the layouts it can move to.
+		// Top-level sections, from 0 in page order (a section inside another section is not counted).
 		$n = 0;
-		foreach ( $root->getElementsByTagName( 'section' ) as $section ) {
-			$inside = false;
-			for ( $up = $section->parentNode; $up && $up !== $root; $up = $up->parentNode ) {
-				if ( $up instanceof DOMElement && 'section' === strtolower( $up->nodeName ) ) {
-					$inside = true;
+		foreach ( iterator_to_array( $root->getElementsByTagName( 'section' ) ) as $sec ) {
+			$nested = false;
+			for ( $up = $sec->parentNode; $up instanceof DOMElement && $up !== $root; $up = $up->parentNode ) {
+				if ( 'section' === strtolower( $up->nodeName ) ) {
+					$nested = true;
 					break;
 				}
 			}
-			if ( $inside ) {
-				continue;
+			if ( ! $nested ) {
+				$sec->setAttribute( self::SECTION_ATTR, (string) $n++ );
+				// The layouts this section can move to (0.15.0), from the same registry rules the server applies.
+				$classes = array_values( array_filter( preg_split( '/\s+/', trim( $sec->getAttribute( 'class' ) ) ), 'strlen' ) );
+				$lay     = TWD_SK_Looks::layouts_attr( $classes );
+				if ( '' !== $lay ) {
+					$sec->setAttribute( self::LAYOUT_ATTR, $lay );
+				}
 			}
-			$section->setAttribute( self::SECTION_ATTR, (string) $n );
-			$classes = array_values( array_filter( preg_split( '/\s+/', trim( $section->getAttribute( 'class' ) ) ), 'strlen' ) );
-			$lay     = TWD_SK_Looks::layouts_attr( $classes );
-			if ( '' !== $lay ) {
-				$section->setAttribute( self::LAYOUT_ATTR, $lay );
-			}
-			$n++;
 		}
 		foreach ( $found['spots'] as $i => $node ) {
 			if ( $node instanceof DOMText ) {

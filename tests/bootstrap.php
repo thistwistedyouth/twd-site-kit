@@ -138,11 +138,17 @@ function get_queried_object_id() {
 function is_singular( $type = '' ) {
 	return $GLOBALS['twd_stub']['singular'];
 }
-function add_filter( $name, $callback ) {
+function add_filter( $name, $callback, $priority = 10, $args = 1 ) {
 	$GLOBALS['twd_stub']['hooks'][ $name ][] = $callback;
+	$GLOBALS['twd_stub']['hook_priority'][ $name ][] = $priority;
 }
-function add_action( $name, $callback ) {
-	add_filter( $name, $callback );
+function add_action( $name, $callback, $priority = 10, $args = 1 ) {
+	add_filter( $name, $callback, $priority, $args );
+}
+// 0.14.1: remove_action is recorded, not run, so a test can see what was taken off which hook.
+function remove_action( $name, $callback, $priority = 10 ) {
+	$GLOBALS['twd_stub']['removed_actions'][] = array( 'hook' => $name, 'callback' => $callback, 'priority' => $priority );
+	return true;
 }
 function get_option( $name, $default = false ) {
 	if ( ! empty( $GLOBALS['twd_stub']['option_throws'] ) ) {
@@ -152,6 +158,26 @@ function get_option( $name, $default = false ) {
 }
 function update_option( $name, $value ) {
 	$GLOBALS['twd_stub']['options'][ $name ] = $value;
+	return true;
+}
+function get_post_status( $id = 0 ) {
+	$p = isset( $GLOBALS['twd_stub']['posts'][ (int) $id ] ) ? $GLOBALS['twd_stub']['posts'][ (int) $id ] : null;
+	return $p ? (string) $p->post_status : false;
+}
+function absint( $value ) {
+	return abs( (int) $value );
+}
+// User meta (0.14.1: the editing tools switch is kept per person).
+function get_user_meta( $user_id, $key, $single = false ) {
+	$all = isset( $GLOBALS['twd_stub']['user_meta'] ) ? $GLOBALS['twd_stub']['user_meta'] : array();
+	return isset( $all[ (int) $user_id ][ $key ] ) ? $all[ (int) $user_id ][ $key ] : '';
+}
+function update_user_meta( $user_id, $key, $value ) {
+	$GLOBALS['twd_stub']['user_meta'][ (int) $user_id ][ $key ] = $value;
+	return true;
+}
+function delete_user_meta( $user_id, $key ) {
+	unset( $GLOBALS['twd_stub']['user_meta'][ (int) $user_id ][ $key ] );
 	return true;
 }
 function wp_register_style( $handle, $src, $deps = array(), $ver = false ) {
@@ -339,7 +365,8 @@ function is_user_logged_in() {
 	return (int) $GLOBALS['twd_stub']['user'] > 0;
 }
 function wp_verify_nonce( $nonce, $action ) {
-	return is_string( $nonce ) && $nonce === $GLOBALS['twd_stub']['nonce_ok'] && 'wp_rest' === $action ? 1 : false;
+	$actions = array_merge( array( 'wp_rest' ), isset( $GLOBALS['twd_stub']['nonce_actions'] ) ? (array) $GLOBALS['twd_stub']['nonce_actions'] : array() );
+	return is_string( $nonce ) && $nonce === $GLOBALS['twd_stub']['nonce_ok'] && in_array( $action, $actions, true ) ? 1 : false;
 }
 function wp_create_nonce( $action ) {
 	return $GLOBALS['twd_stub']['nonce_ok'];
@@ -645,6 +672,7 @@ require_once ABSPATH . 'includes/class-twd-sk-launch.php';
 require_once ABSPATH . 'includes/class-twd-sk-upgrade.php';
 require_once ABSPATH . 'includes/class-twd-sk-looks.php';
 require_once ABSPATH . 'includes/class-twd-sk-inline.php';
+require_once ABSPATH . 'includes/class-twd-sk-structure.php';
 require_once ABSPATH . 'includes/class-twd-sk-plan.php';
 require_once ABSPATH . 'includes/class-twd-sk-assets.php';
 require_once ABSPATH . 'includes/class-twd-sk-updater.php';

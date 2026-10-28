@@ -1,8 +1,10 @@
 # Test script: 0.15.0 (branch `claude/twd-site-kit-0-15-0-mjih8y`)
 
-0.15.0 so far: the Embed section, the editable "no articles" line, Bring pages up to date, the Look tool in the Visual editor, the picture look and question-group editing. Tested against the plugin's own test suite (953 tests) and, for the "no articles" line, the Look panel and the question groups, in a real browser with the real stylesheet. The Embed screens have not been tried on a real site. Work through this on a **hidden staging site** only. Riskiest first. If anything goes wrong: `wp twd-sk safe-mode on` (embeds print nothing in safe mode), then send `wp twd-sk doctor`.
+0.15.0 so far: the Embed section, the editable "no articles" line, Bring pages up to date, the Look tool in the Visual editor, the picture look and question-group editing. Tested against the plugin's own test suite (972 tests) and, for the "no articles" line, the Look panel and the question groups, in a real browser with the real stylesheet. The Embed screens have not been tried on a real site. Work through this on a **hidden staging site** only. Riskiest first. If anything goes wrong: `wp twd-sk safe-mode on` (embeds print nothing in safe mode), then send `wp twd-sk doctor`.
 
-Before you start: install the test zip `0.15.0-test2` by hand (Plugins, Add New, Upload Plugin, replace). Take a snapshot first (`wp twd-sk style snapshot "before 0.15"`) and keep the zip of the plugin as it was, so there is a way back.
+This branch now also carries the studio build's pieces (Add section, Move up and Move down, the editing tools switch, the Elementor guard, the compact footer, Ink at 1140); their steps are in `docs/test-script-0.14.1.md`, run them after this script. One check that only exists in the combined build is at the end of this script (section 7).
+
+Before you start: install the test zip `0.15.0-test3` by hand (Plugins, Add New, Upload Plugin, replace). Take a snapshot first (`wp twd-sk style snapshot "before 0.15"`) and keep the zip of the plugin as it was, so there is a way back.
 
 ## 1. The no-articles line
 
@@ -51,3 +53,11 @@ Everything here is as an administrator on a page that uses the kit template.
 
 27. **Editing.** On a page with the Groups layout: Visual editor. All groups show, stacked. Type new words in a tab: its group heading changes with it; type in a heading: its tab follows. Save: the page shows the new tab words and each tab still opens its own group. Press Link with the cursor in a tab: it says a tab's address cannot be changed.
 28. **Removing.** Click a group's tab entry and press Remove: the tab and its group go together; if it was the first group, the next one is shown first on a wide screen. Put back before saving restores both.
+
+## 7. The combined toolbar (Look beside Add section, Move up and Move down)
+
+1. **One card, every tool.** Open a page with the Visual editor, click inside a section. The card at the bottom left shows B, I, Link, Look, Remove and Put back, then Add section, Move up and Move down, then Save changes and Cancel. On a phone the tools wrap onto more rows and nothing is cut off at the right edge.
+2. **One panel at a time.** Press Add section (a panel opens with the kind and layout choices), then press Look: the Add panel closes and the Look panel opens. Press Add section again and the Look panel closes.
+3. **No Embed in Add section.** The list of kinds has no Embed (as an administrator too). Embeds are added from the Site tab (Embeds, Add to this page).
+4. **A move keeps the look.** Change a section's layout with Look and Save. Press Move down on that section: it moves and keeps the new layout.
+5. **Panels stay inside the card.** Open the Add section panel and look at the two drop-down lists: they sit inside the card and do not run past its right edge, at desktop and phone width.

@@ -1451,9 +1451,80 @@
 		yes.focus();
 	}
 
+	/* ---- the editing tools switch (0.14.1) ----
+	 * One switch that hides the floating buttons (Edit with AI, Visual editor, Tell us), the Edit header and
+	 * Edit footer pills and the version label, so the site can be looked at as a visitor sees it, and brings
+	 * them back when pressed again. It sits in the WordPress admin bar when there is one (top left), and as a
+	 * small floating switch otherwise, and on a phone, where WordPress hides most admin bar items. The choice is
+	 * kept for the signed-in user on the server (no browser storage), so it follows them between pages and devices.
+	 * A session already open (the pop-up, the editing card) is never closed by it. */
+	var tools = { off: !!cfg.toolsOff, listeners: [], bar: null, floating: null };
+
+	function toolsLabel() {
+		return 'Editing tools: ' + (tools.off ? 'off' : 'on');
+	}
+
+	function applyTools() {
+		[root, document.getElementById('twd-sk-tellus')].forEach(function (node) {
+			if (!node) {
+				return;
+			}
+			if (tools.off) {
+				node.setAttribute('data-twd-sk-tools', 'off');
+			} else {
+				node.removeAttribute('data-twd-sk-tools');
+			}
+		});
+		if (tools.bar) {
+			tools.bar.textContent = toolsLabel();
+			tools.bar.setAttribute('aria-checked', tools.off ? 'false' : 'true');
+		}
+		if (tools.floating) {
+			tools.floating.setAttribute('aria-checked', tools.off ? 'false' : 'true');
+		}
+		tools.listeners.forEach(function (fn) {
+			fn(tools.off);
+		});
+	}
+
+	function flipTools() {
+		tools.off = !tools.off;
+		applyTools();
+		// Remembered for this user. If it cannot be saved the switch still works for this page view.
+		api('POST', '/editor/tools', { off: tools.off }).catch(function () {});
+	}
+
+	function buildToolsSwitch() {
+		var list = document.getElementById('wp-admin-bar-root-default');
+		if (list) {
+			var a = el('a', { className: 'ab-item', href: '#', role: 'switch', 'aria-checked': 'true' });
+			a.addEventListener('click', function (e) {
+				e.preventDefault();
+				flipTools();
+			});
+			var li = el('li', { id: 'wp-admin-bar-twd-sk-tools' }, [a]);
+			// Right after the WordPress logo, so it sits at the top left.
+			list.insertBefore(li, list.children.length > 1 ? list.children[1] : null);
+			tools.bar = a;
+			root.setAttribute('data-twd-sk-ab', '1');
+		}
+		var track = el('span', { className: 'twd-sk-ed__switch-track', 'aria-hidden': 'true' }, [el('span', { className: 'twd-sk-ed__switch-knob' })]);
+		var sw = el('button', { type: 'button', className: 'twd-sk-ed__switch', role: 'switch', 'aria-checked': 'true' }, [track, el('span', { className: 'twd-sk-ed__switch-label', text: 'Editing tools' })]);
+		sw.addEventListener('click', flipTools);
+		root.appendChild(sw);
+		tools.floating = sw;
+		applyTools();
+	}
+
 	// What other editor scripts (the Site tab) may use. They register tabs here before the pop-up first opens.
 	window.TWD_SK_ED = {
 		cfg: cfg,
+		toolsOff: function () {
+			return tools.off;
+		},
+		onToolsChange: function (fn) {
+			tools.listeners.push(fn);
+		},
 		W: W,
 		api: api,
 		el: el,
@@ -1498,4 +1569,5 @@
 
 	openBtn.addEventListener('click', open);
 	show(openBtn, true);
+	buildToolsSwitch();
 })();

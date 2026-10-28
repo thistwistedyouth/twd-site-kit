@@ -466,7 +466,7 @@ class TWD_SK_CLI {
 	 * : With apply: the header layout (bar, centered, split, minimal).
 	 *
 	 * [--footer=<layout>]
-	 * : With apply: the footer layout (columns, band, centered, simple, feature).
+	 * : With apply: the footer layout (columns, band, centered, simple, feature, compact).
 	 *
 	 * [--wordmark[=<on|off>]]
 	 * : With apply: the text wordmark header (the logo as live text, centred on every page) on or off.
