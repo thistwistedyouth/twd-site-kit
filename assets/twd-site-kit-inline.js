@@ -547,6 +547,10 @@
 			status('Put the cursor in some words, or select some, first.');
 			return;
 		}
+		if (t.classList.contains('twd-sk-faq__tablink')) {
+			status('A group tab always opens its own group, so its address cannot be changed here.');
+			return;
+		}
 		S.range = sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
 		var i = t.getAttribute('data-twd-sk-t');
 		var a = t.tagName === 'A' ? t : (sel.anchorNode && sel.anchorNode.parentNode && sel.anchorNode.parentNode.closest ? sel.anchorNode.parentNode.closest('a') : null);
@@ -902,10 +906,40 @@
 		document.execCommand('insertText', false, text.replace(/\s*[\r\n]+\s*/g, ' '));
 	}
 
+	// A question group's tab and its heading carry the same words, so changing one changes the other (0.15.0).
+	function groupPair(t) {
+		var link = null;
+		var name = null;
+		if (t.classList.contains('twd-sk-faq__tablink')) {
+			link = t;
+			var id = (t.getAttribute('href') || '').replace(/^#/, '');
+			var group = id ? document.getElementById(id) : null;
+			name = group ? group.querySelector('.twd-sk-faq__groupname[data-twd-sk-t]') : null;
+		} else if (t.classList.contains('twd-sk-faq__groupname')) {
+			name = t;
+			var g = t.closest('.twd-sk-faq__group');
+			link = g && g.id ? document.querySelector('.twd-sk-faq__tablink[href="#' + g.id + '"][data-twd-sk-t]') : null;
+		}
+		return link && name ? { link: link, name: name } : null;
+	}
+
+	function syncGroup(t) {
+		var pair = groupPair(t);
+		if (!pair) {
+			return;
+		}
+		var to = t === pair.link ? pair.name : pair.link;
+		if (to.textContent !== t.textContent) {
+			to.textContent = t.textContent;
+			markChanged(to);
+		}
+	}
+
 	function onInput(e) {
 		var t = editableOf(e.target);
 		if (t) {
 			markChanged(t);
+			syncGroup(t);
 		}
 	}
 

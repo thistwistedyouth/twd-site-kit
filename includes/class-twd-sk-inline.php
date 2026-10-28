@@ -124,15 +124,25 @@ class TWD_SK_Inline {
 	}
 
 	/** True when this element holds only words and simple inline markup, and is worth changing. */
+	/** A question group's tab link (0.15.0): its words can change, its address (the group it opens) never does. */
+	private static function is_tab_link( DOMElement $el ) {
+		return 'a' === strtolower( $el->nodeName ) && 1 === preg_match( '/(^|\s)twd-sk-faq__tablink(\s|$)/', $el->getAttribute( 'class' ) );
+	}
+
 	private static function is_text( DOMElement $el ) {
 		$tag = strtolower( $el->nodeName );
 		if ( ! in_array( $tag, self::text_tags(), true ) ) {
 			return false;
 		}
+		// A group tab's list entry holds only its link: the link is the piece of text, never the entry (0.15.0),
+		// or typing over all of it would take the link away.
+		if ( 'li' === $tag && 1 === preg_match( '/(^|\s)twd-sk-faq__tab(\s|$)/', $el->getAttribute( 'class' ) ) ) {
+			return false;
+		}
 		if ( in_array( $tag, array( 'span', 'div', 'a', 'small' ), true ) && ! self::has_kit_class( $el ) ) {
 			return false;
 		}
-		if ( 'a' === $tag && ! self::is_button( $el ) ) {
+		if ( 'a' === $tag && ! self::is_button( $el ) && ! self::is_tab_link( $el ) ) {
 			return false;
 		}
 		$text = (string) $el->textContent;
@@ -263,6 +273,62 @@ class TWD_SK_Inline {
 	private static function holds_shortcode( DOMElement $el ) {
 		$codes = array_keys( TWD_SK_Registry::allowed_shortcodes() );
 		return $codes && 1 === preg_match( '/\[(?:' . implode( '|', array_map( 'preg_quote', $codes ) ) . ')[\s\]]/i', (string) $el->textContent );
+	}
+
+	private static function has_class( DOMElement $el, $class ) {
+		return false !== strpos( ' ' . $el->getAttribute( 'class' ) . ' ', ' ' . $class . ' ' );
+	}
+
+	/** The other half of a question group (0.15.0): a group's tab, or a tab's group. Null when there is none. */
+	private static function group_partner( DOMElement $el ) {
+		$xp = new DOMXPath( $el->ownerDocument );
+		if ( self::has_class( $el, 'twd-sk-faq__tab' ) ) {
+			foreach ( $el->getElementsByTagName( 'a' ) as $a ) {
+				if ( 1 === preg_match( '/^#([\w-]+)$/', $a->getAttribute( 'href' ), $m ) ) {
+					$hit = $xp->query( '//*[@id="' . $m[1] . '"]' );
+					return $hit && $hit->length ? $hit->item( 0 ) : null;
+				}
+			}
+			return null;
+		}
+		if ( self::has_class( $el, 'twd-sk-faq__group' ) && 1 === preg_match( '/^[\w-]+$/', $el->getAttribute( 'id' ) ) ) {
+			$hit = $xp->query( '//a[@href="#' . $el->getAttribute( 'id' ) . '"]' );
+			if ( $hit && $hit->length ) {
+				for ( $n = $hit->item( 0 ); $n; $n = $n->parentNode ) {
+					if ( $n instanceof DOMElement && self::has_class( $n, 'twd-sk-faq__tab' ) ) {
+						return $n;
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	/** The box that holds question groups, when this element is one of them. */
+	private static function group_holder( DOMElement $el ) {
+		return self::has_class( $el, 'twd-sk-faq__group' ) && $el->parentNode instanceof DOMElement ? $el->parentNode : null;
+	}
+
+	/** After a group goes, one of the groups that are left is the one shown first. */
+	private static function ensure_default_group( DOMElement $holder ) {
+		if ( ! $holder->parentNode ) {
+			return;
+		}
+		$first = null;
+		foreach ( $holder->childNodes as $child ) {
+			if ( ! $child instanceof DOMElement || ! self::has_class( $child, 'twd-sk-faq__group' ) ) {
+				continue;
+			}
+			if ( self::has_class( $child, 'twd-sk-faq__group--default' ) ) {
+				return;
+			}
+			if ( null === $first ) {
+				$first = $child;
+			}
+		}
+		if ( $first ) {
+			$first->setAttribute( 'class', trim( $first->getAttribute( 'class' ) ) . ' twd-sk-faq__group--default' );
+		}
 	}
 
 	/** Take an element out, then any wrapper it leaves empty, up to (never including) its section. */
@@ -405,7 +471,10 @@ class TWD_SK_Inline {
 			while ( $el->firstChild ) {
 				$el->removeChild( $el->firstChild );
 			}
-			if ( self::is_button( $el ) ) {
+			if ( self::is_button( $el ) || self::is_tab_link( $el ) ) {
+				if ( self::is_tab_link( $el ) && isset( $edit['href'] ) && is_string( $edit['href'] ) && '' !== trim( $edit['href'] ) ) {
+					return new WP_Error( 'twd_sk_bad_input', 'A group tab always opens its own group, so its address cannot be changed here.' );
+				}
 				$label = trim( preg_replace( '/\s+/u', ' ', html_entity_decode( strip_tags( str_replace( array( '<br>', '<br/>', '<br />' ), ' ', $edit['html'] ) ), ENT_QUOTES, 'UTF-8' ) ) );
 				$el->appendChild( $doc->createTextNode( self::tidy( $label ) ) );
 				if ( isset( $edit['href'] ) && is_string( $edit['href'] ) && '' !== trim( $edit['href'] ) ) {
@@ -495,7 +564,19 @@ class TWD_SK_Inline {
 			if ( ! $el->parentNode ) {
 				continue; // Already gone with its section.
 			}
+			// A question group goes with its tab and a tab with its group, and the groups keep one that shows first.
+			$partner = self::group_partner( $el );
+			$holder  = self::group_holder( $el );
+			if ( null === $holder && $partner ) {
+				$holder = self::group_holder( $partner );
+			}
 			self::remove_node( $el );
+			if ( $partner && $partner->parentNode ) {
+				self::remove_node( $partner );
+			}
+			if ( $holder ) {
+				self::ensure_default_group( $holder );
+			}
 			$removed++;
 		}
 		if ( $removed && 0 === $root->getElementsByTagName( 'section' )->length ) {

@@ -249,18 +249,43 @@
 		]);
 	}
 
+	// A short list of ready-made choices (the picture colour treatment and tint, 0.15.0). A value from the style
+	// itself that is not on the list is kept as the first choice, so nothing is lost by opening this.
+	function choiceControl(item, value) {
+		var id = 'twd-sk-site-' + item.token;
+		var list = ((S.data.presets || {})[item.token] || []).slice();
+		var known = list.some(function (p) {
+			return p[0] === value;
+		});
+		if (!known) {
+			list.unshift([value, 'The style\'s own setting']);
+		}
+		var select = el('select', { id: id, className: 'twd-sk-ed__input' });
+		list.forEach(function (p) {
+			select.appendChild(el('option', { value: p[0], text: p[1] }));
+		});
+		select.value = value;
+		select.addEventListener('change', function () {
+			setToken(item.token, select.value);
+		});
+		return el('div', { className: 'twd-sk-ed__field' }, [
+			el('label', { className: 'twd-sk-ed__label', 'for': id, text: item.label }),
+			select
+		]);
+	}
+
 	function renderControls() {
 		clear(ui.controls);
 		var tokens = effective();
-		var groups = { colours: 'Colours', fonts: 'Fonts', shape: 'Corners', logo: 'Logo sizes (pixels high)' };
-		['colours', 'fonts', 'shape', 'logo'].forEach(function (group) {
+		var groups = { colours: 'Colours', fonts: 'Fonts', shape: 'Corners', pictures: 'Pictures', logo: 'Logo sizes (pixels high)' };
+		['colours', 'fonts', 'shape', 'pictures', 'logo'].forEach(function (group) {
 			var grid = el('div', { className: 'twd-sk-ed__grid' });
 			S.data.editable.forEach(function (item) {
 				if (item.group !== group) {
 					return;
 				}
 				var value = tokens[item.token];
-				grid.appendChild(item.kind === 'color' ? colourControl(item, value) : item.kind === 'font' ? fontControl(item, value) : radiusControl(item, value));
+				grid.appendChild(item.kind === 'color' ? colourControl(item, value) : item.kind === 'font' ? fontControl(item, value) : item.kind === 'choice' ? choiceControl(item, value) : radiusControl(item, value));
 			});
 			ui.controls.appendChild(el('h4', { className: 'twd-sk-ed__subtitle', text: groups[group] }));
 			ui.controls.appendChild(grid);

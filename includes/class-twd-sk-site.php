@@ -36,6 +36,9 @@ class TWD_SK_Site {
 			array( 'shape', 'radius-btn', 'Button corners', 'radius' ),
 			array( 'shape', 'radius-card', 'Card corners', 'radius' ),
 			array( 'shape', 'radius-image', 'Image corners', 'radius' ),
+			// 0.15.0: how pictures are treated, as a short list of ready-made choices.
+			array( 'pictures', 'image-filter', 'Colour of the pictures', 'choice' ),
+			array( 'pictures', 'image-tint', 'Tint over pictures beside text', 'choice' ),
 			// 0.14.0: logo sizes, in pixels.
 			array( 'logo', 'logo-height', 'Header logo height', 'size' ),
 			array( 'logo', 'logo-height-sm', 'Header logo height on phones', 'size' ),
@@ -43,6 +46,30 @@ class TWD_SK_Site {
 			array( 'logo', 'footer-logo-height', 'Footer logo height', 'size' ),
 			array( 'logo', 'footer-logo-height-feature', 'Large footer: logo height', 'size' ),
 			array( 'logo', 'footer-logo-height-feature-sm', 'Large footer: logo height on phones', 'size' ),
+		);
+	}
+
+	/**
+	 * Ready-made choices for the picture tokens: token => list of array( value, plain label ). Every value is
+	 * checked by TWD_SK_Packs like any other token, and a test checks each one.
+	 */
+	public static function picture_presets() {
+		return array(
+			'image-filter' => array(
+				array( 'none', 'As they are' ),
+				array( 'saturate(0.85)', 'A little softer in colour' ),
+				array( 'saturate(0.7) brightness(1.03)', 'Soft and calm' ),
+				array( 'sepia(0.25) saturate(0.9)', 'Warm' ),
+				array( 'contrast(1.08) saturate(1.1)', 'Crisp and vivid' ),
+				array( 'grayscale(1)', 'Black and white' ),
+			),
+			'image-tint'   => array(
+				array( 'transparent', 'None' ),
+				array( 'rgba(154,74,50,0.1)', 'Warm' ),
+				array( 'rgba(40,70,90,0.12)', 'Cool' ),
+				array( 'rgba(0,0,0,0.12)', 'A soft shade' ),
+				array( 'rgba(255,255,255,0.14)', 'A soft fade' ),
+			),
 		);
 	}
 
@@ -84,6 +111,7 @@ class TWD_SK_Site {
 			'editable'  => array_map( function ( $e ) {
 				return array( 'group' => $e[0], 'token' => $e[1], 'label' => $e[2], 'kind' => $e[3] );
 			}, self::editable() ),
+			'presets'   => self::picture_presets(),
 			'fonts'     => array_keys( TWD_SK_Packs::fonts() ),
 			'font_css'  => self::font_css_map(),
 			'pairs'     => array_map( function ( $p ) {
