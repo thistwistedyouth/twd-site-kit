@@ -125,6 +125,8 @@ class TWD_SK_Editor {
 			'setupUrl'       => current_user_can( 'manage_options' ) ? esc_url_raw( TWD_SK_Build::admin_url() ) : '',
 			// The editing tools switch (0.14.1): hides the launchers for this person until switched on again.
 			'toolsOff'       => self::tools_off(),
+			// Whether the page is live, so Add a section can warn that its placeholder words would show (0.14.1).
+			'pagePublished'  => $context['page_id'] > 0 && 'publish' === get_post_status( $context['page_id'] ),
 		) );
 		wp_enqueue_script( self::HANDLE );
 

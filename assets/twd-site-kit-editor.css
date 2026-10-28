@@ -236,6 +236,10 @@
   flex: 1 1 240px;
   width: auto;
 }
+.twd-sk-ed .twd-sk-ed__inlinepanel.twd-sk-ed__inlinepanel .twd-sk-ed__select.twd-sk-ed__select {
+  flex: 1 1 240px;
+  width: auto;
+}
 .twd-sk-ed .twd-sk-ed__inlinepanel.twd-sk-ed__inlinepanel label {
   flex: 1 1 100%;
   font-size: var(--twd-site-size-small) !important;

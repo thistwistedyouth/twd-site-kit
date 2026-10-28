@@ -57,6 +57,7 @@ require_once TWD_SK_PATH . 'includes/class-twd-sk-brand.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-sets.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-launch.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-inline.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-structure.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-plan.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-assets.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-updater.php';

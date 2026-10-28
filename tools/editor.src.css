@@ -71,6 +71,7 @@
 .twd-sk-ed__inlinestatus { order: 1; flex: 1 1 100%; font-size: $size-small; color: $color-title; }
 .twd-sk-ed__inlinepanel { order: 2; flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid $color-border; }
 .twd-sk-ed__inlinepanel .twd-sk-ed__input { flex: 1 1 240px; width: auto; }
+.twd-sk-ed__inlinepanel .twd-sk-ed__select { flex: 1 1 240px; width: auto; }
 .twd-sk-ed__inlinepanel label { flex: 1 1 100%; font-size: $size-small; font-weight: 600; color: $color-title; }
 .twd-sk-ed__inlinehead { flex: 1 1 100%; margin: 0; font-size: $size-small; font-weight: 600; color: $color-title; }
 

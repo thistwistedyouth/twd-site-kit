@@ -132,7 +132,7 @@
 
 	function counter() {
 		var n = changedCount();
-		status(n ? n + ' change' + (n === 1 ? '' : 's') + ' not saved yet.' : 'Click any words to change them. Click a picture to change it' + (S.spots.length ? ', or a dashed Add a picture box to put one there.' : '.') + ' Click something, then Remove, to take it out.');
+		status(n ? n + ' change' + (n === 1 ? '' : 's') + ' not saved yet.' : 'Click any words to change them. Click a picture to change it' + (S.spots.length ? ', or a dashed Add a picture box to put one there.' : '.') + ' Click something, then Remove, to take it out. Click inside a section to move it, or to add a new one after it.');
 		ui.save.disabled = !n || S.saving || S.uploading;
 		adminBar();
 	}
@@ -223,6 +223,36 @@
 		ui.remove = toolButton('Remove', 'Remove this list entry, card, button or section', removeThis);
 		ui.putBack = toolButton('Put back', 'Put back the last thing removed', putBack);
 		ui.putBack.disabled = true;
+		// Add a section and move one, no AI (0.14.1). Add needs the list of sections the server gave this page.
+		ui.addSec = toolButton('Add section', 'Add a new section to the page', openAdd);
+		ui.moveUp = toolButton('Move up', 'Move this section up the page', function () {
+			moveSection('up');
+		});
+		ui.moveDown = toolButton('Move down', 'Move this section down the page', function () {
+			moveSection('down');
+		});
+		var kinds = Object.keys(cfg.components || {}).filter(function (id) {
+			return id !== 'hero';
+		});
+		ui.addKind = el('select', { id: 'twd-sk-inline-addkind', className: 'twd-sk-ed__select' });
+		kinds.forEach(function (id) {
+			ui.addKind.appendChild(el('option', { value: id, text: cfg.components[id].label }));
+		});
+		ui.addKind.addEventListener('change', fillLayouts);
+		ui.addLayout = el('select', { id: 'twd-sk-inline-addlayout', className: 'twd-sk-ed__select' });
+		ui.addDesc = el('p', { className: 'twd-sk-ed__inlinehead' });
+		ui.addWhere = el('p', { className: 'twd-sk-ed__inlinehead' });
+		ui.addPanel = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' }, [
+			ui.addWhere,
+			el('label', { 'for': 'twd-sk-inline-addkind', text: 'What kind of section' }),
+			ui.addKind,
+			el('label', { 'for': 'twd-sk-inline-addlayout', text: 'Which layout' }),
+			ui.addLayout,
+			ui.addDesc,
+			ED.button('Add it', 'primary', addIt),
+			ED.button('Close', 'secondary', closePanels)
+		]);
+		fillLayouts();
 		ui.linkInput = el('input', { type: 'text', id: 'twd-sk-inline-link', className: 'twd-sk-ed__input', placeholder: '/contact, or a full web address', autocomplete: 'off' });
 		ui.linkPanel = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' }, [
 			el('label', { 'for': 'twd-sk-inline-link', text: 'Link address' }),
@@ -252,8 +282,9 @@
 		ui.confirm = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' });
 		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar', role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '' }, [
 			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.bold, ui.italic, ui.link, ui.remove, ui.putBack]),
+			el('div', { className: 'twd-sk-ed__inlinetools', role: 'group', 'aria-label': 'Sections' }, kinds.length ? [ui.addSec, ui.moveUp, ui.moveDown] : [ui.moveUp, ui.moveDown]),
 			el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.save, ui.cancel]),
-			ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.confirm
+			ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.addPanel, ui.confirm
 		]);
 		root.appendChild(ui.bar);
 	}
@@ -281,11 +312,12 @@
 		show(ui.linkPanel, false);
 		show(ui.altPanel, false);
 		show(ui.picPanel, false);
+		show(ui.addPanel, false);
 		S.linkTarget = null;
 	}
 
 	function panelOpen() {
-		return !ui.linkPanel.hasAttribute('hidden') || !ui.altPanel.hasAttribute('hidden') || !ui.picPanel.hasAttribute('hidden');
+		return !ui.linkPanel.hasAttribute('hidden') || !ui.altPanel.hasAttribute('hidden') || !ui.picPanel.hasAttribute('hidden') || !ui.addPanel.hasAttribute('hidden');
 	}
 
 	function openLink() {
@@ -676,6 +708,167 @@
 		}
 	}
 
+	/* ---- adding and moving a section (0.14.1) ----
+	   Each is saved at once as its own version (so the history can undo it), then the page reloads straight back into
+	   this editor with the section in view. Changes not yet saved are never carried across a reload, so the buttons ask
+	   for them to be saved or thrown away first. The server numbers the sections (data-twd-sk-sec) and checks the rules:
+	   the section with the main heading stays at the top. */
+
+	function sectionOf(node) {
+		var n = node && node.nodeType === 1 ? node : (node ? node.parentNode : null);
+		return n && n.closest ? n.closest('[data-twd-sk-sec]') : null;
+	}
+
+	function currentSection() {
+		var sel = window.getSelection ? window.getSelection() : null;
+		return sectionOf(S.last) || sectionOf(sel && sel.rangeCount ? sel.anchorNode : null);
+	}
+
+	function sectionName(sec) {
+		var h = sec.querySelector('h1, h2, h3');
+		var text = h ? h.textContent.replace(/\s+/g, ' ').trim() : '';
+		if (!text) {
+			return 'this section';
+		}
+		return text.length > 40 ? text.slice(0, 37) + '...' : text;
+	}
+
+	// True (with a message) when the page cannot be reloaded without losing something.
+	function notNow() {
+		var n = changedCount();
+		if (S.saving || S.uploading) {
+			status('Wait a moment: something is still saving or uploading.');
+			return true;
+		}
+		if (n) {
+			status('Save or cancel your ' + n + ' change' + (n === 1 ? '' : 's') + ' first: adding or moving a section reloads the page.');
+			return true;
+		}
+		return false;
+	}
+
+	// The address's own query string without the two this editor adds ('' or '?a=1&b=2').
+	function plainSearch() {
+		var keep = window.location.search.replace(/^\?/, '').split('&').filter(function (pair) {
+			return pair !== '' && !/^twd_sk_(edit|at)=/.test(pair);
+		});
+		return keep.length ? '?' + keep.join('&') : '';
+	}
+
+	function reloadEditing(at) {
+		var search = plainSearch();
+		var url = window.location.pathname + search + (search ? '&' : '?') + 'twd_sk_edit=1&twd_sk_at=' + parseInt(at, 10);
+		window.setTimeout(function () {
+			window.location.assign(url);
+		}, 600);
+	}
+
+	function structure(body, working, done) {
+		S.saving = true;
+		body.base_version = cfg.currentVersion;
+		status(working);
+		ED.api('POST', '/pages/' + cfg.pageId + '/structure', body).then(function (data) {
+			status(done + ' Saved as version ' + data.version + '. Reloading so you see it.');
+			reloadEditing(data.at);
+		}, function (err) {
+			S.saving = false;
+			status(err.message);
+		});
+	}
+
+	function moveSection(dir) {
+		if (notNow()) {
+			return;
+		}
+		var sec = currentSection();
+		if (!sec) {
+			status('Click inside the section you want to move first.');
+			return;
+		}
+		structure({ op: 'move', index: parseInt(sec.getAttribute('data-twd-sk-sec'), 10), dir: dir }, 'Moving it ' + dir + '...', 'Moved ' + dir + '.');
+	}
+
+	function fillLayouts() {
+		var c = (cfg.components || {})[ui.addKind.value];
+		ED.clear(ui.addLayout);
+		if (!c) {
+			return;
+		}
+		Object.keys(c.variants || {}).forEach(function (key) {
+			ui.addLayout.appendChild(el('option', { value: key, text: c.variants[key] }));
+		});
+		ui.addDesc.textContent = c.description || '';
+	}
+
+	function openAdd() {
+		if (notNow()) {
+			return;
+		}
+		var sec = currentSection();
+		var all = document.querySelectorAll('[data-twd-sk-sec]');
+		S.addAfter = sec ? parseInt(sec.getAttribute('data-twd-sk-sec'), 10) : all.length - 1;
+		ui.addWhere.textContent = sec ? 'The new section goes after "' + sectionName(sec) + '".' : 'The new section goes at the end of the page. To put it somewhere else, click inside the section it should follow first.';
+		closePanels();
+		show(ui.confirm, false);
+		show(ui.addPanel, true);
+		ui.addKind.focus();
+	}
+
+	function doAdd() {
+		structure({ op: 'add', after: S.addAfter, component: ui.addKind.value, variant: ui.addLayout.value }, 'Adding the section...', 'Added.');
+	}
+
+	function addIt() {
+		if (notNow()) {
+			return;
+		}
+		if (!cfg.pagePublished) {
+			doAdd();
+			return;
+		}
+		// A live page would show the placeholder words to visitors until they are replaced.
+		ED.clear(ui.confirm);
+		ui.confirm.appendChild(el('span', { text: 'This page is live. The new section shows its placeholder words to visitors until you replace them. Add it now anyway? ' }));
+		var yes = ED.button('Add it anyway', 'primary', function () {
+			show(ui.confirm, false);
+			doAdd();
+		});
+		var no = ED.button('Not yet', 'secondary', function () {
+			show(ui.confirm, false);
+		});
+		ui.confirm.appendChild(yes);
+		ui.confirm.appendChild(no);
+		show(ui.confirm, true);
+		yes.focus();
+	}
+
+	// After an add or a move the page comes back with ?twd_sk_edit=1&twd_sk_at=N: open the editor at that section.
+	function resume() {
+		var q = window.location.search;
+		if (!/[?&]twd_sk_edit=1(&|$)/.test(q)) {
+			return;
+		}
+		var m = /[?&]twd_sk_at=(\d+)/.exec(q);
+		try {
+			window.history.replaceState(null, '', window.location.pathname + plainSearch() + window.location.hash);
+		} catch (e) {
+			// The address stays as it is; nothing else depends on it.
+		}
+		start();
+		if (!S.on || !m) {
+			return;
+		}
+		var sec = document.querySelector('[data-twd-sk-sec="' + parseInt(m[1], 10) + '"]');
+		if (sec) {
+			sec.scrollIntoView({ block: 'center' });
+			var first = sec.querySelector('[data-twd-sk-t]');
+			if (first) {
+				first.focus({ preventScroll: true });
+			}
+			S.last = first || sec;
+		}
+	}
+
 	/* ---- starting, saving, stopping ---- */
 
 	function start() {
@@ -915,4 +1108,5 @@
 	ED.inlineCount = function () {
 		return texts().length + pictures().length + spots().length;
 	};
+	resume();
 })();

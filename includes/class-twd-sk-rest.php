@@ -110,6 +110,12 @@ class TWD_SK_REST {
 				'callback'            => array( __CLASS__, 'post_inline' ),
 				'permission_callback' => array( __CLASS__, 'can_write_page' ),
 			) );
+			// Add a section and move a section on the page itself, no AI (0.14.1).
+			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/structure', array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_structure' ),
+				'permission_callback' => array( __CLASS__, 'can_write_page' ),
+			) );
 			// The one-box planner (0.10.0): a plan (one AI call), then one change per request.
 			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/plan', array(
 				'methods'             => 'POST',
@@ -978,6 +984,39 @@ class TWD_SK_REST {
 		$note = 'Changed on the page (' . implode( ', ', $parts ) . ')';
 		$saved = TWD_SK_Store::save( $id, $out['html'], array( 'base_version' => $base, 'note' => $note ) );
 		return self::after_write( $id, $saved );
+	}
+
+	/**
+	 * Add a section or move one (0.14.1): the change is made on the stored page, cleaned and saved as one version,
+	 * and the new place of the section comes back (`at`) so the page can reload with it in view.
+	 */
+	public static function post_structure( $request ) {
+		$id   = (int) $request->get_param( 'id' );
+		$base = self::base_version( $request );
+		if ( is_wp_error( $base ) ) {
+			return $base;
+		}
+		if ( $base !== (int) TWD_SK_Store::get_current_version_id( $id ) ) {
+			return self::error( 'twd_sk_conflict', 'This page changed since you opened it. Reload the page and try again.', 409 );
+		}
+		$op = $request->get_param( 'op' );
+		if ( 'add' === $op ) {
+			$out = TWD_SK_Structure::add( $id, array(
+				'after'     => $request->get_param( 'after' ),
+				'component' => $request->get_param( 'component' ),
+				'variant'   => $request->get_param( 'variant' ),
+			) );
+		} elseif ( 'move' === $op ) {
+			$out = TWD_SK_Structure::move( $id, array( 'index' => $request->get_param( 'index' ), 'dir' => $request->get_param( 'dir' ) ) );
+		} else {
+			return self::error( 'twd_sk_bad_input', 'Choose to add a section or move one.', 400 );
+		}
+		if ( is_wp_error( $out ) ) {
+			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_empty_page' === $out->get_error_code() || 'twd_sk_bad_input' === $out->get_error_code() ? 400 : 502 );
+		}
+		$saved = TWD_SK_Store::save( $id, $out['html'], array( 'base_version' => $base, 'note' => $out['note'] ) );
+		$done  = self::after_write( $id, $saved );
+		return is_wp_error( $done ) ? $done : $done + array( 'at' => (int) $out['at'] );
 	}
 
 	/** The checklist of changes for a request. Nothing is changed. */

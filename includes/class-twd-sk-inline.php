@@ -30,6 +30,8 @@ class TWD_SK_Inline {
 	const SPOT_ATTR = 'data-twd-sk-s';
 	// 0.14.0: things that can be removed (a section, a repeated item such as a list entry or card, a button).
 	const REMOVE_ATTR  = 'data-twd-sk-r';
+	// 0.14.1: each top-level section's number, counted as TWD_SK_Sections counts, so Add and Move name a section.
+	const SECTION_ATTR = 'data-twd-sk-sec';
 	const MAX_REMOVES  = 50;
 	const MAX_EDITS = 400;
 	const MAX_TEXT  = 6000;
@@ -303,6 +305,20 @@ class TWD_SK_Inline {
 		}
 		foreach ( $found['removes'] as $i => $el ) {
 			$el->setAttribute( self::REMOVE_ATTR, (string) $i );
+		}
+		// Top-level sections, from 0 in page order (a section inside another section is not counted).
+		$n = 0;
+		foreach ( iterator_to_array( $root->getElementsByTagName( 'section' ) ) as $sec ) {
+			$nested = false;
+			for ( $up = $sec->parentNode; $up instanceof DOMElement && $up !== $root; $up = $up->parentNode ) {
+				if ( 'section' === strtolower( $up->nodeName ) ) {
+					$nested = true;
+					break;
+				}
+			}
+			if ( ! $nested ) {
+				$sec->setAttribute( self::SECTION_ATTR, (string) $n++ );
+			}
 		}
 		foreach ( $found['spots'] as $i => $node ) {
 			if ( $node instanceof DOMText ) {
