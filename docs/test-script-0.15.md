@@ -1,8 +1,8 @@
 # Test script: 0.15.0 (branch `claude/twd-site-kit-0-15-0-mjih8y`)
 
-The Embed section and the editable "no articles" line. Tested against the plugin's own test suite (926 tests) and, for the "no articles" line, in a real browser with the real stylesheet (an empty grid, a full grid, an old section without the line, at 1280 and 375 pixels). The Embed screens have not been tried on a real site. Work through this on a **hidden staging site** only. Riskiest first. If anything goes wrong: `wp twd-sk safe-mode on` (embeds print nothing in safe mode), then send `wp twd-sk doctor`.
+0.15.0 so far: the Embed section, the editable "no articles" line, Bring pages up to date, the Look tool in the Visual editor, the picture look and question-group editing. Tested against the plugin's own test suite (953 tests) and, for the "no articles" line, the Look panel and the question groups, in a real browser with the real stylesheet. The Embed screens have not been tried on a real site. Work through this on a **hidden staging site** only. Riskiest first. If anything goes wrong: `wp twd-sk safe-mode on` (embeds print nothing in safe mode), then send `wp twd-sk doctor`.
 
-Before you start: install the test zip by hand (Plugins, Add New, Upload Plugin, replace). Take a snapshot first (`wp twd-sk style snapshot "before 0.15"`) and keep the zip of the plugin as it was, so there is a way back.
+Before you start: install the test zip `0.15.0-test2` by hand (Plugins, Add New, Upload Plugin, replace). Take a snapshot first (`wp twd-sk style snapshot "before 0.15"`) and keep the zip of the plugin as it was, so there is a way back.
 
 ## 1. The no-articles line
 
@@ -29,3 +29,25 @@ Everything here is as an administrator on a page that uses the kit template.
 16. **Safe mode.** `wp twd-sk safe-mode on`: the embed shows nothing and no raw `[twd_embed ...]` text appears. Off again, it returns.
 17. **Command line.** `wp twd-sk embeds` lists them without code (add `--code` to show it); `wp twd-sk embed-set --label="Map" --kind=shortcode --code='[map]'` makes one; `wp twd-sk embed-delete <id>` removes one. `wp twd-sk doctor` has an Embeds section with counts and never a name or any code.
 18. **Not offered to the AI, a brief or a plan.** A site brief or a starter set that lists an `embed` section is refused with a plain message. The one-box planner never offers to add one.
+
+## 3. Bring pages up to date
+
+19. **See what is waiting.** On a site with a Resources section built before 0.15.0 (it has no editable line): Site tab, "Bring pages up to date" lists the page and says what would be added, in plain words. The launch check has one warning for it. `wp twd-sk upgrade` lists the same and changes nothing.
+20. **Do it.** The button asks first; say yes. The page now has the line (as a visitor with no articles: your wording, once; with articles: nothing extra). The history shows a new version "Brought up to date: resources_none". Reload the page and open the Visual editor: the line is editable. Undo in the history puts the old page back exactly. Run it again: "Every page is up to date."
+
+## 4. The Look tool (Visual editor)
+
+21. **Open it.** Visual editor, click inside a section, press **Look** in the toolbar. A panel says "Look of this section: ..." and offers only what fits. Click inside the safety notice and press Look: it says there is nothing to choose.
+22. **Layout.** On a services section with cards: choose Glow; the boxes change at once, your words stay. On a standard FAQ: choose Two columns. On an image-and-text section: choose Reverse. A section with no twin (pills, a call-to-action strip, a hero with a picture beside the text) offers no layout list. Changed sections get a green outline until you save.
+23. **Hero picture options.** On the full-width picture hero: Picture overlay (Normal, Lighter, Stronger), Words on the left, and Picture moves a little as you scroll. Switch each and look. A hero with the picture beside the text shows none of these.
+24. **Background.** On a section with a plain, soft or tinted background choose another; text stays readable. The dark band sections do not offer it.
+25. **Save, Cancel and Undo.** Press Save: the page reloads with the look kept and the history shows "N section looks". Undo restores it. Make a change and press Cancel, Throw them away: the look goes back. A look and some changed words save as one version.
+
+## 5. Picture look
+
+26. **Choose.** Site tab, Style, "Pictures": try Black and white and a Warm tint, watch the page change at once, press Save style. Reload: kept. Pictures beside text get the tint; the full-width hero does not. Choose "As they are" and "None": the page looks as it did. Reset also puts it back. The ember style shows "The style's own setting" for its filter.
+
+## 6. Question groups
+
+27. **Editing.** On a page with the Groups layout: Visual editor. All groups show, stacked. Type new words in a tab: its group heading changes with it; type in a heading: its tab follows. Save: the page shows the new tab words and each tab still opens its own group. Press Link with the cursor in a tab: it says a tab's address cannot be changed.
+28. **Removing.** Click a group's tab entry and press Remove: the tab and its group go together; if it was the first group, the next one is shown first on a wide screen. Put back before saving restores both.
