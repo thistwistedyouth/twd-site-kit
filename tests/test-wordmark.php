@@ -287,7 +287,9 @@ twd_sk_test( 'wordmark: the shrink script waits for the spacer to scroll up to t
 	twd_sk_has( 'var SHRINK_AT = 60;', $js );
 	twd_sk_has( 'var GROW_AT = 20;', $js );
 	twd_sk_has( "wrap.classList.contains('twd-sk-chrome--wordmark')", $js );
-	twd_sk_has( 'Math.max(SHRINK_AT, wrap.offsetHeight - COMPACT)', $js );
+	twd_sk_has( 'Math.max(SHRINK_AT, wrap.offsetHeight - compact())', $js );
+	twd_sk_has( "'--twd-site-wordmark-symbol' + name", $js, 'a larger symbol gives a taller compact row' );
+	twd_sk_has( 'var COMPACT = 56;', $js, 'and the standard symbol still gives the 56px it always did' );
 	twd_sk_has( 'if (!shrunk && y > shrinkAt()) {', $js );
 	twd_sk_hasnt( 'innerHTML', $js );
 } );
@@ -335,4 +337,110 @@ twd_sk_test( 'wordmark tokens: in every pack and as defaults, sized as asked, va
 	twd_sk_eq( '18px', $pack['tokens']['wordmark-name'] );
 	twd_sk_eq( 'Jost', $pack['tokens']['menu-font'], 'its menu is in its body font' );
 	twd_sk_eq( count( TWD_SK_Packs::token_names() ), count( $pack['tokens'] ) );
+} );
+
+// The second line in the smaller header (0.15.0). A setting, off by default; with it off every header prints the same bytes as before.
+
+twd_sk_test( 'second line in the smaller header: off by default and validated; on, it brings the scrolled name with it', function () {
+	$d = TWD_SK_Chrome::defaults();
+	twd_sk_true( false === $d['wordmark_small_line'], 'off by default' );
+	twd_sk_is_error( 'twd_sk_bad_chrome', TWD_SK_Chrome::save_settings( array( 'wordmark_small_line' => 'yes' ) ) );
+	twd_sk_chrome_setup( twd_sk_wm_profile(), array( 'wordmark' => true, 'wordmark_scrolled_name' => false, 'wordmark_small_line' => false ) );
+	$e = TWD_SK_Chrome::effective();
+	twd_sk_true( ! $e['wm_line'] && ! $e['wm_name'], 'off: neither' );
+	TWD_SK_Chrome::save_settings( array( 'wordmark_small_line' => true ) );
+	$e = TWD_SK_Chrome::effective();
+	twd_sk_true( $e['wm_line'] && $e['wm_name'], 'on: the line, and the name beside the symbol when the front page is scrolled' );
+	TWD_SK_Chrome::save_settings( array( 'wordmark' => false ) );
+	$e = TWD_SK_Chrome::effective();
+	twd_sk_true( ! $e['wm_line'] && ! $e['wm_name'], 'it does nothing without the text wordmark' );
+	TWD_SK_Chrome::save_settings( array( 'wordmark' => false, 'wordmark_small_line' => false ) );
+} );
+
+twd_sk_test( 'second line in the smaller header: off prints exactly what it did, on prints the words block and the classes the stylesheet needs', function () {
+	twd_sk_chrome_setup( twd_sk_wm_profile(), array( 'wordmark' => true, 'sticky' => true, 'shrink' => true, 'wordmark_small_line' => false ) );
+	$off = array();
+	foreach ( array( false, true ) as $front ) {
+		$GLOBALS['twd_stub']['front'] = $front;
+		$off[ (int) $front ] = TWD_SK_Chrome::render_header();
+		twd_sk_hasnt( 'wm-line', $off[ (int) $front ] );
+		twd_sk_hasnt( 'twd-sk-header__words', $off[ (int) $front ] );
+	}
+	twd_sk_hasnt( 'twd-sk-header__line', $off[0], 'off: no second line on other pages, as before' );
+	// On, any page but the front: the bar, the name and the line together in one block beside the symbol, in one link.
+	TWD_SK_Chrome::save_settings( array( 'wordmark_small_line' => true ) );
+	$GLOBALS['twd_stub']['front'] = false;
+	$html = TWD_SK_Chrome::render_header();
+	twd_sk_has( 'twd-sk-header--wordmark twd-sk-header--mark-dot twd-sk-header--bar twd-sk-header--wm-line twd-sk-header--sticky twd-sk-header--shrink', $html );
+	twd_sk_has( '<a class="twd-sk-header__logo" href="https://example.test/"><img class="twd-sk-header__mark" src="/u/mark.png" alt="" width="120" height="120" decoding="async"><span class="twd-sk-header__words"><span class="twd-sk-header__name">Your Name</span><span class="twd-sk-header__line">Therapy</span></span></a>', $html );
+	twd_sk_has( 'twd-sk-chrome--sticky twd-sk-chrome--wordmark twd-sk-chrome--wm-line"', $html, 'the spacer knows the bar holds two lines of words' );
+	twd_sk_eq( 1, substr_count( $html, 'Your Name' ), 'the name is still said once' );
+	twd_sk_eq( 1, substr_count( $html, 'Therapy' ) );
+	// The front page: the same block inside the stack, and the scrolled name comes with it.
+	$GLOBALS['twd_stub']['front'] = true;
+	$html = TWD_SK_Chrome::render_header();
+	twd_sk_has( 'twd-sk-header--wm-front twd-sk-header--wm-name twd-sk-header--wm-line', $html );
+	twd_sk_has( '<span class="twd-sk-header__words"><span class="twd-sk-header__name">Your Name</span><span class="twd-sk-header__line">Therapy</span></span>', $html );
+	twd_sk_has( 'twd-sk-chrome--wordmark twd-sk-chrome--wm-front twd-sk-chrome--wm-line"', $html );
+	// No second line to show: nothing changes, so there is no block and no class for an empty line.
+	twd_sk_chrome_setup( twd_sk_wm_profile( array( 'logo_line' => '' ) ), array( 'wordmark' => true, 'sticky' => true, 'wordmark_small_line' => true ) );
+	foreach ( array( false, true ) as $front ) {
+		$GLOBALS['twd_stub']['front'] = $front;
+		$html = TWD_SK_Chrome::render_header();
+		twd_sk_hasnt( 'wm-line', $html );
+		twd_sk_hasnt( 'twd-sk-header__words', $html );
+		twd_sk_hasnt( 'twd-sk-header__line', $html );
+	}
+	// Escaped like every other text in the header.
+	twd_sk_chrome_setup( twd_sk_wm_profile( array( 'logo_line' => 'Q <b>"x"</b>' ) ), array( 'wordmark' => true, 'wordmark_small_line' => true ) );
+	$GLOBALS['twd_stub']['front'] = false;
+	twd_sk_hasnt( '<b>', TWD_SK_Chrome::render_header() );
+	TWD_SK_Chrome::save_settings( array( 'wordmark' => false, 'wordmark_small_line' => false, 'sticky' => false, 'shrink' => false ) );
+	$GLOBALS['twd_stub']['front'] = false;
+} );
+
+twd_sk_test( 'second line in the smaller header: every printed class is styled, the line is one row, the spacer counts it, and a larger symbol is a Site tab choice', function () {
+	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	foreach ( array( 'twd-sk-header--wm-line', 'twd-sk-header__words', 'twd-sk-chrome--wm-line' ) as $class ) {
+		twd_sk_has( '.' . $class . '.' . $class, $raw, $class );
+		twd_sk_true( in_array( $class, TWD_SK_Chrome::classes(), true ), $class . ' is on the list the stylesheet tests check' );
+	}
+	$line = 'twd-sk-header--wm-line\.twd-sk-header--wm-line\.twd-sk-header--bar\.twd-sk-header--bar \.twd-sk-header__line\.twd-sk-header__line';
+	twd_sk_true( 1 === preg_match( '/' . $line . '[^{]*\{[^}]*margin: 2px 0 0 !important[^}]*white-space: nowrap[^}]*overflow: clip/', $raw ), 'the line stays on one row, so the fixed height holds' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-header--wm-front\.twd-sk-header--wm-front\.twd-sk-header--wm-line\.twd-sk-header--wm-line\.twd-sk-header--shrunk\.twd-sk-header--shrunk \.twd-sk-header__line\.twd-sk-header__line/', $raw ), 'and so does the scrolled front page' );
+	// The spacer: the bar is the taller of the symbol, a menu link and the name with the line; the front page keeps its own formula (its rule comes later).
+	$bar   = strpos( $raw, 'twd-sk-chrome--wordmark.twd-sk-chrome--wordmark.twd-sk-chrome--wm-line.twd-sk-chrome--wm-line {' );
+	$front = strpos( $raw, 'twd-sk-chrome--wordmark.twd-sk-chrome--wordmark.twd-sk-chrome--wm-front.twd-sk-chrome--wm-front {' );
+	twd_sk_true( false !== $bar && false !== $front && $bar < $front, 'the front page spacer rule comes after, so it wins the tie' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-chrome--wm-line\.twd-sk-chrome--wm-line \{\s*height: calc\(max\(var\(--twd-site-wordmark-symbol\), var\(--twd-site-menu-size\) \* 1\.3 \+ 20px, var\(--twd-site-wordmark-name\) \* 1\.2 \+ 2px \+ var\(--twd-site-wordmark-line-front\) \* 1\.3\) \+ 29px/', $raw ), 'the bar spacer counts the name and line' );
+	// A phone: the spacer follows the phone symbol, never less than the 48px menu button it always allowed for.
+	twd_sk_true( 1 === preg_match( '/@media \(max-width: 900px\)\s*\{[^@]*height: calc\(max\(48px, var\(--twd-site-wordmark-symbol-sm\)\) \+ 29px \+ var\(--twd-sk-wm-strip\)\)/', $raw ), 'phones: 77px with the standard symbol, more with a larger one' );
+	// The symbol sizes are Site tab choices (no pack changes: every site keeps its look until someone chooses).
+	$names = TWD_SK_Site::editable_names();
+	twd_sk_true( in_array( 'wordmark-symbol', $names, true ) && in_array( 'wordmark-symbol-sm', $names, true ), 'the symbol heights are editable' );
+	twd_sk_eq( '36px', TWD_SK_Packs::defaults()['wordmark-symbol'], 'and the standard size is unchanged' );
+	$res = TWD_SK_Site::apply( null, array( 'wordmark-symbol' => '54px', 'wordmark-symbol-sm' => '48px' ) );
+	twd_sk_true( ! is_wp_error( $res ), 'a larger symbol saves' );
+	twd_sk_has( '--twd-site-wordmark-symbol:54px;', TWD_SK_Packs::tokens_css( TWD_SK_Packs::active_tokens() ) );
+	TWD_SK_Site::reset();
+	twd_sk_hasnt( '--twd-site-wordmark-symbol:54px;', TWD_SK_Packs::tokens_css( TWD_SK_Packs::active_tokens() ) );
+} );
+
+twd_sk_test( 'second line in the smaller header: in the site brief, a style snapshot, the command line, the site report and the Site tab script', function () {
+	twd_sk_true( array_key_exists( 'wordmark_small_line', TWD_SK_Brief::export()['header'] ), 'the brief export has it' );
+	$plan = TWD_SK_Brief::plan( array( 'schema' => 'twd-site-brief/1', 'header' => array( 'wordmark' => true, 'wordmark_small_line' => true ) ), false );
+	twd_sk_eq( array( 'wordmark' => true, 'wordmark_small_line' => true ), $plan['changes']['chrome'] );
+	twd_sk_true( array_key_exists( 'wordmark_small_line', TWD_SK_Style::current()['chrome'] ), 'a snapshot keeps it' );
+	WP_CLI::reset();
+	( new TWD_SK_CLI() )->style( array( 'apply' ), array( 'wordmark' => true, 'small-line' => 'on' ) );
+	twd_sk_true( TWD_SK_Chrome::settings()['wordmark'] && TWD_SK_Chrome::settings()['wordmark_small_line'] );
+	twd_sk_has( 'second line in the smaller header: yes', TWD_SK_Doctor::report() );
+	( new TWD_SK_CLI() )->style( array( 'apply' ), array( 'small-line' => 'off' ) );
+	twd_sk_true( ! TWD_SK_Chrome::settings()['wordmark_small_line'] );
+	TWD_SK_Chrome::save_settings( array( 'wordmark' => false, 'wordmark_small_line' => false ) );
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' );
+	foreach ( array( 'twd-sk-ch-wmline', 'wordmark_small_line: cui.wmline.checked', 'cui.wmline.checked = !!c.settings.wordmark_small_line' ) as $needle ) {
+		twd_sk_has( $needle, $js, $needle );
+	}
+	twd_sk_has( 'cui.wordmark.checked, cui.wmname.checked, cui.wmline.checked, cui.marker.value', $js, 'an unsaved tick counts as an unsaved change' );
 } );

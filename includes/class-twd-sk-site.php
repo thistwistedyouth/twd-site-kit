@@ -43,6 +43,9 @@ class TWD_SK_Site {
 			array( 'logo', 'logo-height', 'Header logo height', 'size' ),
 			array( 'logo', 'logo-height-sm', 'Header logo height on phones', 'size' ),
 			array( 'logo', 'logo-height-front', 'Front page logo height', 'size' ),
+			// 0.15.0: the symbol in the text wordmark header (the smaller header on every page, and the scrolled front page).
+			array( 'logo', 'wordmark-symbol', 'Text header: symbol height', 'size' ),
+			array( 'logo', 'wordmark-symbol-sm', 'Text header: symbol height on phones', 'size' ),
 			array( 'logo', 'footer-logo-height', 'Footer logo height', 'size' ),
 			array( 'logo', 'footer-logo-height-feature', 'Large footer: logo height', 'size' ),
 			array( 'logo', 'footer-logo-height-feature-sm', 'Large footer: logo height on phones', 'size' ),

@@ -474,6 +474,9 @@ class TWD_SK_CLI {
 	 * [--scrolled-name[=<on|off>]]
 	 * : With apply: keep the name beside the symbol when the front page's text wordmark header is scrolled.
 	 *
+	 * [--small-line[=<on|off>]]
+	 * : With apply: also show the second line under the name in the smaller text wordmark header (every page, and the scrolled front page).
+	 *
 	 * [--menu-marker=<marker>]
 	 * : With apply: how the page you are on is marked in that header's menu (dot, color, bar, none).
 	 *
@@ -518,8 +521,8 @@ class TWD_SK_CLI {
 		}
 		if ( 'apply' === $action ) {
 			$what = isset( $args[1] ) ? (string) $args[1] : '';
-			if ( '' === $what && ! array_intersect( array( 'header', 'footer', 'wordmark', 'scrolled-name', 'menu-marker' ), array_keys( $assoc_args ) ) ) {
-				WP_CLI::error( 'Give a pack name or a kit file, or one of --header, --footer, --wordmark, --scrolled-name or --menu-marker to change only that.' );
+			if ( '' === $what && ! array_intersect( array( 'header', 'footer', 'wordmark', 'scrolled-name', 'small-line', 'menu-marker' ), array_keys( $assoc_args ) ) ) {
+				WP_CLI::error( 'Give a pack name or a kit file, or one of --header, --footer, --wordmark, --scrolled-name, --small-line or --menu-marker to change only that.' );
 				return;
 			}
 			if ( '' === $what ) {
@@ -539,7 +542,7 @@ class TWD_SK_CLI {
 					$chrome[ $k ] = (string) $assoc_args[ $k ];
 				}
 			}
-			foreach ( array( 'wordmark' => 'wordmark', 'scrolled-name' => 'wordmark_scrolled_name' ) as $flag => $setting ) {
+			foreach ( array( 'wordmark' => 'wordmark', 'scrolled-name' => 'wordmark_scrolled_name', 'small-line' => 'wordmark_small_line' ) as $flag => $setting ) {
 				if ( isset( $assoc_args[ $flag ] ) ) {
 					$w                 = $assoc_args[ $flag ];
 					$chrome[ $setting ] = ( true === $w || in_array( strtolower( (string) $w ), array( 'on', 'yes', 'true', '1' ), true ) )
