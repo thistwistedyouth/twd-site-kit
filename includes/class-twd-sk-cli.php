@@ -462,7 +462,7 @@ class TWD_SK_CLI {
 	 * : With apply: the header layout (bar, centered, split, minimal).
 	 *
 	 * [--footer=<layout>]
-	 * : With apply: the footer layout (columns, band, centered, simple).
+	 * : With apply: the footer layout (columns, band, centered, simple, compact).
 	 *
 	 * [--dry-run]
 	 * : With apply or swap: say what would change and change nothing.

@@ -4,7 +4,7 @@
  "description": "Text-led: off-white paper, ink-black words, one deep blue-green for buttons and links only. A quiet Garamond for headings, a plain sans for body, small corners, no gradients, barely any shadow. For a site where the writing is the point.",
  "chrome": {
   "header": "bar",
-  "footer": "columns"
+  "footer": "compact"
  },
  "tokens": {
   "color-bg": "#F7F5F0",
