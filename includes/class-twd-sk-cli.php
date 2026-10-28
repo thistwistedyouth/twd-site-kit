@@ -20,6 +20,7 @@
  *   wp twd-sk snags [--status=<status>] [--type=<type>] [--format=json|markdown]  print the Tell us notes kept on this site
  *   wp twd-sk snag-status <id> <status>  set a note to new, seen, done or parked
  *   wp twd-sk snags-setting [on|off]     show, or switch, the Tell us module
+ *   wp twd-sk upgrade [--apply] [--page=<id>]  bring pages built earlier up to date (lists first; --apply does it)
  *   wp twd-sk embeds [--code]            list the embeds (code kept apart from the pages)
  *   wp twd-sk embed-set --label= --kind= --code= [--id=]   save an embed
  *   wp twd-sk embed-delete <id>          delete an embed
@@ -865,6 +866,55 @@ class TWD_SK_CLI {
 		}
 		$cur = TWD_SK_Snags::settings();
 		WP_CLI::log( 'Tell us: ' . ( $cur['enabled'] ? 'on' : 'off' ) . ( $cur['safe_mode'] ? ' (safe mode is on, so it is switched off for now)' : '' ) . '. Notes are kept for ' . $cur['months'] . ' months. Email notification: ' . ( $cur['email_on'] ? 'on' : 'off' ) . '.' );
+	}
+
+	/**
+	 * Bring pages built earlier up to date: add what a later version of the kit added to a section (for
+	 * example the line a Resources section shows while there are no articles). Lists what could be added
+	 * and changes nothing, unless --apply is given. Each page becomes its own version, so Undo puts it back.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--apply]
+	 * : Do it.
+	 *
+	 * [--page=<id>]
+	 * : Only this page.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk upgrade
+	 *     wp twd-sk upgrade --apply
+	 */
+	public function upgrade( $args, $assoc_args ) {
+		$only = isset( $assoc_args['page'] ) ? array( (int) $assoc_args['page'] ) : null;
+		$scan = TWD_SK_Upgrade::scan();
+		if ( null !== $only ) {
+			$scan = array_values( array_filter( $scan, function ( $p ) use ( $only ) {
+				return in_array( $p['id'], $only, true );
+			} ) );
+		}
+		if ( ! $scan ) {
+			WP_CLI::success( 'Every page is up to date.' );
+			return;
+		}
+		foreach ( $scan as $p ) {
+			WP_CLI::log( '#' . $p['id'] . ' "' . $p['title'] . '" (' . $p['status'] . ')' );
+			foreach ( $p['items'] as $item ) {
+				WP_CLI::log( '    ' . $item['label'] . ( $item['count'] > 1 ? ' (' . $item['count'] . ' places)' : '' ) );
+			}
+		}
+		if ( ! isset( $assoc_args['apply'] ) ) {
+			WP_CLI::log( 'Nothing was changed. Add --apply to bring these pages up to date.' );
+			return;
+		}
+		$done = TWD_SK_Upgrade::run( $only );
+		foreach ( $done['updated'] as $u ) {
+			WP_CLI::success( 'Updated "' . $u['title'] . '".' );
+		}
+		foreach ( $done['failed'] as $f ) {
+			WP_CLI::warning( '"' . $f['title'] . '" was not changed: ' . $f['reason'] );
+		}
 	}
 
 	/**

@@ -1943,6 +1943,78 @@
 		});
 	}
 
+	/* ---- bring pages up to date (0.15.0): add what a later version added to sections built earlier ---- */
+
+	var UP = { data: null };
+	var upui = {};
+
+	function drawUpgrades() {
+		clear(upui.list);
+		var pages = (UP.data && UP.data.pages) || [];
+		if (!pages.length) {
+			upui.list.appendChild(el('p', { className: 'twd-sk-ed__help', text: 'Every page is up to date.' }));
+			show(upui.runBtn, false);
+			return;
+		}
+		pages.forEach(function (p) {
+			var lines = p.items.map(function (i) {
+				return i.label + (i.count > 1 ? ' (' + i.count + ' places)' : '');
+			});
+			var card = el('div', { className: 'twd-sk-ed__card' }, [
+				el('p', { text: p.title + (p.status !== 'publish' ? ' (' + p.status + ')' : '') })
+			]);
+			listInto(card, lines);
+			upui.list.appendChild(card);
+		});
+		upui.runBtn.textContent = 'Bring ' + pages.length + ' page' + (pages.length === 1 ? '' : 's') + ' up to date';
+		show(upui.runBtn, true);
+	}
+
+	function loadUpgrades() {
+		api('GET', '/site/upgrades').then(function (data) {
+			UP.data = data;
+			drawUpgrades();
+		}, function (err) {
+			message(upui.msg, err.message, false);
+		});
+	}
+
+	function runUpgrades() {
+		message(upui.msg, 'Working...', true);
+		api('POST', '/site/upgrades/apply', { confirm: true }).then(function (data) {
+			UP.data = data;
+			drawUpgrades();
+			var n = (data.updated || []).length;
+			var bad = (data.failed || []).map(function (f) {
+				return '"' + f.title + '": ' + f.reason;
+			});
+			message(upui.msg, 'Brought ' + n + ' page' + (n === 1 ? '' : 's') + ' up to date. Each is a new version, so Undo in the history puts it back. Reload this page to see the change.' + (bad.length ? ' Not changed: ' + bad.join(' ') : ''), !bad.length);
+		}, function (err) {
+			message(upui.msg, err.message, false);
+		});
+	}
+
+	function buildUpgradesSection(panel) {
+		upui.msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		upui.list = el('div', { className: 'twd-sk-ed__upgrades' });
+		upui.runBtn = button('Bring pages up to date', 'primary', function () {
+			ED.confirmInline(upui.list, {
+				text: 'Add what is missing to these pages? Nothing you wrote is changed, and each page keeps its old version in the history.',
+				yesLabel: 'Bring them up to date',
+				onYes: runUpgrades
+			});
+		});
+		show(upui.runBtn, false);
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Bring pages up to date' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'When a newer version of Site Kit adds a little more to a section, pages built earlier do not have it. This lists them and adds only what is missing, without changing any of your words.' }),
+			upui.list,
+			el('div', { className: 'twd-sk-ed__actions' }, [upui.runBtn]),
+			upui.msg
+		]));
+		loadUpgrades();
+	}
+
 	function buildSite(panel) {
 		buildModeSection(panel);
 		buildBriefSection(panel);
@@ -1950,6 +2022,7 @@
 		buildProfileSection(panel);
 		buildFactsSection(panel);
 		buildEmbedsSection(panel);
+		buildUpgradesSection(panel);
 		buildChromeSection(panel);
 		buildSetupSection(panel);
 		buildLaunchSection(panel);
@@ -1961,6 +2034,7 @@
 			'Style': 'Pick a look, colours, fonts and corners',
 			'Site details': 'Name, menu, contact lines, footer text',
 			'Embeds': 'Show a booking calendar, map or other outside code on a page',
+			'Bring pages up to date': 'Add what newer versions added to pages built earlier',
 			'Header and footer': 'Who places them, layout, fixed header',
 			'Set up a new site': 'Create the starter pages',
 			'Launch check': 'Everything to check before going live',

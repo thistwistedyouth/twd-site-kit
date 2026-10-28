@@ -224,6 +224,14 @@ class TWD_SK_Launch {
 			$items[] = self::item( 'privacy_text', 'fail', 'The privacy policy is still WordPress\'s suggested text', 'Replace it with the site\'s own policy before launch (Settings, Privacy, then edit the page).' );
 		}
 
+		// Pages built before a later version added something to a section (0.15.0).
+		$up = TWD_SK_Upgrade::scan();
+		if ( $up ) {
+			$items[] = self::item( 'upgrades', 'warn', count( $up ) . ' page' . ( 1 === count( $up ) ? ' can' : 's can' ) . ' be brought up to date', 'Newer sections have a little more than these pages (' . implode( ', ', array_map( function ( $p ) {
+				return '"' . $p['title'] . '"';
+			}, $up ) ) . '). Open the Site tab, Bring pages up to date, or run wp twd-sk upgrade --apply. Each page becomes a version you can undo.' );
+		}
+
 		$counts = array( 'fail' => 0, 'warn' => 0, 'ok' => 0 );
 		foreach ( $items as $i ) {
 			$counts[ $i['status'] ]++;

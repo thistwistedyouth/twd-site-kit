@@ -256,6 +256,17 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_site_embed_delete' ),
 			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 		) );
+		// Bring pages built earlier up to date (0.15.0). Administrators only.
+		register_rest_route( self::ROUTE_NS, '/site/upgrades', array(
+			'methods'             => 'GET',
+			'callback'            => array( __CLASS__, 'get_site_upgrades' ),
+			'permission_callback' => array( __CLASS__, 'can_read_site' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/upgrades/apply', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_upgrades_apply' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
 		register_rest_route( self::ROUTE_NS, '/site/launch/publish', array(
 			'methods'             => 'POST',
 			'callback'            => array( __CLASS__, 'post_site_launch_publish' ),
@@ -658,6 +669,40 @@ class TWD_SK_REST {
 		}
 		TWD_SK_Embed::delete( $eid );
 		return self::embeds_payload();
+	}
+
+	// -- Bring pages up to date (0.15.0) -----------------------------------------
+
+	private static function upgrades_payload( $extra = array() ) {
+		$scan = TWD_SK_Upgrade::scan();
+		return $extra + array(
+			'pages' => $scan,
+			'total' => TWD_SK_Upgrade::total( $scan ),
+		);
+	}
+
+	public static function get_site_upgrades( $request ) {
+		return self::upgrades_payload();
+	}
+
+	/** Adds what is missing to the pages named (or every page that can take it). Needs confirm; each page is its own version. */
+	public static function post_site_upgrades_apply( $request ) {
+		if ( ! self::truthy( $request->get_param( 'confirm' ) ) ) {
+			return self::error( 'twd_sk_confirm', 'Please confirm that you want these pages brought up to date.', 400 );
+		}
+		$pages = $request->get_param( 'pages' );
+		$ids   = null;
+		if ( is_array( $pages ) ) {
+			$ids = array();
+			foreach ( $pages as $pid ) {
+				// Only pages this person may edit.
+				if ( is_numeric( $pid ) && current_user_can( 'edit_post', (int) $pid ) ) {
+					$ids[] = (int) $pid;
+				}
+			}
+		}
+		$done = TWD_SK_Upgrade::run( $ids );
+		return self::upgrades_payload( array( 'updated' => $done['updated'], 'failed' => $done['failed'] ) );
 	}
 
 	// -- Therapy or business mode -------------------------------------------

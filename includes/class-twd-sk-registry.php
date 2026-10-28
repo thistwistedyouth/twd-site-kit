@@ -28,6 +28,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TWD_SK_Registry {
 
+	/** The line shown while the articles grid is empty (0.15.0): the articles plugin's own plain words. */
+	const NO_ARTICLES_LINE = '<p class="twd-sk-resources__none">No articles yet. Please check back soon.</p>';
+
+
 	/**
 	 * Attribute rules for the one shortcode a page may contain.
 	 * Each value is a regex the attribute value must match in full.
@@ -833,7 +837,7 @@ class TWD_SK_Registry {
 				'</div>',
 				'<div class="twd-sk-resources__grid">',
 				'[twd_articles category="your-topic" count="3" columns="3"]',
-				'<p class="twd-sk-resources__none">No articles yet. Please check back soon.</p>',
+				self::NO_ARTICLES_LINE,
 				'</div>',
 				'</div>',
 				'</div>',
@@ -847,7 +851,7 @@ class TWD_SK_Registry {
 			'<h2 class="twd-sk-title">Latest articles</h2>',
 			'<p class="twd-sk-lead">Short introduction here.</p>',
 			'[twd_articles count="6" columns="3"]',
-			'<p class="twd-sk-resources__none">No articles yet. Please check back soon.</p>',
+			self::NO_ARTICLES_LINE,
 			'</div>',
 			'</section>',
 		) );
