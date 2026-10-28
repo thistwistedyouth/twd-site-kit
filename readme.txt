@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.14.0
+Stable tag: 0.14.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,15 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.14.1 =
+* Built on the same branch as 0.14.0, still not merged. Nothing here is on by default except the editing tools switch, which only appears for signed-in editors.
+* Visual editor: Add section, Move up and Move down, with no AI and no copy and paste. Each is saved at once as its own version (the history can undo it) and the page reloads straight back into the editor with the section in view. A new section comes as the kit outline with placeholder words to fill in, and a live page asks first. The section with the main heading stays at the top.
+* Editing tools switch: one switch in the admin bar (a small floating switch on a phone or with no admin bar) hides the floating buttons, the Edit header and footer pills and the version label, and brings them back. Kept for each person on the server, not in the browser.
+* Elementor: opening Elementor's editor on a kit page now shows a plain card saying the page is edited on the page itself, with a link to it. An administrator can carry on with one more click. The Edit with Elementor link in the pages list and on the classic edit screen is hidden from anyone else on kit pages. Other pages are untouched.
+* Footer: a new compact layout (tagline on top, logo left, links right, and one dark bar for the copyright, registration lines, contact details and legal links). The Ink style prefers it. Existing layouts are unchanged.
+* Header: on the front page, the site name now shows beside the small mark once the header shrinks, as on other pages.
+* The Ink style's page width is 1140px, the same as Sage and Grove.
 
 = 0.14.0 =
 * Built on a branch for the studio route (the owner's own production process). Nothing here is on by default: a site that updates and changes nothing looks exactly as before.

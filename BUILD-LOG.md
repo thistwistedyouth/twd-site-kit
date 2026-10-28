@@ -2,7 +2,35 @@
 
 The one place to see where this project is. Newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md. Update this file at the end of every piece of work, in the same commit.
 
-## Where we are (branch `studio-0.14`, 27 Oct 2026, work in progress)
+## Where we are (branch `studio-0.14`, 28 Oct 2026, 0.14.1 on the branch)
+
+**0.14.1 is on the branch `studio-0.14`, NOT merged, NOT in the update file on `main`.** It comes from the owner's first look at the pilot staging site and carries what he asked for: the header and footer fixes, an easier way to see the site without the editing buttons, a guard against Elementor, and adding and moving sections without AI. Install the branch zip by hand (see `docs/test-script-0.14.1.md`). `main` still carries 0.13.0.
+
+| 0.14.1 piece | What it adds | State |
+|---|---|---|
+| Ink width | `container` 1120px to 1140px, the same as sage and grove; the header and footer share it | Built, tested |
+| Name beside the mark | On the front page, once the header shrinks, the site name shows to the right of the small mark, as on every other page (the mark-replaces-logo rule is now a general sibling selector) | Built, tested, looked at offline |
+| Editing tools switch | One switch (admin bar after the WordPress logo; a floating one on a phone or with no admin bar) hides the floating buttons, the Edit header and footer pills and the version label, and brings them back. Kept per person as user meta, not in the browser | Built, tested, run in a real browser against a stub page; not on a real site |
+| Elementor guard | Opening Elementor's editor on a kit page shows a plain card with a link to the page; an administrator can carry on with one click. The Edit with Elementor link and the classic edit screen button are hidden from non-administrators on kit pages | Built, tested against stubs; hook names and priorities checked against the Elementor 4.3.5 source; not seen on a live Elementor |
+| Add and move sections | Add section, Move up, Move down in the Visual editor, no AI; each saved as its own version, then the page reloads into the editor at that section. A new section comes as the outline with placeholder words; a live page asks first; the section with the main heading never moves | Built, tested, run in a real browser against a stub page; not on a real site |
+| Compact footer | A fifth footer layout (tagline on top, logo left, links right, one dark bar for the small print); `ink` prefers it; the other layouts are unchanged | Built, tested, looked at offline at desktop and phone width |
+
+**Decisions taken in this session, generic form (client-specific ones are in the private clients repository):**
+1. The editing tools preference is kept per person on the server (user meta), because a test bans browser storage in the editor scripts and it then follows the person between devices.
+2. Add and move are immediate, one version each, not staged with the other edits: moving a section renumbers every piece of text after it, so combining them with unsaved words would need ordering rules. The price: unsaved changes must be saved or cancelled first, and the buttons say so.
+3. A new section comes with placeholder words (the engine that already existed), so a live page asks before adding one.
+4. A banner (hero) is never offered or accepted by Add: a page has one main heading.
+5. The compact footer is a new layout, not a change to an existing one, because every release reaches every site.
+6. The Elementor guard is built on the one door every route into Elementor's editor passes through (`admin_action_elementor`), not on `elementor/utils/is_post_support` (which only controls the body class and the files manager) nor on the admin bar (built by JavaScript from documents Elementor drew, and the kit template draws none).
+
+**Risk list for 0.14.1 (built, not seen on a real site):** the Elementor guard on a live Elementor (the first thing to check, with an editor-role login as well as an administrator); the editing tools switch in a real admin bar and on a phone; add and move on a real page, including the reload back into the editor and a draft page's `?page_id=` address; the compact footer with the real logo; the front header name on a real shrink. Order and plain steps are in `docs/test-script-0.14.1.md`.
+
+**Next:** the owner installs 0.14.1 on the pilot staging site and works through the test script. Then 0.15.0 (agreed split): an Embed section for a shortcode or raw HTML (administrators only; the page stores only `[twd_embed id="N"]`, the content lives apart; raw HTML bypasses the cleaner so it needs a two-step confirm and the launch check lists every embed) and an editable "when there are no articles" line. Still open: the width of the narrow reading column (`container-narrow`, 680px in ink) after the owner has seen renders at about 760, 800 and 900; the footer and header styling on the pilot site waits on its site report (`wp twd-sk doctor`), because the screenshots he sent do not match what this branch draws (capital letters in the menu, no header button, no Explore heading), so something other than this code may be shaping them.
+
+**Waiting on other projects (new, 28 Oct 2026):**
+- Articles plugin (`twd-article-publisher`, read only from here): the "No articles yet" wording belongs to it, not to Site Kit, so a page cannot edit it. Either an editable line kept on the page and shown only while the grid is empty (needs the plugin to mark its empty state, or CSS `:has()` on a class it already prints), or a setting in the plugin. To be read and briefed for 0.15.0.
+
+## Where we were (branch `studio-0.14`, 27 Oct 2026, work in progress)
 
 **On the branch `studio-0.14`, NOT merged, NOT in the update file:** 0.14.0, built overnight for the studio route (the owner's own production process, which lives in the private clients repository) and the first pilot rebuild on a staging site. Nothing on this branch reaches any site until the owner installs the branch zip by hand and merges. `main` still carries 0.13.0.
 
