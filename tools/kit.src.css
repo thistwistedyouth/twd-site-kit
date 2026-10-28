@@ -659,7 +659,10 @@
 .twd-sk-header--front.twd-sk-header--shrunk .twd-sk-header__panel { margin-left: auto; }
 .twd-sk-header--front.twd-sk-header--shrunk .twd-sk-header__logo-img { max-height: $logo-height-sm; }
 .twd-sk-header--front.twd-sk-header--shrunk .twd-sk-header__logo-mark { display: block; }
-.twd-sk-header--front.twd-sk-header--shrunk .twd-sk-header__logo-mark + .twd-sk-header__logo-img { display: none; }
+.twd-sk-header--front.twd-sk-header--shrunk .twd-sk-header__logo-mark ~ .twd-sk-header__logo-img { display: none; }
+/* 0.14.1: the site name beside the mark once shrunk, as on every other page. Hidden on the front page until then. */
+.twd-sk-header--front .twd-sk-header__logo-name { display: none; }
+.twd-sk-header--front.twd-sk-header--shrunk .twd-sk-header__logo-name { display: block; }
 .twd-sk-header__logo-text { font-family: $font-heading; font-size: $size-h3; font-weight: $heading-weight; font-style: $heading-style; line-height: 1.2; color: $color-title; }
 .twd-sk-header__toggle {
   display: none; align-items: center; justify-content: center; min-width: 48px; min-height: 48px; padding: 0;

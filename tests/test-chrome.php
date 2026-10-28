@@ -601,7 +601,9 @@ twd_sk_test( 'chrome front logo (0.14.0): off by default; on, the front page get
 	twd_sk_has( 'twd-sk-chrome--sticky twd-sk-chrome--front', $html, 'the spacer knows the header is taller' );
 	twd_sk_true( strpos( $html, 'twd-sk-header__logo-mark' ) < strpos( $html, 'twd-sk-header__logo-img' ), 'mark first, then the full logo' );
 	twd_sk_has( '<img class="twd-sk-header__logo-mark" src="/u/mark.png" alt=""', $html );
-	twd_sk_hasnt( 'twd-sk-header__logo-text', $html );
+	// 0.14.1: the site name comes after the full logo, for the shrunk header (the stylesheet hides it until then).
+	twd_sk_has( '<span class="twd-sk-header__logo-text twd-sk-header__logo-name">Calm Practice</span>', $html );
+	twd_sk_true( strpos( $html, 'twd-sk-header__logo-img' ) < strpos( $html, 'twd-sk-header__logo-name' ), 'name after the full logo, so the sibling rule can hide the logo' );
 	// On, another page: the mark and the site name as text, no full logo.
 	$GLOBALS['twd_stub']['front'] = false;
 	$html = TWD_SK_Chrome::render_header();
@@ -630,7 +632,9 @@ twd_sk_test( 'chrome front logo css: larger logo and a column layout on the fron
 	twd_sk_true( 1 === preg_match( '/twd-sk-header--front\.twd-sk-header--front \.twd-sk-header__inner\.twd-sk-header__inner \{[^}]*flex-direction: column/', $raw ), 'front page stacks the logo above the menu' );
 	twd_sk_true( 1 === preg_match( '/twd-sk-header--front\.twd-sk-header--front \.twd-sk-header__logo-img\.twd-sk-header__logo-img \{[^}]*max-height: var\(--twd-site-logo-height-front\)/', $raw ), 'the front page logo height is a token' );
 	twd_sk_true( 1 === preg_match( '/twd-sk-header--front\.twd-sk-header--front\.twd-sk-header--shrunk\.twd-sk-header--shrunk \.twd-sk-header__inner\.twd-sk-header__inner \{[^}]*flex-direction: row/', $raw ), 'shrunk, it is a row again' );
-	twd_sk_true( 1 === preg_match( '/twd-sk-header--shrunk\.twd-sk-header--shrunk \.twd-sk-header__logo-mark\.twd-sk-header__logo-mark \+ \.twd-sk-header__logo-img\.twd-sk-header__logo-img \{[^}]*display: none/', $raw ), 'shrunk, the mark replaces the full logo' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-header--shrunk\.twd-sk-header--shrunk \.twd-sk-header__logo-mark\.twd-sk-header__logo-mark ~ \.twd-sk-header__logo-img\.twd-sk-header__logo-img \{[^}]*display: none/', $raw ), 'shrunk, the mark replaces the full logo' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-header--front\.twd-sk-header--front \.twd-sk-header__logo-name\.twd-sk-header__logo-name \{[^}]*display: none/', $raw ), '0.14.1: the name beside the mark is hidden on the front page until shrunk' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-header--front\.twd-sk-header--front\.twd-sk-header--shrunk\.twd-sk-header--shrunk \.twd-sk-header__logo-name\.twd-sk-header__logo-name \{[^}]*display: block/', $raw ), '0.14.1: and shown once shrunk' );
 	twd_sk_true( 1 === preg_match( '/twd-sk-chrome--sticky\.twd-sk-chrome--sticky\.twd-sk-chrome--front\.twd-sk-chrome--front \{[^}]*height: calc\(var\(--twd-site-logo-height-front\)/', $raw ), 'the spacer grows with the logo' );
 	twd_sk_true( 1 === preg_match( '/prefers-reduced-motion: reduce\)\s*\{[^@]*twd-sk-header__logo-mark[^{]*\{[^}]*transition: none/', $raw ), 'no motion when asked' );
 	twd_sk_true( 1 === preg_match( '/@media \(max-width: 900px\)[^@]*twd-sk-header__logo-img\.twd-sk-header__logo-img \{[^}]*logo-height-sm/', $raw ), 'phones use the small logo height' );

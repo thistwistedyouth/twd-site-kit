@@ -164,7 +164,7 @@ class TWD_SK_Chrome {
 			'twd-sk-header__strip', 'twd-sk-header__strip-inner', 'twd-sk-header__strip-link', 'twd-sk-header__inner',
 			'twd-sk-header__logo', 'twd-sk-header__logo-img', 'twd-sk-header__logo-text', 'twd-sk-header__toggle', 'twd-sk-header__bars',
 			// 0.14.0: the front page's larger stacked logo, and the small mark used elsewhere.
-			'twd-sk-header--front', 'twd-sk-header__logo-mark', 'twd-sk-chrome--front',
+			'twd-sk-header--front', 'twd-sk-header__logo-mark', 'twd-sk-header__logo-name', 'twd-sk-chrome--front',
 			// 0.14.0: the header laid transparent over a page's opening full-width picture.
 			'twd-sk-header--over', 'twd-sk-chrome--over',
 			'twd-sk-header__panel', 'twd-sk-header__nav', 'twd-sk-header__menu', 'twd-sk-header__item', 'twd-sk-header__item--parent',
@@ -387,7 +387,10 @@ class TWD_SK_Chrome {
 		if ( $front ) {
 			$full = self::logo_img( $profile['logo_id'], 'twd-sk-header__logo-img', $name );
 			if ( '' !== $full ) {
-				return $mark . $full;
+				// 0.14.1: the site name beside the mark, shown only once the header shrinks (the stylesheet
+				// hides it and the mark on the front page until then), as on every other page.
+				$label = '' !== $mark ? '<span class="twd-sk-header__logo-text twd-sk-header__logo-name">' . self::esc( $name ) . '</span>' : '';
+				return $mark . $full . $label;
 			}
 		} elseif ( '' !== $mark ) {
 			return $mark . '<span class="twd-sk-header__logo-text">' . self::esc( $name ) . '</span>';
