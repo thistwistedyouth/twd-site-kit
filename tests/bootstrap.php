@@ -138,11 +138,17 @@ function get_queried_object_id() {
 function is_singular( $type = '' ) {
 	return $GLOBALS['twd_stub']['singular'];
 }
-function add_filter( $name, $callback ) {
+function add_filter( $name, $callback, $priority = 10, $args = 1 ) {
 	$GLOBALS['twd_stub']['hooks'][ $name ][] = $callback;
+	$GLOBALS['twd_stub']['hook_priority'][ $name ][] = $priority;
 }
-function add_action( $name, $callback ) {
-	add_filter( $name, $callback );
+function add_action( $name, $callback, $priority = 10, $args = 1 ) {
+	add_filter( $name, $callback, $priority, $args );
+}
+// 0.14.1: remove_action is recorded, not run, so a test can see what was taken off which hook.
+function remove_action( $name, $callback, $priority = 10 ) {
+	$GLOBALS['twd_stub']['removed_actions'][] = array( 'hook' => $name, 'callback' => $callback, 'priority' => $priority );
+	return true;
 }
 function get_option( $name, $default = false ) {
 	if ( ! empty( $GLOBALS['twd_stub']['option_throws'] ) ) {
@@ -153,6 +159,9 @@ function get_option( $name, $default = false ) {
 function update_option( $name, $value ) {
 	$GLOBALS['twd_stub']['options'][ $name ] = $value;
 	return true;
+}
+function absint( $value ) {
+	return abs( (int) $value );
 }
 // User meta (0.14.1: the editing tools switch is kept per person).
 function get_user_meta( $user_id, $key, $single = false ) {
@@ -352,7 +361,8 @@ function is_user_logged_in() {
 	return (int) $GLOBALS['twd_stub']['user'] > 0;
 }
 function wp_verify_nonce( $nonce, $action ) {
-	return is_string( $nonce ) && $nonce === $GLOBALS['twd_stub']['nonce_ok'] && 'wp_rest' === $action ? 1 : false;
+	$actions = array_merge( array( 'wp_rest' ), isset( $GLOBALS['twd_stub']['nonce_actions'] ) ? (array) $GLOBALS['twd_stub']['nonce_actions'] : array() );
+	return is_string( $nonce ) && $nonce === $GLOBALS['twd_stub']['nonce_ok'] && in_array( $action, $actions, true ) ? 1 : false;
 }
 function wp_create_nonce( $action ) {
 	return $GLOBALS['twd_stub']['nonce_ok'];
