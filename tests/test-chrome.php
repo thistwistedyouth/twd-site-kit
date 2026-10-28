@@ -680,7 +680,7 @@ function twd_sk_feature_parts( $html ) {
 	);
 }
 
-twd_sk_test( 'chrome footer feature: the logo large, the footer text as a heading, Contact with the email then the registration on the left, the page links in two columns with no label on the right', function () {
+twd_sk_test( 'chrome footer feature: the logo large, the footer text as a heading, Contact with the email on the left, the page links in two columns with no label on the right, and the registration in the dark strip', function () {
 	$GLOBALS['twd_stub']['attachments'][50] = array( 'url' => '/u/logo.png', 'w' => 600, 'h' => 200, 'is_image' => true );
 	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'logo_id' => 50 ) ), array( 'footer_variant' => 'feature', 'footer_columns' => 3 ) );
 	$html  = TWD_SK_Chrome::render_footer();
@@ -692,13 +692,15 @@ twd_sk_test( 'chrome footer feature: the logo large, the footer text as a headin
 	$b = $parts['brand'];
 	twd_sk_has( '<img class="twd-sk-footer__logo-img" src="/u/logo.png" alt="Calm Practice"', $b );
 	twd_sk_eq( 'large', $GLOBALS['twd_stub']['image_size_asked'][50], 'a bigger size of the picture, so a large logo stays sharp' );
-	$order = array( '<img class="twd-sk-footer__logo-img"', '<p class="twd-sk-footer__tagline">Gentle, practical therapy.</p>', 'twd-sk-footer__contact-group', '<p class="twd-sk-footer__heading">Contact</p>', 'hello@calm.example', '01234 567890', '1 High Street', 'twd-sk-footer__regs', '<p class="twd-sk-footer__reg-line">Member of an example body</p>' );
+	$order = array( '<img class="twd-sk-footer__logo-img"', '<p class="twd-sk-footer__tagline">Gentle, practical therapy.</p>', 'twd-sk-footer__contact-group', '<p class="twd-sk-footer__heading">Contact</p>', 'hello@calm.example', '01234 567890', '1 High Street' );
 	$last  = -1;
 	foreach ( $order as $needle ) {
 		$at = strpos( $b, $needle );
 		twd_sk_true( false !== $at && $at > $last, 'left block order: ' . $needle );
 		$last = (int) $at;
 	}
+	twd_sk_hasnt( 'Member of an example body', $b, '0.15.0: the registration is no longer in the main area' );
+	twd_sk_hasnt( 'twd-sk-footer__regs', $html );
 	twd_sk_eq( 1, substr_count( $html, 'twd-sk-footer__heading' ), 'one small label, Contact, and nothing like Explore above the links' );
 	twd_sk_hasnt( 'Explore', $html );
 
@@ -713,8 +715,13 @@ twd_sk_test( 'chrome footer feature: the logo large, the footer text as a headin
 	$s = $parts['bottom'];
 	twd_sk_has( '&copy; ' . gmdate( 'Y' ) . ' Calm Practice', $s );
 	twd_sk_has( 'href="/privacy">Privacy</a>', $s );
-	foreach ( array( 'hello@calm.example', 'Member of an example body', '01234', 'Contact', 'twd-sk-footer__reg' ) as $not ) {
-		twd_sk_hasnt( $not, $s, 'the strip holds only the copyright and the legal links: ' . $not );
+	twd_sk_has( '<div class="twd-sk-footer__meta"><span class="twd-sk-footer__reg-line">Member of an example body</span></div>', $s, '0.15.0: the registration lines are in the strip' );
+	$copy = strpos( $s, 'twd-sk-footer__copy' );
+	$reg  = strpos( $s, 'twd-sk-footer__reg-line' );
+	$legal = strpos( $s, 'twd-sk-footer__legal' );
+	twd_sk_true( $copy < $reg && $reg < $legal, 'the strip reads: copyright, registration, legal links' );
+	foreach ( array( 'hello@calm.example', '01234', 'Contact', '1 High Street' ) as $not ) {
+		twd_sk_hasnt( $not, $s, 'the strip holds no contact details: ' . $not );
 	}
 
 	$known = array_merge( TWD_SK_Chrome::classes(), array( 'twd-sk-page', 'twd-sk-inner' ) );
@@ -728,7 +735,7 @@ twd_sk_test( 'chrome footer feature: whatever was not supplied is left out, and 
 	$html = TWD_SK_Chrome::render_footer();
 	twd_sk_has( 'twd-sk-footer--feature twd-sk-footer--cols-1', $html, 'no links, so one block' );
 	twd_sk_has( '<p class="twd-sk-footer__name">Calm Practice</p>', $html, 'no logo: the name as text' );
-	foreach ( array( 'twd-sk-footer__tagline', 'twd-sk-footer__contact-group', 'twd-sk-footer__regs', '<nav aria-label="Footer">', 'Contact' ) as $not ) {
+	foreach ( array( 'twd-sk-footer__tagline', 'twd-sk-footer__contact-group', 'twd-sk-footer__reg-line', 'twd-sk-footer__meta', '<nav aria-label="Footer">', 'Contact' ) as $not ) {
 		twd_sk_hasnt( $not, $html, $not );
 	}
 	twd_sk_eq( 1, substr_count( $html, 'class="twd-sk-footer__col"' ), 'one block' );
@@ -900,4 +907,27 @@ twd_sk_test( 'chrome footer compact css: a dark bar from the band colour, the li
 	foreach ( array( 'sage', 'grove', 'ember', 'midnight' ) as $slug ) {
 		twd_sk_true( 'compact' !== TWD_SK_Packs::packs()[ $slug ]['chrome']['footer'], $slug . ' keeps its own footer' );
 	}
+} );
+
+twd_sk_test( 'chrome footer feature css (0.15.0): the links sit on the footer text row (the left block lets its pieces take the grid rows), the registration is styled in the strip, and a phone stacks as before', function () {
+	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-footer--feature\.twd-sk-footer--feature \.twd-sk-footer__main\.twd-sk-footer__main > \.twd-sk-footer__col\.twd-sk-footer__col:first-child \{[^}]*display: contents/', $raw ), 'the left block is not a box of its own' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-footer__col\.twd-sk-footer__col \+ \.twd-sk-footer__col\.twd-sk-footer__col \{[^}]*grid-column: 2;[^}]*grid-row: 2 \/ span 2;[^}]*margin-top: calc\(28px \+ \(var\(--twd-site-size-h2\) \* var\(--twd-site-line-heading\) - var\(--twd-site-size-body\) \* var\(--twd-site-line-body\)\) \/ 2\)/', $raw ), 'the links start on the footer text row, lined up with its first line, from tokens' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-footer--feature\.twd-sk-footer--feature \.twd-sk-footer__reg-line\.twd-sk-footer__reg-line \{[^}]*color: var\(--twd-site-color-on-band\)/', $raw ), 'the registration is readable on the band colour' );
+	twd_sk_hasnt( 'twd-sk-footer__regs', $raw, 'the old registration block is no longer styled' );
+	// On a phone the left block is a box again and the links column returns to normal flow (the same stack as before).
+	twd_sk_true( 1 === preg_match( '/@media \(max-width: 768px\) \{.*twd-sk-footer--feature\.twd-sk-footer--feature \.twd-sk-footer__main\.twd-sk-footer__main > \.twd-sk-footer__col\.twd-sk-footer__col:first-child \{[^}]*display: block/s', $raw ), 'phone: the left block is a box again' );
+	twd_sk_true( 1 === preg_match( '/@media \(max-width: 768px\) \{.*twd-sk-footer__col\.twd-sk-footer__col \+ \.twd-sk-footer__col\.twd-sk-footer__col \{[^}]*grid-column: auto;[^}]*grid-row: auto;[^}]*margin-top: 0/s', $raw ), 'phone: the links column returns to normal flow' );
+} );
+
+twd_sk_test( 'chrome footer feature (0.15.0): the other layouts print the same bytes with or without a registration line change, and the compact footer still holds the registration in its bar', function () {
+	foreach ( array( 'columns', 'band', 'centered', 'simple', 'compact' ) as $v ) {
+		twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'registration' => array( 'Member of an example body' ) ) ), array( 'footer_variant' => $v, 'footer_columns' => 2 ) );
+		$html = TWD_SK_Chrome::render_footer();
+		twd_sk_has( 'Member of an example body', $html, $v . ' still prints the registration' );
+		twd_sk_hasnt( 'twd-sk-footer--feature', $html, $v . ' is not the feature footer' );
+	}
+	twd_sk_chrome_setup( null, array( 'footer_variant' => 'columns' ) );
+	twd_sk_has( '<div class="twd-sk-inner twd-sk-footer__reg">', TWD_SK_Chrome::render_footer(), 'the columns footer keeps its own registration row, as before' );
+	TWD_SK_Chrome::save_settings( array( 'footer_variant' => '' ) );
 } );

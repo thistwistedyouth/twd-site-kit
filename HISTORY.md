@@ -77,6 +77,14 @@ Why: the four footers were a small logo, a line of text and a list of links with
 - **The older layouts are byte for byte the same.** The four older footers and the header were rendered for two profiles on a test server with the code before and after this work and compared: identical. The generated stylesheet only gained rules.
 - **Not verified on a real site:** how a real lockup looks at 140 to 150px high, the two link columns on a real theme, the strip on a real browser, and with an Elementor Pro footer template.
 
+## The large footer, adjusted at the owner's request (28 Oct 2026, 0.15.0 branch)
+
+The first design of the large footer kept the email and the registration lines in the main area, never in the strip, and put the links beside the logo. After seeing it on a real page the owner asked for the registration back in the dark strip and the links level with the footer text, because the logo made the links sit far above the words they belong with and the registration read as part of the contact details.
+
+- **Registration in the strip.** Same markup as the compact footer's bar (`div.twd-sk-footer__meta` with `span.twd-sk-footer__reg-line`), so one stylesheet rule set serves both. The email stays in the main area under a small Contact label, because that layout's purpose is a visible way to get in touch.
+- **Links level with the footer text, with no new markup.** The left block is turned into `display: contents` on a wide screen so the logo, the footer text and the contact group become rows of the same grid as the links; the links start on the footer text's row. The first link is lined up with the first line of the footer text by working out half the difference of the two line boxes from the size and line-height tokens, so it holds under any pack. A phone resets to the old stacked blocks. The alternative, a fixed top offset on the links column, was rejected: it depends on the logo height and goes wrong when there is no logo.
+- **This changes an existing layout.** The direction rule says an existing look does not change without an option. The owner asked for this one directly, and only one site uses the layout, so it is changed in place and recorded here rather than put behind a switch. If another site needs the old arrangement, it would be a new layout name, not a setting.
+
 ## Merging the studio branch into 0.15.0 (28 Oct 2026)
 
 Why: two builds were both labelled 0.14.1. `main` had the released one; the branch `studio-0.14` (six commits from a different working session, branched from an older point) had Add section, Move up and Move down, the editing tools switch, the Elementor guard, the compact footer and Ink at 1140, with its own zip and update file. A staging site could have been running either. The owner said yes to combining them in the 0.15.0 branch.

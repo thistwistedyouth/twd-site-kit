@@ -153,8 +153,8 @@ class TWD_SK_Chrome {
 			'band'     => 'One to three columns on the band colour',
 			'centered' => 'One centred column',
 			'simple'   => 'Just the copyright, legal links and registration lines',
-			// 0.14.0: the large logo, footer text as a heading, contact and registration, links in two columns, a dark strip below.
-			'feature'  => 'Large logo with contact and registration, links in two columns, dark strip below',
+			// 0.14.0: the large logo, footer text as a heading, contact, links in two columns level with the footer text, a dark strip below holding the registration (moved there 0.15.0).
+			'feature'  => 'Large logo and contact on the left, links in two columns level with the footer text, registration and copyright in a dark strip below',
 			'compact'  => 'Tagline on top, logo left, links right, and a dark bar for the small print',
 		);
 	}
@@ -188,7 +188,7 @@ class TWD_SK_Chrome {
 			'twd-sk-footer__reg', 'twd-sk-footer__reg-line', 'twd-sk-footer__bottom', 'twd-sk-footer__bottom-inner',
 			'twd-sk-footer__copy', 'twd-sk-footer__legal', 'twd-sk-footer__legal-link', 'twd-sk-skip',
 			// 0.14.0: the feature footer's own pieces (the footer text as a heading, the contact and registration groups, the two-column list).
-			'twd-sk-footer__tagline', 'twd-sk-footer__contact-group', 'twd-sk-footer__regs', 'twd-sk-footer__links--two',
+			'twd-sk-footer__tagline', 'twd-sk-footer__contact-group', 'twd-sk-footer__links--two',
 			// 0.14.0: the text wordmark header (a mark, the name and a second line as live text, centred on every page).
 			'twd-sk-header--wordmark', 'twd-sk-header--wm-front', 'twd-sk-header--wm-name', 'twd-sk-header__mark', 'twd-sk-header__name', 'twd-sk-header__line',
 			'twd-sk-chrome--wordmark', 'twd-sk-chrome--wm-front', 'twd-sk-chrome--noline',
@@ -623,10 +623,10 @@ class TWD_SK_Chrome {
 			return self::render_compact_footer( $profile );
 		}
 
-		$bottom = '<div class="twd-sk-footer__bottom"><div class="twd-sk-inner twd-sk-footer__bottom-inner">' . self::copyright( $profile ) . self::legal_links( $profile ) . '</div></div>';
 		if ( 'feature' === $variant ) {
-			return self::render_footer_feature( $profile, $bottom );
+			return self::render_footer_feature( $profile );
 		}
+		$bottom = '<div class="twd-sk-footer__bottom"><div class="twd-sk-inner twd-sk-footer__bottom-inner">' . self::copyright( $profile ) . self::legal_links( $profile ) . '</div></div>';
 		$reg    = '';
 		if ( $profile['registration'] ) {
 			$reg = '<div class="twd-sk-inner twd-sk-footer__reg">';
@@ -696,12 +696,13 @@ class TWD_SK_Chrome {
 
 	/**
 	 * The feature footer (0.14.0). Left block: the logo large (a bigger size of the picture, so it stays sharp),
-	 * the footer text set as a heading, a small Contact label with the email, phone and address lines, then the
-	 * registration lines. Right block: the page links in two columns, with no label above them. Below: the
-	 * slim strip with only the copyright and the legal links. The email and the registration lines stay in the
-	 * main area, never in the strip. Anything not supplied leaves its piece out; nothing is invented.
+	 * the footer text set as a heading, then a small Contact label with the email, phone and address lines.
+	 * Right block: the page links in two columns, with no label above them, level with the footer text (the
+	 * stylesheet places them on that row). Below: the dark strip with the copyright, the registration lines
+	 * (moved here from the main area in 0.15.0, at the owner's request) and the legal links. The email stays in
+	 * the main area. Anything not supplied leaves its piece out; nothing is invented.
 	 */
-	private static function render_footer_feature( $profile, $bottom ) {
+	private static function render_footer_feature( $profile ) {
 		$brand = $profile['logo_id']
 			? '<div>' . self::logo_html( $profile, 'twd-sk-footer__logo-img', 'twd-sk-footer__name', true, 'large' ) . '</div>'
 			: '<p class="twd-sk-footer__name">' . self::esc( self::site_name( $profile ) ) . '</p>';
@@ -722,13 +723,13 @@ class TWD_SK_Chrome {
 		if ( $lines ) {
 			$brand .= '<div class="twd-sk-footer__contact-group"><p class="twd-sk-footer__heading">Contact</p>' . implode( '', $lines ) . '</div>';
 		}
-		if ( $profile['registration'] ) {
-			$brand .= '<div class="twd-sk-footer__regs">';
-			foreach ( $profile['registration'] as $line ) {
-				$brand .= '<p class="twd-sk-footer__reg-line">' . self::esc( $line ) . '</p>';
-			}
-			$brand .= '</div>';
+		$regs = '';
+		foreach ( $profile['registration'] as $line ) {
+			$regs .= '<span class="twd-sk-footer__reg-line">' . self::esc( $line ) . '</span>';
 		}
+		$bottom = '<div class="twd-sk-footer__bottom"><div class="twd-sk-inner twd-sk-footer__bottom-inner">' . self::copyright( $profile )
+			. ( '' !== $regs ? '<div class="twd-sk-footer__meta">' . $regs . '</div>' : '' )
+			. self::legal_links( $profile ) . '</div></div>';
 
 		$links = '';
 		if ( $profile['menu'] ) {

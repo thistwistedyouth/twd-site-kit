@@ -2663,9 +2663,6 @@
   font-size: var(--twd-site-size-body) !important;
   overflow-wrap: anywhere;
 }
-.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__regs.twd-sk-footer__regs {
-  margin: 24px 0 0 !important;
-}
 .twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__link.twd-sk-footer__link {
   font-size: var(--twd-site-size-body) !important;
 }
@@ -2694,8 +2691,41 @@
   border-top: 0 !important;
 }
 .twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__bottom-inner.twd-sk-footer__bottom-inner {
+  gap: 6px 28px;
   padding-top: 12px !important;
   padding-bottom: 12px !important;
+}
+/* 0.15.0: the registration lines sit in the dark strip (as in the compact footer), between the copyright and the legal links. */
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__reg-line.twd-sk-footer__reg-line {
+  margin: 0 !important;
+  font-size: var(--twd-site-size-small) !important;
+  line-height: var(--twd-site-line-body) !important;
+  color: var(--twd-site-color-on-band) !important;
+}
+/* 0.15.0: the links sit level with the footer text, not beside the logo. The left block stops being a box of its own so its
+   pieces take the grid rows (logo, footer text, contact), and the links start on the footer text's row, lined up with its first line. */
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__main.twd-sk-footer__main {
+  row-gap: 0;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__main.twd-sk-footer__main > .twd-sk-footer__col.twd-sk-footer__col:first-child {
+  display: contents;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__main.twd-sk-footer__main > .twd-sk-footer__col.twd-sk-footer__col:first-child > * {
+  grid-column: 1;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__main.twd-sk-footer__main > .twd-sk-footer__col.twd-sk-footer__col:first-child > :nth-child(1) {
+  grid-row: 1;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__main.twd-sk-footer__main > .twd-sk-footer__col.twd-sk-footer__col:first-child > :nth-child(2) {
+  grid-row: 2;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__main.twd-sk-footer__main > .twd-sk-footer__col.twd-sk-footer__col:first-child > :nth-child(3) {
+  grid-row: 3;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__main.twd-sk-footer__main > .twd-sk-footer__col.twd-sk-footer__col + .twd-sk-footer__col.twd-sk-footer__col {
+  grid-column: 2;
+  grid-row: 2 / span 2;
+  margin-top: calc(28px + (var(--twd-site-size-h2) * var(--twd-site-line-heading) - var(--twd-site-size-body) * var(--twd-site-line-body)) / 2) !important;
 }
 .twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__copy.twd-sk-footer__copy,
 .twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__legal.twd-sk-footer__legal {
@@ -3038,6 +3068,14 @@
     gap: var(--twd-site-gap-md);
     padding-top: var(--twd-site-section-y-sm) !important;
     padding-bottom: var(--twd-site-section-y-sm) !important;
+  }
+  .twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__main.twd-sk-footer__main > .twd-sk-footer__col.twd-sk-footer__col:first-child {
+    display: block;
+  }
+  .twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__main.twd-sk-footer__main > .twd-sk-footer__col.twd-sk-footer__col + .twd-sk-footer__col.twd-sk-footer__col {
+    grid-column: auto;
+    grid-row: auto;
+    margin-top: 0 !important;
   }
   .twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__logo-img.twd-sk-footer__logo-img {
     height: var(--twd-site-footer-logo-height-feature-sm);

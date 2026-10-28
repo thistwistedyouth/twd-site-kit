@@ -830,7 +830,6 @@
 .twd-sk-footer--feature .twd-sk-footer__contact-group { margin: 32px 0 0; }
 .twd-sk-footer--feature .twd-sk-footer__contact-group .twd-sk-footer__heading { margin: 0 0 8px; }
 .twd-sk-footer--feature .twd-sk-footer__contact { margin: 0 0 6px; font-size: $size-body; overflow-wrap: anywhere; }
-.twd-sk-footer--feature .twd-sk-footer__regs { margin: 24px 0 0; }
 .twd-sk-footer--feature .twd-sk-footer__link { font-size: $size-body; }
 .twd-sk-footer--feature .twd-sk-footer__links--two { columns: 140px 2; column-gap: 24px; }
 .twd-sk-footer--feature .twd-sk-footer__links--two > li { break-inside: avoid; padding: 0 0 12px; }
@@ -838,7 +837,18 @@
 .twd-sk-footer--feature .twd-sk-footer__links .twd-sk-footer__link { color: $color-title; text-decoration: none; }
 .twd-sk-footer--feature .twd-sk-footer__links .twd-sk-footer__link:hover, .twd-sk-footer--feature .twd-sk-footer__links .twd-sk-footer__link:focus-visible { color: $color-accent-text; text-decoration: underline; }
 .twd-sk-footer--feature .twd-sk-footer__bottom { background-color: $color-band; border-top: 0; }
-.twd-sk-footer--feature .twd-sk-footer__bottom-inner { padding-top: 12px; padding-bottom: 12px; }
+.twd-sk-footer--feature .twd-sk-footer__bottom-inner { gap: 6px 28px; padding-top: 12px; padding-bottom: 12px; }
+/* 0.15.0: the registration lines sit in the dark strip (as in the compact footer), between the copyright and the legal links. */
+.twd-sk-footer--feature .twd-sk-footer__reg-line { margin: 0; font-size: $size-small; line-height: $line-body; color: $color-on-band; }
+/* 0.15.0: the links sit level with the footer text, not beside the logo. The left block stops being a box of its own so its
+   pieces take the grid rows (logo, footer text, contact), and the links start on the footer text's row, lined up with its first line. */
+.twd-sk-footer--feature .twd-sk-footer__main { row-gap: 0; }
+.twd-sk-footer--feature .twd-sk-footer__main > .twd-sk-footer__col:first-child { display: contents; }
+.twd-sk-footer--feature .twd-sk-footer__main > .twd-sk-footer__col:first-child > * { grid-column: 1; }
+.twd-sk-footer--feature .twd-sk-footer__main > .twd-sk-footer__col:first-child > :nth-child(1) { grid-row: 1; }
+.twd-sk-footer--feature .twd-sk-footer__main > .twd-sk-footer__col:first-child > :nth-child(2) { grid-row: 2; }
+.twd-sk-footer--feature .twd-sk-footer__main > .twd-sk-footer__col:first-child > :nth-child(3) { grid-row: 3; }
+.twd-sk-footer--feature .twd-sk-footer__main > .twd-sk-footer__col + .twd-sk-footer__col { grid-column: 2; grid-row: 2 / span 2; margin-top: calc(28px + (#{$size-h2} * #{$line-heading} - #{$size-body} * #{$line-body}) / 2); }
 .twd-sk-footer--feature .twd-sk-footer__copy, .twd-sk-footer--feature .twd-sk-footer__legal { color: $color-on-band; }
 .twd-sk-footer--feature .twd-sk-footer__legal-link { color: $color-accent-on-dark; }
 /* The compact footer (0.14.1): the tagline centred on top, the logo left and the links right, then a dark bar for the
@@ -932,6 +942,8 @@
   .twd-sk-footer__bottom-inner { flex-direction: column; align-items: flex-start; }
   /* The feature footer stacks its two blocks; the logo takes its phone size and the heading its smaller step, still large. */
   .twd-sk-footer--feature .twd-sk-footer__main { grid-template-columns: 1fr; gap: $gap-md; padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
+  .twd-sk-footer--feature .twd-sk-footer__main > .twd-sk-footer__col:first-child { display: block; }
+  .twd-sk-footer--feature .twd-sk-footer__main > .twd-sk-footer__col + .twd-sk-footer__col { grid-column: auto; grid-row: auto; margin-top: 0; }
   .twd-sk-footer--feature .twd-sk-footer__logo-img { height: $footer-logo-height-feature-sm; }
   .twd-sk-footer--feature .twd-sk-footer__tagline { font-size: $size-h2-sm; }
 }
