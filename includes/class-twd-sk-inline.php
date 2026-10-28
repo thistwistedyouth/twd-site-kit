@@ -30,6 +30,9 @@ class TWD_SK_Inline {
 	const SPOT_ATTR = 'data-twd-sk-s';
 	// 0.14.0: things that can be removed (a section, a repeated item such as a list entry or card, a button).
 	const REMOVE_ATTR  = 'data-twd-sk-r';
+	// 0.15.0: each top-level section, numbered as TWD_SK_Sections counts them (for its look), and the layouts it can move to.
+	const SECTION_ATTR = 'data-twd-sk-o';
+	const LAYOUT_ATTR  = 'data-twd-sk-lay';
 	const MAX_REMOVES  = 50;
 	const MAX_EDITS = 400;
 	const MAX_TEXT  = 6000;
@@ -303,6 +306,27 @@ class TWD_SK_Inline {
 		}
 		foreach ( $found['removes'] as $i => $el ) {
 			$el->setAttribute( self::REMOVE_ATTR, (string) $i );
+		}
+		// Each top-level section, in the order TWD_SK_Sections counts them, with the layouts it can move to.
+		$n = 0;
+		foreach ( $root->getElementsByTagName( 'section' ) as $section ) {
+			$inside = false;
+			for ( $up = $section->parentNode; $up && $up !== $root; $up = $up->parentNode ) {
+				if ( $up instanceof DOMElement && 'section' === strtolower( $up->nodeName ) ) {
+					$inside = true;
+					break;
+				}
+			}
+			if ( $inside ) {
+				continue;
+			}
+			$section->setAttribute( self::SECTION_ATTR, (string) $n );
+			$classes = array_values( array_filter( preg_split( '/\s+/', trim( $section->getAttribute( 'class' ) ) ), 'strlen' ) );
+			$lay     = TWD_SK_Looks::layouts_attr( $classes );
+			if ( '' !== $lay ) {
+				$section->setAttribute( self::LAYOUT_ATTR, $lay );
+			}
+			$n++;
 		}
 		foreach ( $found['spots'] as $i => $node ) {
 			if ( $node instanceof DOMText ) {

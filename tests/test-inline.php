@@ -59,7 +59,7 @@ twd_sk_test( 'inline: the safety notice and the enquiry form are never editable 
 
 twd_sk_test( 'inline: numbering changes nothing else on the page', function () {
 	$stored = twd_sk_inline_page( twd_sk_inline_sample() );
-	$plain  = preg_replace( '/ data-twd-sk-[tpr]="\d+"/', '', TWD_SK_Inline::mark( $stored ) );
+	$plain  = preg_replace( array( '/ data-twd-sk-[tpro]="\d+"/', '/ data-twd-sk-lay="[^"]*"/' ), '', TWD_SK_Inline::mark( $stored ) );
 	twd_sk_eq( $stored, $plain );
 	twd_sk_eq( '', TWD_SK_Inline::mark( '' ) );
 } );
@@ -239,7 +239,7 @@ twd_sk_test( 'inline spots: a picture marker is a place for a picture; caption a
 	twd_sk_true( 1 === preg_match( '/<figcaption class="twd-sk-pictures__caption" data-twd-sk-t="\d+">\[PLACEHOLDER: caption/', $marked ), 'the caption marker is still words to type over' );
 	twd_sk_true( 1 === preg_match( '/<p data-twd-sk-t="\d+">\[PLACEHOLDER: describe the picture above\]<\/p>/', $marked ) );
 	twd_sk_eq( array( 'text' => 6, 'pics' => 1, 'spots' => 3, 'removes' => 5 ), TWD_SK_Inline::count( $stored ) );
-	$plain = preg_replace( array( '/ data-twd-sk-[tpsr]="\d+"/', '/<span>(\[PLACEHOLDER[^<]*)<\/span>/' ), array( '', '$1' ), $marked );
+	$plain = preg_replace( array( '/ data-twd-sk-[tpsro]="\d+"/', '/ data-twd-sk-lay="[^"]*"/', '/<span>(\[PLACEHOLDER[^<]*)<\/span>/' ), array( '', '', '$1' ), $marked );
 	twd_sk_eq( $stored, $plain, 'numbering changes nothing else' );
 } );
 

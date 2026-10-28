@@ -94,6 +94,8 @@ class TWD_SK_Editor {
 			'embeds'         => ( (bool) $context['is_kit_page'] && TWD_SK_Embed::can_manage() && ! TWD_SK_Safe::on() ) ? TWD_SK_Embed::summaries() : array(),
 			// Changing words and pictures in place (0.10.0): kit pages, outside safe mode.
 			'inline'         => (bool) $context['is_kit_page'] && ! TWD_SK_Safe::on(),
+			// The layouts and options the Visual editor's Look panel offers (0.15.0): labels and class names only.
+			'look'           => ( (bool) $context['is_kit_page'] && ! TWD_SK_Safe::on() ) ? TWD_SK_Looks::config() : array(),
 			// Uploading a picture from the computer while changing the page in place (0.10.1).
 			'canUpload'      => current_user_can( 'upload_files' ),
 			'mediaUrl'       => esc_url_raw( rest_url( 'wp/v2/media' ) ),

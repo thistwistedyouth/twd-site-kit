@@ -1060,9 +1060,24 @@ class TWD_SK_REST {
 		if ( $base !== (int) TWD_SK_Store::get_current_version_id( $id ) ) {
 			return self::error( 'twd_sk_conflict', 'This page changed since you opened it. Reload the page and make the change again.', 409 );
 		}
-		$out = TWD_SK_Inline::apply( TWD_SK_Store::get_current( $id ), $request->get_param( 'texts' ), $request->get_param( 'pictures' ), $request->get_param( 'spots' ), $request->get_param( 'removes' ) );
-		if ( is_wp_error( $out ) ) {
-			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_conflict' === $out->get_error_code() ? 409 : 400 );
+		// The look of sections (layout and options) changes only class names, so it goes first on the section
+		// numbers the page was drawn with; words, pictures and removals follow on the result (0.15.0).
+		$html  = TWD_SK_Store::get_current( $id );
+		$looks = array( 'html' => $html, 'changed' => 0 );
+		if ( is_array( $request->get_param( 'looks' ) ) && $request->get_param( 'looks' ) ) {
+			$looks = TWD_SK_Looks::apply( $html, $request->get_param( 'looks' ) );
+			if ( is_wp_error( $looks ) ) {
+				return self::error( $looks->get_error_code(), $looks->get_error_message(), 'twd_sk_conflict' === $looks->get_error_code() ? 409 : 400 );
+			}
+		}
+		$others = array( $request->get_param( 'texts' ), $request->get_param( 'pictures' ), $request->get_param( 'spots' ), $request->get_param( 'removes' ) );
+		if ( $looks['changed'] && ! array_filter( $others ) ) {
+			$out = array( 'html' => $looks['html'], 'changed' => 0, 'removed' => 0 );
+		} else {
+			$out = TWD_SK_Inline::apply( $looks['html'], $others[0], $others[1], $others[2], $others[3] );
+			if ( is_wp_error( $out ) ) {
+				return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_conflict' === $out->get_error_code() ? 409 : 400 );
+			}
 		}
 		$parts = array();
 		if ( $out['changed'] ) {
@@ -1070,6 +1085,9 @@ class TWD_SK_REST {
 		}
 		if ( ! empty( $out['removed'] ) ) {
 			$parts[] = (int) $out['removed'] . ' removed';
+		}
+		if ( $looks['changed'] ) {
+			$parts[] = (int) $looks['changed'] . ' section look' . ( 1 === (int) $looks['changed'] ? '' : 's' );
 		}
 		$note = 'Changed on the page (' . implode( ', ', $parts ) . ')';
 		$saved = TWD_SK_Store::save( $id, $out['html'], array( 'base_version' => $base, 'note' => $note ) );

@@ -20,7 +20,7 @@
 	var show = ED.show;
 	var BLOCKS_WITH_BREAKS = { P: 1, LI: 1, DD: 1, FIGCAPTION: 1, BLOCKQUOTE: 1 };
 	var PICTURE_TYPES = /^image\/(jpeg|png|gif|webp|avif)$/;
-	var S = { on: false, texts: [], pics: [], spots: [], orig: {}, origText: {}, origPic: {}, hrefs: {}, picks: {}, spotPicks: {}, removes: {}, removeOrder: [], last: null, range: null, linkTarget: null, target: null, saving: false, uploading: false };
+	var S = { on: false, texts: [], pics: [], spots: [], orig: {}, origText: {}, origPic: {}, hrefs: {}, picks: {}, spotPicks: {}, removes: {}, removeOrder: [], looks: {}, origLook: {}, lookSec: null, last: null, range: null, linkTarget: null, target: null, saving: false, uploading: false };
 	var ui = {};
 
 	function texts() {
@@ -72,7 +72,7 @@
 				n++;
 			}
 		});
-		return n + Object.keys(S.picks).length + Object.keys(S.spotPicks).length + Object.keys(S.removes).length;
+		return n + Object.keys(S.picks).length + Object.keys(S.spotPicks).length + Object.keys(S.removes).length + Object.keys(S.looks).length;
 	}
 
 	/* ---- removing a section, an item or a button (0.14.0) ----
@@ -132,7 +132,7 @@
 
 	function counter() {
 		var n = changedCount();
-		status(n ? n + ' change' + (n === 1 ? '' : 's') + ' not saved yet.' : 'Click any words to change them. Click a picture to change it' + (S.spots.length ? ', or a dashed Add a picture box to put one there.' : '.') + ' Click something, then Remove, to take it out.');
+		status(n ? n + ' change' + (n === 1 ? '' : 's') + ' not saved yet.' : 'Click any words to change them. Click a picture to change it' + (S.spots.length ? ', or a dashed Add a picture box to put one there.' : '.') + ' Click something, then Remove, to take it out. Click inside a section, then Look, to change its layout or options.');
 		ui.save.disabled = !n || S.saving || S.uploading;
 		adminBar();
 	}
@@ -191,6 +191,256 @@
 		counter();
 	}
 
+	/* ---- the look of a section (0.15.0): its layout and options ----
+	   The server numbers each section (data-twd-sk-o) and says which layouts it can move to (data-twd-sk-lay:
+	   only layouts that use the same pieces, so every word and picture keeps its place). The choices come from
+	   the registry (cfg.look). Changing one sets the section's classes here so it shows at once; Save sends the
+	   wanted state by section number and the server works the classes out again and checks them. */
+
+	function lookConfig() {
+		return (cfg.look && cfg.look.components) || {};
+	}
+
+	function classesOf(sec) {
+		return sec.className.split(/\s+/).filter(function (c) {
+			return c;
+		});
+	}
+
+	function componentOfSection(sec) {
+		var list = classesOf(sec);
+		for (var k = 0; k < list.length; k++) {
+			var c = list[k];
+			if (c.indexOf('twd-sk-') === 0 && c.indexOf('--') < 0 && c.indexOf('__') < 0 && c.indexOf('twd-sk-tone-') !== 0) {
+				return c.slice(7).replace(/-/g, '_');
+			}
+		}
+		return '';
+	}
+
+	function lookMet(o, classes) {
+		if (o.requires && classes.indexOf(o.requires) < 0) {
+			return false;
+		}
+		if (o.requires_any && !o.requires_any.some(function (c) {
+			return classes.indexOf(c) > -1;
+		})) {
+			return false;
+		}
+		return true;
+	}
+
+	function layoutOf(info, classes) {
+		var std = cfg.look.standard;
+		var found = null;
+		info.layouts.forEach(function (l) {
+			if (found === null && l[0] !== std && classes.indexOf(l[0]) > -1) {
+				found = l[0];
+			}
+		});
+		if (found !== null) {
+			return found;
+		}
+		return info.layouts.some(function (l) {
+			return l[0] === std;
+		}) ? std : null;
+	}
+
+	// The same rules as TWD_SK_Looks::classes_for() on the server.
+	function lookClasses(info, classes, layout, values) {
+		var std = cfg.look.standard;
+		var next = classes.slice();
+		var names = info.layouts.map(function (l) {
+			return l[0] === std ? '' : l[0];
+		});
+		if (layout !== null && layout !== layoutOf(info, classes)) {
+			next = next.filter(function (c) {
+				return !c || names.indexOf(c) < 0;
+			});
+			if (layout !== std) {
+				next.splice(1, 0, layout);
+			}
+		}
+		info.options.forEach(function (o) {
+			if (!Object.prototype.hasOwnProperty.call(values, o.key)) {
+				return;
+			}
+			var v = values[o.key];
+			if (o.kind === 'toggle') {
+				next = next.filter(function (c) {
+					return c !== o.class;
+				});
+				if (v && lookMet(o, next)) {
+					next.push(o.class);
+				}
+				return;
+			}
+			if (!lookMet(o, next)) {
+				return;
+			}
+			var all = o.choices.map(function (ch) {
+				return ch[0];
+			});
+			next = next.filter(function (c) {
+				return all.indexOf(c) < 0;
+			});
+			if (v !== std) {
+				next.push(v);
+			}
+		});
+		info.options.forEach(function (o) {
+			if (o.requires && next.indexOf(o.requires) < 0) {
+				var drop = o.kind === 'toggle' ? [o.class] : o.choices.map(function (ch) {
+					return ch[0];
+				});
+				next = next.filter(function (c) {
+					return drop.indexOf(c) < 0;
+				});
+			}
+		});
+		return next;
+	}
+
+	// What the section looks like now, as the wanted state the server understands.
+	function lookState(info, classes) {
+		var std = cfg.look.standard;
+		var state = { options: {} };
+		var layout = layoutOf(info, classes);
+		if (layout !== null) {
+			state.layout = layout;
+		}
+		info.options.forEach(function (o) {
+			if (!lookMet(o, classes)) {
+				return;
+			}
+			if (o.kind === 'toggle') {
+				state.options[o.key] = classes.indexOf(o.class) > -1;
+				return;
+			}
+			var chosen = std;
+			o.choices.forEach(function (ch) {
+				if (ch[0] !== std && classes.indexOf(ch[0]) > -1) {
+					chosen = ch[0];
+				}
+			});
+			state.options[o.key] = chosen;
+		});
+		return state;
+	}
+
+	function changeLook(layout, values) {
+		var sec = S.lookSec;
+		var info = lookConfig()[componentOfSection(sec)];
+		var i = sec.getAttribute('data-twd-sk-o');
+		sec.className = lookClasses(info, classesOf(sec), layout, values).join(' ');
+		if (sec.className === S.origLook[i]) {
+			delete S.looks[i];
+			sec.removeAttribute('data-twd-sk-looked');
+		} else {
+			var state = lookState(info, classesOf(sec));
+			state.i = parseInt(i, 10);
+			S.looks[i] = state;
+			sec.setAttribute('data-twd-sk-looked', '1');
+		}
+		counter();
+		drawLook();
+	}
+
+	function lookSelect(id, label, choices, current, onPick, help) {
+		var select = el('select', { id: id, className: 'twd-sk-ed__input' });
+		choices.forEach(function (ch) {
+			select.appendChild(el('option', { value: ch[0], text: ch[1] }));
+		});
+		select.value = current;
+		select.addEventListener('change', function () {
+			onPick(select.value);
+		});
+		var kids = [el('label', { className: 'twd-sk-ed__label', 'for': id, text: label })];
+		if (help) {
+			kids.push(el('p', { className: 'twd-sk-ed__help', text: help }));
+		}
+		kids.push(select);
+		return el('div', { className: 'twd-sk-ed__field' }, kids);
+	}
+
+	function drawLook() {
+		var sec = S.lookSec;
+		var info = lookConfig()[componentOfSection(sec)];
+		var classes = classesOf(sec);
+		var std = cfg.look.standard;
+		ED.clear(ui.lookBody);
+		ui.lookHead.textContent = 'Look of this section: ' + info.label;
+		var can = (sec.getAttribute('data-twd-sk-lay') || '').split(' ').filter(function (c) {
+			return c;
+		});
+		if (can.length > 1) {
+			var current = layoutOf(info, classes);
+			ui.lookBody.appendChild(lookSelect('twd-sk-look-layout', 'Layout', info.layouts.filter(function (l) {
+				return can.indexOf(l[0]) > -1;
+			}), current === null ? std : current, function (value) {
+				changeLook(value, {});
+			}, 'Your words and pictures stay exactly as they are.'));
+		}
+		info.options.forEach(function (o) {
+			if (!lookMet(o, classes)) {
+				return;
+			}
+			var id = 'twd-sk-look-' + o.key;
+			if (o.kind === 'toggle') {
+				var box = el('input', { id: id, type: 'checkbox' });
+				box.checked = classes.indexOf(o.class) > -1;
+				box.addEventListener('change', function () {
+					var v = {};
+					v[o.key] = box.checked;
+					changeLook(null, v);
+				});
+				var kids = [box, el('span', { text: o.label })];
+				ui.lookBody.appendChild(el('label', { className: 'twd-sk-ed__check', 'for': id }, kids));
+				if (o.help) {
+					ui.lookBody.appendChild(el('p', { className: 'twd-sk-ed__help', text: o.help }));
+				}
+				return;
+			}
+			var now = lookState(info, classes).options[o.key];
+			ui.lookBody.appendChild(lookSelect(id, o.label, o.choices, now, function (value) {
+				var v = {};
+				v[o.key] = value;
+				changeLook(null, v);
+			}, o.help));
+		});
+		if (!ui.lookBody.firstChild) {
+			ui.lookBody.appendChild(el('p', { className: 'twd-sk-ed__help', text: 'This section has nothing to choose here.' }));
+		}
+	}
+
+	function openLook() {
+		var sec = S.last && S.last.closest ? S.last.closest('section[data-twd-sk-o]') : null;
+		if (!sec) {
+			status('Click inside the section you want to change, then press Look.');
+			return;
+		}
+		var info = lookConfig()[componentOfSection(sec)];
+		var can = (sec.getAttribute('data-twd-sk-lay') || '').split(' ').filter(function (c) {
+			return c;
+		});
+		var classes = classesOf(sec);
+		var hasOption = info && info.options.some(function (o) {
+			return lookMet(o, classes);
+		});
+		if (!info || (can.length < 2 && !hasOption)) {
+			status('This section has nothing to choose here.');
+			return;
+		}
+		var i = sec.getAttribute('data-twd-sk-o');
+		if (S.origLook[i] === undefined) {
+			S.origLook[i] = sec.className;
+		}
+		closePanels();
+		S.lookSec = sec;
+		drawLook();
+		show(ui.lookPanel, true);
+	}
+
 	/* ---- the toolbar ---- */
 
 	function toolButton(label, title, onClick) {
@@ -218,6 +468,12 @@
 		ui.remove = toolButton('Remove', 'Remove this list entry, card, button or section', removeThis);
 		ui.putBack = toolButton('Put back', 'Put back the last thing removed', putBack);
 		ui.putBack.disabled = true;
+		ui.look = toolButton('Look', 'Change the layout or options of this section', openLook);
+		ui.lookHead = el('p', { className: 'twd-sk-ed__inlinehead', tabindex: '-1' });
+		ui.lookBody = el('div', { className: 'twd-sk-ed__lookbody' });
+		ui.lookPanel = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' }, [
+			ui.lookHead, ui.lookBody, ED.button('Close', 'secondary', closePanels)
+		]);
 		ui.linkInput = el('input', { type: 'text', id: 'twd-sk-inline-link', className: 'twd-sk-ed__input', placeholder: '/contact, or a full web address', autocomplete: 'off' });
 		ui.linkPanel = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' }, [
 			el('label', { 'for': 'twd-sk-inline-link', text: 'Link address' }),
@@ -246,9 +502,9 @@
 		]);
 		ui.confirm = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' });
 		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar', role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '' }, [
-			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.bold, ui.italic, ui.link, ui.remove, ui.putBack]),
+			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.bold, ui.italic, ui.link, ui.look, ui.remove, ui.putBack]),
 			el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.save, ui.cancel]),
-			ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.confirm
+			ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.confirm
 		]);
 		root.appendChild(ui.bar);
 	}
@@ -276,11 +532,12 @@
 		show(ui.linkPanel, false);
 		show(ui.altPanel, false);
 		show(ui.picPanel, false);
+		show(ui.lookPanel, false);
 		S.linkTarget = null;
 	}
 
 	function panelOpen() {
-		return !ui.linkPanel.hasAttribute('hidden') || !ui.altPanel.hasAttribute('hidden') || !ui.picPanel.hasAttribute('hidden');
+		return !ui.linkPanel.hasAttribute('hidden') || !ui.altPanel.hasAttribute('hidden') || !ui.picPanel.hasAttribute('hidden') || !ui.lookPanel.hasAttribute('hidden');
 	}
 
 	function openLink() {
@@ -693,6 +950,9 @@
 		S.spotPicks = {};
 		S.removes = {};
 		S.removeOrder = [];
+		S.looks = {};
+		S.origLook = {};
+		S.lookSec = null;
 		S.last = null;
 		S.target = null;
 		if (ui.putBack) {
@@ -779,6 +1039,15 @@
 		Object.keys(S.removes).forEach(function (k) {
 			S.removes[k].removeAttribute('hidden');
 		});
+		Array.prototype.forEach.call(document.querySelectorAll('section[data-twd-sk-o]'), function (sec) {
+			var k = sec.getAttribute('data-twd-sk-o');
+			if (S.origLook[k] !== undefined) {
+				sec.className = S.origLook[k];
+				sec.removeAttribute('data-twd-sk-looked');
+			}
+		});
+		S.looks = {};
+		S.origLook = {};
 		S.picks = {};
 		S.spotPicks = {};
 		S.removes = {};
@@ -835,7 +1104,10 @@
 		body.removes = Object.keys(S.removes).map(function (k) {
 			return parseInt(k, 10);
 		});
-		if (!body.texts.length && !body.pictures.length && !body.spots.length && !body.removes.length) {
+		body.looks = Object.keys(S.looks).map(function (k) {
+			return S.looks[k];
+		});
+		if (!body.texts.length && !body.pictures.length && !body.spots.length && !body.removes.length && !body.looks.length) {
 			status('Nothing has changed yet.');
 			return;
 		}
