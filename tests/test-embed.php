@@ -83,6 +83,7 @@ twd_sk_test( 'embed: the section is in the registry, its shortcode keeps a valid
 		twd_sk_eq( $sk, TWD_SK_Sanitizer::clean( $sk ), 'the skeleton survives the cleaner untouched' );
 	}
 	twd_sk_true( ! isset( TWD_SK_Sanitizer::find_leftovers( '<p>[twd_embed id="3"]</p>' )['[twd_embed id="0"]'] ), 'a real number is not flagged' );
+	twd_sk_true( isset( TWD_SK_Sanitizer::find_leftovers( '<p>[twd_embed id="00"]</p>' )['[twd_embed id="0"]'] ), 'a row of zeros is still the sample' );
 } );
 
 twd_sk_test( 'embed: a page that points at a deleted embed cannot be published, one that points at a saved embed can', function () {
