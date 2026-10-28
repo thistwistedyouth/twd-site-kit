@@ -167,6 +167,10 @@
 				cancel();
 			}
 		});
+		// The editing tools switch (0.14.1) hides this item too, unless an editing session is open.
+		if (ED.onToolsChange) {
+			ED.onToolsChange(adminBar);
+		}
 		adminBar();
 	}
 
@@ -179,6 +183,7 @@
 		ui.abMain.a.setAttribute('aria-disabled', S.on && (!n || S.saving || S.uploading) ? 'true' : 'false');
 		ui.abCancel.a.textContent = 'Cancel';
 		ui.abCancel.li.style.display = S.on ? '' : 'none';
+		ui.abMain.li.style.display = !S.on && ED.toolsOff && ED.toolsOff() ? 'none' : '';
 	}
 
 	function markChanged(t) {

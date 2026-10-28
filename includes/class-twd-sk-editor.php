@@ -19,6 +19,33 @@ class TWD_SK_Editor {
 	const HANDLE_SEO  = 'twd-site-kit-editor-seo';
 	const HANDLE_INLINE = 'twd-site-kit-inline';
 
+	/** User meta: set to 1 when this person has switched the editing tools off (0.14.1). */
+	const META_TOOLS = 'twd_sk_tools_off';
+
+	/**
+	 * True when the signed-in person has switched the editing tools off: the floating buttons, the Edit header and
+	 * footer pills and the version label stay hidden until they switch them on again. It hides launchers only and is
+	 * kept per person on the server, never in the browser.
+	 */
+	public static function tools_off( $user_id = 0 ) {
+		$uid = $user_id > 0 ? (int) $user_id : ( function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0 );
+		return $uid > 0 && '1' === (string) get_user_meta( $uid, self::META_TOOLS, true );
+	}
+
+	/** Remember the switch for a person. Switching on removes the meta, so nothing is left behind. */
+	public static function set_tools_off( $off, $user_id = 0 ) {
+		$uid = $user_id > 0 ? (int) $user_id : ( function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0 );
+		if ( $uid <= 0 ) {
+			return false;
+		}
+		if ( $off ) {
+			update_user_meta( $uid, self::META_TOOLS, '1' );
+		} else {
+			delete_user_meta( $uid, self::META_TOOLS );
+		}
+		return true;
+	}
+
 	public static function init() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue' ), 20 );
 		add_action( 'wp_footer', array( __CLASS__, 'print_root' ) );
@@ -96,6 +123,8 @@ class TWD_SK_Editor {
 			'canUpload'      => current_user_can( 'upload_files' ),
 			'mediaUrl'       => esc_url_raw( rest_url( 'wp/v2/media' ) ),
 			'setupUrl'       => current_user_can( 'manage_options' ) ? esc_url_raw( TWD_SK_Build::admin_url() ) : '',
+			// The editing tools switch (0.14.1): hides the launchers for this person until switched on again.
+			'toolsOff'       => self::tools_off(),
 		) );
 		wp_enqueue_script( self::HANDLE );
 
@@ -137,7 +166,7 @@ class TWD_SK_Editor {
 		if ( null === self::context() ) {
 			return;
 		}
-		echo '<div id="twd-sk-ed" class="twd-sk-ed"><button type="button" id="twd-sk-ed-open" class="twd-sk-ed__open" hidden aria-haspopup="dialog">'
+		echo '<div id="twd-sk-ed" class="twd-sk-ed"' . ( self::tools_off() ? ' data-twd-sk-tools="off"' : '' ) . '><button type="button" id="twd-sk-ed-open" class="twd-sk-ed__open" hidden aria-haspopup="dialog">'
 			. esc_html__( 'Edit with AI', 'twd-site-kit' )
 			. '</button><span class="twd-sk-ed__version" title="TWD Site Kit version">v' . esc_html( defined( 'TWD_SK_VERSION' ) ? TWD_SK_VERSION : '' ) . '</span></div>';
 	}

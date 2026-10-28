@@ -49,6 +49,12 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_create_page' ),
 			'permission_callback' => array( __CLASS__, 'can_create_page' ),
 		) );
+		// The editing tools switch (0.14.1): a per-person preference, so it works in safe mode too.
+		register_rest_route( self::ROUTE_NS, '/editor/tools', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_editor_tools' ),
+			'permission_callback' => array( __CLASS__, 'can_use_editor' ),
+		) );
 		if ( ! TWD_SK_Safe::on() ) {
 			self::register_site_routes();
 		}
@@ -378,6 +384,11 @@ class TWD_SK_REST {
 		return self::guard( $request, 'read', false, 'manage_options' );
 	}
 
+	/** Anything about the editor itself (not a page) needs only edit_pages: the editing tools switch. */
+	public static function can_use_editor( $request ) {
+		return self::guard( $request, 'write', false );
+	}
+
 	/** New draft pages need only edit_pages, and no page ID. */
 	public static function can_create_page( $request ) {
 		return self::guard( $request, 'create', false );
@@ -486,6 +497,13 @@ class TWD_SK_REST {
 	/**
 	 * Where a page stands: status, template, publish readiness. Read only.
 	 */
+	/** The editing tools switch (0.14.1): remember, for this person, that the launchers are hidden or shown. */
+	public static function post_editor_tools( $request ) {
+		$off = self::truthy( $request->get_param( 'off' ) );
+		TWD_SK_Editor::set_tools_off( $off );
+		return array( 'off' => $off );
+	}
+
 	public static function get_info( $request ) {
 		return self::info_payload( (int) $request->get_param( 'id' ) );
 	}

@@ -154,6 +154,19 @@ function update_option( $name, $value ) {
 	$GLOBALS['twd_stub']['options'][ $name ] = $value;
 	return true;
 }
+// User meta (0.14.1: the editing tools switch is kept per person).
+function get_user_meta( $user_id, $key, $single = false ) {
+	$all = isset( $GLOBALS['twd_stub']['user_meta'] ) ? $GLOBALS['twd_stub']['user_meta'] : array();
+	return isset( $all[ (int) $user_id ][ $key ] ) ? $all[ (int) $user_id ][ $key ] : '';
+}
+function update_user_meta( $user_id, $key, $value ) {
+	$GLOBALS['twd_stub']['user_meta'][ (int) $user_id ][ $key ] = $value;
+	return true;
+}
+function delete_user_meta( $user_id, $key ) {
+	unset( $GLOBALS['twd_stub']['user_meta'][ (int) $user_id ][ $key ] );
+	return true;
+}
 function wp_register_style( $handle, $src, $deps = array(), $ver = false ) {
 	$GLOBALS['twd_stub']['styles'][ $handle ] = array( 'src' => $src, 'ver' => $ver, 'enqueued' => false, 'inline' => '' );
 }

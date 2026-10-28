@@ -656,7 +656,7 @@ class TWD_SK_Snags {
 		if ( ! self::wanted() ) {
 			return;
 		}
-		echo '<div id="twd-sk-tellus" class="twd-sk-ed"><button type="button" id="twd-sk-tellus-open" class="twd-sk-ed__open twd-sk-ed__open--tellus" hidden aria-haspopup="dialog">'
+		echo '<div id="twd-sk-tellus" class="twd-sk-ed"' . ( TWD_SK_Editor::tools_off() ? ' data-twd-sk-tools="off"' : '' ) . '><button type="button" id="twd-sk-tellus-open" class="twd-sk-ed__open twd-sk-ed__open--tellus" hidden aria-haspopup="dialog">'
 			. esc_html__( 'Tell us', 'twd-site-kit' )
 			. '</button></div>';
 	}
