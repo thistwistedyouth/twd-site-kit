@@ -53,6 +53,7 @@ require_once TWD_SK_PATH . 'includes/class-twd-sk-pictures.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-full.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-build.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-enquiry.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-embed.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-brand.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-sets.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-launch.php';
@@ -82,6 +83,8 @@ TWD_SK_Safe::init();
 TWD_SK_Chrome::init();
 // The enquiry form shortcode too: in safe mode it prints a plain sentence and the handler refuses.
 TWD_SK_Enquiry::init();
+// The embed shortcode too: in safe mode it prints nothing, so no outside code runs.
+TWD_SK_Embed::init();
 
 // The newest modules (0.4.0) start only outside safe mode.
 if ( ! TWD_SK_Safe::on() ) {

@@ -58,7 +58,7 @@ twd_sk_test( 'gallery: has exactly one h1, in the first hero, and later hero tit
 } );
 
 twd_sk_test( 'gallery: every ID is unique and every #anchor link points at an ID that exists', function () {
-	$html = twd_sk_gallery_file();
+	$html = preg_replace( '/\[twd_embed id="\d+"\]/', '', twd_sk_gallery_file() ); // a shortcode's number is not an HTML id
 	preg_match_all( '/\sid="([^"]+)"/', $html, $ids );
 	twd_sk_eq( count( $ids[1] ), count( array_unique( $ids[1] ) ), 'unique ids' );
 	preg_match_all( '/href="#([^"]+)"/', $html, $links );
@@ -82,7 +82,7 @@ twd_sk_test( 'gallery: placeholder text only, no real names, details or addresse
 		twd_sk_true( 1 === preg_match( '#^/wp-content/plugins/twd-site-kit/assets/placeholder-(image|badge)\.svg$#', $src ), 'bundled placeholder picture only: ' . $src );
 	}
 	twd_sk_hasnt( 'your-image', $html );
-	twd_sk_hasnt( '[', preg_replace( '/\[twd_articles [^\]]*\]|\[twd_enquiry\]/', '', $html ), 'no square brackets except the two registry shortcodes' );
+	twd_sk_hasnt( '[', preg_replace( '/\[twd_articles [^\]]*\]|\[twd_enquiry\]|\[twd_embed id="\d+"\]/', '', $html ), 'no square brackets except the three registry shortcodes' );
 } );
 
 twd_sk_test( 'gallery: holds the articles shortcode twice (the grid and the strip) and no script, form, button or inline style', function () {
@@ -114,7 +114,7 @@ twd_sk_test( 'gallery: stored through the store it comes back unchanged and repo
 	twd_sk_true( TWD_SK_Page::page_has_h1( 13 ) );
 } );
 
-twd_sk_test( 'gallery: renders through [twd_page] with only the two registry shortcodes run', function () {
+twd_sk_test( 'gallery: renders through [twd_page] with only the registry shortcodes run', function () {
 	twd_stub_add_post( 13, 'page' );
 	TWD_SK_Store::save( 13, twd_sk_gallery_file() );
 	$GLOBALS['twd_stub']['post_id'] = 13;
@@ -122,7 +122,8 @@ twd_sk_test( 'gallery: renders through [twd_page] with only the two registry sho
 	twd_sk_has( '<RUN:twd_articles count="6" columns="3">', $out );
 	twd_sk_has( '<RUN:twd_articles category="your-topic" count="3" columns="3">', $out );
 	twd_sk_has( '<RUN:twd_enquiry>', $out );
-	twd_sk_eq( 3, substr_count( $out, '<RUN:' ) );
+	twd_sk_eq( 2, substr_count( $out, '<RUN:twd_embed id="0">' ), 'both embed samples run as the embed shortcode' );
+	twd_sk_eq( 5, substr_count( $out, '<RUN:' ) );
 	twd_sk_true( 0 === strpos( $out, '<div class="twd-sk-page">' ) );
 } );
 

@@ -165,13 +165,13 @@ twd_sk_test( 'cli: undo with nothing to undo fails cleanly', function () {
 	} ) );
 } );
 
-twd_sk_test( 'cli: exposes exactly these commands: save, get, versions, undo, pack, prompt, check, safe_mode, export_templates, setup, doctor, mode, build, brand, launch_check, snags, snag_status, snags_setting, style', function () {
+twd_sk_test( 'cli: exposes exactly these commands: save, get, versions, undo, pack, prompt, check, safe_mode, export_templates, setup, doctor, mode, build, brand, launch_check, snags, snag_status, snags_setting, style, embeds, embed_set, embed_delete', function () {
 	$methods = array();
 	foreach ( ( new ReflectionClass( 'TWD_SK_CLI' ) )->getMethods( ReflectionMethod::IS_PUBLIC ) as $m ) {
 		$methods[] = $m->getName();
 	}
 	sort( $methods );
-	twd_sk_eq( array( 'brand', 'build', 'check', 'doctor', 'export_templates', 'get', 'launch_check', 'mode', 'pack', 'prompt', 'safe_mode', 'save', 'setup', 'snag_status', 'snags', 'snags_setting', 'style', 'undo', 'versions' ), $methods );
+	twd_sk_eq( array( 'brand', 'build', 'check', 'doctor', 'embed_delete', 'embed_set', 'embeds', 'export_templates', 'get', 'launch_check', 'mode', 'pack', 'prompt', 'safe_mode', 'save', 'setup', 'snag_status', 'snags', 'snags_setting', 'style', 'undo', 'versions' ), $methods );
 } );
 
 twd_sk_test( 'cli: pack with no name lists the packs and marks the active one', function () {

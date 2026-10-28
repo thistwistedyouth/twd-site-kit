@@ -182,6 +182,8 @@ class TWD_SK_Sanitizer {
 			'Area name here'                    => null,
 			// 0.14.0: the sample category in the articles strip.
 			'your-topic'                        => null,
+			// 0.15.0: an Embed section whose embed has not been chosen yet (number 0).
+			'[twd_embed id="0"]'                => '/\[twd_embed\s+id="0"\]/',
 			'/service-N'                        => '#href\s*=\s*["\']/service-\d+["\'/?\#]#i',
 			'[PLACEHOLDER'                      => null,
 			// 0.14.0: half a marker left after an edit by hand (the word without its opening bracket, an opener

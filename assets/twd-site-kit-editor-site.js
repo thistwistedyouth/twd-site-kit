@@ -1745,12 +1745,211 @@
 		});
 	}
 
+	/* ---- embeds (0.15.0): code kept apart from the page ---- */
+
+	var EM = { data: null, editing: null, snap: '' };
+	var emui = {};
+
+	function embedUsedText(item) {
+		var pages = item.used_on || [];
+		if (!pages.length) {
+			return 'Not on any page yet.';
+		}
+		return 'On ' + pages.map(function (p) {
+			return '"' + p.title + '"';
+		}).join(', ') + '.';
+	}
+
+	function embedForm() {
+		return { label: emui.label.value, kind: emui.kind.value, code: emui.code.value };
+	}
+
+	function embedFormText() {
+		var f = embedForm();
+		return f.label + '|' + f.kind + '|' + f.code;
+	}
+
+	function openEmbedForm(item) {
+		EM.editing = item ? item.id : 0;
+		emui.label.value = item ? item.label : '';
+		emui.kind.value = item ? item.kind : 'shortcode';
+		emui.code.value = item ? item.code : '';
+		EM.snap = embedFormText();
+		emui.formTitle.textContent = item ? 'Change "' + item.label + '"' : 'New embed';
+		message(emui.msg, '', true);
+		show(emui.form, true);
+		show(emui.newBtn, false);
+		emui.label.focus();
+	}
+
+	function closeEmbedForm() {
+		EM.editing = null;
+		EM.snap = '';
+		show(emui.form, false);
+		show(emui.newBtn, true);
+	}
+
+	function drawEmbeds() {
+		clear(emui.list);
+		var items = (EM.data && EM.data.embeds) || [];
+		// Keep the Add to this page list in the pop-up in step (names only, never the code).
+		if (ED.cfg) {
+			ED.cfg.embeds = items.map(function (i) {
+				return { id: i.id, label: i.label, kind: i.kind };
+			});
+		}
+		if (!items.length) {
+			emui.list.appendChild(el('p', { className: 'twd-sk-ed__help', text: 'No embeds yet.' }));
+			return;
+		}
+		items.forEach(function (item) {
+			var actions = [];
+			if (ED.cfg && ED.cfg.isKitPage) {
+				actions.push(button('Add to this page', 'primary', function () {
+					addEmbedToPage(item);
+				}));
+			}
+			actions.push(button('Change', 'secondary', function () {
+				openEmbedForm(item);
+			}));
+			actions.push(button('Delete', 'secondary', function () {
+				var host = emui.list;
+				ED.confirmInline(host, {
+					text: 'Delete "' + item.label + '"? Pages that show it will have a gap until you choose another.',
+					yesLabel: 'Delete',
+					onYes: function () {
+						deleteEmbed(item, false);
+					}
+				});
+			}));
+			emui.list.appendChild(el('div', { className: 'twd-sk-ed__card' }, [
+				el('p', { text: item.label }),
+				el('p', { className: 'twd-sk-ed__help', text: ((EM.data.kinds || {})[item.kind] || item.kind) + '. ' + embedUsedText(item) }),
+				el('div', { className: 'twd-sk-ed__actions' }, actions)
+			]));
+		});
+	}
+
+	function loadEmbeds() {
+		api('GET', '/site/embeds').then(function (data) {
+			EM.data = data;
+			var htmlOption = emui.kind.querySelector('option[value="html"]');
+			if (htmlOption) {
+				htmlOption.disabled = !data.can_html;
+			}
+			drawEmbeds();
+		}, function (err) {
+			message(emui.msg, err.message, false);
+		});
+	}
+
+	function saveEmbed() {
+		message(emui.msg, 'Saving...', true);
+		var body = embedForm();
+		body.embed_id = EM.editing || 0;
+		api('POST', '/site/embeds', body).then(function (data) {
+			EM.data = data;
+			closeEmbedForm();
+			drawEmbeds();
+			message(emui.msg, 'Saved. Choose Add to this page to show it on a page.', true);
+		}, function (err) {
+			message(emui.msg, err.message, false);
+		});
+	}
+
+	function deleteEmbed(item, confirmed) {
+		api('POST', '/site/embeds/' + item.id + '/delete', { confirm: confirmed }).then(function (data) {
+			EM.data = data;
+			drawEmbeds();
+			message(emui.msg, 'Deleted.', true);
+		}, function (err) {
+			if (err.status === 409) {
+				ED.confirmInline(emui.list, {
+					text: err.message,
+					yesLabel: 'Delete anyway',
+					onYes: function () {
+						deleteEmbed(item, true);
+					}
+				});
+				return;
+			}
+			message(emui.msg, err.message, false);
+		});
+	}
+
+	// A new Embed section at the end of this page, shown in the normal preview. Nothing is saved until Apply.
+	function addEmbedToPage(item) {
+		message(emui.msg, 'Preparing the preview...', true);
+		api('GET', '/pages/' + ED.cfg.pageId + '/sections').then(function (info) {
+			var count = (info.sections || []).length;
+			if (!count) {
+				message(emui.msg, 'This page has no sections yet.', false);
+				return;
+			}
+			return api('POST', '/pages/' + ED.cfg.pageId + '/add-section', {
+				base_version: ED.version(),
+				after: count - 1,
+				component: 'embed',
+				variant: emui.bare.checked ? 'twd-sk-embed--bare' : '',
+				embed: item.id
+			}).then(function (out) {
+				if (ED.proposeHtml(out.html, 'Added the embed "' + item.label + '"')) {
+					message(emui.msg, (out.report || []).join(' ') + ' Check the preview in Edit this page, then apply it.', true);
+				}
+			});
+		}).then(null, function (err) {
+			message(emui.msg, err.message, false);
+		});
+	}
+
+	function buildEmbedsSection(panel) {
+		emui.label = textInput('twd-sk-embed-label', 80);
+		emui.kind = el('select', { id: 'twd-sk-embed-kind', className: 'twd-sk-ed__input' }, [
+			el('option', { value: 'shortcode', text: 'A shortcode (from a booking, map or form plugin)' }),
+			el('option', { value: 'html', text: 'HTML code (a snippet from another service)' })
+		]);
+		emui.code = textArea('twd-sk-embed-code', 8);
+		emui.msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		emui.bare = el('input', { id: 'twd-sk-embed-bare', type: 'checkbox' });
+		emui.list = el('div', { className: 'twd-sk-ed__embeds' });
+		emui.formTitle = el('h4', { className: 'twd-sk-ed__sub-title', text: 'New embed' });
+		emui.form = el('div', { className: 'twd-sk-ed__card', hidden: '' }, [
+			emui.formTitle,
+			field('Name', emui.label, 'A short name so you can tell it apart, for example Booking calendar. Only you see it.'),
+			field('Kind', emui.kind),
+			field('The shortcode or code', emui.code, 'Paste it exactly as the plugin or service gave it. It is kept apart from the page and shown as it is, so only add code you trust.'),
+			el('div', { className: 'twd-sk-ed__actions' }, [
+				button('Save embed', 'primary', saveEmbed),
+				button('Cancel', 'secondary', closeEmbedForm)
+			])
+		]);
+		emui.newBtn = button('New embed', 'secondary', function () {
+			openEmbedForm(null);
+		});
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Embeds' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'Show a shortcode or a piece of HTML code from another plugin or service on a page, such as a booking calendar or a map. The code is kept here, apart from the page: it is never part of the page text, the AI never sees it and the Visual editor cannot change it. Only administrators can change an embed.' }),
+			el('label', { className: 'twd-sk-ed__check', 'for': 'twd-sk-embed-bare' }, [emui.bare, el('span', { text: 'When I add one to this page, leave out the heading' })]),
+			emui.list,
+			emui.form,
+			el('div', { className: 'twd-sk-ed__actions' }, [emui.newBtn]),
+			emui.msg
+		]));
+		loadEmbeds();
+		ED.addDirtyCheck(function () {
+			return EM.editing !== null && embedFormText() !== EM.snap ? 'Embeds' : '';
+		}, function () {
+			closeEmbedForm();
+		});
+	}
+
 	function buildSite(panel) {
 		buildModeSection(panel);
 		buildBriefSection(panel);
 		buildStyleSection(panel);
 		buildProfileSection(panel);
 		buildFactsSection(panel);
+		buildEmbedsSection(panel);
 		buildChromeSection(panel);
 		buildSetupSection(panel);
 		buildLaunchSection(panel);
@@ -1761,6 +1960,7 @@
 			'Site brief': 'Build or update the whole site from one file',
 			'Style': 'Pick a look, colours, fonts and corners',
 			'Site details': 'Name, menu, contact lines, footer text',
+			'Embeds': 'Show a booking calendar, map or other outside code on a page',
 			'Header and footer': 'Who places them, layout, fixed header',
 			'Set up a new site': 'Create the starter pages',
 			'Launch check': 'Everything to check before going live',

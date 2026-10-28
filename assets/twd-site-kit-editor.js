@@ -1471,6 +1471,24 @@
 			this.dirtyChecks.push({ test: test, discard: discard });
 		},
 		openAt: openAt,
+		// The page version the editor is working from (a change to the page names it).
+		version: function () {
+			return state.version;
+		},
+		// Puts a candidate page in the paste box and runs the normal preview. Nothing is saved until Apply.
+		proposeHtml: function (html, note) {
+			if (!ui.paste || !ui.tabs || !ui.tabs.edit) {
+				return false;
+			}
+			ui.paste.value = html;
+			state.previewedText = null;
+			if (note && ui.note && !ui.note.value.trim()) {
+				ui.note.value = String(note).slice(0, 190);
+			}
+			selectTab('edit');
+			doPreview();
+			return true;
+		},
 		foldSection: foldSection,
 		revealFold: revealFold,
 		addTab: function (name, label, build) {

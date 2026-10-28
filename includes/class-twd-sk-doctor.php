@@ -73,6 +73,7 @@ class TWD_SK_Doctor {
 			array( 'Front page', array( __CLASS__, 'front_page' ) ),
 			array( 'Elementor Theme Builder', array( __CLASS__, 'theme_builder' ) ),
 			array( 'Site details and ' . TWD_SK_Mode::w( 'facts' ), array( __CLASS__, 'details' ) ),
+			array( 'Embeds', array( __CLASS__, 'embeds' ) ),
 			array( 'Site setup', array( __CLASS__, 'setup' ) ),
 			array( 'Launch check', array( 'TWD_SK_Launch', 'lines' ) ),
 			array( 'Pages', array( __CLASS__, 'pages' ) ),
@@ -85,6 +86,29 @@ class TWD_SK_Doctor {
 	}
 
 	// -- Sections ---------------------------------------------------------------
+
+	/** How many embeds are saved and where they are used. Never a name or any of the code. */
+	public static function embeds() {
+		$all = TWD_SK_Embed::all();
+		if ( ! $all ) {
+			return array( 'No embeds saved.' );
+		}
+		$use = TWD_SK_Embed::usage();
+		$l   = array( count( $all ) . ' saved' . ( TWD_SK_Safe::on() ? ' (safe mode is on, so none is shown on a page)' : '' ) . '.' );
+		foreach ( $all as $id => $r ) {
+			$l[] = 'Embed ' . (int) $id . ': ' . self::t( $r['kind'], 12 ) . ', ' . self::t( strlen( $r['code'] ), 8 ) . ' characters, on ' . ( isset( $use[ $id ] ) ? count( $use[ $id ] ) : 0 ) . ' page(s).';
+		}
+		$gone = array();
+		foreach ( array_keys( $use ) as $eid ) {
+			if ( $eid > 0 && ! isset( $all[ $eid ] ) ) {
+				$gone[] = (int) $eid;
+			}
+		}
+		if ( $gone ) {
+			$l[] = 'WARNING: pages point at embed number ' . implode( ', ', $gone ) . ', which is not saved any more.';
+		}
+		return $l;
+	}
 
 	public static function plugin() {
 		$l   = array();

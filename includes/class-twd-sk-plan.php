@@ -206,6 +206,9 @@ class TWD_SK_Plan {
 			if ( ! $reg || 'hero' === $component ) {
 				return new WP_Error( 'twd_sk_bad_input', 'it asked for a kind of section the kit does not have.' );
 			}
+			if ( in_array( $component, TWD_SK_Recipes::admin_only_components(), true ) ) {
+				return new WP_Error( 'twd_sk_bad_input', 'it asked for a section only an administrator can add by hand (an embed).' );
+			}
 			if ( '' !== $variant && ! isset( $reg['variants'][ $variant ] ) ) {
 				$variant = '';
 			}

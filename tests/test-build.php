@@ -436,8 +436,11 @@ twd_sk_test( 'sections: a page outline is a list of real sections, starting with
 	twd_sk_has( 'up to 12', TWD_SK_Recipes::clean_parts( array_merge( array( 'hero' ), array_fill( 0, 12, 'text' ) ) )->get_error_message() );
 	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Recipes::clean_parts( array() ) );
 	$menu = TWD_SK_Recipes::parts_menu();
-	twd_sk_eq( TWD_SK_Registry::ids(), array_keys( $menu ) );
+	// 0.15.0: the embed is for an administrator to add by hand, so the ordinary menu leaves it out.
+	twd_sk_eq( array_values( array_diff( TWD_SK_Registry::ids(), array( 'embed' ) ) ), array_keys( $menu ) );
+	twd_sk_eq( TWD_SK_Registry::ids(), array_keys( TWD_SK_Recipes::parts_menu( true ) ) );
 	twd_sk_eq( 'Standard', $menu['hero']['variants'][''] );
+	twd_sk_has( 'by hand', TWD_SK_Recipes::clean_parts( array( 'hero', 'embed' ) )->get_error_message(), 'a plan or brief cannot hold an embed' );
 } );
 
 twd_sk_test( 'sections: a brief page can name its sections; the outline and the AI request follow them; the page type gives the default', function () {

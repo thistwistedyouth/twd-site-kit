@@ -77,6 +77,18 @@ class TWD_SK_Starters {
 	 * already a marker are left alone.
 	 */
 	public static function placeholderise( $html ) {
+		// The line shown while a grid has no articles keeps its plain default wording (the articles
+		// plugin's own words), so a new Resources section is not held back for a sentence nobody invented.
+		$kept = array();
+		$html = preg_replace_callback(
+			'#<p class="twd-sk-resources__none">[^<>]*</p>#',
+			function ( $m ) use ( &$kept ) {
+				$key          = '%%twd_sk_none_' . count( $kept ) . '%%';
+				$kept[ $key ] = $m[0];
+				return $key;
+			},
+			$html
+		);
 		$html = preg_replace_callback(
 			'/>([^<>]+)</',
 			function ( $m ) {
@@ -89,7 +101,7 @@ class TWD_SK_Starters {
 			},
 			$html
 		);
-		return preg_replace_callback(
+		$html = preg_replace_callback(
 			'/ alt="([^"]+)"/',
 			function ( $m ) {
 				if ( 0 === strpos( trim( $m[1] ), '[PLACEHOLDER' ) ) {
@@ -99,6 +111,7 @@ class TWD_SK_Starters {
 			},
 			$html
 		);
+		return $kept ? strtr( $html, $kept ) : $html;
 	}
 
 	/** [PLACEHOLDER: core], keeping the original leading and trailing space. */

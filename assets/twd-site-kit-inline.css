@@ -44,3 +44,10 @@ body.twd-sk-inline-on img[data-twd-sk-p][src*="/your-logo"] {
 
 /* Removed while editing (0.14.0): hidden until Save; Put back shows it again. */
 body.twd-sk-inline-on [data-twd-sk-r][hidden] { display: none !important; }
+
+/* The line shown only while a grid has no articles (0.15.0): always visible while editing, so it can be reached. */
+body.twd-sk-inline-on .twd-sk-resources__none[data-twd-sk-t] { display: block !important; }
+body.twd-sk-inline-on .twd-sk-resources__none[data-twd-sk-t]::before {
+  content: "Shown only when there are no articles yet"; display: block; margin-bottom: 0.25rem;
+  font-size: 0.75rem; font-weight: 700; color: #2271b1; text-align: inherit;
+}

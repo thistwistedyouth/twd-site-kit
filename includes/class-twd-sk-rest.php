@@ -238,6 +238,24 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'get_site_launch' ),
 			'permission_callback' => array( __CLASS__, 'can_read_site' ),
 		) );
+		// Embeds: code kept apart from the page (0.15.0). Administrators only.
+		register_rest_route( self::ROUTE_NS, '/site/embeds', array(
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'get_site_embeds' ),
+				'permission_callback' => array( __CLASS__, 'can_read_site' ),
+			),
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_site_embeds' ),
+				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+			),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/embeds/(?P<eid>\d+)/delete', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_embed_delete' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
 		register_rest_route( self::ROUTE_NS, '/site/launch/publish', array(
 			'methods'             => 'POST',
 			'callback'            => array( __CLASS__, 'post_site_launch_publish' ),
@@ -589,6 +607,57 @@ class TWD_SK_REST {
 			return self::error( $saved->get_error_code(), $saved->get_error_message(), 400 );
 		}
 		return self::facts_payload();
+	}
+
+	// -- Embeds (0.15.0) ---------------------------------------------------------
+
+	private static function embeds_payload( $extra = array() ) {
+		return $extra + array(
+			'embeds'    => TWD_SK_Embed::listing(),
+			'kinds'     => TWD_SK_Embed::kinds(),
+			'can_html'  => TWD_SK_Embed::can_save_kind( 'html' ),
+			'max_code'  => TWD_SK_Embed::MAX_CODE,
+			'max_items' => TWD_SK_Embed::MAX_ITEMS,
+		);
+	}
+
+	public static function get_site_embeds( $request ) {
+		return self::embeds_payload();
+	}
+
+	/** Saves a new embed, or the one named by id. Administrators only; raw HTML also needs unfiltered_html. */
+	public static function post_site_embeds( $request ) {
+		$kind = $request->get_param( 'kind' );
+		if ( 'html' === $kind && ! TWD_SK_Embed::can_save_kind( 'html' ) ) {
+			return self::error( 'twd_sk_forbidden', 'Your account is not allowed to save raw HTML on this site. A shortcode can still be saved.', 403 );
+		}
+		$id    = (int) $request->get_param( 'embed_id' );
+		$saved = TWD_SK_Embed::save( array(
+			'label' => $request->get_param( 'label' ),
+			'kind'  => $kind,
+			'code'  => $request->get_param( 'code' ),
+		), $id, get_current_user_id() );
+		if ( is_wp_error( $saved ) ) {
+			return self::error( $saved->get_error_code(), $saved->get_error_message(), 'twd_sk_not_found' === $saved->get_error_code() ? 404 : 400 );
+		}
+		return self::embeds_payload( array( 'saved' => (int) $saved['id'] ) );
+	}
+
+	/** Deletes an embed. One that pages still use needs confirm, because those pages would show a gap. */
+	public static function post_site_embed_delete( $request ) {
+		$eid = (int) $request->get_param( 'eid' );
+		if ( ! TWD_SK_Embed::get( $eid ) ) {
+			return self::error( 'twd_sk_not_found', 'That embed was not found. It may already have been deleted.', 404 );
+		}
+		$use = TWD_SK_Embed::usage();
+		if ( ! empty( $use[ $eid ] ) && ! self::truthy( $request->get_param( 'confirm' ) ) ) {
+			$names = array_map( function ( $p ) {
+				return '"' . $p['title'] . '"';
+			}, $use[ $eid ] );
+			return self::error( 'twd_sk_in_use', 'This embed is used on ' . implode( ', ', $names ) . '. Those pages would show a gap and could not be published until it is replaced. Delete it anyway?', 409, array( 'used_on' => $use[ $eid ] ) );
+		}
+		TWD_SK_Embed::delete( $eid );
+		return self::embeds_payload();
 	}
 
 	// -- Therapy or business mode -------------------------------------------
@@ -1021,9 +1090,10 @@ class TWD_SK_REST {
 			'instruction' => $request->get_param( 'instruction' ),
 			'facts'       => $request->get_param( 'facts' ),
 			'use_ai'      => self::truthy( $request->get_param( 'use_ai' ) ),
+			'embed'       => $request->get_param( 'embed' ),
 		) );
 		if ( is_wp_error( $result ) ) {
-			$map    = array( 'twd_sk_bad_input' => 400, 'twd_sk_empty_page' => 400, 'twd_sk_ai_unavailable' => 503 );
+			$map    = array( 'twd_sk_bad_input' => 400, 'twd_sk_empty_page' => 400, 'twd_sk_ai_unavailable' => 503, 'twd_sk_forbidden' => 403 );
 			$code   = $result->get_error_code();
 			$status = isset( $map[ $code ] ) ? $map[ $code ] : 502;
 			return self::error( $code, $result->get_error_message(), $status );

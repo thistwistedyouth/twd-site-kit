@@ -329,6 +329,21 @@ class TWD_SK_AI {
 		if ( ! $c || ( '' !== $variant && ! isset( $c['variants'][ $variant ] ) ) ) {
 			return self::err( 'twd_sk_bad_input', 'Choose one of the kit\'s sections and layouts.' );
 		}
+		// An Embed (0.15.0) holds code kept apart from the page: only an administrator adds one, by hand, naming
+		// a saved embed, and the AI never writes it.
+		$embed_id = 0;
+		if ( in_array( $component, TWD_SK_Recipes::admin_only_components(), true ) ) {
+			if ( ! TWD_SK_Embed::can_manage() ) {
+				return new WP_Error( 'twd_sk_forbidden', 'Only an administrator can add an embed to a page.' );
+			}
+			if ( ! empty( $in['use_ai'] ) || ! empty( $in['plan'] ) ) {
+				return self::err( 'twd_sk_bad_input', 'The AI does not write an embed. Add it without AI.' );
+			}
+			$embed_id = isset( $in['embed'] ) && ( is_int( $in['embed'] ) || ( is_string( $in['embed'] ) && ctype_digit( $in['embed'] ) ) ) ? (int) $in['embed'] : 0;
+			if ( $embed_id <= 0 || ! TWD_SK_Embed::get( $embed_id ) ) {
+				return self::err( 'twd_sk_bad_input', 'Choose which saved embed to show. Set one up first under Site, Embeds.' );
+			}
+		}
 		$instruction = isset( $in['instruction'] ) && is_string( $in['instruction'] ) ? trim( $in['instruction'] ) : '';
 		$facts       = isset( $in['facts'] ) && is_string( $in['facts'] ) ? trim( $in['facts'] ) : '';
 		$max_facts = ! empty( $in['plan'] ) ? TWD_SK_Plan::MAX_REQUEST : self::MAX_FACTS;
@@ -339,6 +354,9 @@ class TWD_SK_AI {
 		$facts       = self::lines( $facts, $max_facts );
 
 		$outline  = trim( TWD_SK_Starters::build( array( array( $component, $variant ) ), false ) );
+		if ( $embed_id > 0 ) {
+			$outline = str_replace( '[twd_embed id="0"]', '[twd_embed id="' . $embed_id . '"]', $outline );
+		}
 		$sections = $parts['sections'];
 		$gaps     = $parts['gaps'];
 		$at       = $after + 1;
@@ -348,7 +366,9 @@ class TWD_SK_AI {
 		if ( empty( $in['use_ai'] ) ) {
 			return array(
 				'html'    => TWD_SK_Sections::join( $gaps, $sections ),
-				'report'  => array( 'Added a ' . $c['label'] . ' section as section ' . ( $at + 1 ) . '. Its wording is marked [PLACEHOLDER] for you to fill in.' ),
+				'report'  => array( $embed_id > 0
+					? 'Added an Embed section as section ' . ( $at + 1 ) . ', showing "' . TWD_SK_Embed::get( $embed_id )['label'] . '". The code itself stays apart from the page. Write its heading with the Visual editor.'
+					: 'Added a ' . $c['label'] . ' section as section ' . ( $at + 1 ) . '. Its wording is marked [PLACEHOLDER] for you to fill in.' ),
 				'kept'    => array(),
 				'changed' => array( $at ),
 			);

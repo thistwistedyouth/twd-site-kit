@@ -793,6 +793,30 @@ class TWD_SK_Registry {
 		) );
 	}
 
+	/**
+	 * An embed: a heading above, or nothing but, the code an administrator saved apart from the page
+	 * and named by number (0.15.0). The number 0 is the sample: it is flagged until a real embed is chosen.
+	 */
+	private static function embed( $variant = '' ) {
+		if ( 'twd-sk-embed--bare' === $variant ) {
+			return self::lines( array(
+				'<section class="twd-sk-embed twd-sk-embed--bare twd-sk-tone-base">',
+				'<div class="twd-sk-inner">',
+				'[twd_embed id="0"]',
+				'</div>',
+				'</section>',
+			) );
+		}
+		return self::lines( array(
+			'<section class="twd-sk-embed twd-sk-tone-base">',
+			'<div class="twd-sk-inner">',
+			'<h2 class="twd-sk-title">Heading here</h2>',
+			'[twd_embed id="0"]',
+			'</div>',
+			'</section>',
+		) );
+	}
+
 	private static function resources( $variant = '' ) {
 		if ( 'strip' === $variant ) {
 			// A few articles from one category beside a short introduction (0.14.0). The grid's own
@@ -809,6 +833,7 @@ class TWD_SK_Registry {
 				'</div>',
 				'<div class="twd-sk-resources__grid">',
 				'[twd_articles category="your-topic" count="3" columns="3"]',
+				'<p class="twd-sk-resources__none">No articles yet. Please check back soon.</p>',
 				'</div>',
 				'</div>',
 				'</div>',
@@ -822,6 +847,7 @@ class TWD_SK_Registry {
 			'<h2 class="twd-sk-title">Latest articles</h2>',
 			'<p class="twd-sk-lead">Short introduction here.</p>',
 			'[twd_articles count="6" columns="3"]',
+			'<p class="twd-sk-resources__none">No articles yet. Please check back soon.</p>',
 			'</div>',
 			'</section>',
 		) );
@@ -1320,7 +1346,7 @@ class TWD_SK_Registry {
 			'resources'  => array(
 				'id'          => 'resources',
 				'label'       => 'Resources',
-				'description' => 'A heading above the articles grid. Only wraps the twd_articles shortcode. The strip layout shows a few articles from one category beside a short introduction, for the foot of a service page.',
+				'description' => 'A heading above the articles grid. Only wraps the twd_articles shortcode, followed by a short line (twd-sk-resources__none) that shows only while there are no articles yet, in place of the articles plugin\'s own line, so its words can be changed. The strip layout shows a few articles from one category beside a short introduction, for the foot of a service page.',
 				'skeleton'    => self::resources(),
 				'variants'    => array(
 					'twd-sk-resources--strip' => array(
@@ -1335,9 +1361,33 @@ class TWD_SK_Registry {
 					'twd-sk-resources__row',
 					'twd-sk-resources__intro',
 					'twd-sk-resources__grid',
+					// The site's own line for a grid with no articles yet (0.15.0).
+					'twd-sk-resources__none',
 				),
 				'shortcodes'  => array(
 					'twd_articles' => self::articles_shortcode_attrs(),
+				),
+			),
+
+			'embed'      => array(
+				'id'          => 'embed',
+				'label'       => 'Embed (set up by an administrator)',
+				'description' => 'A section that shows a shortcode or a piece of HTML code an administrator saved apart from the page, such as a booking calendar, a map or a form from another plugin. The page itself holds only the twd_embed shortcode with the number of the saved embed. The code is never part of the page: it is not written, changed or seen by the AI, and only an administrator can create or change it. Keep an embed section exactly as it is.',
+				'skeleton'    => self::embed(),
+				'variants'    => array(
+					'twd-sk-embed--bare' => array(
+						'label'    => 'No heading: only the embedded code',
+						'skeleton' => self::embed( 'twd-sk-embed--bare' ),
+					),
+				),
+				'classes'     => array(
+					'twd-sk-embed',
+					'twd-sk-embed--bare',
+					'twd-sk-embed__content',
+					'twd-sk-embed__missing',
+				),
+				'shortcodes'  => array(
+					'twd_embed' => array( 'id' => '/^\d{1,9}$/' ),
 				),
 			),
 

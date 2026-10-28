@@ -44,6 +44,8 @@ class TWD_SK_Report {
 			'Times here'          => 'sample opening times',
 			'Area name here'      => 'a sample area name',
 			'your-topic'          => 'the sample article category in an articles strip',
+			'[twd_embed id="0"]'  => 'an Embed section with no embed chosen yet',
+			'embed missing'       => 'an Embed section whose embed has been deleted',
 			'/service-N'          => 'a sample link to a service page (such as /service-1)',
 			'PLACEHOLDER fragment' => 'half a placeholder marker left after an edit (the word PLACEHOLDER without its brackets)',
 			'stray ]'             => 'a closing square bracket left over from a placeholder marker',

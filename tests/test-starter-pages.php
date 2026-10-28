@@ -63,6 +63,11 @@ twd_sk_test( 'starters: every piece of sample text, picture description and link
 			if ( 0 === strpos( $text, '[twd_' ) ) {
 				continue;
 			}
+			// The line shown while the articles grid is empty keeps the articles plugin's own plain wording (0.15.0).
+			if ( 'No articles yet. Please check back soon.' === $text ) {
+				twd_sk_true( false !== strpos( $html, '<p class="twd-sk-resources__none">' . $text . '</p>' ), $key . ' the no-articles line sits in its own paragraph' );
+				continue;
+			}
 			twd_sk_true( false !== strpos( $text, '[PLACEHOLDER: ' ), $key . ' text is not a placeholder: ' . $text );
 		}
 		preg_match_all( '/ alt="([^"]*)"/', $body, $m );

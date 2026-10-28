@@ -22,8 +22,8 @@ class TWD_SK_Sections {
 
 	/** Section types whose wording a remix may not change unless asked. */
 	public static function locked_types() {
-		$types = apply_filters( 'twd_sk_locked_section_types', array( 'quote', 'notice' ) );
-		return is_array( $types ) ? $types : array( 'quote', 'notice' );
+		$types = apply_filters( 'twd_sk_locked_section_types', array( 'quote', 'notice', 'embed' ) );
+		return is_array( $types ) ? $types : array( 'quote', 'notice', 'embed' );
 	}
 
 	/**

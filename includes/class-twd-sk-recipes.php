@@ -122,9 +122,21 @@ class TWD_SK_Recipes {
 	}
 
 	/** Every component and its layouts, for choosing sections: id => { label, description, variants: class => label }. */
-	public static function parts_menu() {
+	/**
+	 * Sections only an administrator sets up by hand. The AI, a brief, a starter set, the setup page and the
+	 * one-box planner never add one (an Embed holds outside code that is kept apart from the page).
+	 */
+	public static function admin_only_components() {
+		return array( 'embed' );
+	}
+
+	/** The sections offered in a menu. The administrator-only ones appear only when asked for. */
+	public static function parts_menu( $with_admin_only = false ) {
 		$out = array();
 		foreach ( TWD_SK_Registry::all() as $id => $c ) {
+			if ( ! $with_admin_only && in_array( $id, self::admin_only_components(), true ) ) {
+				continue;
+			}
 			$variants = array( '' => 'Standard' );
 			foreach ( $c['variants'] as $class => $v ) {
 				$variants[ $class ] = $v['label'];
@@ -163,6 +175,9 @@ class TWD_SK_Recipes {
 			$c = TWD_SK_Registry::get( $id );
 			if ( ! $c ) {
 				return new WP_Error( 'twd_sk_bad_input', 'Section ' . ( $i + 1 ) . ' is not one of the kit\'s sections.' );
+			}
+			if ( in_array( $id, self::admin_only_components(), true ) ) {
+				return new WP_Error( 'twd_sk_bad_input', 'Section ' . ( $i + 1 ) . ' (' . $c['label'] . ') cannot be part of a plan or a brief. An administrator adds it to a page by hand, from Add a section.' );
 			}
 			if ( '' !== $variant && ! isset( $c['variants'][ $variant ] ) ) {
 				// A layout this version does not know (for example one from a newer recipe) falls back to the

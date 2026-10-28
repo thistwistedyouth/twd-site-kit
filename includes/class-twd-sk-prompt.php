@@ -26,6 +26,7 @@ class TWD_SK_Prompt {
 			'The page has exactly one h1, in the first hero, with the class twd-sk-hero__title. Every other heading is an h2 or lower, and headings stay in order (an h3 goes under an h2, never straight under the h1).',
 			'Use only the components and classes listed in the style guide below. Do not invent classes.',
 			'No scripts, no inline styles, no forms and no iframes. For a contact form, use the Enquiry form section exactly as in the style guide. For a map, use a link. If the ' . $who . ' wants anything else like that, tell them to ask their web designer.',
+			'An Embed section (twd-sk-embed) holds outside code an administrator saved apart from the page. Never add one, never change its shortcode or its number, and never write any embedded code yourself. Leave an existing one exactly as it is.',
 			'Images: keep every existing image address exactly as it is. For a new image, write [PLACEHOLDER: image needed] where the image goes, and ask the ' . $who . ' for the address after they have uploaded it. Never invent a file name.',
 			'Every image needs descriptive alt text that says what the picture shows. Use empty alt text only for a purely decorative image.',
 			'Link text must be meaningful on its own. Write "Read about anxiety support", never "click here" or "read more".',

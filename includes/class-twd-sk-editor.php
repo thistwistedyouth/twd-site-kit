@@ -89,7 +89,9 @@ class TWD_SK_Editor {
 			'canManage'      => current_user_can( 'manage_options' ),
 			'factsSaved'     => '' !== TWD_SK_Facts::get(),
 			'words'          => TWD_SK_Mode::js_words(),
-			'components'     => (bool) $context['is_kit_page'] ? TWD_SK_Recipes::parts_menu() : array(),
+			'components'     => (bool) $context['is_kit_page'] ? TWD_SK_Recipes::parts_menu( TWD_SK_Embed::can_manage() && ! TWD_SK_Safe::on() ) : array(),
+			// The saved embeds an administrator can add to a page from Add a section (0.15.0): names only, never the code.
+			'embeds'         => ( (bool) $context['is_kit_page'] && TWD_SK_Embed::can_manage() && ! TWD_SK_Safe::on() ) ? TWD_SK_Embed::summaries() : array(),
 			// Changing words and pictures in place (0.10.0): kit pages, outside safe mode.
 			'inline'         => (bool) $context['is_kit_page'] && ! TWD_SK_Safe::on(),
 			// Uploading a picture from the computer while changing the page in place (0.10.1).

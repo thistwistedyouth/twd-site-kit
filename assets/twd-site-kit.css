@@ -1251,6 +1251,29 @@
 .twd-sk-page .twd-sk-resources__grid.twd-sk-resources__grid .twd-ap-articles-loadmore-row.twd-ap-articles-loadmore-row {
   display: none;
 }
+/* ---- the line for a grid with no articles yet (0.15.0) ----
+   The line is the site's own words in the page, so it can be changed in the Visual editor. It stays hidden
+   until the articles plugin's grid says it is empty (that plugin shows its own line without the hidden
+   attribute), and then it takes the place of that plugin's line. Each :has() rule is on its own, so a
+   browser without :has() ignores them, keeps this line hidden and shows the plugin's own line as before. */
+.twd-sk-page .twd-sk-resources__none.twd-sk-resources__none {
+  display: none;
+  margin: var(--twd-site-gap-sm) 0 0 !important;
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  line-height: var(--twd-site-line-body) !important;
+  color: var(--twd-site-color-muted) !important;
+  text-align: center !important;
+}
+.twd-sk-page .twd-sk-resources.twd-sk-resources:has(.twd-ap-articles-none.twd-ap-articles-none:not([hidden])) .twd-sk-resources__none.twd-sk-resources__none {
+  display: block;
+}
+.twd-sk-page .twd-sk-resources.twd-sk-resources:has(.twd-sk-resources__none.twd-sk-resources__none) .twd-ap-articles-none.twd-ap-articles-none {
+  display: none;
+}
+.twd-sk-page .twd-sk-resources__grid.twd-sk-resources__grid .twd-sk-resources__none.twd-sk-resources__none {
+  text-align: left !important;
+}
 /* ---- contact ---- */
 .twd-sk-page .twd-sk-contact__grid.twd-sk-contact__grid {
   display: grid;
@@ -1641,6 +1664,38 @@
 .twd-sk-page .twd-sk-enquiry.twd-sk-enquiry {
   padding-top: var(--twd-site-section-y) !important;
   padding-bottom: var(--twd-site-section-y) !important;
+}
+/* ---- embed (0.15.0): code an administrator saved apart from the page (a shortcode or HTML) ----
+   The kit only gives it room and keeps pictures and frames inside the column; the code looks as its own
+   maker made it. The missing note is shown to editors only (visitors get nothing). */
+.twd-sk-page .twd-sk-embed.twd-sk-embed {
+  padding-top: var(--twd-site-section-y) !important;
+  padding-bottom: var(--twd-site-section-y) !important;
+}
+.twd-sk-page .twd-sk-embed--bare.twd-sk-embed--bare {
+  padding-top: var(--twd-site-section-y-sm) !important;
+  padding-bottom: var(--twd-site-section-y-sm) !important;
+}
+.twd-sk-page .twd-sk-embed__content.twd-sk-embed__content {
+  max-width: 100%;
+  min-width: 0;
+}
+.twd-sk-page .twd-sk-embed__content.twd-sk-embed__content iframe,
+.twd-sk-page .twd-sk-embed__content.twd-sk-embed__content img,
+.twd-sk-page .twd-sk-embed__content.twd-sk-embed__content video,
+.twd-sk-page .twd-sk-embed__content.twd-sk-embed__content table {
+  max-width: 100%;
+}
+.twd-sk-page .twd-sk-embed__missing.twd-sk-embed__missing {
+  margin: 0 !important;
+  padding: 16px !important;
+  border: 1px dashed var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-card) !important;
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  line-height: var(--twd-site-line-body) !important;
+  color: var(--twd-site-color-muted) !important;
+  text-align: center !important;
 }
 .twd-sk-page .twd-sk-form.twd-sk-form {
   margin-top: 8px !important;
@@ -2675,7 +2730,8 @@
   .twd-sk-page .twd-sk-pricing.twd-sk-pricing,
   .twd-sk-page .twd-sk-hours.twd-sk-hours,
   .twd-sk-page .twd-sk-areas.twd-sk-areas,
-  .twd-sk-page .twd-sk-enquiry.twd-sk-enquiry {
+  .twd-sk-page .twd-sk-enquiry.twd-sk-enquiry,
+  .twd-sk-page .twd-sk-embed.twd-sk-embed {
     padding-top: var(--twd-site-section-y-sm) !important;
     padding-bottom: var(--twd-site-section-y-sm) !important;
   }

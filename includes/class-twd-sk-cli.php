@@ -20,6 +20,9 @@
  *   wp twd-sk snags [--status=<status>] [--type=<type>] [--format=json|markdown]  print the Tell us notes kept on this site
  *   wp twd-sk snag-status <id> <status>  set a note to new, seen, done or parked
  *   wp twd-sk snags-setting [on|off]     show, or switch, the Tell us module
+ *   wp twd-sk embeds [--code]            list the embeds (code kept apart from the pages)
+ *   wp twd-sk embed-set --label= --kind= --code= [--id=]   save an embed
+ *   wp twd-sk embed-delete <id>          delete an embed
  *   wp twd-sk style status|snapshot|apply|revert|swap   restyle a built site: keep the current look, apply a pack or a kit file (dry run first), go back, change a section's layout (0.14.0)
  *   wp twd-sk build [<brief-file>] [--mode=<mode>] [--set=<slug>] [--pack=<slug>] [--pictures=<file>] [--no-ai] [--dry-run]
  *                                        set the whole site up from a brief, every page a draft
@@ -862,6 +865,88 @@ class TWD_SK_CLI {
 		}
 		$cur = TWD_SK_Snags::settings();
 		WP_CLI::log( 'Tell us: ' . ( $cur['enabled'] ? 'on' : 'off' ) . ( $cur['safe_mode'] ? ' (safe mode is on, so it is switched off for now)' : '' ) . '. Notes are kept for ' . $cur['months'] . ' months. Email notification: ' . ( $cur['email_on'] ? 'on' : 'off' ) . '.' );
+	}
+
+	/**
+	 * List the embeds saved on this site (code kept apart from the pages), as JSON. The code is left out
+	 * unless --code is given.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--code]
+	 * : Include each embed's code.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk embeds
+	 */
+	public function embeds( $args, $assoc_args ) {
+		$rows = array();
+		foreach ( TWD_SK_Embed::listing() as $r ) {
+			if ( ! isset( $assoc_args['code'] ) ) {
+				unset( $r['code'] );
+			}
+			$rows[] = $r;
+		}
+		WP_CLI::line( wp_json_encode( $rows ) );
+	}
+
+	/**
+	 * Save an embed: a shortcode or a piece of HTML code shown in an Embed section. Without --id it
+	 * makes a new one and prints its number; with --id it replaces that embed. Add it to a page from
+	 * the pop-up (Site tab, Embeds, Add to this page).
+	 *
+	 * ## OPTIONS
+	 *
+	 * --label=<label>
+	 * : A short name, for example Booking calendar.
+	 *
+	 * --kind=<kind>
+	 * : shortcode or html.
+	 *
+	 * --code=<code>
+	 * : The shortcode or the code, exactly as given.
+	 *
+	 * [--id=<id>]
+	 * : The number of the embed to replace.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk embed-set --label="Booking calendar" --kind=shortcode --code='[booking_calendar]'
+	 *
+	 * @subcommand embed-set
+	 */
+	public function embed_set( $args, $assoc_args ) {
+		$saved = TWD_SK_Embed::save( array(
+			'label' => isset( $assoc_args['label'] ) ? (string) $assoc_args['label'] : '',
+			'kind'  => isset( $assoc_args['kind'] ) ? (string) $assoc_args['kind'] : '',
+			'code'  => isset( $assoc_args['code'] ) ? (string) $assoc_args['code'] : '',
+		), isset( $assoc_args['id'] ) ? (int) $assoc_args['id'] : 0, 0 );
+		if ( is_wp_error( $saved ) ) {
+			WP_CLI::error( $saved->get_error_message() );
+			return;
+		}
+		WP_CLI::success( 'Saved embed ' . (int) $saved['id'] . '.' );
+	}
+
+	/**
+	 * Delete an embed. Pages that show it will have a gap, and cannot be published, until it is replaced.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <id>
+	 * : The number of the embed (shown by the embeds command).
+	 *
+	 * @subcommand embed-delete
+	 */
+	public function embed_delete( $args, $assoc_args ) {
+		$id = isset( $args[0] ) ? (int) $args[0] : 0;
+		if ( $id <= 0 || ! TWD_SK_Embed::delete( $id ) ) {
+			WP_CLI::error( 'There is no embed with that number.' );
+			return;
+		}
+		$use = TWD_SK_Embed::usage();
+		WP_CLI::success( 'Deleted embed ' . $id . '.' . ( ! empty( $use[ $id ] ) ? ' ' . count( $use[ $id ] ) . ' page(s) still point at it.' : '' ) );
 	}
 
 	/**

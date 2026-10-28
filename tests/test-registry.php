@@ -1,9 +1,9 @@
 <?php
 // Registry tests: the components as data, keyed on IDs, with variants.
 
-twd_sk_test( 'registry: exactly the seventeen expected component IDs, in page order', function () {
+twd_sk_test( 'registry: exactly the eighteen expected component IDs, in page order', function () {
 	twd_sk_eq(
-		array( 'hero', 'text', 'image_text', 'pictures', 'quote', 'logos', 'faq', 'services', 'pricing', 'steps', 'cta', 'contact', 'hours', 'areas', 'enquiry', 'notice', 'resources' ),
+		array( 'hero', 'text', 'image_text', 'pictures', 'quote', 'logos', 'faq', 'services', 'pricing', 'steps', 'cta', 'contact', 'hours', 'areas', 'enquiry', 'notice', 'resources', 'embed' ),
 		TWD_SK_Registry::ids()
 	);
 } );
@@ -62,19 +62,22 @@ twd_sk_test( 'registry: the wrapper class twd-sk-page is never an allowed class 
 	twd_sk_true( ! isset( TWD_SK_Registry::allowed_classes()['twd-sk-page'] ) );
 } );
 
-twd_sk_test( 'registry: only resources (twd_articles) and enquiry (twd_enquiry, no attributes) declare a shortcode', function () {
+twd_sk_test( 'registry: only resources (twd_articles), enquiry (twd_enquiry, no attributes) and embed (twd_embed, a number) declare a shortcode', function () {
 	foreach ( TWD_SK_Registry::all() as $id => $c ) {
 		if ( 'resources' === $id ) {
 			twd_sk_eq( array( 'twd_articles' ), array_keys( $c['shortcodes'] ) );
 		} elseif ( 'enquiry' === $id ) {
 			twd_sk_eq( array( 'twd_enquiry' => array() ), $c['shortcodes'] );
+		} elseif ( 'embed' === $id ) {
+			twd_sk_eq( array( 'twd_embed' ), array_keys( $c['shortcodes'] ) );
+			twd_sk_eq( array( 'id' ), array_keys( $c['shortcodes']['twd_embed'] ) );
 		} else {
 			twd_sk_eq( array(), $c['shortcodes'], $id . ' has no shortcodes' );
 		}
 	}
 	$tags = array_keys( TWD_SK_Registry::allowed_shortcodes() );
 	sort( $tags );
-	twd_sk_eq( array( 'twd_articles', 'twd_enquiry' ), $tags );
+	twd_sk_eq( array( 'twd_articles', 'twd_embed', 'twd_enquiry' ), $tags );
 } );
 
 twd_sk_test( 'registry: the page shortcode is never allowed inside a page', function () {
@@ -148,7 +151,7 @@ twd_sk_test( 'registry: skeleton placeholder text has no square brackets (the sa
 			$text .= $v['skeleton'];
 		}
 		// The only brackets allowed are the registry's own shortcodes.
-		$text = preg_replace( '/\[twd_articles [^\]]*\]|\[twd_enquiry\]/', '', $text );
+		$text = preg_replace( '/\[twd_articles [^\]]*\]|\[twd_enquiry\]|\[twd_embed id="\d+"\]/', '', $text );
 		twd_sk_hasnt( '[', $text, $id );
 		twd_sk_hasnt( ']', $text, $id );
 	}

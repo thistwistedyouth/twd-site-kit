@@ -431,6 +431,16 @@
 .twd-sk-resources__intro .twd-sk-btn { margin-top: $gap-sm; }
 .twd-sk-resources__grid .twd-ap-articles-toolbar, .twd-sk-resources__grid .twd-ap-articles-loadmore-row { display: none; }
 
+/* ---- the line for a grid with no articles yet (0.15.0) ----
+   The line is the site's own words in the page, so it can be changed in the Visual editor. It stays hidden
+   until the articles plugin's grid says it is empty (that plugin shows its own line without the hidden
+   attribute), and then it takes the place of that plugin's line. Each :has() rule is on its own, so a
+   browser without :has() ignores them, keeps this line hidden and shows the plugin's own line as before. */
+.twd-sk-resources__none { display: none; margin: $gap-sm 0 0; font-family: $font-body; font-size: $size-small; line-height: $line-body; color: $color-muted; text-align: center; }
+.twd-sk-resources:has(.twd-ap-articles-none:not([hidden])) .twd-sk-resources__none { display: block; }
+.twd-sk-resources:has(.twd-sk-resources__none) .twd-ap-articles-none { display: none; }
+.twd-sk-resources__grid .twd-sk-resources__none { text-align: left; }
+
 /* ---- contact ---- */
 .twd-sk-contact__grid { display: grid; grid-template-columns: 1fr; gap: $gap-lg; }
 .twd-sk-contact--split .twd-sk-contact__grid { grid-template-columns: 1fr 1fr; align-items: start; }
@@ -554,6 +564,18 @@
 
 /* ---- enquiry form (0.8.1): rendered by the plugin from [twd_enquiry] ---- */
 .twd-sk-enquiry { padding-top: $section-y; padding-bottom: $section-y; }
+
+/* ---- embed (0.15.0): code an administrator saved apart from the page (a shortcode or HTML) ----
+   The kit only gives it room and keeps pictures and frames inside the column; the code looks as its own
+   maker made it. The missing note is shown to editors only (visitors get nothing). */
+.twd-sk-embed { padding-top: $section-y; padding-bottom: $section-y; }
+.twd-sk-embed--bare { padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
+.twd-sk-embed__content { max-width: 100%; min-width: 0; }
+.twd-sk-embed__content iframe, .twd-sk-embed__content img, .twd-sk-embed__content video, .twd-sk-embed__content table { max-width: 100%; }
+.twd-sk-embed__missing {
+  margin: 0; padding: 16px; border: 1px dashed $color-border; border-radius: $radius-card;
+  font-family: $font-body; font-size: $size-small; line-height: $line-body; color: $color-muted; text-align: center;
+}
 .twd-sk-form { margin-top: 8px; }
 .twd-sk-form__field { margin-bottom: 18px; }
 .twd-sk-form__label { display: block; margin-bottom: 6px; font-size: $size-small; font-weight: 600; color: $color-title; }
@@ -826,7 +848,7 @@
   & > :not(section):not(.twd-sk-inner):not(.twd-sk-gallery-label):not(.twd-sk-header):not(.twd-sk-footer) { padding-left: $gutter-sm; padding-right: $gutter-sm; }
   .twd-sk-hero--split, .twd-sk-hero--compact, .twd-sk-text, .twd-sk-image-text, .twd-sk-quote,
   .twd-sk-faq, .twd-sk-services, .twd-sk-steps, .twd-sk-contact, .twd-sk-notice,
-  .twd-sk-resources, .twd-sk-pictures, .twd-sk-pricing, .twd-sk-hours, .twd-sk-areas, .twd-sk-enquiry { padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
+  .twd-sk-resources, .twd-sk-pictures, .twd-sk-pricing, .twd-sk-hours, .twd-sk-areas, .twd-sk-enquiry, .twd-sk-embed { padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
   .twd-sk-pictures__grid, .twd-sk-pricing__grid { grid-template-columns: 1fr 1fr; }
   .twd-sk-logos__img { max-width: 120px; height: 48px; }
   .twd-sk-logos--grid .twd-sk-logos__list { grid-template-columns: 1fr 1fr; }

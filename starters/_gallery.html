@@ -898,7 +898,7 @@
 </div>
 <div class="twd-sk-gallery-label">
 <div class="twd-sk-inner">
-<p><strong>resources / default</strong>: A heading above the articles grid. Only wraps the twd_articles shortcode. The strip layout shows a few articles from one category beside a short introduction, for the foot of a service page.</p>
+<p><strong>resources / default</strong>: A heading above the articles grid. Only wraps the twd_articles shortcode, followed by a short line (twd-sk-resources__none) that shows only while there are no articles yet, in place of the articles plugin's own line, so its words can be changed. The strip layout shows a few articles from one category beside a short introduction, for the foot of a service page.</p>
 </div>
 </div>
 <section class="twd-sk-resources twd-sk-tone-base">
@@ -907,11 +907,12 @@
 <h2 class="twd-sk-title">Latest articles</h2>
 <p class="twd-sk-lead">Short introduction here.</p>
 [twd_articles count="6" columns="3"]
+<p class="twd-sk-resources__none">No articles yet. Please check back soon.</p>
 </div>
 </section>
 <div class="twd-sk-gallery-label">
 <div class="twd-sk-inner">
-<p><strong>resources / twd-sk-resources--strip</strong>: A heading above the articles grid. Only wraps the twd_articles shortcode. The strip layout shows a few articles from one category beside a short introduction, for the foot of a service page.</p>
+<p><strong>resources / twd-sk-resources--strip</strong>: A heading above the articles grid. Only wraps the twd_articles shortcode, followed by a short line (twd-sk-resources__none) that shows only while there are no articles yet, in place of the articles plugin's own line, so its words can be changed. The strip layout shows a few articles from one category beside a short introduction, for the foot of a service page.</p>
 </div>
 </div>
 <section class="twd-sk-resources twd-sk-resources--strip twd-sk-tone-tint">
@@ -925,7 +926,29 @@
 </div>
 <div class="twd-sk-resources__grid">
 [twd_articles category="your-topic" count="3" columns="3"]
+<p class="twd-sk-resources__none">No articles yet. Please check back soon.</p>
 </div>
 </div>
+</div>
+</section>
+<div class="twd-sk-gallery-label">
+<div class="twd-sk-inner">
+<p><strong>embed / default</strong>: A section that shows a shortcode or a piece of HTML code an administrator saved apart from the page, such as a booking calendar, a map or a form from another plugin. The page itself holds only the twd_embed shortcode with the number of the saved embed. The code is never part of the page: it is not written, changed or seen by the AI, and only an administrator can create or change it. Keep an embed section exactly as it is.</p>
+</div>
+</div>
+<section class="twd-sk-embed twd-sk-tone-base">
+<div class="twd-sk-inner">
+<h2 class="twd-sk-title">Heading here</h2>
+[twd_embed id="0"]
+</div>
+</section>
+<div class="twd-sk-gallery-label">
+<div class="twd-sk-inner">
+<p><strong>embed / twd-sk-embed--bare</strong>: A section that shows a shortcode or a piece of HTML code an administrator saved apart from the page, such as a booking calendar, a map or a form from another plugin. The page itself holds only the twd_embed shortcode with the number of the saved embed. The code is never part of the page: it is not written, changed or seen by the AI, and only an administrator can create or change it. Keep an embed section exactly as it is.</p>
+</div>
+</div>
+<section class="twd-sk-embed twd-sk-embed--bare twd-sk-tone-base">
+<div class="twd-sk-inner">
+[twd_embed id="0"]
 </div>
 </section>
