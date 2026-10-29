@@ -90,6 +90,25 @@ class TWD_SK_Registry {
 			'twd-sk-border-accent',
 			'twd-sk-pad-compact',
 			'twd-sk-pad-roomy',
+			// 0.15.0 (idea 8): "On this page", a list of jump links to the page's h2 headings, built when the page is drawn
+			// (never stored) inside the section that carries twd-sk-toc; the headings get twd-sk-toc-target with their ids.
+			'twd-sk-toc',
+			'twd-sk-toc__box',
+			'twd-sk-toc__title',
+			'twd-sk-toc__list',
+			'twd-sk-toc__link',
+			'twd-sk-toc-target',
+			// 0.15.0 (idea 6): reading controls on a page that carries twd-sk-reading: the small script draws the button and
+			// panel (never stored) and puts the read-* classes on the page wrappers from the visitor's own choice.
+			'twd-sk-reading',
+			'twd-sk-reading__btn',
+			'twd-sk-reading__panel',
+			'twd-sk-reading__row',
+			'twd-sk-reading__ctl',
+			'twd-sk-read-lg',
+			'twd-sk-read-xl',
+			'twd-sk-read-loose',
+			'twd-sk-read-contrast',
 			// 0.15.0: typography for text-led pages (Look choices on text sections): the first paragraph larger,
 			// its opening line in small capitals, a drop cap, and refined lists.
 			'twd-sk-lead-in',

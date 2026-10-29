@@ -132,7 +132,58 @@ class TWD_SK_Page {
 			$html = TWD_SK_Inline::mark( $html );
 		}
 
+		// "On this page" (0.15.0, idea 8): built from the h2 headings now, inside the section that asks for it; never stored.
+		if ( false !== strpos( $html, 'twd-sk-toc' ) ) {
+			$html = self::add_toc( $html );
+		}
+
 		return '<div class="' . self::WRAPPER_CLASS . '">' . self::render_html( $html ) . '</div>';
+	}
+
+	/**
+	 * Give every h2 an id (twd-sk-h-N, unless it has one) and put a list of links to them into the first section that
+	 * carries twd-sk-toc, just inside the end of its column. Nothing is stored: the stored page has no ids and no list.
+	 */
+	public static function add_toc( $html ) {
+		if ( 1 !== preg_match( '/<section\b[^>]*\sclass="[^"]*\btwd-sk-toc\b/', $html ) ) {
+			return $html;
+		}
+		$n     = 0;
+		$items = array();
+		$html  = preg_replace_callback( '/<h2\b([^>]*)>(.*?)<\/h2>/is', function ( $m ) use ( &$n, &$items ) {
+			$n++;
+			$attrs = $m[1];
+			$text  = trim( preg_replace( '/\s+/', ' ', html_entity_decode( strip_tags( $m[2] ), ENT_QUOTES, 'UTF-8' ) ) );
+			if ( '' === $text ) {
+				return $m[0];
+			}
+			if ( preg_match( '/\sid="([^"]+)"/', $attrs, $id ) ) {
+				$anchor = $id[1];
+			} else {
+				$anchor = 'twd-sk-h-' . $n;
+				$attrs .= ' id="' . $anchor . '"';
+			}
+			if ( preg_match( '/\sclass="([^"]*)"/', $attrs, $c ) ) {
+				$attrs = str_replace( $c[0], ' class="' . $c[1] . ' twd-sk-toc-target"', $attrs );
+			} else {
+				$attrs .= ' class="twd-sk-toc-target"';
+			}
+			$items[] = '<li><a class="twd-sk-toc__link" href="#' . esc_attr( $anchor ) . '">' . esc_html( $text ) . '</a></li>';
+			return '<h2' . $attrs . '>' . $m[2] . '</h2>';
+		}, $html );
+		if ( count( $items ) < 2 ) {
+			return $html;
+		}
+		$nav   = '<nav class="twd-sk-toc__box" aria-label="On this page"><p class="twd-sk-toc__title">On this page</p><ul class="twd-sk-toc__list">' . implode( '', $items ) . '</ul></nav>';
+		$parts = TWD_SK_Sections::split( $html );
+		foreach ( $parts['sections'] as $i => $piece ) {
+			if ( 1 === preg_match( '/^<section\b[^>]*\sclass="[^"]*\btwd-sk-toc\b/', $piece ) ) {
+				$done = preg_replace( '/(<\/div>\s*<\/section>)$/', $nav . '$1', $piece, 1, $count );
+				$parts['sections'][ $i ] = $count ? $done : preg_replace( '/<\/section>$/', $nav . '</section>', $piece, 1 );
+				return TWD_SK_Sections::join( $parts['gaps'], $parts['sections'] );
+			}
+		}
+		return $html;
 	}
 
 	/** Small scripts only some sections need, loaded only on a page that has them. */
@@ -148,6 +199,10 @@ class TWD_SK_Page {
 		// opens the group where it is, marks the tab, and sets the address without the jump.
 		if ( false !== strpos( (string) $html, 'twd-sk-faq--groups' ) ) {
 			wp_enqueue_script( 'twd-site-kit-faq', TWD_SK_URL . 'assets/twd-site-kit-faq.js', array(), defined( 'TWD_SK_VERSION' ) ? TWD_SK_VERSION : false, true );
+		}
+		// Reading controls (0.15.0, idea 6): a visitor's own text size, line spacing and contrast, kept in their browser.
+		if ( false !== strpos( (string) $html, 'twd-sk-reading' ) ) {
+			wp_enqueue_script( 'twd-site-kit-reading', TWD_SK_URL . 'assets/twd-site-kit-reading.js', array(), defined( 'TWD_SK_VERSION' ) ? TWD_SK_VERSION : false, true );
 		}
 		// The parallax hero still shows its picture without the script; the script moves it a little (0.14.0).
 		if ( false !== strpos( (string) $html, 'twd-sk-hero--parallax' ) ) {

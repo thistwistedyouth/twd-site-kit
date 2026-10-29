@@ -1092,6 +1092,36 @@
   .twd-sk-resources__row { grid-template-columns: 1fr 2fr; }
 }
 
+/* ---- on this page (0.15.0, idea 8): a quiet box of links to the page's section headings, built when the page is drawn ---- */
+.twd-sk-toc__box { margin: 28px 0 0; padding: $card-pad-sm; border-left: 3px solid $color-accent; border-radius: $radius-card; background-color: $color-surface; text-align: left; }
+.twd-sk-toc { position: relative; }
+.twd-sk-toc__title { margin: 0 0 8px; font-size: $eyebrow-size; font-weight: $eyebrow-weight; letter-spacing: $eyebrow-spacing; text-transform: uppercase; color: $color-eyebrow; }
+.twd-sk-toc__list { margin: 0; padding: 0; list-style: none; }
+.twd-sk-toc__list li + li { margin-top: 6px; }
+.twd-sk-toc__link { font-size: $size-small; color: $color-accent-text; text-decoration: underline; }
+.twd-sk-toc__link:hover, .twd-sk-toc__link:focus-visible { color: $color-primary; }
+.twd-sk-toc-target { scroll-margin-top: 120px; }
+/* ---- reading controls (0.15.0, idea 6): the visitor's own text size, line spacing and contrast ---- */
+.twd-sk-reading { position: fixed; right: 16px; bottom: 16px; z-index: 99985; }
+.twd-sk-reading__btn {
+  min-height: 44px; padding: 10px 16px; border: 1px solid $color-border; border-radius: $radius-pill; background-color: $color-surface;
+  color: $color-title; font-family: $font-body; font-size: $size-small; font-weight: $btn-weight; box-shadow: $shadow-card; cursor: pointer;
+}
+.twd-sk-reading__btn:hover, .twd-sk-reading__btn:focus-visible { border-color: $color-primary; color: $color-primary; }
+.twd-sk-reading__panel { position: absolute; right: 0; bottom: 52px; width: 260px; padding: 14px; border: 1px solid $color-border; border-radius: $radius-card; background-color: $color-surface; box-shadow: $shadow-card; }
+.twd-sk-reading__row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: $size-small; color: $color-body; }
+.twd-sk-reading__row + .twd-sk-reading__row { margin-top: 10px; }
+.twd-sk-reading__row > span { flex: 1 1 100%; font-weight: $btn-weight; color: $color-title; }
+.twd-sk-reading__ctl { min-height: 40px; padding: 6px 12px; border: 1px solid $color-border; border-radius: $radius-btn; background-color: $color-bg; color: $color-title; font-family: $font-body; font-size: $size-small; cursor: pointer; }
+.twd-sk-reading__ctl[aria-pressed="true"] { border-color: $color-primary; background-color: $color-primary; color: $color-on-primary; }
+&.twd-sk-read-lg .twd-sk-text__body, &.twd-sk-read-lg .twd-sk-text__body p, &.twd-sk-read-lg .twd-sk-faq__answer, &.twd-sk-read-lg .twd-sk-image-text__body p, &.twd-sk-read-lg .twd-sk-lead { font-size: calc(#{$size-body} * 1.15); }
+&.twd-sk-read-xl .twd-sk-text__body, &.twd-sk-read-xl .twd-sk-text__body p, &.twd-sk-read-xl .twd-sk-faq__answer, &.twd-sk-read-xl .twd-sk-image-text__body p, &.twd-sk-read-xl .twd-sk-lead { font-size: calc(#{$size-body} * 1.3); }
+&.twd-sk-read-loose .twd-sk-text__body, &.twd-sk-read-loose .twd-sk-text__body p, &.twd-sk-read-loose .twd-sk-faq__answer, &.twd-sk-read-loose .twd-sk-image-text__body p { line-height: calc(#{$line-body} * 1.25); }
+&.twd-sk-read-contrast .twd-sk-tone-surface, &.twd-sk-read-contrast .twd-sk-tone-tint { background-color: $color-bg; }
+&.twd-sk-read-contrast .twd-sk-text__body, &.twd-sk-read-contrast .twd-sk-text__body p, &.twd-sk-read-contrast .twd-sk-faq__answer, &.twd-sk-read-contrast .twd-sk-image-text__body p, &.twd-sk-read-contrast .twd-sk-lead, &.twd-sk-read-contrast .twd-sk-card { color: $color-title; }
+@media (max-width: 768px) {
+  .twd-sk-reading { right: 12px; bottom: 76px; }
+}
 /* ---- at a glance (0.15.0, idea 9): three or four short facts in a row, two across on a phone ---- */
 .twd-sk-facts__list { display: grid; grid-template-columns: repeat(4, 1fr); gap: $gap-md; margin: 32px 0 0; }
 .twd-sk-facts__item { margin: 0; padding: 0 0 0 16px; border-left: 2px solid $color-accent; }

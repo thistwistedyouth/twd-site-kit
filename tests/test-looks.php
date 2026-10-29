@@ -48,7 +48,7 @@ twd_sk_test( 'looks: the browser gets small, static data: labels and class names
 	twd_sk_eq( array( 'box', 'border', 'padding' ), $c['advanced'] );
 	twd_sk_eq( array(), $c['components']['faq']['options'], 'a component with no options of its own sends none' );
 	$json = json_encode( $c );
-	twd_sk_true( strlen( $json ) < 12000, 'light: ' . strlen( $json ) . ' bytes' ); // 8000 until the nearest-choice hints joined in 0.15.0
+	twd_sk_true( strlen( $json ) < 16000, 'light: ' . strlen( $json ) . ' bytes' ); // 8000 until the nearest-choice hints and the Tier C options joined in 0.15.0
 	twd_sk_hasnt( 'PLACEHOLDER', $json );
 	// Every class named in it is one the registry allows.
 	$allowed = TWD_SK_Registry::allowed_classes();
@@ -308,7 +308,7 @@ twd_sk_test( 'words over a picture (0.15.0): the Picture text layout, its layer,
 
 	// The options: on a text section they need the Picture layout; the tint and padding need the frame; larger text is always there.
 	$opts = TWD_SK_Looks::options( 'text' );
-	twd_sk_eq( array( 'overlay', 'frame', 'frame_tint', 'frame_pad', 'text_size', 'lead_in', 'small_caps', 'drop_cap', 'fine_lists' ), array_keys( $opts ) );
+	twd_sk_eq( array( 'overlay', 'frame', 'frame_tint', 'frame_pad', 'text_size', 'lead_in', 'small_caps', 'drop_cap', 'fine_lists', 'toc', 'reading' ), array_keys( $opts ) );
 	twd_sk_eq( 'twd-sk-text--picture', $opts['overlay']['requires'] );
 	twd_sk_eq( 'twd-sk-text--picture', $opts['frame']['requires'] );
 	twd_sk_eq( 'twd-sk-frame', $opts['frame_tint']['requires'] );

@@ -152,3 +152,44 @@ twd_sk_test( 'page: html with no shortcodes comes back untouched', function () {
 	$in = '<p class="twd-sk-text__body">Plain text</p>';
 	twd_sk_eq( $in, TWD_SK_Page::render_html( $in ) );
 } );
+
+twd_sk_test( 'Tier C ideas 6 and 8 (0.15.0): an On this page list built from the h2 headings when the page is drawn (never stored), and reading controls as a tiny script loaded only where asked', function () {
+	// The list: ids on every h2, the list inside the section that asks for it, two headings at least, nothing stored.
+	$page = '<section class="twd-sk-hero twd-sk-hero--compact twd-sk-toc twd-sk-tone-base"><div class="twd-sk-inner"><h1 class="twd-sk-hero__title">Essay</h1></div></section>'
+		. "\n" . '<section class="twd-sk-text twd-sk-tone-base"><div class="twd-sk-inner"><h2 class="twd-sk-title">First &amp; foremost</h2><div class="twd-sk-text__body"><p>A.</p><h2 class="twd-sk-text__subheading">Second</h2><p>B.</p></div></div></section>'
+		. "\n" . '<section class="twd-sk-cta twd-sk-cta--strip twd-sk-tone-band"><div class="twd-sk-inner"><p class="twd-sk-cta__text">Go.</p></div></section>';
+	$out = TWD_SK_Page::add_toc( $page );
+	twd_sk_has( '<h2 class="twd-sk-title twd-sk-toc-target" id="twd-sk-h-1">First &amp; foremost</h2>', $out );
+	twd_sk_has( '<h2 class="twd-sk-text__subheading twd-sk-toc-target" id="twd-sk-h-2">Second</h2>', $out );
+	twd_sk_has( '<nav class="twd-sk-toc__box" aria-label="On this page"><p class="twd-sk-toc__title">On this page</p><ul class="twd-sk-toc__list"><li><a class="twd-sk-toc__link" href="#twd-sk-h-1">First &amp; foremost</a></li><li><a class="twd-sk-toc__link" href="#twd-sk-h-2">Second</a></li></ul></nav></div></section>', $out );
+	twd_sk_true( 0 === strpos( $out, '<section class="twd-sk-hero twd-sk-hero--compact twd-sk-toc twd-sk-tone-base"><div class="twd-sk-inner"><h1 class="twd-sk-hero__title">Essay</h1><nav class="twd-sk-toc__box"' ), 'the list sits inside the section that asked for it' );
+	twd_sk_eq( 1, substr_count( $out, 'twd-sk-toc__list' ) );
+	// One heading only: no list (nothing to jump to); no section asks: nothing changes.
+	twd_sk_hasnt( 'twd-sk-toc__list', TWD_SK_Page::add_toc( '<section class="twd-sk-text twd-sk-toc twd-sk-tone-base"><div class="twd-sk-inner"><h2 class="twd-sk-title">Only</h2></div></section>' ) );
+	$plain = str_replace( ' twd-sk-toc', '', $page );
+	twd_sk_eq( $plain, TWD_SK_Page::add_toc( $plain ) );
+	// The sanitiser would not keep the drawn ids and list from a paste either way, but they are never offered to it.
+	twd_sk_true( in_array( 'twd-sk-toc', TWD_SK_Registry::shared_classes(), true ) );
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	foreach ( array( 'twd-sk-toc__link', 'twd-sk-toc-target', 'twd-sk-reading__btn', 'twd-sk-reading__ctl', 'twd-sk-read-xl', 'twd-sk-read-contrast' ) as $cls ) {
+		twd_sk_has( $cls, $css );
+	}
+	// The toggles: On this page on the hero and text sections; reading controls on text sections.
+	twd_sk_eq( 'twd-sk-toc', TWD_SK_Looks::options( 'hero' )['toc']['class'] );
+	twd_sk_eq( 'twd-sk-toc', TWD_SK_Looks::options( 'text' )['toc']['class'] );
+	twd_sk_eq( 'twd-sk-reading', TWD_SK_Looks::options( 'text' )['reading']['class'] );
+	// The reading script: small, ASCII, no addresses, builds with DOM calls, keeps the choice in the visitor's browser only, stands aside while editing.
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-reading.js' );
+	twd_sk_true( strlen( $js ) < 6144, 'small: ' . strlen( $js ) );
+	twd_sk_true( 1 !== preg_match( '/[^\x00-\x7F]/', $js ), 'ASCII only' );
+	twd_sk_hasnt( 'http', $js );
+	twd_sk_hasnt( 'innerHTML', $js );
+	twd_sk_hasnt( 'fetch(', $js );
+	twd_sk_hasnt( 'document.cookie', $js );
+	foreach ( array( 'twd_sk_reading', 'localStorage', 'twd-sk-read-lg', 'twd-sk-read-xl', 'twd-sk-read-loose', 'twd-sk-read-contrast', 'aria-pressed', 'twd-sk-inline-on', "'Escape'" ) as $needle ) {
+		twd_sk_has( $needle, $js );
+	}
+	$page_php = file_get_contents( ABSPATH . 'includes/class-twd-sk-page.php' );
+	twd_sk_has( "'twd-sk-reading'", $page_php );
+	twd_sk_has( 'twd-site-kit-reading.js', $page_php );
+} );

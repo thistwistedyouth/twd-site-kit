@@ -55,7 +55,7 @@ class TWD_SK_Looks {
 	 */
 	public static function options( $component ) {
 		$all = array(
-			'text' => self::picture_options( 'twd-sk-text--picture' ) + self::type_options(),
+			'text' => self::picture_options( 'twd-sk-text--picture' ) + self::type_options() + self::page_options(),
 			'cta'  => self::picture_options( 'twd-sk-cta--band' ),
 			'quote' => array(
 				'marks' => array(
@@ -114,6 +114,7 @@ class TWD_SK_Looks {
 					'requires' => 'twd-sk-hero--image',
 					'help'     => 'Off on phones and for visitors who ask for less motion.',
 				),
+				'toc'      => array( 'label' => 'On this page list here', 'kind' => 'toggle', 'class' => 'twd-sk-toc', 'help' => 'A quiet list of links to the page\'s section headings, built when the page is shown.' ),
 			),
 		);
 		return isset( $all[ $component ] ) ? $all[ $component ] : array();
@@ -173,6 +174,14 @@ class TWD_SK_Looks {
 				'class' => 'twd-sk-text-lg',
 				'help'  => 'The paragraphs a size up, like an introduction.',
 			),
+		);
+	}
+
+	/** Page helps (0.15.0, ideas 6 and 8): an "On this page" list in this section, and reading controls for the page. */
+	private static function page_options() {
+		return array(
+			'toc'     => array( 'label' => 'On this page list here', 'kind' => 'toggle', 'class' => 'twd-sk-toc', 'help' => 'A quiet list of links to the page\'s section headings, built when the page is shown.' ),
+			'reading' => array( 'label' => 'Reading controls on this page', 'kind' => 'toggle', 'class' => 'twd-sk-reading', 'help' => 'A small Reading button for visitors: text size, line spacing, higher contrast. Their choice stays in their own browser.' ),
 		);
 	}
 
