@@ -55,7 +55,7 @@ class TWD_SK_Looks {
 	 */
 	public static function options( $component ) {
 		$all = array(
-			'text' => self::picture_options( 'twd-sk-text--picture' ),
+			'text' => self::picture_options( 'twd-sk-text--picture' ) + self::type_options(),
 			'cta'  => self::picture_options( 'twd-sk-cta--band' ),
 			'image_text' => array(
 				'band_height' => array(
@@ -158,6 +158,16 @@ class TWD_SK_Looks {
 				'class' => 'twd-sk-text-lg',
 				'help'  => 'The paragraphs a size up, like an introduction.',
 			),
+		);
+	}
+
+	/** Typography for text-led pages (0.15.0, SK-021): toggles on any text section, shared classes styled from tokens. */
+	private static function type_options() {
+		return array(
+			'lead_in'    => array( 'label' => 'First paragraph larger', 'kind' => 'toggle', 'class' => 'twd-sk-lead-in', 'help' => 'The opening paragraph at the introduction size.' ),
+			'small_caps' => array( 'label' => 'Opening line in small capitals', 'kind' => 'toggle', 'class' => 'twd-sk-small-caps' ),
+			'drop_cap'   => array( 'label' => 'Drop cap', 'kind' => 'toggle', 'class' => 'twd-sk-drop-cap', 'help' => 'A large first letter in the heading font.' ),
+			'fine_lists' => array( 'label' => 'Refined lists', 'kind' => 'toggle', 'class' => 'twd-sk-lists-fine', 'help' => 'Thin rules between items, an arrow for links, large thin numbers.' ),
 		);
 	}
 

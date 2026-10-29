@@ -197,6 +197,8 @@ class TWD_SK_Packs {
 			'frame-padding', 'frame-padding-sm', 'frame-padding-lg',
 			// 0.15.0: the picture band's height (normal, and the Tall choice), on a computer and on a phone.
 			'band-height', 'band-height-sm', 'band-height-tall', 'band-height-tall-sm',
+			// 0.15.0: the space between paragraphs in a text section (SK-021).
+			'para-gap',
 		) as $name ) {
 			$s[ $name ] = 'length';
 		}
@@ -255,6 +257,7 @@ class TWD_SK_Packs {
 			'band-height-sm'                => '180px',
 			'band-height-tall'              => '400px',
 			'band-height-tall-sm'           => '260px',
+			'para-gap'                      => '1em',
 		);
 	}
 

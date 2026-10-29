@@ -511,7 +511,7 @@ twd_sk_test( 'leftovers: every example marker is found, case-insensitively, and 
 	$html = '<p>Heading here</p><p>paragraph TEXT here</p><a href="mailto:you@example.com">x</a><p>Mail Example.org</p><p>or example.net</p><p>Quote text here, Another quote here</p><p>Name and context</p><a href="tel:PHONE_NUMBER">y</a><span>Short label here</span>'
 		. '<img src="/wp-content/uploads/your-image.jpg" alt="Describe the image"><img src="/wp-content/uploads/your-badge.png" alt="x"><a href="/service-2">s</a>'
 		. '<a href="/contact">CONTACT me about a first session</a><a href="/s">Find out about my services</a><a href="/a">Read more about this approach</a><a href="tel:1">Call me to arrange a first session</a>'
-		. '<p>Question here?</p><p>Answer here.</p><p>Topic one</p><p>Short description here.</p><p>Short introduction here.</p><h3>Service name here</h3><p>A short statement in your own words.</p>'
+		. '<p>Question here?</p><p>Answer here.</p><p>Topic one</p><p>Short description here.</p><p>Short introduction here.</p><h3>Service name here</h3><p>A short statement in your own words.</p><p>A short passage from this page, set large.</p>'
 		. '<p>[PLACEHOLDER: fee]</p><p>[PLACEHOLDER]</p>'
 		. '<img src="/wp-content/uploads/your-logo.png" alt="Describe the logo"><p>Caption here</p><p>Price here</p><p>Short note here.</p><p>Day here</p><p>Times here</p><p>Area name here</p><a href="/c">Ask about this</a><a href="/m">See the area on a map</a>'
 		. '<p>PLACEHOLDER: fee]</p><p>the price, or say "ask"]</p><p>Fees: TO CONFIRM</p>'

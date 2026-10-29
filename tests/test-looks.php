@@ -308,7 +308,7 @@ twd_sk_test( 'words over a picture (0.15.0): the Picture text layout, its layer,
 
 	// The options: on a text section they need the Picture layout; the tint and padding need the frame; larger text is always there.
 	$opts = TWD_SK_Looks::options( 'text' );
-	twd_sk_eq( array( 'overlay', 'frame', 'frame_tint', 'frame_pad', 'text_size' ), array_keys( $opts ) );
+	twd_sk_eq( array( 'overlay', 'frame', 'frame_tint', 'frame_pad', 'text_size', 'lead_in', 'small_caps', 'drop_cap', 'fine_lists' ), array_keys( $opts ) );
 	twd_sk_eq( 'twd-sk-text--picture', $opts['overlay']['requires'] );
 	twd_sk_eq( 'twd-sk-text--picture', $opts['frame']['requires'] );
 	twd_sk_eq( 'twd-sk-frame', $opts['frame_tint']['requires'] );
@@ -503,4 +503,60 @@ twd_sk_test( 'chunk 3 (0.15.0): question groups open in place with the chosen ta
 	twd_sk_has( 'twd-sk-resources--hide-empty { display: block !important; }', file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.css' ) );
 	$res = array( 'twd-sk-resources', 'twd-sk-tone-base' );
 	twd_sk_eq( array( 'twd-sk-resources', 'twd-sk-tone-base', 'twd-sk-resources--hide-empty' ), TWD_SK_Looks::classes_for( 'resources', $res, null, array( 'hide_empty' => true ) ) );
+} );
+
+twd_sk_test( 'chunk 4, typography (0.15.0, SK-021): lead-in, small capitals, drop cap and refined lists as Look toggles on text sections; a pull line layout; text sizes, reading width and paragraph spacing in the Site tab; every pack still passes', function () {
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	foreach ( array( 'twd-sk-lead-in', 'twd-sk-small-caps', 'twd-sk-drop-cap', 'twd-sk-lists-fine' ) as $cls ) {
+		twd_sk_true( in_array( $cls, TWD_SK_Registry::shared_classes(), true ), $cls . ' is shared' );
+		twd_sk_has( $cls, $css );
+	}
+	$o = TWD_SK_Looks::options( 'text' );
+	foreach ( array( 'lead_in' => 'twd-sk-lead-in', 'small_caps' => 'twd-sk-small-caps', 'drop_cap' => 'twd-sk-drop-cap', 'fine_lists' => 'twd-sk-lists-fine' ) as $key => $cls ) {
+		twd_sk_eq( 'toggle', $o[ $key ]['kind'], $key );
+		twd_sk_eq( $cls, $o[ $key ]['class'], $key );
+		twd_sk_true( ! isset( $o[ $key ]['requires'] ), $key . ' works on every text layout' );
+	}
+	twd_sk_true( ! isset( TWD_SK_Looks::options( 'faq' )['drop_cap'] ), 'text sections only' );
+	$base = array( 'twd-sk-text', 'twd-sk-text--prose', 'twd-sk-tone-base' );
+	$on   = TWD_SK_Looks::classes_for( 'text', $base, null, array( 'lead_in' => true, 'small_caps' => true, 'drop_cap' => true, 'fine_lists' => true ) );
+	twd_sk_eq( array( 'twd-sk-text', 'twd-sk-text--prose', 'twd-sk-tone-base', 'twd-sk-lead-in', 'twd-sk-small-caps', 'twd-sk-drop-cap', 'twd-sk-lists-fine' ), $on );
+	twd_sk_eq( $base, TWD_SK_Looks::classes_for( 'text', $on, null, array( 'lead_in' => false, 'drop_cap' => false, 'fine_lists' => false, 'small_caps' => false ) ) );
+	// The pull line: a text layout with one piece, so it is reached from Add section, not by moving a text section.
+	$text = TWD_SK_Registry::get( 'text' );
+	twd_sk_true( isset( $text['variants']['twd-sk-text--pull'] ) );
+	$sk = $text['variants']['twd-sk-text--pull']['skeleton'];
+	twd_sk_has( '<p class="twd-sk-text__pull">', $sk );
+	twd_sk_eq( $sk, TWD_SK_Sanitizer::clean( $sk ) );
+	twd_sk_eq( array(), TWD_SK_Looks::compatible( 'text', 'twd-sk-text--pull' ), 'its piece is its own' );
+	twd_sk_eq( array( '', 'twd-sk-text--prose', 'twd-sk-text--picture' ), TWD_SK_Looks::compatible( 'text', '' ), 'the plain text section still moves as before' );
+	twd_sk_has( 'twd-sk-text__pull', $css );
+	twd_sk_true( 1 === preg_match( '/twd-sk-text__pull\.twd-sk-text__pull \{[^}]*font-size: var\(--twd-site-size-h2\)/', $css ) );
+	// Tokens and the Site tab: paragraph spacing in every pack and the defaults; the Text group rows; the rules read the token.
+	foreach ( TWD_SK_Packs::packs() as $slug => $pack ) {
+		twd_sk_eq( '1em', $pack['tokens']['para-gap'], $slug );
+	}
+	twd_sk_eq( '1em', TWD_SK_Packs::defaults()['para-gap'] );
+	twd_sk_has( 'margin-top: var(--twd-site-para-gap)', $css );
+	$names = TWD_SK_Site::editable_names();
+	foreach ( array( 'size-body', 'size-lead', 'size-h2', 'size-h3', 'container-narrow', 'para-gap' ) as $t ) {
+		twd_sk_true( in_array( $t, $names, true ), $t . ' is editable' );
+	}
+	$groups = array();
+	foreach ( TWD_SK_Site::state()['editable'] as $e ) {
+		if ( 'text' === $e['group'] ) {
+			$groups[] = $e['token'];
+		}
+	}
+	twd_sk_eq( array( 'size-body', 'size-lead', 'size-h2', 'size-h3', 'container-narrow', 'para-gap' ), $groups );
+	twd_sk_has( "text: 'Text (pixels)'", file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' ) );
+	// The floors still hold: a body size under 16px is refused like before, from the Site tab too.
+	$v = TWD_SK_Packs::validate_tokens( array( 'size-body' => '15px' ), false );
+	twd_sk_true( ! empty( $v['errors'] ) || ! isset( $v['valid']['size-body'] ), 'a body size under the floor is refused' );
+	// Every pack still passes its own checks with the new tokens (contrast and sizes).
+	foreach ( TWD_SK_Packs::packs() as $slug => $pack ) {
+		$c = TWD_SK_Contrast::check( $pack['tokens'] );
+		twd_sk_eq( array(), $c['blocking'], $slug . ' contrast' );
+		twd_sk_eq( array(), TWD_SK_Packs::validate_tokens( $pack['tokens'], true )['errors'], $slug . ' tokens' );
+	}
 } );

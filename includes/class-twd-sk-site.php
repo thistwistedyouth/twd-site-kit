@@ -46,6 +46,13 @@ class TWD_SK_Site {
 			array( 'pictures', 'band-height-sm', 'Picture band height on phones', 'size' ),
 			array( 'pictures', 'band-height-tall', 'Tall picture band height', 'size' ),
 			array( 'pictures', 'band-height-tall-sm', 'Tall picture band height on phones', 'size' ),
+			// 0.15.0 (SK-021): text sizes, the reading width and the space between paragraphs, in pixels.
+			array( 'text', 'size-body', 'Body text size', 'size' ),
+			array( 'text', 'size-lead', 'Introduction text size', 'size' ),
+			array( 'text', 'size-h2', 'Section heading size', 'size' ),
+			array( 'text', 'size-h3', 'Small heading size', 'size' ),
+			array( 'text', 'container-narrow', 'Reading width', 'size' ),
+			array( 'text', 'para-gap', 'Space between paragraphs', 'size' ),
 			// 0.14.0: logo sizes, in pixels.
 			array( 'logo', 'logo-height', 'Header logo height', 'size' ),
 			array( 'logo', 'logo-height-sm', 'Header logo height on phones', 'size' ),

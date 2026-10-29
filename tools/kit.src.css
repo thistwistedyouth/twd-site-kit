@@ -158,7 +158,7 @@
 .twd-sk-hero--parallax .twd-sk-hero__bg { top: -12%; bottom: -12%; height: auto; transform: translate3d(0, var(--twd-sk-parallax, 0px), 0); }
 
 /* ---- text ---- */
-.twd-sk-text__body > * + * { margin-top: 1em; }
+.twd-sk-text__body > * + * { margin-top: $para-gap; }
 .twd-sk-text__body a { color: $color-primary; text-decoration: underline; }
 .twd-sk-text__grid {
   display: grid; width: 100%; min-width: 0; float: none; grid-template-columns: 1.3fr 1fr;
@@ -174,7 +174,7 @@
    lists and quotes styled for long writing. Nothing moves, nothing is centred. */
 .twd-sk-text--prose .twd-sk-eyebrow, .twd-sk-text--prose .twd-sk-title, .twd-sk-text--prose .twd-sk-text__body { text-align: left; }
 .twd-sk-text--prose .twd-sk-title { margin-bottom: 28px; }
-.twd-sk-text--prose .twd-sk-text__body > * + * { margin-top: 1.3em; }
+.twd-sk-text--prose .twd-sk-text__body > * + * { margin-top: calc(#{$para-gap} * 1.3); }
 .twd-sk-text--prose .twd-sk-text__body h2, .twd-sk-text--prose .twd-sk-text__body h3, .twd-sk-text--prose .twd-sk-text__body h4 {
   margin-top: 2em; font-family: $font-heading; font-size: $size-h3; font-weight: $title-weight; font-style: $title-style; line-height: $line-heading; color: $color-title;
 }
@@ -182,6 +182,27 @@
 .twd-sk-text--prose .twd-sk-text__body ol { list-style: decimal; }
 .twd-sk-text--prose .twd-sk-text__body li + li { margin-top: 0.4em; }
 .twd-sk-text--prose .twd-sk-text__body blockquote { padding: 0 0 0 1.2em; border-left: 3px solid $color-accent; color: $color-muted; }
+/* Typography for text-led pages (0.15.0, SK-021): Look choices on a text section, no class = as before. */
+.twd-sk-lead-in .twd-sk-text__body > p:first-of-type { font-size: $size-lead; }
+.twd-sk-small-caps .twd-sk-text__body > p:first-of-type::first-line { font-variant: small-caps; letter-spacing: 0.04em; }
+.twd-sk-drop-cap .twd-sk-text__body > p:first-of-type::first-letter {
+  float: left; padding: 0.05em 0.12em 0 0; font-family: $font-heading; font-size: calc(#{$size-h1} * 1.4); font-weight: $heading-weight; line-height: 0.8; color: $color-accent-text;
+}
+.twd-sk-lists-fine .twd-sk-text__body ul, .twd-sk-lists-fine .twd-sk-text__body ol { margin: 0; padding: 0; list-style: none; }
+.twd-sk-lists-fine .twd-sk-text__body li { position: relative; padding: 12px 0 12px 2em; border-top: 1px solid $color-border; }
+.twd-sk-lists-fine .twd-sk-text__body li:last-child { border-bottom: 1px solid $color-border; }
+.twd-sk-lists-fine .twd-sk-text__body ul > li::before { content: "\2192"; position: absolute; left: 0.2em; top: 12px; font-family: $font-heading; color: $color-accent-text; }
+.twd-sk-lists-fine .twd-sk-text__body ol { counter-reset: twd-sk-fine; }
+.twd-sk-lists-fine .twd-sk-text__body ol > li { padding-left: 2.4em; counter-increment: twd-sk-fine; }
+.twd-sk-lists-fine .twd-sk-text__body ol > li::before { content: counter(twd-sk-fine); position: absolute; left: 0; top: 6px; font-family: $font-heading; font-size: $size-h3; font-weight: 300; line-height: 1.2; color: $color-accent-text; }
+.twd-sk-lists-fine .twd-sk-text__body li + li { margin-top: 0; }
+.twd-sk-lists-fine .twd-sk-text__body li a { font-family: $font-heading; font-size: $size-title; text-decoration: none; color: $color-title; }
+.twd-sk-lists-fine .twd-sk-text__body li a:hover { text-decoration: underline; color: $color-primary; }
+/* The pull line (0.15.0): one short passage set large, centred. */
+.twd-sk-text--pull .twd-sk-inner { text-align: center; }
+.twd-sk-text__pull {
+  margin: 0; font-family: $font-heading; font-size: $size-h2; font-weight: $heading-weight; font-style: $heading-style; line-height: $line-heading; color: $color-title; text-align: center;
+}
 /* Subheading (0.15.0): an h2 or h3 inside the body of any text layout, from the Visual editor's Heading above button or the AI. */
 .twd-sk-text__subheading {
   margin-top: 1.6em; font-family: $font-heading; font-size: $size-h3; font-weight: $title-weight; font-style: $title-style; line-height: $line-heading; color: $color-title;
@@ -231,6 +252,7 @@
 /* Larger text (0.15.0, a Look choice on text and call to action sections): the body copy at the lead size. */
 .twd-sk-text-lg .twd-sk-text__body, .twd-sk-text-lg .twd-sk-cta__text { font-size: $size-lead; }
 @media (max-width: 768px) {
+  .twd-sk-text__pull { font-size: $size-h2-sm; }
   .twd-sk-text--picture { min-height: $hero-min-height-sm; }
   .twd-sk-frame > .twd-sk-inner { width: calc(100% - 2 * #{$gutter-sm}); }
 }

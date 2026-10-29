@@ -88,6 +88,12 @@ class TWD_SK_Registry {
 			'twd-sk-border-accent',
 			'twd-sk-pad-compact',
 			'twd-sk-pad-roomy',
+			// 0.15.0: typography for text-led pages (Look choices on text sections): the first paragraph larger,
+			// its opening line in small capitals, a drop cap, and refined lists.
+			'twd-sk-lead-in',
+			'twd-sk-small-caps',
+			'twd-sk-drop-cap',
+			'twd-sk-lists-fine',
 			'twd-sk-eyebrow',
 			'twd-sk-title',
 			'twd-sk-lead',
@@ -158,6 +164,16 @@ class TWD_SK_Registry {
 	}
 
 	private static function text( $variant ) {
+		if ( 'pull' === $variant ) {
+			// 0.15.0: a pull line: a short passage from the page's own words set large, the original left in place.
+			return self::lines( array(
+				'<section class="twd-sk-text twd-sk-text--pull twd-sk-tone-base">',
+				'<div class="twd-sk-inner twd-sk-inner--narrow">',
+				'<p class="twd-sk-text__pull">A short passage from this page, set large.</p>',
+				'</div>',
+				'</section>',
+			) );
+		}
 		if ( 'picture' === $variant ) {
 			// 0.15.0: a picture behind the whole section (covering it, never repeating) under a graduated
 			// overlay, with the words in a centred frame (twd-sk-frame: a dark tint, a padding choice).
@@ -971,7 +987,7 @@ class TWD_SK_Registry {
 			'text'       => array(
 				'id'          => 'text',
 				'label'       => 'Text',
-				'description' => 'A heading and paragraphs. The aside variant adds cards in a side column; the prose variant is a left-aligned reading column for longer writing; the picture variant puts a picture behind the whole section with the words in a frame (the extra classes twd-sk-overlay-light, twd-sk-overlay-strong and twd-sk-overlay-fade change the overlay, twd-sk-frame--light, twd-sk-frame--strong, twd-sk-frame--pad-sm and twd-sk-frame--pad-lg the frame). A long run of paragraphs may be broken up with subheadings inside twd-sk-text__body: an h2 (or an h3 when the section has an h2 title) with the class twd-sk-text__subheading, before the paragraph it introduces.',
+				'description' => 'A heading and paragraphs. The aside variant adds cards in a side column; the prose variant is a left-aligned reading column for longer writing; the pull variant sets one short passage from the page large (twd-sk-text__pull); the picture variant puts a picture behind the whole section with the words in a frame (the extra classes twd-sk-overlay-light, twd-sk-overlay-strong and twd-sk-overlay-fade change the overlay, twd-sk-frame--light, twd-sk-frame--strong, twd-sk-frame--pad-sm and twd-sk-frame--pad-lg the frame). A long run of paragraphs may be broken up with subheadings inside twd-sk-text__body: an h2 (or an h3 when the section has an h2 title) with the class twd-sk-text__subheading, before the paragraph it introduces.',
 				'skeleton'    => self::text( '' ),
 				'variants'    => array(
 					'twd-sk-text--aside' => array(
@@ -985,6 +1001,10 @@ class TWD_SK_Registry {
 					'twd-sk-text--picture' => array(
 						'label'    => 'Picture: the words in a frame over a picture behind the whole section',
 						'skeleton' => self::text( 'picture' ),
+					),
+					'twd-sk-text--pull' => array(
+						'label'    => 'Pull line: a short passage from the page set large (the original stays where it is)',
+						'skeleton' => self::text( 'pull' ),
 					),
 				),
 				'classes'     => array(
@@ -1000,6 +1020,9 @@ class TWD_SK_Registry {
 					'twd-sk-text__overlay',
 					// 0.15.0: a subheading inside the body (an h2, or an h3 when the section has an h2 title).
 					'twd-sk-text__subheading',
+					// 0.15.0: the pull line layout's one piece.
+					'twd-sk-text--pull',
+					'twd-sk-text__pull',
 				),
 				'shortcodes'  => array(),
 			),

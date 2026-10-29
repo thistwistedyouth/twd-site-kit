@@ -325,8 +325,8 @@
 	function renderControls() {
 		clear(ui.controls);
 		var tokens = effective();
-		var groups = { colours: 'Colours', fonts: 'Fonts', shape: 'Corners', pictures: 'Pictures', logo: 'Logo sizes (pixels high)', header: 'Header (pixels)' };
-		['colours', 'fonts', 'shape', 'pictures', 'logo'].forEach(function (group) {
+		var groups = { colours: 'Colours', fonts: 'Fonts', text: 'Text (pixels)', shape: 'Corners', pictures: 'Pictures', logo: 'Logo sizes (pixels high)', header: 'Header (pixels)' };
+		['colours', 'fonts', 'text', 'shape', 'pictures', 'logo'].forEach(function (group) {
 			var grid = el('div', { className: 'twd-sk-ed__grid' });
 			S.data.editable.forEach(function (item) {
 				if (item.group !== group) {

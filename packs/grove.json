@@ -112,6 +112,7 @@
   "band-height-sm": "180px",
   "band-height-tall": "400px",
   "band-height-tall-sm": "260px",
+  "para-gap": "1em",
   "image-filter": "none",
   "image-tint": "transparent"
  }
