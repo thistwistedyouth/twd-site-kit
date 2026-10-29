@@ -2149,10 +2149,17 @@
 		loadHistory();
 	}
 
-	// For the Your Edits menu: undo the last site change from anywhere.
-	ED.siteUndo = function () {
-		return api('POST', '/site/history/undo', {});
-	};
+	// Your Edits menu: undo the last site change from anywhere (opens the Site tab at Site changes so the result is seen).
+	if (ED.addLauncher) {
+		ED.addLauncher({ id: 'undo-site', order: 50, label: function () { return 'Undo the last site change'; }, show: function () { return !(ED.toolsOff && ED.toolsOff()); }, run: function () {
+			ED.openAt('site');
+			if (hui.list) {
+				ED.revealFold(hui.list);
+				hui.list.scrollIntoView({ block: 'center' });
+				historyAction('/site/history/undo', {}, 'Went back one site change.');
+			}
+		} });
+	}
 	ED.siteHistoryReload = loadHistory;
 
 	function buildSite(panel) {

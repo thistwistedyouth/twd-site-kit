@@ -440,6 +440,7 @@ twd_sk_test( 'version label: signed-in editors get a small version label in the 
 	TWD_SK_Editor::print_root();
 	twd_sk_eq( '', ob_get_clean(), 'visitors see no label' );
 	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.css' );
-	twd_sk_has( '.twd-sk-ed__version', $css );
-	twd_sk_has( 'pointer-events: none', $css, 'never in the way of a tap' );
+	// 0.15.0: the label is printed for the scripts but never shows; the Your Edits menu lists the version instead.
+	twd_sk_has( ".twd-sk-ed .twd-sk-ed__version.twd-sk-ed__version {\n  display: none;", $css );
+	twd_sk_has( "'Site Kit ' + version.textContent", file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' ) );
 } );

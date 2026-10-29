@@ -342,9 +342,10 @@
 	}
 
 	openBtn.addEventListener('click', open);
-	// Without a Visual editor button on this page, the Tell us button takes its place.
-	if (!document.getElementById('twd-sk-ed-text')) {
-		openBtn.className += ' twd-sk-ed__open--low';
-	}
 	show(openBtn, true);
+	// Your Edits menu (0.15.0): the launcher lives there; the button above stays for a page with no menu script.
+	var ED = window.TWD_SK_ED;
+	if (ED && ED.addLauncher) {
+		ED.addLauncher({ id: 'tellus', order: 30, label: function () { return 'Tell us'; }, run: open, show: function () { return !(ED.toolsOff && ED.toolsOff()); } });
+	}
 })();

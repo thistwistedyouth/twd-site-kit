@@ -183,7 +183,11 @@
 		ui.abMain.a.setAttribute('aria-disabled', S.on && (!n || S.saving || S.uploading) ? 'true' : 'false');
 		ui.abCancel.a.textContent = 'Cancel';
 		ui.abCancel.li.style.display = S.on ? '' : 'none';
-		ui.abMain.li.style.display = !S.on && ED.toolsOff && ED.toolsOff() ? 'none' : '';
+		// Not editing: the Your Edits menu offers Visual editor; this item shows only while a session is open.
+		ui.abMain.li.style.display = S.on ? '' : 'none';
+		if (ED.redrawMenu) {
+			ED.redrawMenu();
+		}
 	}
 
 	function markChanged(t) {
@@ -1471,6 +1475,9 @@
 	ED.startInline = function () {
 		start();
 	};
+	if (ED.addLauncher) {
+		ED.addLauncher({ id: 'text', order: 10, label: function () { return 'Visual editor'; }, run: start, show: function () { return !S.on && !(ED.toolsOff && ED.toolsOff()); } });
+	}
 	// Every way out runs the one revert routine: Cancel and Escape (cancel(), asking first), the pop-up's "Close and
 	// lose these changes" (through this check), and a page redraw (the nodes are gone, so the session ends).
 	ED.addDirtyCheck(function () {

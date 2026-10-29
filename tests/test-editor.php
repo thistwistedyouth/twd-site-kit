@@ -334,12 +334,12 @@ twd_sk_test( 'editor css: tokens only, no viewport-width tricks, no negative mar
 
 twd_sk_test( 'editor css: buttons and tabs are at least 44px tall, and on a phone the pop-up fills the screen', function () {
 	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.css' );
-	foreach ( array( 'twd-sk-ed__btn', 'twd-sk-ed__tab', 'twd-sk-ed__close', 'twd-sk-ed__open' ) as $c ) {
+	foreach ( array( 'twd-sk-ed__btn', 'twd-sk-ed__tab', 'twd-sk-ed__close', 'twd-sk-ed__menu', 'twd-sk-ed__menuitem' ) as $c ) {
 		twd_sk_true( 1 === preg_match( '/\.' . $c . '\.' . $c . '[^{]*\{[^}]*min-height:\s*(4[4-9]|[5-9]\d)px/', $raw ), $c . ' has a min-height of 44px or more' );
 	}
 	twd_sk_true( 1 === preg_match( '/@media \(max-width: 700px\) \{.*twd-sk-ed__dialog[^{]*\{[^}]*height: 100%.*border-radius: 0/s', $raw ), 'full screen dialog on a phone' );
 	twd_sk_true( 1 === preg_match( '/@media \(max-width: 700px\) \{.*twd-sk-ed__btn[^{]*\{[^}]*min-height: 48px/s', $raw ), 'larger tap targets on a phone' );
-	twd_sk_true( 1 === preg_match( '/twd-sk-ed__open[^{]*\{[^}]*left: 24px;[^}]*bottom: 24px/s', $raw ), 'button sits bottom left' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-ed__menu\.twd-sk-ed__menu \{[^}]*left: 24px;[^}]*bottom: 24px/s', $raw ), 'the Your Edits button sits bottom left' );
 } );
 
 twd_sk_test( 'editor css: the editor stylesheet is the only other stylesheet, and both packs keep its text pairs at 4.5:1', function () {
@@ -410,4 +410,19 @@ twd_sk_test( 'site js: setup lists what will happen and asks first, sends a conf
 	foreach ( array( "api('GET', '/site/setup')", "api('POST', '/site/setup', { confirm: true", 'This is what will happen', 'Yes, set the site up', 'Do not change the front page setting', 'It never publishes anything and never overwrites site details that already have content', 'Set this site up from the starters' ) as $needle ) {
 		twd_sk_has( $needle, $js );
 	}
+} );
+
+twd_sk_test( 'your edits menu (0.15.0): one admin bar drop-down and one floating button hold every launcher; the floating buttons and the version label never show', function () {
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' );
+	foreach ( array( "id: 'wp-admin-bar-twd-sk-edits'", "text: 'Your Edits'", 'function addLauncher(', 'addLauncher: addLauncher', "className: 'twd-sk-ed__menu'", "'Undo the last page change'", 'kind: \'switch\'', "'Site Kit ' + version.textContent" ) as $needle ) {
+		twd_sk_has( $needle, $js );
+	}
+	twd_sk_true( false === strpos( $js, 'twd-sk-ed__switch' ), 'the separate floating switch is gone' );
+	twd_sk_has( "ED.addLauncher({ id: 'text', order: 10, label: function () { return 'Visual editor'; }", file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' ) );
+	twd_sk_has( "ED.addLauncher({ id: 'tellus', order: 30", file_get_contents( ABSPATH . 'assets/twd-site-kit-snags.js' ) );
+	twd_sk_has( "ED.addLauncher({ id: 'undo-site', order: 50", file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' ) );
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.css' );
+	twd_sk_has( ".twd-sk-ed .twd-sk-ed__open.twd-sk-ed__open,\n.twd-sk-ed .twd-sk-ed__version.twd-sk-ed__version {\n  display: none;", $css );
+	twd_sk_has( '.twd-sk-ed .twd-sk-ed__menu.twd-sk-ed__menu {', $css );
+	twd_sk_has( ".twd-sk-ed[data-twd-sk-ab] .twd-sk-ed__menu.twd-sk-ed__menu,\n.twd-sk-ed[data-twd-sk-ab] .twd-sk-ed__menupop.twd-sk-ed__menupop {\n  display: none;", $css );
 } );

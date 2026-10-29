@@ -72,34 +72,30 @@ twd_sk_test( 'tools switch rest: any editor may set it for themselves, a visitor
 	twd_sk_true( $found, 'registered in safe mode too' );
 } );
 
-twd_sk_test( 'tools switch css: hides launchers only (buttons, pills, version label), never the pop-up or the editing card; the floating switch shows without an admin bar or on a phone', function () {
+twd_sk_test( 'tools switch css (0.15.0, the Your Edits menu): the switch hides the pills (the only launchers still floating), never the pop-up or the editing card; the floating menu button shows without an admin bar or on a phone', function () {
 	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.css' );
-	foreach ( array( 'twd-sk-ed__open', 'twd-sk-ed__pill', 'twd-sk-ed__version' ) as $c ) {
-		twd_sk_true( 1 === preg_match( '/\.twd-sk-ed\[data-twd-sk-tools="off"\] \.' . $c . '\.' . $c . '[,\s{]/', $raw ), $c . ' is hidden when the tools are off' );
+	twd_sk_true( 1 === preg_match( '/\.twd-sk-ed\[data-twd-sk-tools="off"\] \.twd-sk-ed__pill\.twd-sk-ed__pill \{\s*display: none;/', $raw ), 'the pills are hidden when the tools are off' );
+	foreach ( array( 'twd-sk-ed__dialog', 'twd-sk-ed__inlinebar', 'twd-sk-ed__card', 'twd-sk-ed__menu' ) as $c ) {
+		twd_sk_true( 1 !== preg_match( '/data-twd-sk-tools="off"\][^{]*' . $c . '[.\s{,]/', $raw ), $c . ' is never hidden by the switch' );
 	}
-	twd_sk_true( 1 === preg_match( '/data-twd-sk-tools="off"\][^{]*twd-sk-ed__version\.twd-sk-ed__version \{\s*display: none;/', $raw ), 'display none' );
-	foreach ( array( 'twd-sk-ed__dialog', 'twd-sk-ed__inlinebar', 'twd-sk-ed__card' ) as $c ) {
-		twd_sk_true( 1 !== preg_match( '/data-twd-sk-tools="off"\][^{]*' . $c . '/', $raw ), $c . ' is never hidden by the switch' );
-	}
-	twd_sk_true( 1 === preg_match( '/\.twd-sk-ed__switch\.twd-sk-ed__switch \{[^}]*min-height: 44px/', $raw ), 'a 44px tap target' );
-	twd_sk_true( 1 === preg_match( '/\.twd-sk-ed\[data-twd-sk-ab\] \.twd-sk-ed__switch\.twd-sk-ed__switch \{\s*display: none;/', $raw ), 'with an admin bar item the floating switch stays away' );
-	twd_sk_true( 1 === preg_match( '/@media \(max-width: 782px\) \{\s*\.twd-sk-ed\[data-twd-sk-ab\] \.twd-sk-ed__switch\.twd-sk-ed__switch \{\s*display: inline-flex;/', $raw ), 'but returns on a phone, where WordPress hides the admin bar items' );
-	twd_sk_true( strpos( $raw, '[data-twd-sk-tools="off"] .twd-sk-ed__switch.twd-sk-ed__switch' ) > 0, 'it drops to the corner when the buttons are gone' );
+	twd_sk_true( 1 === preg_match( '/\.twd-sk-ed__menu\.twd-sk-ed__menu \{[^}]*min-height: 48px/', $raw ), 'a 48px tap target' );
+	twd_sk_true( 1 === preg_match( '/\.twd-sk-ed\[data-twd-sk-ab\] \.twd-sk-ed__menu\.twd-sk-ed__menu,\s*\.twd-sk-ed\[data-twd-sk-ab\] \.twd-sk-ed__menupop\.twd-sk-ed__menupop \{\s*display: none;/', $raw ), 'with the admin bar menu the floating button stays away' );
+	twd_sk_true( 1 === preg_match( '/@media \(max-width: 782px\) \{\s*\.twd-sk-ed\[data-twd-sk-ab\] \.twd-sk-ed__menu\.twd-sk-ed__menu \{\s*display: inline-block;/', $raw ), 'but returns on a phone, where WordPress hides most admin bar items' );
 } );
 
 twd_sk_test( 'tools switch js: built with DOM calls into the admin bar after the WordPress logo, saved through the server, announced as a switch, and the Visual editor admin item follows it', function () {
 	$js     = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' );
 	$inline = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
-	twd_sk_has( "wp-admin-bar-twd-sk-tools", $js );
-	twd_sk_has( "list.insertBefore(li, list.children.length > 1 ? list.children[1] : null)", $js, 'after the WordPress logo, top left' );
+	twd_sk_has( "wp-admin-bar-twd-sk-edits", $js );
+	twd_sk_has( "list.insertBefore(menu.bar, list.children.length > 1 ? list.children[1] : null)", $js, 'after the WordPress logo, top left' );
 	twd_sk_has( "api('POST', '/editor/tools', { off: tools.off })", $js, 'kept on the server' );
-	twd_sk_has( "role: 'switch'", $js );
+	twd_sk_has( "node.setAttribute('role', 'switch')", $js );
 	twd_sk_has( "'aria-checked'", $js );
 	twd_sk_has( 'toolsOff: function', $js );
 	twd_sk_has( 'onToolsChange: function', $js );
 	twd_sk_hasnt( 'localStorage', $js, 'no browser storage' );
 	twd_sk_has( 'ED.onToolsChange(adminBar)', $inline );
-	twd_sk_has( "ui.abMain.li.style.display = !S.on && ED.toolsOff && ED.toolsOff() ? 'none' : '';", $inline, 'hidden unless an editing session is open' );
+	twd_sk_has( "ui.abMain.li.style.display = S.on ? '' : 'none';", $inline, 'hidden unless an editing session is open (the menu offers Visual editor)' );
 	foreach ( array( $js, $inline ) as $src ) {
 		twd_sk_hasnt( 'alert(', $src );
 		twd_sk_hasnt( 'confirm(', $src );

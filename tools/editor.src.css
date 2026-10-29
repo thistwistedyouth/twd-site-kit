@@ -5,50 +5,40 @@
 &, & *, & *::before, & *::after { box-sizing: border-box; }
 & [hidden] { display: none !important; }
 
-/* ---- the floating button (bottom left) ---- */
-.twd-sk-ed__open {
+/* ---- the launchers (0.15.0: the Your Edits menu) ----
+   The old floating buttons (Edit with AI, Visual editor, Tell us) and the version label stay in the markup for the
+   scripts that use them, but never show: every launcher lives in the Your Edits menu (the admin bar drop-down, or
+   the one floating button below on a phone or with no admin bar). The Edit header and footer pills sit over the
+   header and footer corners, never over the page's words, and the editing tools switch still hides them. */
+.twd-sk-ed__open, .twd-sk-ed__version { display: none; }
+&[data-twd-sk-tools="off"] .twd-sk-ed__pill { display: none; }
+.twd-sk-ed__menu {
   position: fixed; left: 24px; bottom: 24px; z-index: 99990; min-height: 48px;
   padding: 12px 22px; border: 1.5px solid $color-primary; border-radius: $radius-pill;
   background-color: $color-primary; color: $color-on-primary; box-shadow: $shadow-card;
   font-family: $font-body; font-size: $size-small; font-weight: $btn-weight; line-height: 1.2; cursor: pointer;
 }
-.twd-sk-ed__open:hover, .twd-sk-ed__open:focus-visible {
-  background-color: $color-primary-hover; border-color: $color-primary-hover; color: $color-on-primary;
+.twd-sk-ed__menu:hover, .twd-sk-ed__menu:focus-visible { background-color: $color-primary-hover; border-color: $color-primary-hover; color: $color-on-primary; }
+.twd-sk-ed__menu:focus-visible { outline: 2px solid $color-accent-text; outline-offset: 2px; }
+.twd-sk-ed__menupop {
+  position: fixed; left: 24px; bottom: 84px; z-index: 99991; min-width: 240px; max-width: calc(100% - 48px); padding: 6px;
+  border: 1px solid $color-border; border-radius: $radius-card; background-color: $color-surface; box-shadow: $shadow-card;
 }
-/* The second floating button (0.10.0): change words in place. Sits above Edit with AI. */
-.twd-sk-ed__open--text { bottom: 84px; background-color: $color-surface; color: $color-title; border-color: $color-title; }
-.twd-sk-ed__open--text:hover, .twd-sk-ed__open--text:focus-visible { background-color: $color-title; border-color: $color-title; color: $color-surface; }
-/* The version label (0.11.0): bottom left corner, below every floating button, never in the way of a tap. */
-.twd-sk-ed__version {
-  position: fixed; left: 8px; bottom: 0; z-index: 99985; height: 16px; padding: 0 8px; pointer-events: none;
-  background-color: $color-surface; border-radius: 0 $radius-field 0 0;
-  font-family: $font-body; font-size: $size-small; line-height: 16px; color: $color-muted; white-space: nowrap;
+.twd-sk-ed__menulist { list-style: none; margin: 0; padding: 0; }
+.twd-sk-ed__menuitem {
+  display: block; width: 100%; min-height: 44px; padding: 10px 14px; border: 0; border-radius: $radius-field; background-color: transparent;
+  color: $color-title; font-family: $font-body; font-size: $size-body; text-align: left; cursor: pointer;
 }
-/* The Tell us button (0.11.0). Sits above the Visual editor button, or in its place on a page without one. */
-.twd-sk-ed__open--tellus { bottom: 144px; background-color: $color-surface; color: $color-title; border-color: $color-title; }
-.twd-sk-ed__open--tellus:hover, .twd-sk-ed__open--tellus:focus-visible { background-color: $color-title; border-color: $color-title; color: $color-surface; }
-.twd-sk-ed__open--tellus.twd-sk-ed__open--low { bottom: 84px; }
-
-/* ---- the editing tools switch (0.14.1) ----
-   The switch hides the launchers only: the floating buttons, the Edit header and footer pills and the version
-   label. The pop-up and the editing card are other classes, so a session already open is never hidden. */
-&[data-twd-sk-tools="off"] .twd-sk-ed__open, &[data-twd-sk-tools="off"] .twd-sk-ed__pill, &[data-twd-sk-tools="off"] .twd-sk-ed__version { display: none; }
-.twd-sk-ed__switch {
-  position: fixed; left: 24px; bottom: 204px; z-index: 99990; display: inline-flex; align-items: center; gap: 10px; min-height: 44px;
-  padding: 0 14px 0 10px; border: 1.5px solid $color-border; border-radius: $radius-pill; background-color: $color-surface;
-  box-shadow: $shadow-card; font-family: $font-body; font-size: $size-small; font-weight: $btn-weight; line-height: 1.2; color: $color-title; cursor: pointer;
-}
-.twd-sk-ed__switch:focus-visible { outline: 2px solid $color-accent-text; outline-offset: 2px; }
-.twd-sk-ed__switch-track { position: relative; display: inline-block; width: 36px; height: 20px; border-radius: $radius-pill; background-color: $color-muted; }
-.twd-sk-ed__switch-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: $radius-pill; background-color: $color-surface; }
-.twd-sk-ed__switch[aria-checked="true"] .twd-sk-ed__switch-track { background-color: $color-primary; }
-.twd-sk-ed__switch[aria-checked="true"] .twd-sk-ed__switch-knob { left: 18px; }
-/* With the buttons gone it drops to the corner, where the stack started. */
-&[data-twd-sk-tools="off"] .twd-sk-ed__switch { bottom: 24px; }
-/* With an admin bar item it only shows on a phone, where WordPress hides most admin bar items. */
-&[data-twd-sk-ab] .twd-sk-ed__switch { display: none; }
+.twd-sk-ed__menuitem:hover, .twd-sk-ed__menuitem:focus-visible { background-color: $color-tint; color: $color-title; outline: none; }
+.twd-sk-ed__menuitem[role="switch"]::after { content: ""; display: inline-block; width: 10px; height: 10px; margin-left: 10px; border-radius: $radius-pill; background-color: $color-muted; vertical-align: middle; }
+.twd-sk-ed__menuitem[role="switch"][aria-checked="true"]::after { background-color: $color-primary; }
+.twd-sk-ed__menunote { display: block; padding: 8px 14px; color: $color-muted; font-size: $size-small; }
+/* With the admin bar menu, the floating button only shows on a phone, where WordPress hides most admin bar items. */
+&[data-twd-sk-ab] .twd-sk-ed__menu, &[data-twd-sk-ab] .twd-sk-ed__menupop { display: none; }
 @media (max-width: 782px) {
-  &[data-twd-sk-ab] .twd-sk-ed__switch { display: inline-flex; }
+  &[data-twd-sk-ab] .twd-sk-ed__menu { display: inline-block; }
+  &[data-twd-sk-ab] .twd-sk-ed__menupop { display: block; }
+  .twd-sk-ed__menupop { left: 12px; right: 12px; max-width: none; }
 }
 
 /* ---- the in-place editing card (0.10.2: bottom left, where the floating buttons sit, clear of other

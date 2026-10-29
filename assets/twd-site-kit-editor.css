@@ -20,8 +20,19 @@
 .twd-sk-ed [hidden] {
   display: none !important;
 }
-/* ---- the floating button (bottom left) ---- */
-.twd-sk-ed .twd-sk-ed__open.twd-sk-ed__open {
+/* ---- the launchers (0.15.0: the Your Edits menu) ----
+   The old floating buttons (Edit with AI, Visual editor, Tell us) and the version label stay in the markup for the
+   scripts that use them, but never show: every launcher lives in the Your Edits menu (the admin bar drop-down, or
+   the one floating button below on a phone or with no admin bar). The Edit header and footer pills sit over the
+   header and footer corners, never over the page's words, and the editing tools switch still hides them. */
+.twd-sk-ed .twd-sk-ed__open.twd-sk-ed__open,
+.twd-sk-ed .twd-sk-ed__version.twd-sk-ed__version {
+  display: none;
+}
+.twd-sk-ed[data-twd-sk-tools="off"] .twd-sk-ed__pill.twd-sk-ed__pill {
+  display: none;
+}
+.twd-sk-ed .twd-sk-ed__menu.twd-sk-ed__menu {
   position: fixed;
   left: 24px;
   bottom: 24px;
@@ -39,125 +50,89 @@
   line-height: 1.2 !important;
   cursor: pointer;
 }
-.twd-sk-ed .twd-sk-ed__open.twd-sk-ed__open:hover,
-.twd-sk-ed .twd-sk-ed__open.twd-sk-ed__open:focus-visible {
+.twd-sk-ed .twd-sk-ed__menu.twd-sk-ed__menu:hover,
+.twd-sk-ed .twd-sk-ed__menu.twd-sk-ed__menu:focus-visible {
   background-color: var(--twd-site-color-primary-hover) !important;
   border-color: var(--twd-site-color-primary-hover) !important;
   color: var(--twd-site-color-on-primary) !important;
 }
-/* The second floating button (0.10.0): change words in place. Sits above Edit with AI. */
-.twd-sk-ed .twd-sk-ed__open--text.twd-sk-ed__open--text {
-  bottom: 84px;
-  background-color: var(--twd-site-color-surface) !important;
-  color: var(--twd-site-color-title) !important;
-  border-color: var(--twd-site-color-title) !important;
-}
-.twd-sk-ed .twd-sk-ed__open--text.twd-sk-ed__open--text:hover,
-.twd-sk-ed .twd-sk-ed__open--text.twd-sk-ed__open--text:focus-visible {
-  background-color: var(--twd-site-color-title) !important;
-  border-color: var(--twd-site-color-title) !important;
-  color: var(--twd-site-color-surface) !important;
-}
-/* The version label (0.11.0): bottom left corner, below every floating button, never in the way of a tap. */
-.twd-sk-ed .twd-sk-ed__version.twd-sk-ed__version {
-  position: fixed;
-  left: 8px;
-  bottom: 0;
-  z-index: 99985;
-  height: 16px;
-  padding: 0 8px !important;
-  pointer-events: none;
-  background-color: var(--twd-site-color-surface) !important;
-  border-radius: 0 var(--twd-site-radius-field) 0 0 !important;
-  font-family: var(--twd-site-font-body) !important;
-  font-size: var(--twd-site-size-small) !important;
-  line-height: 16px !important;
-  color: var(--twd-site-color-muted) !important;
-  white-space: nowrap;
-}
-/* The Tell us button (0.11.0). Sits above the Visual editor button, or in its place on a page without one. */
-.twd-sk-ed .twd-sk-ed__open--tellus.twd-sk-ed__open--tellus {
-  bottom: 144px;
-  background-color: var(--twd-site-color-surface) !important;
-  color: var(--twd-site-color-title) !important;
-  border-color: var(--twd-site-color-title) !important;
-}
-.twd-sk-ed .twd-sk-ed__open--tellus.twd-sk-ed__open--tellus:hover,
-.twd-sk-ed .twd-sk-ed__open--tellus.twd-sk-ed__open--tellus:focus-visible {
-  background-color: var(--twd-site-color-title) !important;
-  border-color: var(--twd-site-color-title) !important;
-  color: var(--twd-site-color-surface) !important;
-}
-.twd-sk-ed .twd-sk-ed__open--tellus.twd-sk-ed__open--tellus.twd-sk-ed__open--low.twd-sk-ed__open--low {
-  bottom: 84px;
-}
-/* ---- the editing tools switch (0.14.1) ----
-   The switch hides the launchers only: the floating buttons, the Edit header and footer pills and the version
-   label. The pop-up and the editing card are other classes, so a session already open is never hidden. */
-.twd-sk-ed[data-twd-sk-tools="off"] .twd-sk-ed__open.twd-sk-ed__open,
-.twd-sk-ed[data-twd-sk-tools="off"] .twd-sk-ed__pill.twd-sk-ed__pill,
-.twd-sk-ed[data-twd-sk-tools="off"] .twd-sk-ed__version.twd-sk-ed__version {
-  display: none;
-}
-.twd-sk-ed .twd-sk-ed__switch.twd-sk-ed__switch {
-  position: fixed;
-  left: 24px;
-  bottom: 204px;
-  z-index: 99990;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 0 14px 0 10px !important;
-  border: 1.5px solid var(--twd-site-color-border) !important;
-  border-radius: var(--twd-site-radius-pill) !important;
-  background-color: var(--twd-site-color-surface) !important;
-  box-shadow: var(--twd-site-shadow-card) !important;
-  font-family: var(--twd-site-font-body) !important;
-  font-size: var(--twd-site-size-small) !important;
-  font-weight: var(--twd-site-btn-weight) !important;
-  line-height: 1.2 !important;
-  color: var(--twd-site-color-title) !important;
-  cursor: pointer;
-}
-.twd-sk-ed .twd-sk-ed__switch.twd-sk-ed__switch:focus-visible {
+.twd-sk-ed .twd-sk-ed__menu.twd-sk-ed__menu:focus-visible {
   outline: 2px solid var(--twd-site-color-accent-text);
   outline-offset: 2px;
 }
-.twd-sk-ed .twd-sk-ed__switch-track.twd-sk-ed__switch-track {
-  position: relative;
+.twd-sk-ed .twd-sk-ed__menupop.twd-sk-ed__menupop {
+  position: fixed;
+  left: 24px;
+  bottom: 84px;
+  z-index: 99991;
+  min-width: 240px;
+  max-width: calc(100% - 48px);
+  padding: 6px !important;
+  border: 1px solid var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-card) !important;
+  background-color: var(--twd-site-color-surface) !important;
+  box-shadow: var(--twd-site-shadow-card) !important;
+}
+.twd-sk-ed .twd-sk-ed__menulist.twd-sk-ed__menulist {
+  list-style: none;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.twd-sk-ed .twd-sk-ed__menuitem.twd-sk-ed__menuitem {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px !important;
+  border: 0 !important;
+  border-radius: var(--twd-site-radius-field) !important;
+  background-color: transparent !important;
+  color: var(--twd-site-color-title) !important;
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-body) !important;
+  text-align: left !important;
+  cursor: pointer;
+}
+.twd-sk-ed .twd-sk-ed__menuitem.twd-sk-ed__menuitem:hover,
+.twd-sk-ed .twd-sk-ed__menuitem.twd-sk-ed__menuitem:focus-visible {
+  background-color: var(--twd-site-color-tint) !important;
+  color: var(--twd-site-color-title) !important;
+  outline: none;
+}
+.twd-sk-ed .twd-sk-ed__menuitem.twd-sk-ed__menuitem[role="switch"]::after {
+  content: "";
   display: inline-block;
-  width: 36px;
-  height: 20px;
+  width: 10px;
+  height: 10px;
+  margin-left: 10px !important;
   border-radius: var(--twd-site-radius-pill) !important;
   background-color: var(--twd-site-color-muted) !important;
+  vertical-align: middle;
 }
-.twd-sk-ed .twd-sk-ed__switch-knob.twd-sk-ed__switch-knob {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: var(--twd-site-radius-pill) !important;
-  background-color: var(--twd-site-color-surface) !important;
-}
-.twd-sk-ed .twd-sk-ed__switch.twd-sk-ed__switch[aria-checked="true"] .twd-sk-ed__switch-track.twd-sk-ed__switch-track {
+.twd-sk-ed .twd-sk-ed__menuitem.twd-sk-ed__menuitem[role="switch"][aria-checked="true"]::after {
   background-color: var(--twd-site-color-primary) !important;
 }
-.twd-sk-ed .twd-sk-ed__switch.twd-sk-ed__switch[aria-checked="true"] .twd-sk-ed__switch-knob.twd-sk-ed__switch-knob {
-  left: 18px;
+.twd-sk-ed .twd-sk-ed__menunote.twd-sk-ed__menunote {
+  display: block;
+  padding: 8px 14px !important;
+  color: var(--twd-site-color-muted) !important;
+  font-size: var(--twd-site-size-small) !important;
 }
-/* With the buttons gone it drops to the corner, where the stack started. */
-.twd-sk-ed[data-twd-sk-tools="off"] .twd-sk-ed__switch.twd-sk-ed__switch {
-  bottom: 24px;
-}
-/* With an admin bar item it only shows on a phone, where WordPress hides most admin bar items. */
-.twd-sk-ed[data-twd-sk-ab] .twd-sk-ed__switch.twd-sk-ed__switch {
+/* With the admin bar menu, the floating button only shows on a phone, where WordPress hides most admin bar items. */
+.twd-sk-ed[data-twd-sk-ab] .twd-sk-ed__menu.twd-sk-ed__menu,
+.twd-sk-ed[data-twd-sk-ab] .twd-sk-ed__menupop.twd-sk-ed__menupop {
   display: none;
 }
 @media (max-width: 782px) {
-  .twd-sk-ed[data-twd-sk-ab] .twd-sk-ed__switch.twd-sk-ed__switch {
-    display: inline-flex;
+  .twd-sk-ed[data-twd-sk-ab] .twd-sk-ed__menu.twd-sk-ed__menu {
+    display: inline-block;
+  }
+  .twd-sk-ed[data-twd-sk-ab] .twd-sk-ed__menupop.twd-sk-ed__menupop {
+    display: block;
+  }
+  .twd-sk-ed .twd-sk-ed__menupop.twd-sk-ed__menupop {
+    left: 12px;
+    right: 12px;
+    max-width: none;
   }
 }
 /* ---- the in-place editing card (0.10.2: bottom left, where the floating buttons sit, clear of other

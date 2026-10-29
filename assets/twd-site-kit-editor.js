@@ -442,6 +442,7 @@
 		]);
 		panel.appendChild(hist);
 		foldSection(hist, { summary: 'Undo, or go back to an earlier version' });
+		ui.hist = hist;
 	}
 
 	/* ---- changing words in place (twd-site-kit-inline.js) ---- */
@@ -1600,12 +1601,8 @@
 				node.removeAttribute('data-twd-sk-tools');
 			}
 		});
-		if (tools.bar) {
-			tools.bar.textContent = toolsLabel();
-			tools.bar.setAttribute('aria-checked', tools.off ? 'false' : 'true');
-		}
-		if (tools.floating) {
-			tools.floating.setAttribute('aria-checked', tools.off ? 'false' : 'true');
+		if (menu.built) {
+			drawMenu();
 		}
 		tools.listeners.forEach(function (fn) {
 			fn(tools.off);
@@ -1619,25 +1616,126 @@
 		api('POST', '/editor/tools', { off: tools.off }).catch(function () {});
 	}
 
-	function buildToolsSwitch() {
+	/* ---- Your Edits (0.15.0): one menu for every editing tool ----
+	 * Replaces the stack of floating buttons (Edit with AI, Visual editor, Tell us) and the separate switch, so
+	 * nothing floats over the page's words. In the WordPress admin bar it is one drop-down, "Your Edits". On a
+	 * phone (WordPress hides most admin bar items under 783px) and with no admin bar, one small floating
+	 * "Your Edits" button opens the same list. Other editor scripts add their items with ED.addLauncher(). */
+	var menu = { items: [], bar: null, list: null, pop: null, popList: null, button: null, built: false };
+
+	function addLauncher(item) {
+		menu.items.push(item);
+		if (menu.built) {
+			drawMenu();
+		}
+	}
+
+	function menuItems() {
+		return menu.items.filter(function (it) {
+			return !it.show || it.show();
+		}).sort(function (a, b) {
+			return (a.order || 50) - (b.order || 50);
+		});
+	}
+
+	function drawMenu() {
+		[menu.list, menu.popList].forEach(function (list) {
+			if (!list) {
+				return;
+			}
+			clear(list);
+			menuItems().forEach(function (it) {
+				var inBar = list === menu.list;
+				var node;
+				if (it.kind === 'note') {
+					node = el('span', { className: inBar ? 'ab-item ab-empty-item' : 'twd-sk-ed__menunote', text: it.label() });
+				} else {
+					node = el(inBar ? 'a' : 'button', inBar ? { className: 'ab-item', href: '#' } : { type: 'button', className: 'twd-sk-ed__menuitem' });
+					node.textContent = it.label();
+					if (it.kind === 'switch') {
+						node.setAttribute('role', 'switch');
+						node.setAttribute('aria-checked', it.checked() ? 'true' : 'false');
+					}
+					node.addEventListener('click', function (e) {
+						e.preventDefault();
+						closeMenu();
+						it.run();
+					});
+				}
+				list.appendChild(inBar ? el('li', { id: 'wp-admin-bar-twd-sk-' + it.id }, [node]) : el('li', {}, [node]));
+			});
+		});
+	}
+
+	function closeMenu() {
+		if (menu.bar) {
+			menu.bar.classList.remove('hover');
+		}
+		if (menu.pop) {
+			show(menu.pop, false);
+			menu.button.setAttribute('aria-expanded', 'false');
+		}
+	}
+
+	function buildMenu() {
 		var list = document.getElementById('wp-admin-bar-root-default');
 		if (list) {
-			var a = el('a', { className: 'ab-item', href: '#', role: 'switch', 'aria-checked': 'true' });
-			a.addEventListener('click', function (e) {
+			var top = el('a', { className: 'ab-item', href: '#', 'aria-haspopup': 'true', 'aria-expanded': 'false', text: 'Your Edits' });
+			menu.list = el('ul', { id: 'wp-admin-bar-twd-sk-edits-default', className: 'ab-submenu' });
+			menu.bar = el('li', { id: 'wp-admin-bar-twd-sk-edits', className: 'menupop' }, [top, el('div', { className: 'ab-sub-wrapper' }, [menu.list])]);
+			top.addEventListener('click', function (e) {
 				e.preventDefault();
-				flipTools();
+				var on = menu.bar.classList.toggle('hover');
+				top.setAttribute('aria-expanded', on ? 'true' : 'false');
 			});
-			var li = el('li', { id: 'wp-admin-bar-twd-sk-tools' }, [a]);
 			// Right after the WordPress logo, so it sits at the top left.
-			list.insertBefore(li, list.children.length > 1 ? list.children[1] : null);
-			tools.bar = a;
+			list.insertBefore(menu.bar, list.children.length > 1 ? list.children[1] : null);
 			root.setAttribute('data-twd-sk-ab', '1');
 		}
-		var track = el('span', { className: 'twd-sk-ed__switch-track', 'aria-hidden': 'true' }, [el('span', { className: 'twd-sk-ed__switch-knob' })]);
-		var sw = el('button', { type: 'button', className: 'twd-sk-ed__switch', role: 'switch', 'aria-checked': 'true' }, [track, el('span', { className: 'twd-sk-ed__switch-label', text: 'Editing tools' })]);
-		sw.addEventListener('click', flipTools);
-		root.appendChild(sw);
-		tools.floating = sw;
+		menu.button = el('button', { type: 'button', className: 'twd-sk-ed__menu', 'aria-haspopup': 'true', 'aria-expanded': 'false', text: 'Your Edits' });
+		menu.popList = el('ul', { className: 'twd-sk-ed__menulist' });
+		menu.pop = el('div', { className: 'twd-sk-ed__menupop', hidden: '' }, [menu.popList]);
+		menu.button.addEventListener('click', function () {
+			var open = menu.pop.hasAttribute('hidden');
+			show(menu.pop, open);
+			menu.button.setAttribute('aria-expanded', open ? 'true' : 'false');
+			if (open) {
+				var first = menu.popList.querySelector('button');
+				if (first) {
+					first.focus();
+				}
+			}
+		});
+		root.appendChild(menu.pop);
+		root.appendChild(menu.button);
+		document.addEventListener('click', function (e) {
+			if ((menu.bar && menu.bar.classList.contains('hover') && !menu.bar.contains(e.target)) || (menu.pop && !menu.pop.hasAttribute('hidden') && !menu.pop.contains(e.target) && e.target !== menu.button)) {
+				closeMenu();
+			}
+		});
+		document.addEventListener('keydown', function (e) {
+			if (e.key === 'Escape' && ((menu.bar && menu.bar.classList.contains('hover')) || (menu.pop && !menu.pop.hasAttribute('hidden')))) {
+				closeMenu();
+			}
+		});
+		var version = root.querySelector('.twd-sk-ed__version');
+		addLauncher({ id: 'ai', order: 20, label: function () { return 'Edit with AI'; }, run: open, show: function () { return !tools.off; } });
+		if (cfg.pageId) {
+			addLauncher({ id: 'undo-page', order: 40, label: function () { return 'Undo the last page change'; }, show: function () { return !tools.off; }, run: function () {
+				open();
+				if (ui.hist) {
+					revealFold(ui.hist);
+					ui.hist.scrollIntoView({ block: 'start' });
+				}
+				doUndo(false);
+			} });
+		}
+		addLauncher({ id: 'tools', order: 90, kind: 'switch', label: toolsLabel, checked: function () { return !tools.off; }, run: flipTools });
+		if (version && version.textContent) {
+			addLauncher({ id: 'version', order: 99, kind: 'note', label: function () { return 'Site Kit ' + version.textContent; } });
+		}
+		menu.built = true;
+		drawMenu();
 		applyTools();
 	}
 
@@ -1650,6 +1748,9 @@
 		onToolsChange: function (fn) {
 			tools.listeners.push(fn);
 		},
+		// Your Edits menu (0.15.0): { id, order, label(), run(), show()?, kind: 'item' | 'switch' (with checked()) | 'note' }.
+		addLauncher: addLauncher,
+		redrawMenu: drawMenu,
 		W: W,
 		api: api,
 		el: el,
@@ -1699,5 +1800,5 @@
 
 	openBtn.addEventListener('click', open);
 	show(openBtn, true);
-	buildToolsSwitch();
+	buildMenu();
 })();
