@@ -49,6 +49,8 @@ class TWD_SK_Site {
 			array( 'logo', 'footer-logo-height', 'Footer logo height', 'size' ),
 			array( 'logo', 'footer-logo-height-feature', 'Large footer: logo height', 'size' ),
 			array( 'logo', 'footer-logo-height-feature-sm', 'Large footer: logo height on phones', 'size' ),
+			// 0.15.0: the contact strip's thickness (space above and below its text). 0 gives the thinnest strip.
+			array( 'header', 'strip-padding', 'Contact strip: space above and below the text', 'size' ),
 		);
 	}
 

@@ -2,6 +2,12 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 29 Oct 2026: the fixed header's spacer is measured, not calculated (chunk 1)
+
+The spacer under a fixed header was a formula over the size tokens, with the contact strip hard-wired at 36px. Each new header option (the wordmark, the second line, the symbol sizes) added a term, and the formula was already 5px out on the pilot site. The header script now measures the header and sets the spacer; the formula stays only as the value a browser without script gets. The script is one that every page with the kit header already loads, so no visitor gains a request. A token for the strip thickness could then be added without touching the formula's accuracy.
+
+The stylesheet ceiling went to 160,000 rather than the full 175,000 the owner allowed: one real duplicate was found, and a lower ceiling keeps the "say when it needs raising" check meaningful.
+
 ## 29 Oct 2026: every way out of the Visual editor reverts (chunks 2c and 2f)
 
 The owner saw edits stay on the page after throwing them away. The cause was a name clash in the script (two `putBack` functions; JavaScript keeps the last declaration), introduced when Remove and Put back were added in 0.14 on top of the 0.10 revert code, and never caught because the browser checks drove looks and pictures, not words. Lesson recorded in the test: one function of that name, and the revert routine is named for what it does.

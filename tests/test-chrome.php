@@ -931,3 +931,25 @@ twd_sk_test( 'chrome footer feature (0.15.0): the other layouts print the same b
 	twd_sk_has( '<div class="twd-sk-inner twd-sk-footer__reg">', TWD_SK_Chrome::render_footer(), 'the columns footer keeps its own registration row, as before' );
 	TWD_SK_Chrome::save_settings( array( 'footer_variant' => '' ) );
 } );
+
+twd_sk_test( 'chrome: the contact strip thickness is a token (default 8px, so nothing changes), the spacers follow it, and the header script measures the real height', function () {
+	twd_sk_eq( 'length', TWD_SK_Packs::schema()['strip-padding'] );
+	twd_sk_eq( '8px', TWD_SK_Packs::defaults()['strip-padding'] );
+	foreach ( TWD_SK_Packs::packs() as $slug => $pack ) {
+		twd_sk_eq( '8px', $pack['tokens']['strip-padding'], $slug );
+	}
+	$editable = array_filter( TWD_SK_Site::editable(), function ( $row ) {
+		return 'strip-padding' === $row[1];
+	} );
+	twd_sk_eq( 1, count( $editable ), 'editable in the Site tab' );
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	twd_sk_has( "padding-top: var(--twd-site-strip-padding) !important;
+  padding-bottom: var(--twd-site-strip-padding) !important;", $css );
+	twd_sk_has( 'height: calc(96px + var(--twd-site-strip-padding) * 2);', $css );
+	twd_sk_has( '--twd-sk-wm-strip: calc(20px + var(--twd-site-strip-padding) * 2);', $css );
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-header.js' );
+	twd_sk_has( "wrap.style.height = h + 'px';", $js );
+	twd_sk_has( "header.classList.contains('twd-sk-header--shrunk')", $js );
+	twd_sk_has( "document.fonts.ready", $js );
+	twd_sk_true( strlen( $js ) < 4000, 'still small' );
+} );

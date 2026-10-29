@@ -101,6 +101,7 @@
   "menu-weight": "400",
   "menu-spacing": "0.12em",
   "menu-gap": "26px",
+  "strip-padding": "8px",
   "menu-font": "Jost",
   "menu-transform": "uppercase",
   "image-filter": "none",

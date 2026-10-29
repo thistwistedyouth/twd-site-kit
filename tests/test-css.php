@@ -326,7 +326,8 @@ twd_sk_test( 'css: the page title fallback exists and only affects pages with th
 
 twd_sk_test( 'css: the stylesheet is a sensible size', function () {
 	$size = filesize( ABSPATH . 'assets/twd-site-kit.css' );
-	twd_sk_true( $size > 10000 && $size < 140000, 'size ' . $size );
+	// Ceiling raised from 140,000 on 29 Oct 2026 (the owner allowed up to 175,000 once duplicate rules were removed; one was).
+	twd_sk_true( $size > 10000 && $size < 160000, 'size ' . $size );
 } );
 
 twd_sk_test( 'css: the file holds no em or en dashes', function () {

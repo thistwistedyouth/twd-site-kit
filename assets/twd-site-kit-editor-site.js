@@ -277,7 +277,7 @@
 	function renderControls() {
 		clear(ui.controls);
 		var tokens = effective();
-		var groups = { colours: 'Colours', fonts: 'Fonts', shape: 'Corners', pictures: 'Pictures', logo: 'Logo sizes (pixels high)' };
+		var groups = { colours: 'Colours', fonts: 'Fonts', shape: 'Corners', pictures: 'Pictures', logo: 'Logo sizes (pixels high)', header: 'Header (pixels)' };
 		['colours', 'fonts', 'shape', 'pictures', 'logo'].forEach(function (group) {
 			var grid = el('div', { className: 'twd-sk-ed__grid' });
 			S.data.editable.forEach(function (item) {
@@ -661,7 +661,7 @@
 				field('Site name', pui.name, 'Shown as text if there is no logo.'),
 				field('Logo picture number', logoRow, 'Optional. A picture from the media library.'),
 				field('Small logo mark picture number', markRow, 'Optional, a symbol-only version. Used beside the site name on every page but the front page when "Bigger logo on the front page" is on below.'),
-				field('Second line under the name', pui.logoLine, 'Optional, a few words such as the kind of work. Shown small under the name when "Text wordmark" is ticked in Header and footer.'),
+				field('Second line under the name', pui.logoLine, 'Optional, a few words such as the kind of work. Shown under the name in the large front page header when "Text wordmark" is ticked in Header and footer. To show it in the smaller header too (other pages, and the front page once scrolled), also tick "Show the second line under the name in the smaller header too" there.'),
 				field('Header button text', pui.ctaLabel),
 				field('Header button link', pui.ctaUrl, 'A page on this site, such as /contact.'),
 				field('Phone number', pui.phone),

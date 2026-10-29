@@ -189,6 +189,8 @@ class TWD_SK_Packs {
 			'wordmark-line-front', 'wordmark-line-front-sm',
 			'wordmark-name-spacing', 'wordmark-line-spacing',
 			'menu-size', 'menu-spacing', 'menu-gap',
+			// 0.15.0: the contact strip's space above and below its text (the strip is about 20px taller than twice this).
+			'strip-padding',
 		) as $name ) {
 			$s[ $name ] = 'length';
 		}
@@ -221,6 +223,7 @@ class TWD_SK_Packs {
 			'wordmark-symbol-front'         => '72px',
 			'wordmark-symbol-front-sm'      => '44px',
 			'wordmark-symbol'               => '36px',
+			'strip-padding'                 => '8px',
 			'wordmark-symbol-sm'            => '32px',
 			'wordmark-name-front'           => '26px',
 			'wordmark-name-front-sm'        => '20px',

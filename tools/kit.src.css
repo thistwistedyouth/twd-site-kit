@@ -631,13 +631,14 @@
 /* The wrapper is the .twd-sk-page element itself, so these rules sit on it (&) rather than below it. */
 &.twd-sk-chrome { position: relative; z-index: 50; }
 &.twd-sk-chrome--sticky { height: 76px; }
-&.twd-sk-chrome--sticky.twd-sk-chrome--strip { height: 112px; }
+/* The strip is its paddings plus one line of small text (about 20px). The header script measures the real height and sets it on the spacer; this is the no-script value. */
+&.twd-sk-chrome--sticky.twd-sk-chrome--strip { height: calc(96px + #{$strip-padding} * 2); }
 /* The text wordmark header's fixed spacer (0.14.0). On the front page the header is the tall stacked lockup, so its height is worked out
    from the size tokens (the way the front page logo's is): symbol, name, second line and menu line, plus the paddings (no second line
    takes its space out). On every other page it is the one-row bar: the taller of the symbol and a menu link, plus the paddings. */
 &.twd-sk-chrome--wordmark { --twd-sk-wm-s: $wordmark-symbol-front; --twd-sk-wm-n: $wordmark-name-front; --twd-sk-wm-l: $wordmark-line-front; --twd-sk-wm-pad: 93px; --twd-sk-wm-strip: 0px; }
 &.twd-sk-chrome--noline { --twd-sk-wm-l: 0px; --twd-sk-wm-pad: 85px; }
-&.twd-sk-chrome--wordmark.twd-sk-chrome--strip { --twd-sk-wm-strip: 36px; }
+&.twd-sk-chrome--wordmark.twd-sk-chrome--strip { --twd-sk-wm-strip: calc(20px + #{$strip-padding} * 2); }
 &.twd-sk-chrome--sticky.twd-sk-chrome--wordmark { height: calc(max(#{$wordmark-symbol}, #{$menu-size} * 1.3 + 20px) + 29px + var(--twd-sk-wm-strip)); }
 /* Second line in the smaller header: the bar is as tall as the name and line (before the front page rule, which keeps its own). */
 &.twd-sk-chrome--sticky.twd-sk-chrome--wordmark.twd-sk-chrome--wm-line { height: calc(max(#{$wordmark-symbol}, #{$menu-size} * 1.3 + 20px, #{$wordmark-name} * 1.2 + 2px + #{$wordmark-line-front} * 1.3) + 29px + var(--twd-sk-wm-strip)); }
@@ -659,7 +660,7 @@
 .twd-sk-header--over.twd-sk-header--shrunk .twd-sk-header__bars, .twd-sk-header--over.twd-sk-header--shrunk .twd-sk-header__bars::before, .twd-sk-header--over.twd-sk-header--shrunk .twd-sk-header__bars::after { background-color: $color-title; }
 .twd-sk-header--sticky { position: fixed; top: var(--wp-admin--admin-bar--height, 0px); left: 0; right: 0; z-index: 900; }
 .twd-sk-header__strip { background-color: $color-band; color: $color-on-band; font-size: $size-small; }
-.twd-sk-header__strip-inner { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 24px; padding-top: 8px; padding-bottom: 8px; }
+.twd-sk-header__strip-inner { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 24px; padding-top: $strip-padding; padding-bottom: $strip-padding; }
 .twd-sk-header__strip-link { color: $color-on-band; text-decoration: underline; }
 /* Skip link: printed only when Site Kit places the header itself. Hidden until a keyboard user reaches it. */
 .twd-sk-skip {
@@ -891,7 +892,6 @@
   .twd-sk-areas--split .twd-sk-inner { grid-template-columns: 1fr; }
   .twd-sk-areas--split .twd-sk-areas__list, .twd-sk-areas--split .twd-sk-areas__actions { grid-column: 1; grid-row: auto; }
   .twd-sk-hero--parallax .twd-sk-hero__bg { top: 0; bottom: 0; transform: none; }
-  .twd-sk-hero--compact { padding-bottom: $gap-sm; }
   .twd-sk-image-text--band { padding-top: 0; padding-bottom: 0; height: 180px; }
   .twd-sk-cta--band { padding-top: calc(#{$section-y-sm} * 1.4); padding-bottom: calc(#{$section-y-sm} * 1.4); }
   .twd-sk-hero__title { font-size: $size-h1-sm; }

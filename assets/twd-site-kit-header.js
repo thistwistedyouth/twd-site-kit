@@ -1,9 +1,15 @@
-/* TWD Site Kit: the header's mobile menu. Vanilla JS, no build step, no inline handlers.
+/* TWD Site Kit: the header's mobile menu, and the fixed header's measured spacer. Vanilla JS, no build step, no inline handlers.
  *
  * With no script (or if this file is blocked) the menu is simply shown in full, so nothing
  * is lost. Once this runs it adds the menu button, collapses the menu on small screens, and
  * keeps it keyboard and screen reader friendly: aria-expanded, Escape closes, focus returns
- * to the button, and tabbing out of the header closes it. */
+ * to the button, and tabbing out of the header closes it.
+ *
+ * Measured spacer (0.15.0): a fixed header sits in a wrapper that keeps its height so the page
+ * does not slide under it. The stylesheet works that height out from the size tokens; this script
+ * then sets the real measured height, so any token (strip thickness, symbol, menu size) or font
+ * gives a spacer with no gap and no overlap. Measured on load, when fonts arrive and on resize,
+ * never while the header is shrunk (its spacer keeps the full height on purpose). */
 (function () {
 	'use strict';
 
@@ -57,6 +63,37 @@
 		});
 	}
 
+	function spacer(header) {
+		var wrap = header.parentNode;
+		if (!wrap || !wrap.classList || !wrap.classList.contains('twd-sk-chrome--sticky') || wrap.classList.contains('twd-sk-chrome--over')) {
+			return;
+		}
+		var queued = false;
+		function measure() {
+			queued = false;
+			if (header.classList.contains('twd-sk-header--shrunk')) {
+				return;
+			}
+			var h = header.offsetHeight;
+			if (h > 0) {
+				wrap.style.height = h + 'px';
+			}
+		}
+		function queue() {
+			if (!queued) {
+				queued = true;
+				window.requestAnimationFrame(measure);
+			}
+		}
+		measure();
+		window.addEventListener('resize', queue);
+		window.addEventListener('load', queue);
+		if (document.fonts && document.fonts.ready) {
+			document.fonts.ready.then(queue, function () {});
+		}
+	}
+
 	var headers = document.querySelectorAll('.twd-sk-header');
 	Array.prototype.forEach.call(headers, setup);
+	Array.prototype.forEach.call(headers, spacer);
 })();
