@@ -79,18 +79,87 @@ twd_sk_test( 'store: list_versions is newest first and omits the html', function
 	twd_sk_true( 1 === preg_match( '/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/', $list[0]['created'] ) );
 } );
 
-twd_sk_test( 'store: cap of 10 versions, oldest dropped first, numbers keep counting', function () {
+twd_sk_test( 'store: cap of 20 versions, oldest dropped first, numbers keep counting', function () {
 	$id = twd_sk_page();
-	for ( $i = 1; $i <= 13; $i++ ) {
+	for ( $i = 1; $i <= 23; $i++ ) {
 		TWD_SK_Store::save( $id, twd_sk_p( 'v' . $i ) );
 	}
 	$list = TWD_SK_Store::list_versions( $id );
-	twd_sk_eq( 10, count( $list ) );
-	twd_sk_eq( 13, $list[0]['id'] );
-	twd_sk_eq( 4, $list[9]['id'] );
+	twd_sk_eq( 20, count( $list ) );
+	twd_sk_eq( 23, $list[0]['id'] );
+	twd_sk_eq( 4, $list[19]['id'] );
 	twd_sk_eq( null, TWD_SK_Store::get_version( $id, 3 ), 'v3 dropped' );
-	twd_sk_eq( twd_sk_p( 'v13' ), TWD_SK_Store::get_current( $id ) );
-	twd_sk_eq( 14, TWD_SK_Store::save( $id, twd_sk_p( 'v14' ) )['version'], 'numbers never reused' );
+	twd_sk_eq( twd_sk_p( 'v23' ), TWD_SK_Store::get_current( $id ) );
+	twd_sk_eq( 24, TWD_SK_Store::save( $id, twd_sk_p( 'v24' ) )['version'], 'numbers never reused' );
+} );
+
+twd_sk_test( 'store: when the cap is reached, an undo or restore copy is dropped before a version holding real words', function () {
+	$id = twd_sk_page();
+	TWD_SK_Store::save( $id, twd_sk_p( 'one' ) );
+	TWD_SK_Store::save( $id, twd_sk_p( 'two' ) );
+	TWD_SK_Store::undo( $id ); // v3 = copy of v1
+	for ( $i = 4; $i <= 21; $i++ ) {
+		TWD_SK_Store::save( $id, twd_sk_p( 'v' . $i ) );
+	}
+	$list = TWD_SK_Store::list_versions( $id );
+	twd_sk_eq( 20, count( $list ) );
+	twd_sk_eq( null, TWD_SK_Store::get_version( $id, 3 ), 'the undo copy went first' );
+	twd_sk_eq( twd_sk_p( 'one' ), TWD_SK_Store::get_version( $id, 1 )['html'], 'the real version 1 is kept' );
+	twd_sk_eq( twd_sk_p( 'two' ), TWD_SK_Store::get_version( $id, 2 )['html'], 'version 2 kept' );
+	// With no copies left the oldest goes. The newest version is never dropped, so a restore of an old
+	// version keeps those words at the top even when the old version itself then falls off the end.
+	TWD_SK_Store::save( $id, twd_sk_p( 'v22' ) ); // drops v1 (oldest; no copies left)
+	twd_sk_eq( null, TWD_SK_Store::get_version( $id, 1 ) );
+	TWD_SK_Store::restore( $id, 2 ); // v23 = copy of v2, now the current page
+	TWD_SK_Store::save( $id, twd_sk_p( 'v24' ) );
+	$holders = 0;
+	foreach ( TWD_SK_Store::list_versions( $id ) as $v ) {
+		if ( twd_sk_p( 'two' ) === TWD_SK_Store::get_version( $id, $v['id'] )['html'] ) {
+			$holders++;
+		}
+	}
+	twd_sk_eq( 1, $holders, 'the words of version 2 are still held exactly once' );
+	twd_sk_eq( 20, count( TWD_SK_Store::list_versions( $id ) ) );
+} );
+
+twd_sk_test( 'store: each version records its must-fix placeholder count and a plain label', function () {
+	$id = twd_sk_page();
+	TWD_SK_Store::save( $id, '<p>[PLACEHOLDER: the name] and [PLACEHOLDER: more]</p>', array( 'note' => 'Outline (site setup)' ) );
+	TWD_SK_Store::save( $id, twd_sk_p( 'real words' ), array( 'note' => 'Changed on the page (2 pieces)' ) );
+	$list = TWD_SK_Store::list_versions( $id );
+	twd_sk_eq( 0, $list[0]['fix'] );
+	twd_sk_eq( 2, $list[1]['fix'] );
+	twd_sk_eq( 'Changed on the page (2 pieces)', TWD_SK_Store::label( $list[0] ) );
+	twd_sk_eq( 'Outline (site setup)', TWD_SK_Store::label( $list[1] ) );
+	twd_sk_eq( 'Undo: back to version 4', TWD_SK_Store::label( array( 'kind' => 'undo', 'restored_from' => 4, 'note' => 'undo to v4' ) ) );
+	twd_sk_eq( 'Restored version 2', TWD_SK_Store::label( array( 'kind' => 'restore', 'restored_from' => 2 ) ) );
+	twd_sk_eq( 'Saved', TWD_SK_Store::label( array( 'kind' => 'save', 'note' => '' ) ) );
+} );
+
+twd_sk_test( 'store: undo and restore refuse to land on the blank starter (placeholders) unless allowed, and say what they undid', function () {
+	$id = twd_sk_page();
+	TWD_SK_Store::save( $id, '<p>[PLACEHOLDER: the name]</p>', array( 'note' => 'Outline' ) );
+	TWD_SK_Store::save( $id, twd_sk_p( 'real' ), array( 'note' => 'Changed on the page (1 piece)' ) );
+	TWD_SK_Store::save( $id, twd_sk_p( 'real again' ), array( 'note' => 'Changed on the page (1 piece)' ) );
+	$r = TWD_SK_Store::undo( $id );
+	twd_sk_eq( 'Changed on the page (1 piece)', $r['undid'] );
+	twd_sk_eq( 2, $r['target'] );
+	twd_sk_eq( twd_sk_p( 'real' ), TWD_SK_Store::get_current( $id ) );
+	$e = TWD_SK_Store::undo( $id );
+	twd_sk_is_error( 'twd_sk_placeholders', $e );
+	twd_sk_eq( 1, $e->get_error_data()['target'] );
+	twd_sk_eq( 1, $e->get_error_data()['fix'] );
+	twd_sk_eq( twd_sk_p( 'real' ), TWD_SK_Store::get_current( $id ), 'nothing changed by the refusal' );
+	twd_sk_eq( 4, TWD_SK_Store::get_current_version_id( $id ), 'no version written by the refusal' );
+	twd_sk_is_error( 'twd_sk_placeholders', TWD_SK_Store::restore( $id, 1 ), 'restore has the same guard' );
+	$r = TWD_SK_Store::undo( $id, array( 'allow_placeholders' => true ) );
+	twd_sk_eq( 5, $r['version'] );
+	twd_sk_eq( 1, $r['target'] );
+	twd_sk_eq( 'Changed on the page (1 piece)', $r['undid'], 'the change that made version 2 is what the second undo undoes' );
+	// The page now holds placeholders itself, so going between placeholder versions needs no yes.
+	$same = TWD_SK_Store::restore( $id, 1 );
+	twd_sk_eq( 5, $same['version'], 'same words as now: nothing written' );
+	twd_sk_true( $same['unchanged'] );
 } );
 
 twd_sk_test( 'store: append-only, older versions are never changed by later saves', function () {

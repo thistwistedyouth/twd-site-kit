@@ -29,6 +29,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 class TWD_SK_Style {
 
 	const OPTION_SNAPSHOTS = 'twd_sk_style_snapshots';
+	const OPTION_HISTORY   = 'twd_sk_site_history';
+	const KEEP_HISTORY     = 20;
 	const KEEP             = 5;
 	const QUERY_VAR        = 'twd_sk_style';
 	const SCHEMA           = 'twd-style-kit/1';
@@ -149,6 +151,157 @@ class TWD_SK_Style {
 	}
 
 	// -- Snapshots ---------------------------------------------------------------------------------
+
+	/* ---- Site changes (0.15.0): a history of the site settings with Undo and Restore ----
+	 * Every Save in the Site tab (style, site details, header and footer) first records the settings as they
+	 * were, so a change to the footer or the menu can be undone like a page change. An entry holds the whole
+	 * state (pack, token overrides, header and footer settings, site details), never a page. Undo steps back
+	 * one real change at a time: the state before each undo is recorded too (kind "undo"), so going forward
+	 * again is a Restore of that entry, and the next Undo skips those to the change before. */
+
+	/** The site settings as they are now. */
+	public static function site_state() {
+		return array(
+			'pack'    => TWD_SK_Packs::active_slug(),
+			'tokens'  => TWD_SK_Packs::overrides(),
+			'chrome'  => TWD_SK_Chrome::settings(),
+			'profile' => TWD_SK_Profile::get(),
+		);
+	}
+
+	/** The history, newest first. Each entry: at, user, label, kind (save or undo), state. */
+	public static function site_history() {
+		$list = get_option( self::OPTION_HISTORY, array() );
+		$out  = array();
+		if ( is_array( $list ) ) {
+			foreach ( $list as $e ) {
+				if ( is_array( $e ) && isset( $e['state'] ) && is_array( $e['state'] ) ) {
+					$out[] = array(
+						'at'    => isset( $e['at'] ) ? (string) $e['at'] : '',
+						'user'  => isset( $e['user'] ) ? (int) $e['user'] : 0,
+						'label' => isset( $e['label'] ) ? (string) $e['label'] : '',
+						'kind'  => ( isset( $e['kind'] ) && 'undo' === $e['kind'] ) ? 'undo' : 'save',
+						'state' => $e['state'],
+					);
+				}
+			}
+		}
+		return $out;
+	}
+
+	/** The history without the states, for the Site tab: index, at, user, by, label, kind, and whether it equals now. */
+	public static function site_history_summary() {
+		$now = self::site_state();
+		$out = array();
+		foreach ( self::site_history() as $i => $e ) {
+			$user  = $e['user'] > 0 && function_exists( 'get_userdata' ) ? get_userdata( $e['user'] ) : false;
+			$out[] = array(
+				'index' => $i,
+				'at'    => $e['at'],
+				'user'  => $e['user'],
+				'by'    => $user ? (string) $user->display_name : '',
+				'label' => $e['label'],
+				'kind'  => $e['kind'],
+				'same'  => $e['state'] == $now,
+			);
+		}
+		return $out;
+	}
+
+	/** Record the settings as they are now, labelled with what is about to change. Nothing is recorded twice in a row. */
+	public static function record( $label ) {
+		return self::push( $label, 'save', self::site_state() );
+	}
+
+	private static function push( $label, $kind, $state ) {
+		$list = self::site_history();
+		if ( $list && $list[0]['state'] == $state ) {
+			return false;
+		}
+		array_unshift( $list, array(
+			'at'    => gmdate( 'Y-m-d H:i:s' ),
+			'user'  => function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0,
+			'label' => TWD_SK_Profile::text( $label, 80 ),
+			'kind'  => 'undo' === $kind ? 'undo' : 'save',
+			'state' => $state,
+		) );
+		update_option( self::OPTION_HISTORY, array_slice( $list, 0, self::KEEP_HISTORY ), false );
+		return true;
+	}
+
+	/** Put a recorded state back. Every part goes through the same validators the Site tab saves with. */
+	private static function apply_state( $state ) {
+		if ( isset( $state['pack'] ) && $state['pack'] !== TWD_SK_Packs::active_slug() ) {
+			$r = TWD_SK_Packs::set_active( $state['pack'] );
+			if ( is_wp_error( $r ) ) {
+				return $r;
+			}
+		}
+		$r = TWD_SK_Packs::set_overrides( isset( $state['tokens'] ) && is_array( $state['tokens'] ) ? $state['tokens'] : array() );
+		if ( is_wp_error( $r ) ) {
+			return $r;
+		}
+		if ( ! empty( $state['chrome'] ) && is_array( $state['chrome'] ) ) {
+			$r = TWD_SK_Chrome::save_settings( $state['chrome'] );
+			if ( is_wp_error( $r ) ) {
+				return $r;
+			}
+		}
+		if ( ! empty( $state['profile'] ) && is_array( $state['profile'] ) ) {
+			$r = TWD_SK_Profile::save( $state['profile'] );
+			if ( is_wp_error( $r ) ) {
+				return $r;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Undo the last site change. With n undo entries at the top (each the state before an earlier undo),
+	 * the change to step back to is entry 2n: the recorded "before" of the change that came before them.
+	 * Returns array( undid => label, now => label ) or a WP_Error.
+	 */
+	public static function site_undo() {
+		$list = self::site_history();
+		$n    = 0;
+		while ( isset( $list[ $n ] ) && 'undo' === $list[ $n ]['kind'] ) {
+			$n++;
+		}
+		$target = 2 * $n;
+		if ( ! isset( $list[ $target ] ) ) {
+			return new WP_Error( 'twd_sk_nothing_to_undo', 'There is no earlier site change to go back to.' );
+		}
+		$entry = $list[ $target ];
+		$was   = self::site_state();
+		if ( $entry['state'] == $was ) {
+			return new WP_Error( 'twd_sk_nothing_to_undo', 'The site already looks like that; there is nothing to undo.' );
+		}
+		$r = self::apply_state( $entry['state'] );
+		if ( is_wp_error( $r ) ) {
+			return $r;
+		}
+		// Record the state we left (kind undo), so going forward again is a Restore and the next Undo keeps stepping back.
+		self::push( 'Before undo of: ' . $entry['label'], 'undo', $was );
+		return array( 'undid' => $entry['label'], 'now' => 'the site as it was before "' . $entry['label'] . '"' );
+	}
+
+	/** Put a listed entry back (by index and time, so a stale list cannot restore the wrong one). */
+	public static function site_restore( $index, $at ) {
+		$list = self::site_history();
+		if ( ! isset( $list[ $index ] ) || $list[ $index ]['at'] !== (string) $at ) {
+			return new WP_Error( 'twd_sk_version_not_found', 'That site change is no longer in the list. Open the list again.' );
+		}
+		$entry = $list[ $index ];
+		if ( $entry['state'] == self::site_state() ) {
+			return array( 'unchanged' => true, 'now' => $entry['label'] );
+		}
+		self::record( 'Before going back to: ' . $entry['label'] );
+		$r = self::apply_state( $entry['state'] );
+		if ( is_wp_error( $r ) ) {
+			return $r;
+		}
+		return array( 'unchanged' => false, 'now' => $entry['label'] );
+	}
 
 	public static function snapshots() {
 		$list = get_option( self::OPTION_SNAPSHOTS, array() );

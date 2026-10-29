@@ -178,6 +178,10 @@
   color: $color-body; font-size: $size-small;
 }
 .twd-sk-ed__card p { margin: 0 0 8px; }
+.twd-sk-ed__badge {
+  display: inline-block; margin: 4px 0 0; padding: 2px 8px; border-radius: $radius-pill; background-color: $color-tint;
+  color: $color-accent-text; font-size: $size-small; font-weight: 600;
+}
 .twd-sk-ed__swatches { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
 .twd-sk-ed__swatch { display: block; width: 28px; height: 28px; border: 1px solid $color-border; border-radius: $radius-pill; }
 .twd-sk-ed__row { margin: 0 0 6px; font-size: $size-body; color: $color-body; }

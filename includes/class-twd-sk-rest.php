@@ -279,6 +279,22 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_site_upgrades_apply' ),
 			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 		) );
+		// Site changes (0.15.0): the settings history with Undo and Restore. Administrators only.
+		register_rest_route( self::ROUTE_NS, '/site/history', array(
+			'methods'             => 'GET',
+			'callback'            => array( __CLASS__, 'get_site_history' ),
+			'permission_callback' => array( __CLASS__, 'can_read_site' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/history/undo', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_history_undo' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/history/restore', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_history_restore' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
 		register_rest_route( self::ROUTE_NS, '/site/launch/publish', array(
 			'methods'             => 'POST',
 			'callback'            => array( __CLASS__, 'post_site_launch_publish' ),
@@ -507,6 +523,7 @@ class TWD_SK_REST {
 			'twd_sk_bad_page'      => 404,
 			'twd_sk_not_a_page'    => 404,
 			'twd_sk_leftovers'     => 409,
+			'twd_sk_placeholders'  => 409,
 			'twd_sk_other_content' => 409,
 			'twd_sk_site_page'     => 409,
 			'twd_sk_not_kit_page'  => 400,
@@ -707,6 +724,31 @@ class TWD_SK_REST {
 
 	public static function get_site_upgrades( $request ) {
 		return self::upgrades_payload();
+	}
+
+	public static function get_site_history( $request ) {
+		return array( 'history' => TWD_SK_Style::site_history_summary() );
+	}
+
+	public static function post_site_history_undo( $request ) {
+		$r = TWD_SK_Style::site_undo();
+		if ( is_wp_error( $r ) ) {
+			return self::from_store_error( $r );
+		}
+		return $r + array( 'history' => TWD_SK_Style::site_history_summary() );
+	}
+
+	public static function post_site_history_restore( $request ) {
+		$index = $request->get_param( 'index' );
+		$at    = $request->get_param( 'at' );
+		if ( ! is_numeric( $index ) || (int) $index < 0 || ! is_string( $at ) ) {
+			return self::error( 'twd_sk_bad_input', 'Choose a site change from the list.', 400 );
+		}
+		$r = TWD_SK_Style::site_restore( (int) $index, $at );
+		if ( is_wp_error( $r ) ) {
+			return self::from_store_error( $r );
+		}
+		return $r + array( 'history' => TWD_SK_Style::site_history_summary() );
 	}
 
 	/** Adds what is missing to the pages named (or every page that can take it). Needs confirm; each page is its own version. */
@@ -1257,6 +1299,7 @@ class TWD_SK_REST {
 		if ( null !== $overrides && ! is_array( $overrides ) ) {
 			return self::error( 'twd_sk_bad_input', 'The colour and font changes must be a list of names and values.', 400 );
 		}
+		TWD_SK_Style::record( 'Style saved' );
 		$out = TWD_SK_Site::apply( $pack, $overrides );
 		if ( is_wp_error( $out ) ) {
 			$data = $out->get_error_data();
@@ -1266,6 +1309,7 @@ class TWD_SK_REST {
 	}
 
 	public static function post_site_reset( $request ) {
+		TWD_SK_Style::record( 'Style reset to the pack' );
 		return TWD_SK_Site::reset();
 	}
 
@@ -1305,6 +1349,7 @@ class TWD_SK_REST {
 		if ( ! is_array( $profile ) ) {
 			return self::error( 'twd_sk_bad_input', 'Send the profile as a set of fields.', 400 );
 		}
+		TWD_SK_Style::record( 'Site details saved' );
 		$saved = TWD_SK_Profile::save( $profile );
 		if ( is_wp_error( $saved ) ) {
 			return self::error( $saved->get_error_code(), $saved->get_error_message(), 400 );
@@ -1317,6 +1362,7 @@ class TWD_SK_REST {
 		if ( ! is_array( $settings ) ) {
 			return self::error( 'twd_sk_bad_input', 'Send the header and footer settings as a set of fields.', 400 );
 		}
+		TWD_SK_Style::record( 'Header and footer saved' );
 		$saved = TWD_SK_Chrome::save_settings( $settings );
 		if ( is_wp_error( $saved ) ) {
 			return self::error( $saved->get_error_code(), $saved->get_error_message(), 400 );
@@ -1421,7 +1467,8 @@ class TWD_SK_REST {
 		if ( is_wp_error( $base ) ) {
 			return $base;
 		}
-		return self::after_write( $id, TWD_SK_Store::undo( $id, array( 'base_version' => $base ) ) );
+		$args = array( 'base_version' => $base, 'allow_placeholders' => self::truthy( $request->get_param( 'allow_placeholders' ) ) );
+		return self::after_write( $id, TWD_SK_Store::undo( $id, $args ) );
 	}
 
 	public static function post_restore( $request ) {
@@ -1434,7 +1481,8 @@ class TWD_SK_REST {
 		if ( ! is_numeric( $version ) || (int) $version <= 0 ) {
 			return self::error( 'twd_sk_bad_input', 'Choose a version to restore.', 400 );
 		}
-		return self::after_write( $id, TWD_SK_Store::restore( $id, (int) $version, array( 'base_version' => $base ) ) );
+		$args = array( 'base_version' => $base, 'allow_placeholders' => self::truthy( $request->get_param( 'allow_placeholders' ) ) );
+		return self::after_write( $id, TWD_SK_Store::restore( $id, (int) $version, $args ) );
 	}
 
 	// -- Helpers ----------------------------------------------------------
@@ -1453,11 +1501,18 @@ class TWD_SK_REST {
 			return self::from_store_error( $result );
 		}
 		$leftovers = isset( $result['report']['leftovers'] ) ? $result['report']['leftovers'] : array();
-		return array(
+		$out       = array(
 			'version'        => (int) $result['version'],
 			'unchanged'      => ! empty( $result['unchanged'] ),
 			'report'         => TWD_SK_Report::describe( $result['report'] ),
-		) + self::leftover_fields( $leftovers ) + self::versions_payload( $id );
+		);
+		// Undo and Restore say in plain words what they undid and what the page shows now.
+		foreach ( array( 'undid', 'now', 'target' ) as $k ) {
+			if ( isset( $result[ $k ] ) ) {
+				$out[ $k ] = $result[ $k ];
+			}
+		}
+		return $out + self::leftover_fields( $leftovers ) + self::versions_payload( $id );
 	}
 
 	/** The leftover fields every payload carries: the list (each item has a level) and the counts. */
@@ -1482,8 +1537,11 @@ class TWD_SK_REST {
 				'user'    => (int) $v['user'],
 				'by'      => $user ? (string) $user->display_name : '',
 				'note'    => (string) $v['note'],
+				'label'   => TWD_SK_Store::label( $v ),
 				'kind'    => (string) $v['kind'],
+				'from'    => (int) $v['restored_from'],
 				'bytes'   => (int) $v['bytes'],
+				'fix'     => (int) $v['fix'],
 				'current' => (int) $v['id'] === $current,
 			);
 		}

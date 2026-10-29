@@ -29,9 +29,9 @@ function twd_sk_status( $e ) {
 	return is_array( $d ) && isset( $d['status'] ) ? $d['status'] : 0;
 }
 
-twd_sk_test( 'rest: the fifty-seven routes exist under twd-site-kit/v1 and none is open to everyone', function () {
+twd_sk_test( 'rest: the sixty routes exist under twd-site-kit/v1 and none is open to everyone', function () {
 	$routes = twd_sk_rest_routes();
-	twd_sk_eq( 57, count( $routes ) );
+	twd_sk_eq( 60, count( $routes ) );
 	foreach ( $routes as $r ) {
 		twd_sk_eq( 'twd-site-kit/v1', $r['ns'] );
 		twd_sk_true( is_array( $r['args']['permission_callback'] ) && 'TWD_SK_REST' === $r['args']['permission_callback'][0], 'a real permission callback on ' . $r['route'] );
@@ -46,7 +46,7 @@ twd_sk_test( 'rest: the fifty-seven routes exist under twd-site-kit/v1 and none 
 			$reads[] = $r['route'];
 		}
 	}
-	twd_sk_eq( 18, count( $reads ), 'only prompt, versions, info, the sections, the search details, the site state, the profile, the setup plan, the facts, the site type, the launch check, the embeds, the page upgrades, the logo colours, the build state, the site brief, the site report and the templates are GET' );
+	twd_sk_eq( 19, count( $reads ), 'only prompt, versions, info, the sections, the search details, the site state, the profile, the setup plan, the facts, the site type, the launch check, the embeds, the page upgrades, the site history, the logo colours, the build state, the site brief, the site report and the templates are GET' );
 } );
 
 twd_sk_test( 'rest security: a visitor, a missing nonce and a wrong nonce are refused on every route (401)', function () {
@@ -282,18 +282,41 @@ twd_sk_test( 'rest: undo and restore go through the store, are recorded as new v
 	twd_sk_eq( 409, twd_sk_status( $e ) );
 } );
 
-twd_sk_test( 'rest: the history lists the last 10 versions newest first with who made them', function () {
+twd_sk_test( 'rest: the history lists the last 20 versions newest first with who made them, a plain label and the placeholder count', function () {
 	twd_sk_rest_setup();
-	for ( $i = 1; $i <= 12; $i++ ) {
+	for ( $i = 1; $i <= 22; $i++ ) {
 		TWD_SK_Store::save( 12, '<p>Version ' . $i . '</p>', array( 'note' => 'n' . $i ) );
 	}
 	$out = TWD_SK_REST::get_versions( twd_sk_rest_req() );
-	twd_sk_eq( 12, $out['current_version'] );
-	twd_sk_eq( 10, count( $out['versions'] ) );
-	twd_sk_eq( 12, $out['versions'][0]['id'] );
-	twd_sk_eq( 'n12', $out['versions'][0]['note'] );
+	twd_sk_eq( 22, $out['current_version'] );
+	twd_sk_eq( 20, count( $out['versions'] ) );
+	twd_sk_eq( 22, $out['versions'][0]['id'] );
+	twd_sk_eq( 'n22', $out['versions'][0]['note'] );
+	twd_sk_eq( 'n22', $out['versions'][0]['label'] );
+	twd_sk_eq( 0, $out['versions'][0]['fix'] );
 	twd_sk_eq( 'Test Editor', $out['versions'][0]['by'] );
-	twd_sk_eq( 3, $out['versions'][9]['id'] );
+	twd_sk_eq( 3, $out['versions'][19]['id'] );
+} );
+
+twd_sk_test( 'rest: undo refuses the blank starter with a 409 and a plain question, and goes ahead with allow_placeholders', function () {
+	twd_sk_rest_setup();
+	TWD_SK_Store::save( 12, '<p>[PLACEHOLDER: the name]</p>', array( 'note' => 'Outline' ) );
+	TWD_SK_Store::save( 12, '<p>Real words</p>', array( 'note' => 'Changed on the page (1 piece)' ) );
+	$e = TWD_SK_REST::post_undo( twd_sk_rest_req( array( 'base_version' => 2 ) ) );
+	twd_sk_is_error( 'twd_sk_placeholders', $e );
+	twd_sk_eq( 409, $e->get_error_data()['status'] );
+	twd_sk_eq( 1, $e->get_error_data()['target'] );
+	twd_sk_true( false !== strpos( $e->get_error_message(), 'Go back to it anyway?' ) );
+	twd_sk_eq( '<p>Real words</p>', TWD_SK_Store::get_current( 12 ) );
+	$out = TWD_SK_REST::post_undo( twd_sk_rest_req( array( 'base_version' => 2, 'allow_placeholders' => true ) ) );
+	twd_sk_eq( 3, $out['version'] );
+	twd_sk_eq( 'Changed on the page (1 piece)', $out['undid'] );
+	twd_sk_eq( 'Outline', $out['now'] );
+	twd_sk_eq( 1, $out['versions'][0]['fix'] );
+	$e = TWD_SK_REST::post_restore( twd_sk_rest_req( array( 'base_version' => 3, 'version' => 2 ) ) );
+	twd_sk_eq( 4, $e['version'], 'restoring real words needs no yes' );
+	$e = TWD_SK_REST::post_restore( twd_sk_rest_req( array( 'base_version' => 4, 'version' => 1 ) ) );
+	twd_sk_is_error( 'twd_sk_placeholders', $e );
 } );
 
 twd_sk_test( 'rest: the REST class writes only through the store and calls nothing outside the site', function () {
@@ -541,8 +564,8 @@ function twd_sk_site_routes() {
 twd_sk_test( 'rest site: the site routes, each with a real permission callback, none registered in safe mode', function () {
 	twd_sk_site_caps();
 	$routes = twd_sk_site_routes();
-	twd_sk_eq( 34, count( $routes ) );
-	twd_sk_eq( array( '/site', '/site/style', '/site/style/reset', '/site/profile', '/site/profile', '/site/chrome', '/site/setup', '/site/setup', '/site/facts', '/site/facts', '/site/mode', '/site/mode', '/site/launch', '/site/embeds', '/site/embeds', '/site/embeds/(?P<eid>\\d+)/delete', '/site/upgrades', '/site/upgrades/apply', '/site/launch/publish', '/site/launch/tidy', '/site/brand', '/site/build', '/site/build/draft', '/site/build/reset', '/site/build/notes', '/site/full/check', '/site/full/prepare', '/site/build/step', '/site/brief', '/site/brief/plan', '/site/brief/apply', '/site/propose', '/site/doctor', '/site/templates' ), array_map( function ( $r ) {
+	twd_sk_eq( 37, count( $routes ) );
+	twd_sk_eq( array( '/site', '/site/style', '/site/style/reset', '/site/profile', '/site/profile', '/site/chrome', '/site/setup', '/site/setup', '/site/facts', '/site/facts', '/site/mode', '/site/mode', '/site/launch', '/site/embeds', '/site/embeds', '/site/embeds/(?P<eid>\\d+)/delete', '/site/upgrades', '/site/upgrades/apply', '/site/history', '/site/history/undo', '/site/history/restore', '/site/launch/publish', '/site/launch/tidy', '/site/brand', '/site/build', '/site/build/draft', '/site/build/reset', '/site/build/notes', '/site/full/check', '/site/full/prepare', '/site/build/step', '/site/brief', '/site/brief/plan', '/site/brief/apply', '/site/propose', '/site/doctor', '/site/templates' ), array_map( function ( $r ) {
 		return $r['route'];
 	}, $routes ) );
 	TWD_SK_Safe::set( true );

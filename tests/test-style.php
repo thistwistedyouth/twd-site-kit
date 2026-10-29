@@ -225,3 +225,68 @@ twd_sk_test( 'style: started from the modules (so safe mode switches it off), an
 	twd_sk_hasnt( 'TWD_SK_Store', $style );
 	twd_sk_hasnt( 'wp_remote', $style );
 } );
+
+twd_sk_test( 'site changes: every Site tab save records the settings before it, undo steps back one change at a time, restore goes forward again', function () {
+	twd_stub_reset();
+	TWD_SK_Profile::save( array( 'site_name' => 'First name' ) );
+	twd_sk_eq( array(), TWD_SK_Style::site_history_summary(), 'nothing recorded yet' );
+	// Save 1: the footer text changes.
+	TWD_SK_Style::record( 'Site details saved' );
+	TWD_SK_Profile::save( array( 'footer_text' => 'Footer one' ) );
+	// Save 2: the style changes.
+	TWD_SK_Style::record( 'Style saved' );
+	TWD_SK_Packs::set_overrides( array( 'color-band' => '#123456' ) );
+	// Save 3: a header setting (whichever way the contact strip is now, flip it).
+	$strip = TWD_SK_Chrome::settings()['show_strip'];
+	TWD_SK_Style::record( 'Header and footer saved' );
+	TWD_SK_Chrome::save_settings( array( 'show_strip' => ! $strip ) );
+	twd_sk_eq( ! $strip, TWD_SK_Chrome::settings()['show_strip'] );
+	$list = TWD_SK_Style::site_history_summary();
+	twd_sk_eq( 3, count( $list ) );
+	twd_sk_eq( 'Header and footer saved', $list[0]['label'] );
+	twd_sk_true( ! $list[0]['same'] );
+	// Undo 1: only the header setting goes back; the style and footer stay.
+	$r = TWD_SK_Style::site_undo();
+	twd_sk_eq( 'Header and footer saved', $r['undid'] );
+	twd_sk_eq( $strip, TWD_SK_Chrome::settings()['show_strip'] );
+	twd_sk_eq( '#123456', TWD_SK_Packs::overrides()['color-band'] );
+	twd_sk_eq( 'Footer one', TWD_SK_Profile::get()['footer_text'] );
+	twd_sk_eq( 'undo', TWD_SK_Style::site_history_summary()[0]['kind'] );
+	// Undo 2: the style goes back, the footer stays.
+	$r = TWD_SK_Style::site_undo();
+	twd_sk_eq( 'Style saved', $r['undid'] );
+	twd_sk_eq( array(), TWD_SK_Packs::overrides() );
+	twd_sk_eq( 'Footer one', TWD_SK_Profile::get()['footer_text'] );
+	// Undo 3: the footer goes back.
+	$r = TWD_SK_Style::site_undo();
+	twd_sk_eq( 'Site details saved', $r['undid'] );
+	twd_sk_true( 'Footer one' !== TWD_SK_Profile::get()['footer_text'] );
+	twd_sk_is_error( 'twd_sk_nothing_to_undo', TWD_SK_Style::site_undo() );
+	// Going forward again: restore the newest "before undo" entry (the state with everything).
+	$list = TWD_SK_Style::site_history_summary();
+	twd_sk_eq( 'undo', $list[0]['kind'] );
+	$r = TWD_SK_Style::site_restore( 0, $list[0]['at'] );
+	twd_sk_true( empty( $r['unchanged'] ) );
+	twd_sk_eq( 'Footer one', TWD_SK_Profile::get()['footer_text'] );
+	twd_sk_is_error( 'twd_sk_version_not_found', TWD_SK_Style::site_restore( 0, 'wrong time' ) );
+	twd_sk_true( count( TWD_SK_Style::site_history_summary() ) <= TWD_SK_Style::KEEP_HISTORY );
+} );
+
+twd_sk_test( 'site changes: the REST routes record before each save, and undo and restore answer with the list', function () {
+	twd_stub_reset();
+	twd_sk_rest_setup();
+	$strip = TWD_SK_Chrome::settings()['show_strip'];
+	TWD_SK_REST::post_site_profile( twd_sk_rest_req( array( 'profile' => array( 'footer_text' => 'Hello footer' ) ) ) );
+	TWD_SK_REST::post_site_chrome( twd_sk_rest_req( array( 'settings' => array( 'show_strip' => ! $strip ) ) ) );
+	$out = TWD_SK_REST::get_site_history( twd_sk_rest_req() );
+	twd_sk_eq( 2, count( $out['history'] ) );
+	twd_sk_eq( 'Header and footer saved', $out['history'][0]['label'] );
+	$out = TWD_SK_REST::post_site_history_undo( twd_sk_rest_req() );
+	twd_sk_eq( 'Header and footer saved', $out['undid'] );
+	twd_sk_eq( 'Hello footer', TWD_SK_Profile::get()['footer_text'] );
+	twd_sk_eq( $strip, TWD_SK_Chrome::settings()['show_strip'] );
+	$e = TWD_SK_REST::post_site_history_restore( twd_sk_rest_req( array( 'index' => 0, 'at' => 'nope' ) ) );
+	twd_sk_is_error( 'twd_sk_version_not_found', $e );
+	$out = TWD_SK_REST::post_site_history_restore( twd_sk_rest_req( array( 'index' => 0, 'at' => $out['history'][0]['at'] ) ) );
+	twd_sk_eq( ! $strip, TWD_SK_Chrome::settings()['show_strip'] );
+} );

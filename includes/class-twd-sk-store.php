@@ -11,7 +11,12 @@
  *    is the only thing that writes those two meta keys.
  *  - Append-only. A version is never edited. Restore and undo write a NEW
  *    version that copies the old HTML.
- *  - At most MAX_VERSIONS are kept. The oldest is dropped first.
+ *  - At most MAX_VERSIONS are kept. When one must go, a copy goes first (an
+ *    undo or restore whose HTML another kept version still holds), then the
+ *    oldest, so a version holding real words is kept as long as possible.
+ *  - Each version records how many must-fix placeholders it holds ('fix'), so
+ *    Undo and Restore can refuse to land on the blank starter page unless the
+ *    caller says allow_placeholders (0.15.0).
  *  - No separate draft and published rows. The human gate (Preview, then Apply,
  *    with Undo) is built on top of this in a later slice. Callers only use the
  *    public methods below, so a draft concept can be added later without
@@ -30,7 +35,7 @@ class TWD_SK_Store {
 
 	const META_HTML     = '_twd_sk_html';
 	const META_VERSIONS = '_twd_sk_versions';
-	const MAX_VERSIONS  = 10;
+	const MAX_VERSIONS  = 20;
 	const MAX_BYTES     = 200 * 1024; // 200 KB per page, before and after cleaning.
 
 	// -- Reading ----------------------------------------------------------
@@ -155,6 +160,12 @@ class TWD_SK_Store {
 			return new WP_Error( 'twd_sk_version_not_found', 'That version does not exist (it may have been dropped once more than ' . self::MAX_VERSIONS . ' were saved).' );
 		}
 
+		$head  = $store['items'] ? end( $store['items'] ) : null;
+		$guard = self::placeholder_guard( $source, $head, $args );
+		if ( is_wp_error( $guard ) ) {
+			return $guard;
+		}
+
 		// Re-run the sanitiser so a restore can never bring back anything the
 		// current rules would refuse.
 		$result = TWD_SK_Sanitizer::clean_with_report( $source['html'] );
@@ -163,11 +174,17 @@ class TWD_SK_Store {
 			return new WP_Error( 'twd_sk_empty', 'Nothing was left after cleaning that version, so nothing was restored.' );
 		}
 
-		return self::commit( $post_id, $store, $clean, array(
+		$out = self::commit( $post_id, $store, $clean, array(
 			'kind'          => 'restore',
 			'note'          => self::note( $args, 'restore of v' . (int) $source['id'] ),
 			'restored_from' => (int) $source['id'],
 		), $result['report'] );
+		if ( ! is_wp_error( $out ) ) {
+			$out['undid']  = $head ? self::label( $head ) : '';
+			$out['target'] = (int) $source['id'];
+			$out['now']    = self::label( $source );
+		}
+		return $out;
 	}
 
 	/**
@@ -209,6 +226,10 @@ class TWD_SK_Store {
 		if ( null === $target ) {
 			return new WP_Error( 'twd_sk_nothing_to_undo', 'There is no earlier version to go back to.' );
 		}
+		$guard = self::placeholder_guard( $target, $head, $args );
+		if ( is_wp_error( $guard ) ) {
+			return $guard;
+		}
 
 		$result = TWD_SK_Sanitizer::clean_with_report( $target['html'] );
 		$clean  = $result['html'];
@@ -216,14 +237,55 @@ class TWD_SK_Store {
 			return new WP_Error( 'twd_sk_empty', 'Nothing was left after cleaning that version, so nothing was changed.' );
 		}
 
-		return self::commit( $post_id, $store, $clean, array(
+		// What was undone: the change the page showed before this step (the version undo started from).
+		$undone = $head;
+		foreach ( $items as $item ) {
+			if ( (int) $item['id'] === $from ) {
+				$undone = $item;
+			}
+		}
+		$out = self::commit( $post_id, $store, $clean, array(
 			'kind'          => 'undo',
 			'note'          => self::note( $args, 'undo to v' . (int) $target['id'] ),
 			'restored_from' => (int) $target['id'],
 		), $result['report'] );
+		if ( ! is_wp_error( $out ) ) {
+			$out['undid']  = self::label( $undone );
+			$out['target'] = (int) $target['id'];
+			$out['now']    = self::label( $target );
+		}
+		return $out;
 	}
 
 	// -- Internals --------------------------------------------------------
+
+	/**
+	 * Keep at most MAX_VERSIONS. A copy goes first: the oldest undo or restore whose
+	 * HTML another kept version still holds (so no words are lost). Only then the
+	 * oldest version. The newest version is never dropped.
+	 */
+	private static function trim( $items ) {
+		while ( count( $items ) > self::MAX_VERSIONS ) {
+			$drop = null;
+			$last = count( $items ) - 1;
+			foreach ( $items as $i => $item ) {
+				if ( $i === $last || ! in_array( $item['kind'], array( 'undo', 'restore' ), true ) ) {
+					continue;
+				}
+				foreach ( $items as $j => $other ) {
+					if ( $j !== $i && $other['html'] === $item['html'] ) {
+						$drop = $i;
+						break 2;
+					}
+				}
+			}
+			if ( null === $drop ) {
+				$drop = 0;
+			}
+			array_splice( $items, $drop, 1 );
+		}
+		return array_values( $items );
+	}
 
 	private static function too_large() {
 		return new WP_Error(
@@ -288,10 +350,51 @@ class TWD_SK_Store {
 					'kind'          => isset( $item['kind'] ) ? (string) $item['kind'] : 'save',
 					'restored_from' => isset( $item['restored_from'] ) ? (int) $item['restored_from'] : 0,
 					'bytes'         => strlen( (string) $item['html'] ),
+					'fix'           => isset( $item['fix'] ) ? (int) $item['fix'] : self::must_fix_count( (string) $item['html'] ),
 				);
 			}
 		}
 		return $store;
+	}
+
+	/** How many must-fix placeholders some HTML holds (the ones that block publishing). */
+	public static function must_fix_count( $html ) {
+		$levels = TWD_SK_Sanitizer::find_leftovers_by_level( $html );
+		return (int) array_sum( $levels['must'] );
+	}
+
+	/**
+	 * A plain label for a version, for the History list and the Undo message.
+	 * Examples: "Changed on the page (3 pieces)", "Undo: back to version 4", "Restored version 2", "Saved".
+	 */
+	public static function label( $item ) {
+		$kind = isset( $item['kind'] ) ? (string) $item['kind'] : 'save';
+		$note = isset( $item['note'] ) ? trim( (string) $item['note'] ) : '';
+		$from = isset( $item['restored_from'] ) ? (int) $item['restored_from'] : 0;
+		if ( 'undo' === $kind ) {
+			return 'Undo: back to version ' . $from;
+		}
+		if ( 'restore' === $kind ) {
+			return 'Restored version ' . $from;
+		}
+		return '' !== $note ? $note : 'Saved';
+	}
+
+	/**
+	 * The guard Undo and Restore share: refuse to land on a version that still has
+	 * must-fix placeholders when the page now has none, unless allow_placeholders is set.
+	 */
+	private static function placeholder_guard( $target, $head, $args ) {
+		if ( ! empty( $args['allow_placeholders'] ) ) {
+			return true;
+		}
+		if ( $target['fix'] > 0 && ( null === $head || (int) $head['fix'] === 0 ) ) {
+			return new WP_Error( 'twd_sk_placeholders', sprintf(
+				'Version %d still has placeholder text in %d place%s (it looks like the blank starter page). Nothing was changed. Go back to it anyway?',
+				(int) $target['id'], (int) $target['fix'], 1 === (int) $target['fix'] ? '' : 's'
+			), array( 'target' => (int) $target['id'], 'label' => self::label( $target ), 'fix' => (int) $target['fix'] ) );
+		}
+		return true;
 	}
 
 	private static function commit( $post_id, $store, $clean, $meta, $report ) {
@@ -317,10 +420,9 @@ class TWD_SK_Store {
 			'kind'          => $meta['kind'],
 			'restored_from' => $meta['restored_from'],
 			'bytes'         => strlen( $clean ),
+			'fix'           => self::must_fix_count( $clean ),
 		);
-		while ( count( $items ) > self::MAX_VERSIONS ) {
-			array_shift( $items );
-		}
+		$items = self::trim( $items );
 
 		// update_post_meta() strips slashes, so slash first or backslashes in
 		// the HTML would be lost.

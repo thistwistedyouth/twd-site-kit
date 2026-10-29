@@ -7,7 +7,7 @@
  *   wp twd-sk save <page_id> <file>     store a file (or - for stdin) as a new version (--pictures places pic: names first)
  *   wp twd-sk get <page_id>             print the current HTML
  *   wp twd-sk versions <page_id>        list versions, newest first
- *   wp twd-sk undo <page_id>            step back one change (recorded as a new version)
+ *   wp twd-sk undo <page_id> [--allow-placeholders]  step back one change (recorded as a new version; the flag allows the blank starter)
  *   wp twd-sk check <page_id>           list leftover example text still on the page
  *   wp twd-sk prompt <page_id>          print the client AI prompt (rules, style guide, this page's HTML)
  *   wp twd-sk setup [--pack=<slug>] [--skip-front-page]  create Home, About and Contact as drafts, fill a blank profile
@@ -188,7 +188,14 @@ class TWD_SK_CLI {
 	 */
 	public function undo( $args, $assoc_args ) {
 		$page_id = self::page_id( isset( $args[0] ) ? $args[0] : '' );
-		self::report( $page_id, TWD_SK_Store::undo( $page_id ), 'Undone' );
+		$r       = TWD_SK_Store::undo( $page_id, array( 'allow_placeholders' => ! empty( $assoc_args['allow-placeholders'] ) ) );
+		if ( is_wp_error( $r ) && 'twd_sk_placeholders' === $r->get_error_code() ) {
+			WP_CLI::error( $r->get_error_message() . ' Run it again with --allow-placeholders to go back to it.' );
+		}
+		if ( ! is_wp_error( $r ) && isset( $r['undid'] ) ) {
+			WP_CLI::log( 'Undid: ' . $r['undid'] . '. The page now shows version ' . (int) $r['target'] . ' (' . $r['now'] . ').' );
+		}
+		self::report( $page_id, $r, 'Undone' );
 	}
 
 	/**

@@ -344,6 +344,7 @@
 		message(ui.msg, 'Saving...', true);
 		ui.saveBtn.disabled = true;
 		api('POST', '/site/style', body).then(function (data) {
+			loadHistory();
 			S.data = data;
 			clearPreview();
 			draw();
@@ -600,6 +601,7 @@
 		}
 		message(pui.msg, 'Saving...', true);
 		api('POST', '/site/profile', { profile: got.profile }).then(function (data) {
+			loadHistory();
 			P.data = data;
 			fillProfile();
 			message(pui.msg, 'Saved. Reload the page to see the header and footer change.', true);
@@ -743,6 +745,7 @@
 
 	function saveChrome() {
 		message(cui.msg, 'Saving...', true);
+		loadHistory();
 		api('POST', '/site/chrome', {
 			settings: {
 				header_variant: cui.header.value,
@@ -2045,11 +2048,119 @@
 		loadUpgrades();
 	}
 
+	/* ---- Site changes (0.15.0): the settings history with Undo and Restore ----
+	 * Every Save in this tab records the settings as they were, so a footer, menu, style or header change
+	 * can be undone like a page change. Undo steps back one change; the page behind redraws. */
+	var hui = {};
+	var HIST = { list: [], busy: false };
+
+	function drawHistory() {
+		clear(hui.list);
+		hui.undoBtn.disabled = HIST.busy || !HIST.list.length;
+		if (!HIST.list.length) {
+			hui.list.appendChild(el('li', { className: 'twd-sk-ed__help', text: 'No site changes recorded yet. From now on every Save in this tab is listed here.' }));
+			return;
+		}
+		HIST.list.forEach(function (e) {
+			var when = e.at ? new Date(String(e.at).replace(' ', 'T') + 'Z') : null;
+			var head = (e.kind === 'undo' ? 'Before an undo: ' : '') + e.label + (e.same ? ' (the site looks like this now)' : '');
+			var row = el('li', { className: 'twd-sk-ed__version' }, [
+				el('span', { className: 'twd-sk-ed__version-text' }, [
+					el('span', { className: e.same ? 'twd-sk-ed__current' : '', text: head }),
+					el('span', { className: 'twd-sk-ed__version-note', text: 'The site as it was ' + (when && !isNaN(when.getTime()) ? 'on ' + when.toLocaleString() : 'then') + (e.by ? ', saved by ' + e.by : '') })
+				])
+			]);
+			if (!e.same) {
+				row.appendChild(button('Put the site back to this', 'secondary', function () {
+					historyAction('/site/history/restore', { index: e.index, at: e.at }, 'Put the site back to how it was before "' + e.label + '".');
+				}));
+			}
+			hui.list.appendChild(row);
+		});
+	}
+
+	function loadHistory() {
+		if (!hui.list) {
+			return Promise.resolve();
+		}
+		return api('GET', '/site/history').then(function (data) {
+			HIST.list = data.history || [];
+			drawHistory();
+		}, function (err) {
+			message(hui.msg, err.message, false);
+		});
+	}
+
+	function refreshForms() {
+		// The style, site details and header and footer boxes show what is saved, so fill them again.
+		var jobs = [load()];
+		jobs.push(api('GET', '/site/profile').then(function (data) {
+			P.data = data;
+			fillProfile();
+			fillChrome();
+		}, function () {}));
+		return Promise.all(jobs);
+	}
+
+	function historyAction(path, body, what) {
+		if (HIST.busy) {
+			return;
+		}
+		HIST.busy = true;
+		hui.undoBtn.disabled = true;
+		message(hui.msg, 'Working...', true);
+		api('POST', path, body).then(function (data) {
+			HIST.busy = false;
+			HIST.list = data.history || [];
+			drawHistory();
+			var text = data.undid ? 'Undid: ' + data.undid + '.' : (data.unchanged ? 'The site already looked like that.' : what);
+			message(hui.msg, text + ' Redrawing the page...', true);
+			refreshForms().then(function () {
+				return ED.redraw();
+			}).then(function (ok) {
+				message(hui.msg, text + (ok ? '' : ' Reload the page to see it.'), true);
+				show(hui.reloadBtn, !ok);
+			});
+		}, function (err) {
+			HIST.busy = false;
+			drawHistory();
+			message(hui.msg, err.message, false);
+		});
+	}
+
+	function buildHistorySection(panel) {
+		hui.msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		hui.list = el('ol', { className: 'twd-sk-ed__versions' });
+		hui.undoBtn = button('Undo the last site change', 'secondary', function () {
+			historyAction('/site/history/undo', {}, 'Went back one site change.');
+		});
+		hui.undoBtn.disabled = true;
+		hui.reloadBtn = button('Reload the page to see it', 'secondary', function () {
+			window.location.reload();
+		});
+		show(hui.reloadBtn, false);
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Site changes' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'Every Save of the style, site details or header and footer is listed here, newest first. Undo steps back one change (the page words are separate: use History and undo on the Edit tab for those). Nothing is deleted: going back is recorded too, so you can go forward again.' }),
+			el('div', { className: 'twd-sk-ed__actions' }, [hui.undoBtn, hui.reloadBtn]),
+			hui.msg,
+			hui.list
+		]));
+		loadHistory();
+	}
+
+	// For the Your Edits menu: undo the last site change from anywhere.
+	ED.siteUndo = function () {
+		return api('POST', '/site/history/undo', {});
+	};
+	ED.siteHistoryReload = loadHistory;
+
 	function buildSite(panel) {
 		buildModeSection(panel);
 		buildBriefSection(panel);
 		buildStyleSection(panel);
 		buildProfileSection(panel);
+		buildHistorySection(panel);
 		buildFactsSection(panel);
 		buildEmbedsSection(panel);
 		buildUpgradesSection(panel);
@@ -2063,6 +2174,7 @@
 			'Site brief': 'Build or update the whole site from one file',
 			'Style': 'Pick a look, colours, fonts and corners',
 			'Site details': 'Name, menu, contact lines, footer text',
+			'Site changes': 'Undo a saved style, site details or header and footer change',
 			'Embeds': 'Show a booking calendar, map or other outside code on a page',
 			'Bring pages up to date': 'Add what newer versions added to pages built earlier',
 			'Header and footer': 'Who places them, layout, fixed header',

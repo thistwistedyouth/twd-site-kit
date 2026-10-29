@@ -93,7 +93,7 @@ body.twd-sk-has-h1 .entry-title {
   display: none !important;
 }
 '''
-open(os.path.join(HERE,'..','assets','twd-site-kit.css'),'w').write(head+parse(src)+'\n'+tail)
+open(os.path.join(HERE,'..','assets','twd-site-kit.css'),'w',newline='\n').write(head+parse(src)+'\n'+tail)
 
 # Second stylesheet: the front-end editor pop-up. Same rules, scoped under .twd-sk-ed.
 SCOPE='.twd-sk-ed'
@@ -106,5 +106,5 @@ head_ed='''/* TWD Site Kit: front-end editor (the Edit with AI pop-up). Loaded o
 
 '''
 src_ed=open(os.path.join(HERE,'editor.src.css')).read()
-open(os.path.join(HERE,'..','assets','twd-site-kit-editor.css'),'w').write(head_ed+parse(src_ed)+'\n')
+open(os.path.join(HERE,'..','assets','twd-site-kit-editor.css'),'w',newline='\n').write(head_ed+parse(src_ed)+'\n')
 print('written')

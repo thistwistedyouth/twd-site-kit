@@ -416,14 +416,28 @@
 		}
 
 		/* History */
-		ui.undoBtn = button('Undo the last change', 'secondary', doUndo);
+		ui.undoBtn = button('Undo the last change', 'secondary', function () {
+			doUndo(false);
+		});
 		ui.undoBtn.disabled = true;
+		ui.redoBtn = button('Redo', 'secondary', function () {
+			if (state.redoTo) {
+				doRestore(state.redoTo, false, 'Redo');
+			}
+		});
+		show(ui.redoBtn, false);
 		ui.historyMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		ui.historyCard = el('div');
+		ui.historyReload = button('Reload the page to see it', 'secondary', function () {
+			window.location.reload();
+		});
+		show(ui.historyReload, false);
 		ui.versions = el('ol', { className: 'twd-sk-ed__versions' });
-		var hist = step('History and undo (the last 10 versions)', [
-			el('p', { className: 'twd-sk-ed__help', text: 'Undo and Restore never delete anything. They save a new version, so you can always go back again.' }),
-			el('div', { className: 'twd-sk-ed__actions' }, [ui.undoBtn]),
+		var hist = step('History and undo (the last 20 versions)', [
+			el('p', { className: 'twd-sk-ed__help', text: 'Undo steps back one change at a time and the page behind redraws so you can see it. Undo and Restore never delete anything: each saves a new version, so you can always go forward again.' }),
+			el('div', { className: 'twd-sk-ed__actions' }, [ui.undoBtn, ui.redoBtn, ui.historyReload]),
 			ui.historyMsg,
+			ui.historyCard,
 			ui.versions
 		]);
 		panel.appendChild(hist);
@@ -814,21 +828,91 @@
 	function renderVersions(data) {
 		clear(ui.versions);
 		state.version = data.current_version;
-		ui.undoBtn.disabled = (data.versions || []).length < 2;
-		(data.versions || []).forEach(function (v) {
+		var versions = data.versions || [];
+		ui.undoBtn.disabled = state.undoing || versions.length < 2;
+		// Redo: after an undo, the version it stepped back from is the one just before it in the list.
+		state.redoTo = (versions.length > 1 && versions[0].kind === 'undo') ? versions[1].id : 0;
+		show(ui.redoBtn, !!state.redoTo);
+		if (state.redoTo) {
+			ui.redoBtn.textContent = 'Redo (put back version ' + state.redoTo + ')';
+			ui.redoBtn.disabled = state.undoing;
+		}
+		versions.forEach(function (v) {
 			var who = v.by ? ' by ' + v.by : '';
-			var label = 'Version ' + v.id + (v.current ? ' (current)' : '') + ' - ' + formatDate(v.created) + who;
-			var text = el('span', { className: 'twd-sk-ed__version-text' }, [
-				el('span', { className: v.current ? 'twd-sk-ed__current' : '', text: label }),
-				v.note ? el('span', { className: 'twd-sk-ed__version-note', text: v.note }) : null
-			]);
-			var row = el('li', { className: 'twd-sk-ed__version' }, [text]);
+			var head = 'Version ' + v.id + (v.current ? ' (current)' : '') + ' - ' + formatDate(v.created) + who;
+			var kids = [el('span', { className: v.current ? 'twd-sk-ed__current' : '', text: head })];
+			var label = v.label || v.note;
+			if (label) {
+				kids.push(el('span', { className: 'twd-sk-ed__version-note', text: label }));
+			}
+			if (v.fix > 0) {
+				var starter = /^Outline/.test(label || '');
+				kids.push(el('span', { className: 'twd-sk-ed__badge', text: (starter ? 'Blank starter: ' : 'Unfinished: ') + 'placeholder text in ' + v.fix + ' place' + (v.fix === 1 ? '' : 's') }));
+			}
+			var row = el('li', { className: 'twd-sk-ed__version' }, [el('span', { className: 'twd-sk-ed__version-text' }, kids)]);
 			if (!v.current) {
 				row.appendChild(button('Restore this version', 'secondary', function () {
-					doRestore(v.id);
+					doRestore(v.id, false, 'Restored version ' + v.id);
 				}));
 			}
 			ui.versions.appendChild(row);
+		});
+	}
+
+	/* ---- redraw the page behind (no full reload) ----
+	 * After Undo, Restore or any saved change the page is fetched again and every kit wrapper
+	 * (the page and the header and footer) is swapped for the fresh one. Sections whose markup
+	 * changed get a short highlight. Resolves false when it could not (the caller offers a reload). */
+	var redrawHooks = [];
+
+	function redrawPage() {
+		var url = window.location.href.split('#')[0];
+		return fetch(url, { credentials: 'same-origin', cache: 'no-store', headers: { 'X-Requested-With': 'twd-sk-redraw' } }).then(function (res) {
+			if (!res.ok) {
+				return false;
+			}
+			return res.text().then(function (html) {
+				var fresh = new DOMParser().parseFromString(html, 'text/html');
+				var oldWraps = Array.prototype.slice.call(document.querySelectorAll('.twd-sk-page'));
+				var newWraps = Array.prototype.slice.call(fresh.querySelectorAll('.twd-sk-page'));
+				if (!oldWraps.length || oldWraps.length !== newWraps.length) {
+					return false;
+				}
+				var flash = [];
+				oldWraps.forEach(function (oldWrap, i) {
+					var newWrap = document.importNode(newWraps[i], true);
+					var ser = new XMLSerializer();
+					var before = Array.prototype.map.call(oldWrap.children, function (n) {
+						return ser.serializeToString(n);
+					});
+					Array.prototype.forEach.call(newWrap.children, function (n, j) {
+						if (n.tagName === 'SECTION' && before[j] !== ser.serializeToString(n)) {
+							flash.push(n);
+						}
+					});
+					oldWrap.parentNode.replaceChild(newWrap, oldWrap);
+				});
+				document.body.classList.add('twd-sk-ed-redraw');
+				flash.forEach(function (n) {
+					n.classList.add('twd-sk-ed__flash');
+				});
+				window.setTimeout(function () {
+					flash.forEach(function (n) {
+						n.classList.remove('twd-sk-ed__flash');
+					});
+					document.body.classList.remove('twd-sk-ed-redraw');
+				}, 2500);
+				redrawHooks.forEach(function (fn) {
+					try {
+						fn();
+					} catch (err) {
+						// One listener must not stop the others.
+					}
+				});
+				return true;
+			});
+		}, function () {
+			return false;
 		});
 	}
 
@@ -839,27 +923,68 @@
 	}
 
 	function afterHistoryChange(data, what) {
+		state.undoing = false;
 		renderVersions(data);
-		message(ui.historyMsg, what + ' Saved as version ' + data.version + '.', true);
-		show(ui.reloadBtn, true);
+		if (data.leftover_count) {
+			leftoverBanner(ui.banner, data);
+		}
+		message(ui.historyMsg, what + ' Saved as version ' + data.version + '. Redrawing the page...', true);
 		loadPrompt();
-	}
-
-	function doUndo() {
-		message(ui.historyMsg, 'Undoing...', true);
-		api('POST', pagePath('/undo'), { base_version: state.version }).then(function (data) {
-			afterHistoryChange(data, 'Went back one step.');
-		}, function (err) {
-			handleWriteError(ui.historyMsg, err);
+		redrawPage().then(function (ok) {
+			message(ui.historyMsg, what + ' Saved as version ' + data.version + '.' + (ok ? '' : ' Reload the page to see it.'), true);
+			show(ui.historyReload, !ok);
 		});
 	}
 
-	function doRestore(id) {
-		message(ui.historyMsg, 'Restoring...', true);
-		api('POST', pagePath('/restore'), { version: id, base_version: state.version }).then(function (data) {
-			afterHistoryChange(data, 'Restored version ' + id + '.');
+	function historyBusy(on) {
+		state.undoing = on;
+		ui.undoBtn.disabled = on;
+		ui.redoBtn.disabled = on;
+		Array.prototype.forEach.call(ui.versions.querySelectorAll('button'), function (b) {
+			b.disabled = on;
+		});
+	}
+
+	// A 409 "placeholders" answer means the version is the blank starter: ask in plain words, then try again allowing it.
+	function historyError(err, retry) {
+		historyBusy(false);
+		if (err.status === 409 && err.code === 'twd_sk_placeholders') {
+			message(ui.historyMsg, '', true);
+			confirmInline(ui.historyCard, { text: err.message, yesLabel: 'Go back to it anyway', onYes: retry });
+			return;
+		}
+		handleWriteError(ui.historyMsg, err);
+	}
+
+	function doUndo(allow) {
+		if (state.undoing) {
+			return;
+		}
+		historyBusy(true);
+		clear(ui.historyCard);
+		message(ui.historyMsg, 'Undoing...', true);
+		api('POST', pagePath('/undo'), { base_version: state.version, allow_placeholders: !!allow }).then(function (data) {
+			afterHistoryChange(data, 'Undid: ' + (data.undid || 'the last change') + '. The page now shows version ' + data.target + (data.now ? ' (' + data.now + ')' : '') + '.');
 		}, function (err) {
-			handleWriteError(ui.historyMsg, err);
+			historyError(err, function () {
+				doUndo(true);
+			});
+		});
+	}
+
+	function doRestore(id, allow, what) {
+		if (state.undoing) {
+			return;
+		}
+		historyBusy(true);
+		clear(ui.historyCard);
+		message(ui.historyMsg, 'Restoring...', true);
+		api('POST', pagePath('/restore'), { version: id, base_version: state.version, allow_placeholders: !!allow }).then(function (data) {
+			afterHistoryChange(data, (what || 'Restored version ' + id) + (data.now ? ' (' + data.now + ')' : '') + '.');
+		}, function (err) {
+			historyError(err, function () {
+				doRestore(id, true, what);
+			});
 		});
 	}
 
@@ -1562,6 +1687,11 @@
 		},
 		foldSection: foldSection,
 		revealFold: revealFold,
+		// Fetch the page again and swap the kit wrappers in place (no reload). Resolves true when it worked.
+		redraw: redrawPage,
+		onRedraw: function (fn) {
+			redrawHooks.push(fn);
+		},
 		addTab: function (name, label, build) {
 			this.extraTabs.push({ name: name, label: label, build: build });
 		}

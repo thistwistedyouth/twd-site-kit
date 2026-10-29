@@ -5,6 +5,15 @@
  * The toolbar itself is styled with the editor (twd-site-kit-editor.css). */
 
 body.twd-sk-inline-on { padding-bottom: 140px !important; }
+/* A short highlight on the sections that changed after the page was redrawn (Undo, Restore, a saved change). */
+body.twd-sk-ed-redraw .twd-sk-ed__flash {
+  outline: 3px solid var(--twd-site-color-accent-text) !important;
+  outline-offset: -3px !important;
+  transition: outline-color 1.2s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  body.twd-sk-ed-redraw .twd-sk-ed__flash { transition: none; }
+}
 body.twd-sk-inline-on [data-twd-sk-t] {
   outline: 1px dashed rgba(34, 113, 177, 0.6) !important; outline-offset: 3px !important;
   cursor: text !important; -webkit-user-select: text !important; user-select: text !important;

@@ -182,7 +182,7 @@ twd_sk_test( 'inline css: every rule applies only while editing', function () {
 	twd_sk_true( count( $rules ) >= 5 );
 	foreach ( $rules as $rule ) {
 		foreach ( $rule['selectors'] as $sel ) {
-			twd_sk_true( 0 === strpos( $sel, 'body.twd-sk-inline-on' ), $sel );
+			twd_sk_true( 0 === strpos( $sel, 'body.twd-sk-inline-on' ) || 0 === strpos( $sel, 'body.twd-sk-ed-redraw' ), $sel );
 		}
 	}
 } );

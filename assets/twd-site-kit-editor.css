@@ -561,6 +561,16 @@
 .twd-sk-ed .twd-sk-ed__card.twd-sk-ed__card p {
   margin: 0 0 8px !important;
 }
+.twd-sk-ed .twd-sk-ed__badge.twd-sk-ed__badge {
+  display: inline-block;
+  margin: 4px 0 0 !important;
+  padding: 2px 8px !important;
+  border-radius: var(--twd-site-radius-pill) !important;
+  background-color: var(--twd-site-color-tint) !important;
+  color: var(--twd-site-color-accent-text) !important;
+  font-size: var(--twd-site-size-small) !important;
+  font-weight: 600 !important;
+}
 .twd-sk-ed .twd-sk-ed__swatches.twd-sk-ed__swatches {
   display: flex;
   flex-wrap: wrap;

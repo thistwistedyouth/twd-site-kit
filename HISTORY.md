@@ -2,6 +2,17 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 29 Oct 2026: Undo that can be trusted (chunk 2i of the owner's plan)
+
+What went wrong on the pilot site: Undo in the pop-up walked back one version per press, never redrew the page and never stopped at the blank starter outline, so a person trying to undo a move pressed it until two pages showed placeholder words. Page history and site settings were also separate: a footer change had no undo at all.
+
+Decisions:
+- Keep the walk-back rule (one more step per press) but add a guard: a version with must-fix placeholders is refused when the page now has none, with a plain question, and a second call with `allow_placeholders` goes ahead. A placeholder count is stored on each version at commit time so the guard costs nothing on read; older versions are counted when read.
+- Redraw rather than reload: the editor fetches the page again and swaps the kit wrappers (page, header, footer) in place, flashing the sections whose markup changed. Scripts that ran on the old nodes (the quote slider arrows) are not run again on the swapped nodes until a reload; accepted for now.
+- 20 versions, copies first: an undo or restore is a copy of another version, so when the cap is reached a copy whose words are still held elsewhere is dropped before any version holding real words. The newest version is never dropped.
+- Site changes are a second history, kept apart from page history (an option, not post meta), recorded before each Site tab save with the whole settings state. Undo steps back one change and records the state it left as kind `undo`, so "forward again" is a Restore and the next Undo skips those entries (with n undo entries on top the target is entry 2n). The site history lives in `TWD_SK_Style` beside the style snapshots rather than a new class, to keep the class list and the loaders unchanged.
+- Redo in the pop-up is a Restore of the version undo stepped back from: no new route.
+
 ## Open questions
 
 ### Card-type vocabulary overlap (parked, not solved)
