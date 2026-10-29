@@ -664,6 +664,31 @@
   border-radius: var(--twd-site-radius-card) !important;
   background-color: var(--twd-site-color-surface) !important;
 }
+/* 18a (29 Oct 2026): a box or a line chooses its colours from the section's tone, so the words stay readable on every
+   background: on the soft tone the box takes the page colour; on a band, and in the frame over a picture, a darker
+   see-through box (the frame tint) with the tone's light text and lines. TWD_SK_Contrast::style_pairs() lists every
+   style and tone pair and a test runs them all on every pack. */
+.twd-sk-page .twd-sk-tone-surface.twd-sk-tone-surface .twd-sk-notebox.twd-sk-notebox {
+  background-color: var(--twd-site-color-bg) !important;
+}
+.twd-sk-page .twd-sk-tone-band.twd-sk-tone-band .twd-sk-notebox.twd-sk-notebox {
+  border-color: var(--twd-site-color-on-band) !important;
+  border-left-color: var(--twd-site-color-accent-on-dark) !important;
+  background-color: var(--twd-site-color-frame) !important;
+  color: var(--twd-site-color-on-band) !important;
+}
+.twd-sk-page .twd-sk-text--picture.twd-sk-text--picture .twd-sk-notebox.twd-sk-notebox {
+  border-color: var(--twd-site-color-on-image) !important;
+  border-left-color: var(--twd-site-color-on-image) !important;
+  background-color: var(--twd-site-color-frame) !important;
+  color: var(--twd-site-color-on-image) !important;
+}
+.twd-sk-page .twd-sk-tone-band.twd-sk-tone-band .twd-sk-quoteline.twd-sk-quoteline {
+  border-left-color: var(--twd-site-color-accent-on-dark) !important;
+}
+.twd-sk-page .twd-sk-text--picture.twd-sk-text--picture .twd-sk-quoteline.twd-sk-quoteline {
+  border-left-color: var(--twd-site-color-on-image) !important;
+}
 .twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body .twd-sk-btn.twd-sk-btn {
   margin-top: 8px !important;
   text-decoration: none !important;
@@ -3805,6 +3830,27 @@
 .twd-sk-page .twd-sk-border-thin.twd-sk-border-thin:not(.twd-sk-box-card.twd-sk-box-card):not(.twd-sk-box-outline.twd-sk-box-outline) > .twd-sk-inner.twd-sk-inner,
 .twd-sk-page .twd-sk-border-accent.twd-sk-border-accent:not(.twd-sk-box-card.twd-sk-box-card):not(.twd-sk-box-outline.twd-sk-box-outline) > .twd-sk-inner.twd-sk-inner {
   padding: var(--twd-site-card-pad) !important;
+}
+/* 18a: the box and border colours follow the section's tone (see the note box above). */
+.twd-sk-page .twd-sk-tone-surface.twd-sk-tone-surface.twd-sk-box-card.twd-sk-box-card > .twd-sk-inner.twd-sk-inner {
+  background-color: var(--twd-site-color-bg) !important;
+}
+.twd-sk-page .twd-sk-tone-band.twd-sk-tone-band.twd-sk-box-card.twd-sk-box-card > .twd-sk-inner.twd-sk-inner,
+.twd-sk-page .twd-sk-text--picture.twd-sk-text--picture.twd-sk-box-card.twd-sk-box-card > .twd-sk-inner.twd-sk-inner {
+  background-color: var(--twd-site-color-frame) !important;
+  box-shadow: none !important;
+}
+.twd-sk-page .twd-sk-tone-band.twd-sk-tone-band.twd-sk-box-outline.twd-sk-box-outline > .twd-sk-inner.twd-sk-inner,
+.twd-sk-page .twd-sk-tone-band.twd-sk-tone-band.twd-sk-border-thin.twd-sk-border-thin > .twd-sk-inner.twd-sk-inner {
+  border-color: var(--twd-site-color-on-band) !important;
+}
+.twd-sk-page .twd-sk-tone-band.twd-sk-tone-band.twd-sk-border-accent.twd-sk-border-accent > .twd-sk-inner.twd-sk-inner {
+  border-color: var(--twd-site-color-accent-on-dark) !important;
+}
+.twd-sk-page .twd-sk-text--picture.twd-sk-text--picture.twd-sk-box-outline.twd-sk-box-outline > .twd-sk-inner.twd-sk-inner,
+.twd-sk-page .twd-sk-text--picture.twd-sk-text--picture.twd-sk-border-thin.twd-sk-border-thin > .twd-sk-inner.twd-sk-inner,
+.twd-sk-page .twd-sk-text--picture.twd-sk-text--picture.twd-sk-border-accent.twd-sk-border-accent > .twd-sk-inner.twd-sk-inner {
+  border-color: var(--twd-site-color-on-image) !important;
 }
 .twd-sk-page .twd-sk-pad-compact.twd-sk-pad-compact > .twd-sk-inner.twd-sk-inner {
   padding: var(--twd-site-card-pad-sm) !important;

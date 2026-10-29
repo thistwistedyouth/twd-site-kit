@@ -33,7 +33,7 @@ twd_sk_test( 'contrast: the pairs list marks the button and band pairs as blocki
 	foreach ( array( 'button_text', 'button_hover', 'light_button', 'tint_button', 'band_text', 'band_accent' ) as $id ) {
 		twd_sk_eq( 'block', $levels[ $id ], $id );
 	}
-	foreach ( array( 'body_bg', 'body_surface', 'muted_surface', 'heading_bg', 'heading_surface', 'eyebrow_bg', 'accent_text_bg', 'title_tint', 'primary_bg', 'frame_text' ) as $id ) {
+	foreach ( array( 'body_bg', 'body_surface', 'muted_surface', 'heading_bg', 'heading_surface', 'eyebrow_bg', 'accent_text_bg', 'title_tint', 'primary_bg', 'frame_text', 'title_surface', 'box_band', 'box_picture' ) as $id ) {
 		twd_sk_eq( 'warn', $levels[ $id ], $id );
 	}
 } );
@@ -123,4 +123,51 @@ twd_sk_test( 'contrast: a see-through colour is flattened over what lies under i
 		$out = json_decode( trim( (string) shell_exec( 'node -e ' . escapeshellarg( $script ) . ' 2>&1' ) ), true );
 		twd_sk_eq( array( 'rgb(179,179,179)', 'rgb(64,64,64)', 'rgb(128,0,0)' ), $out, 'node' );
 	}
+} );
+
+twd_sk_test( 'contrast: every box, border, quote line, note box and frame style reads at 4.5:1 on every section tone in every pack, and the stylesheet draws those pairs (18a)', function () {
+	$pairs = TWD_SK_Contrast::style_pairs();
+	twd_sk_true( count( $pairs ) >= 30, 'pairs: ' . count( $pairs ) );
+	$styles = array();
+	$tones  = array();
+	foreach ( $pairs as $p ) {
+		$styles[ $p[0] ] = true;
+		$tones[ $p[1] ]  = true;
+	}
+	// Every style the Look panel or the Visual editor offers, on every tone a section can have, plus the picture layout.
+	foreach ( array( 'twd-sk-notebox', 'twd-sk-quoteline', 'twd-sk-box-card', 'twd-sk-box-outline', 'twd-sk-border-thin', 'twd-sk-border-accent', 'twd-sk-frame', 'twd-sk-frame--light', 'twd-sk-frame--strong' ) as $style ) {
+		twd_sk_true( isset( $styles[ $style ] ), 'style listed: ' . $style );
+	}
+	foreach ( array_keys( TWD_SK_Looks::tones() ) as $tone ) {
+		twd_sk_true( isset( $tones[ $tone ] ), 'tone listed: ' . $tone );
+	}
+	twd_sk_true( isset( $tones['twd-sk-tone-band'], $tones['twd-sk-text--picture'] ) );
+	foreach ( TWD_SK_Packs::packs() as $slug => $pack ) {
+		foreach ( $pairs as $p ) {
+			$ratio = TWD_SK_Contrast::ratio_for( $p, $pack['tokens'] );
+			twd_sk_true( null !== $ratio, $slug . ': ' . $p[0] . ' on ' . $p[1] . ' readable' );
+			twd_sk_true( $ratio >= TWD_SK_Contrast::MIN, $slug . ': ' . $p[0] . ' on ' . $p[1] . ' is ' . round( $ratio, 2 ) );
+		}
+	}
+	// The stylesheet carries the tone rules the pairs describe (the band and the picture frame take the frame tint and the
+	// tone's light text; the soft tone takes the page colour).
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	foreach ( array(
+		'.twd-sk-page .twd-sk-tone-band.twd-sk-tone-band .twd-sk-notebox.twd-sk-notebox {',
+		'.twd-sk-page .twd-sk-text--picture.twd-sk-text--picture .twd-sk-notebox.twd-sk-notebox {',
+		'.twd-sk-page .twd-sk-tone-surface.twd-sk-tone-surface .twd-sk-notebox.twd-sk-notebox {',
+		'.twd-sk-page .twd-sk-tone-band.twd-sk-tone-band.twd-sk-box-card.twd-sk-box-card > .twd-sk-inner.twd-sk-inner,',
+		'.twd-sk-page .twd-sk-tone-surface.twd-sk-tone-surface.twd-sk-box-card.twd-sk-box-card > .twd-sk-inner.twd-sk-inner {',
+		'.twd-sk-page .twd-sk-tone-band.twd-sk-tone-band .twd-sk-quoteline.twd-sk-quoteline {',
+	) as $needle ) {
+		twd_sk_has( $needle, $css );
+	}
+	$band = substr( $css, strpos( $css, '.twd-sk-page .twd-sk-tone-band.twd-sk-tone-band .twd-sk-notebox.twd-sk-notebox {' ) );
+	$band = substr( $band, 0, strpos( $band, '}' ) );
+	twd_sk_has( 'background-color: var(--twd-site-color-frame) !important', $band );
+	twd_sk_has( 'color: var(--twd-site-color-on-band) !important', $band );
+	// The fade helper scales the alpha; an unreadable colour gives null.
+	twd_sk_eq( 'rgba(0,0,0,0.18)', TWD_SK_Contrast::with_alpha( 'rgba(0,0,0,0.3)', 0.6 ) );
+	twd_sk_eq( 'rgba(255,255,255,0.5)', TWD_SK_Contrast::with_alpha( '#ffffff', 0.5 ) );
+	twd_sk_eq( null, TWD_SK_Contrast::with_alpha( 'transparent-ish', 0.5 ) );
 } );

@@ -213,6 +213,15 @@
 .twd-sk-quoteline { padding-left: 1.2em; border-left: 3px solid $color-accent; }
 /* Note box (0.15.0, idea 5): a paragraph called out in a soft panel with an accent edge, from the Visual editor's Note box button. */
 .twd-sk-notebox { padding: $card-pad-sm; border: 1px solid $color-border; border-left: 4px solid $color-accent; border-radius: $radius-card; background-color: $color-surface; }
+/* 18a (29 Oct 2026): a box or a line chooses its colours from the section's tone, so the words stay readable on every
+   background: on the soft tone the box takes the page colour; on a band, and in the frame over a picture, a darker
+   see-through box (the frame tint) with the tone's light text and lines. TWD_SK_Contrast::style_pairs() lists every
+   style and tone pair and a test runs them all on every pack. */
+.twd-sk-tone-surface .twd-sk-notebox { background-color: $color-bg; }
+.twd-sk-tone-band .twd-sk-notebox { border-color: $color-on-band; border-left-color: $color-accent-on-dark; background-color: $color-frame; color: $color-on-band; }
+.twd-sk-text--picture .twd-sk-notebox { border-color: $color-on-image; border-left-color: $color-on-image; background-color: $color-frame; color: $color-on-image; }
+.twd-sk-tone-band .twd-sk-quoteline { border-left-color: $color-accent-on-dark; }
+.twd-sk-text--picture .twd-sk-quoteline { border-left-color: $color-on-image; }
 .twd-sk-text--prose .twd-sk-text__body .twd-sk-btn { margin-top: 8px; text-decoration: none; }
 .twd-sk-text--prose .twd-sk-text__body .twd-sk-btn--primary { color: $color-on-primary; }
 .twd-sk-text__aside > * + * { margin-top: 20px; }
@@ -1152,6 +1161,12 @@
 .twd-sk-border-thin > .twd-sk-inner { border: 1px solid $color-border; border-radius: $radius-card; }
 .twd-sk-border-accent > .twd-sk-inner { border: 2px solid $color-accent; border-radius: $radius-card; }
 .twd-sk-border-thin:not(.twd-sk-box-card):not(.twd-sk-box-outline) > .twd-sk-inner, .twd-sk-border-accent:not(.twd-sk-box-card):not(.twd-sk-box-outline) > .twd-sk-inner { padding: $card-pad; }
+/* 18a: the box and border colours follow the section's tone (see the note box above). */
+.twd-sk-tone-surface.twd-sk-box-card > .twd-sk-inner { background-color: $color-bg; }
+.twd-sk-tone-band.twd-sk-box-card > .twd-sk-inner, .twd-sk-text--picture.twd-sk-box-card > .twd-sk-inner { background-color: $color-frame; box-shadow: none; }
+.twd-sk-tone-band.twd-sk-box-outline > .twd-sk-inner, .twd-sk-tone-band.twd-sk-border-thin > .twd-sk-inner { border-color: $color-on-band; }
+.twd-sk-tone-band.twd-sk-border-accent > .twd-sk-inner { border-color: $color-accent-on-dark; }
+.twd-sk-text--picture.twd-sk-box-outline > .twd-sk-inner, .twd-sk-text--picture.twd-sk-border-thin > .twd-sk-inner, .twd-sk-text--picture.twd-sk-border-accent > .twd-sk-inner { border-color: $color-on-image; }
 .twd-sk-pad-compact > .twd-sk-inner { padding: $card-pad-sm; }
 .twd-sk-pad-roomy > .twd-sk-inner { padding: calc(#{$card-pad} * 1.6); }
 @media (max-width: 768px) {

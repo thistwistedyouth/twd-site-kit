@@ -125,7 +125,90 @@ class TWD_SK_Contrast {
 			// 0.15.0: words in the frame over a picture. The frame tint lies over the overlay over a mid grey (a photograph
 			// cannot be known), so the pair carries the layers under its background, from the bottom up.
 			array( 'frame_text', 'warn', 'Words in the frame over a picture', 'color-on-image', 'color-frame', array( self::PHOTO, 'color-overlay-mid' ) ),
+			// 18a (29 Oct 2026): the box styles choose their colours by tone; these are the pairs the tones add.
+			array( 'title_surface', 'warn', 'Titles in a box on a tinted section', 'color-title', 'color-surface' ),
+			array( 'box_band', 'warn', 'Words in a box on a band', 'color-on-band', 'color-frame', array( 'color-band' ) ),
+			array( 'box_picture', 'warn', 'Words in a box in the frame over a picture', 'color-on-image', 'color-frame', array( self::PHOTO, 'color-overlay-mid', 'color-frame' ) ),
 		);
+	}
+
+	/**
+	 * Every box, border, line and frame style on every section tone (18a, 29 Oct 2026): the words' colour, the
+	 * background the words sit on, and the layers under it, exactly as the stylesheet draws them. A test runs each
+	 * on every pack at 4.5:1, and checks the stylesheet carries the rules, so an unreadable box cannot come back.
+	 *
+	 * @return array of array( style class, tone class, fg token, bg token or literal, layers under the bg (bottom up) )
+	 */
+	public static function style_pairs() {
+		$photo = array( self::PHOTO, 'color-overlay-mid' );
+		$out   = array();
+		// Boxes with a background of their own: the note box on a paragraph, the Soft card round a section's words.
+		foreach ( array( 'twd-sk-notebox', 'twd-sk-box-card' ) as $style ) {
+			$out[] = array( $style, 'twd-sk-tone-base', 'color-body', 'color-surface', array() );
+			$out[] = array( $style, 'twd-sk-tone-base', 'color-title', 'color-surface', array() );
+			$out[] = array( $style, 'twd-sk-tone-surface', 'color-body', 'color-bg', array() );
+			$out[] = array( $style, 'twd-sk-tone-surface', 'color-title', 'color-bg', array() );
+			$out[] = array( $style, 'twd-sk-tone-tint', 'color-title', 'color-surface', array() );
+			$out[] = array( $style, 'twd-sk-tone-band', 'color-on-band', 'color-frame', array( 'color-band' ) );
+			$out[] = array( $style, 'twd-sk-text--picture', 'color-on-image', 'color-frame', array_merge( $photo, array( 'color-frame' ) ) );
+		}
+		// Lines and borders: no background of their own, the words sit on the tone itself.
+		foreach ( array( 'twd-sk-box-outline', 'twd-sk-border-thin', 'twd-sk-border-accent', 'twd-sk-quoteline' ) as $style ) {
+			$out[] = array( $style, 'twd-sk-tone-base', 'color-body', 'color-bg', array() );
+			$out[] = array( $style, 'twd-sk-tone-surface', 'color-body', 'color-surface', array() );
+			$out[] = array( $style, 'twd-sk-tone-tint', 'color-title', 'color-tint', array() );
+			$out[] = array( $style, 'twd-sk-tone-band', 'color-on-band', 'color-band', array() );
+			$out[] = array( $style, 'twd-sk-text--picture', 'color-on-image', 'color-frame', $photo );
+		}
+		// The frame over a picture at its three depths (Lighter is the frame tint at 60 percent; Stronger is it twice).
+		$out[] = array( 'twd-sk-frame', 'twd-sk-text--picture', 'color-on-image', 'color-frame', $photo );
+		$out[] = array( 'twd-sk-frame--light', 'twd-sk-text--picture', 'color-on-image', self::fade( 'color-frame', 0.6 ), $photo );
+		$out[] = array( 'twd-sk-frame--strong', 'twd-sk-text--picture', 'color-on-image', 'color-frame', array_merge( $photo, array( 'color-frame' ) ) );
+		return $out;
+	}
+
+	/** A token name or colour marked to be read at a fraction of its opacity: resolved by ratio_for(). */
+	public static function fade( $value, $factor ) {
+		return array( 'fade', $value, (float) $factor );
+	}
+
+	/** The ratio of one style pair against a pack's tokens (null when a colour cannot be read). */
+	public static function ratio_for( $pair, $tokens ) {
+		list( , , $fg, $bg, $layers ) = $pair;
+		$under = empty( $layers ) ? null : self::stack( $layers, $tokens );
+		if ( is_array( $bg ) && 'fade' === $bg[0] ) {
+			$value = isset( $tokens[ $bg[1] ] ) ? $tokens[ $bg[1] ] : $bg[1];
+			$bg    = self::with_alpha( $value, $bg[2] );
+		} else {
+			$bg = isset( $tokens[ $bg ] ) ? $tokens[ $bg ] : $bg;
+		}
+		if ( ! isset( $tokens[ $fg ] ) || null === $bg ) {
+			return null;
+		}
+		if ( null === $under && null === self::parse( $bg ) ) {
+			return null; // A see-through colour with nothing known under it cannot be judged.
+		}
+		$back = null === $under ? $bg : self::flatten( $bg, $under );
+		return null === $back ? null : self::ratio( $tokens[ $fg ], $back );
+	}
+
+	/** A colour's alpha multiplied by a factor (an opaque colour becomes rgba at that factor); null when unreadable. */
+	public static function with_alpha( $value, $factor ) {
+		$value = trim( (string) $value );
+		$t     = self::parse( $value );
+		$a     = 1.0;
+		if ( null === $t ) {
+			if ( preg_match( '/^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(0|1|0?\.\d{1,3}|1\.0+)\s*\)$/', $value, $m ) ) {
+				$t = array( min( 255, (int) $m[1] ), min( 255, (int) $m[2] ), min( 255, (int) $m[3] ) );
+				$a = (float) $m[4];
+			} elseif ( preg_match( '/^#([0-9a-fA-F]{8})$/', $value, $m ) ) {
+				$t = array( hexdec( substr( $m[1], 0, 2 ) ), hexdec( substr( $m[1], 2, 2 ) ), hexdec( substr( $m[1], 4, 2 ) ) );
+				$a = hexdec( substr( $m[1], 6, 2 ) ) / 255;
+			} else {
+				return null;
+			}
+		}
+		return sprintf( 'rgba(%d,%d,%d,%s)', $t[0], $t[1], $t[2], rtrim( rtrim( number_format( $a * $factor, 3, '.', '' ), '0' ), '.' ) );
 	}
 
 	/** Layers from the bottom up (a literal colour or a token name each) flattened to one opaque colour, or null. */
