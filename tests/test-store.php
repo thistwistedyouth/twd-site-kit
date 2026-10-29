@@ -122,6 +122,34 @@ twd_sk_test( 'store: when the cap is reached, an undo or restore copy is dropped
 	twd_sk_eq( 20, count( TWD_SK_Store::list_versions( $id ) ) );
 } );
 
+twd_sk_test( 'store: a copy dropped at the cap can still be restored by its number (the version holding the same words stands in), so an Undo of a save in the Simple editor keeps working', function () {
+	$id = twd_sk_page();
+	TWD_SK_Store::save( $id, twd_sk_p( 'one' ) );
+	TWD_SK_Store::save( $id, twd_sk_p( 'two' ) );
+	TWD_SK_Store::undo( $id ); // v3 = copy of v1
+	for ( $i = 4; $i <= 21; $i++ ) {
+		TWD_SK_Store::save( $id, twd_sk_p( 'v' . $i ) );
+	}
+	twd_sk_eq( null, TWD_SK_Store::get_version( $id, 3 ), 'the undo copy went' );
+	$raw   = get_post_meta( $id, '_twd_sk_versions', true );
+	$found = false;
+	foreach ( $raw['items'] as $item ) {
+		if ( 1 === (int) $item['id'] ) {
+			$found = in_array( 3, $item['also'], true );
+		}
+	}
+	twd_sk_true( $found, 'the surviving version remembers the dropped number' );
+	$out = TWD_SK_Store::restore( $id, 3 );
+	twd_sk_true( ! is_wp_error( $out ), 'restoring the dropped number works' );
+	twd_sk_eq( 1, $out['target'], 'it names the version that holds those words' );
+	twd_sk_eq( twd_sk_p( 'one' ), TWD_SK_Store::get_current( $id ) );
+	twd_sk_eq( 22, $out['version'] );
+	// That restore filled the cap again, so the oldest version (1, no copies left) went; its words live on in 22.
+	twd_sk_eq( null, TWD_SK_Store::get_version( $id, 1 ) );
+	twd_sk_eq( twd_sk_p( 'one' ), TWD_SK_Store::get_version( $id, 22 )['html'] );
+	twd_sk_is_error( 'twd_sk_version_not_found', TWD_SK_Store::restore( $id, 999 ), 'a number nothing holds is still refused' );
+} );
+
 twd_sk_test( 'store: each version records its must-fix placeholder count and a plain label', function () {
 	$id = twd_sk_page();
 	TWD_SK_Store::save( $id, '<p>[PLACEHOLDER: the name] and [PLACEHOLDER: more]</p>', array( 'note' => 'Outline (site setup)' ) );

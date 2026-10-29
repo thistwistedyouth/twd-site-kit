@@ -520,7 +520,9 @@ class TWD_SK_Snags {
 	}
 
 	public static function get_list( $request ) {
-		$admin = current_user_can( 'manage_options' );
+		// The notes panel is an administrator's tool: an administrator viewing as the client (session 5) sees the list as
+		// a client does (their own notes, no names, no ideas). Changing a status or deleting still checks the real capability.
+		$admin = current_user_can( 'manage_options' ) && ! TWD_SK_Editor::simple_on();
 		$notes = $admin
 			? self::find( array( 'include_ideas' => true ) )
 			: self::find( array( 'user_id' => get_current_user_id() ) );
@@ -644,7 +646,8 @@ class TWD_SK_Snags {
 			'pageId'    => $page_id,
 			'pageTitle' => $page_id > 0 ? TWD_SK_Sanitizer::strip_dashes( wp_strip_all_tags( (string) get_the_title( $page_id ) ) ) : '',
 			'version'   => defined( 'TWD_SK_VERSION' ) ? TWD_SK_VERSION : '',
-			'isAdmin'   => current_user_can( 'manage_options' ),
+			// The notes panel is an administrator's tool: never in the Simple editor (session 5), so Client view hides it too.
+			'isAdmin'   => current_user_can( 'manage_options' ) && ! TWD_SK_Editor::simple_on(),
 			'privacy'   => self::privacy_line(),
 			'max'       => self::MAX_LEN,
 		) );
@@ -656,7 +659,7 @@ class TWD_SK_Snags {
 		if ( ! self::wanted() ) {
 			return;
 		}
-		echo '<div id="twd-sk-tellus" class="twd-sk-ed"' . ( TWD_SK_Editor::tools_off() ? ' data-twd-sk-tools="off"' : '' ) . '><button type="button" id="twd-sk-tellus-open" class="twd-sk-ed__open twd-sk-ed__open--tellus" hidden aria-haspopup="dialog">'
+		echo '<div id="twd-sk-tellus" class="twd-sk-ed"' . ( TWD_SK_Editor::launchers_hidden() ? ' data-twd-sk-tools="off"' : '' ) . '><button type="button" id="twd-sk-tellus-open" class="twd-sk-ed__open twd-sk-ed__open--tellus" hidden aria-haspopup="dialog">'
 			. esc_html__( 'Tell us', 'twd-site-kit' )
 			. '</button></div>';
 	}

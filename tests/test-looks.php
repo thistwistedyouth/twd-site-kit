@@ -198,7 +198,7 @@ twd_sk_test( 'looks: Undo puts the old look back', function () {
 
 twd_sk_test( 'looks: the pop-up gets the choices only on a kit page outside safe mode, and the script has the Look tool, builds with DOM calls and sends the wanted state', function () {
 	$php = file_get_contents( ABSPATH . 'includes/class-twd-sk-editor.php' );
-	twd_sk_has( "'look'           => ( (bool) \$context['is_kit_page'] && ! TWD_SK_Safe::on() ) ? TWD_SK_Looks::config() : array(),", $php );
+	twd_sk_has( "'look'           => ( (bool) \$context['is_kit_page'] && ! TWD_SK_Safe::on() && ! \$simple ) ? TWD_SK_Looks::config() : array(),", $php );
 	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
 	foreach ( array( "toolButton('Look'", 'cfg.look', 'data-twd-sk-sec', 'data-twd-sk-lay', 'body.looks = ', 'function lookClasses(', 'S.origLook', "'Look of this section: '" ) as $needle ) {
 		twd_sk_has( $needle, $js );

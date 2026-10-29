@@ -769,6 +769,63 @@
     display: none;
   }
 }
+.twd-sk-ed .twd-sk-ed__pen.twd-sk-ed__pen {
+  display: inline-flex;
+  width: 56px;
+  height: 56px;
+  cursor: pointer;
+}
+.twd-sk-ed .twd-sk-ed__simple.twd-sk-ed__simple {
+  left: auto;
+  right: 24px;
+  width: 380px;
+}
+.twd-sk-ed .twd-sk-ed__simple.twd-sk-ed__simple .twd-sk-ed__inlineactions.twd-sk-ed__inlineactions {
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin: 0 !important;
+}
+.twd-sk-ed .twd-sk-ed__steps.twd-sk-ed__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.twd-sk-ed .twd-sk-ed__simple.twd-sk-ed__simple .twd-sk-ed__tellus.twd-sk-ed__tellus {
+  order: 1;
+  font-weight: 400 !important;
+  color: var(--twd-site-color-body) !important;
+}
+.twd-sk-ed .twd-sk-ed__simple.twd-sk-ed__simple .twd-sk-ed__versions.twd-sk-ed__versions {
+  flex: 1 1 100%;
+  margin: 0 !important;
+}
+.twd-sk-ed .twd-sk-ed__clienttag.twd-sk-ed__clienttag {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  flex: 1 1 100%;
+  margin: 0 !important;
+  padding: 4px 10px !important;
+  border-radius: var(--twd-site-radius-field) !important;
+  background-color: var(--twd-site-color-tint) !important;
+  color: var(--twd-site-color-title) !important;
+  font-size: var(--twd-site-size-small) !important;
+  font-weight: 600 !important;
+}
+.twd-sk-ed .twd-sk-ed__simple.twd-sk-ed__simple[data-twd-sk-engaged="off"] .twd-sk-ed__steps.twd-sk-ed__steps,
+.twd-sk-ed .twd-sk-ed__simple.twd-sk-ed__simple[data-twd-sk-engaged="off"] .twd-sk-ed__tellus.twd-sk-ed__tellus,
+.twd-sk-ed .twd-sk-ed__simple.twd-sk-ed__simple[data-twd-sk-engaged="off"] .twd-sk-ed__inlinetools--words.twd-sk-ed__inlinetools--words,
+.twd-sk-ed .twd-sk-ed__simple.twd-sk-ed__simple:not([data-twd-sk-ctx="words"]) .twd-sk-ed__inlinetools--words.twd-sk-ed__inlinetools--words {
+  display: none;
+}
+@media (max-width: 700px) {
+  .twd-sk-ed .twd-sk-ed__simple.twd-sk-ed__simple {
+    max-height: 70%;
+    padding: 10px 12px !important;
+  }
+}
 .twd-sk-ed .twd-sk-ed__aisec.twd-sk-ed__aisec {
   display: flex;
   align-items: center;

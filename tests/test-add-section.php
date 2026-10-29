@@ -84,5 +84,5 @@ twd_sk_test( 'planner js (0.10.0): one box replaces Add a section; the plan and 
 	twd_sk_has( "maxlength: '6000'", $js );
 	twd_sk_has( 'Not possible on a page: ', $js );
 	$php = file_get_contents( ABSPATH . 'includes/class-twd-sk-editor.php' );
-	twd_sk_has( "'components'     => (bool) \$context['is_kit_page'] ? TWD_SK_Recipes::parts_menu( TWD_SK_Embed::can_manage() && ! TWD_SK_Safe::on() ) : array(),", $php );
+	twd_sk_has( "'components'     => ( (bool) \$context['is_kit_page'] && ! \$simple ) ? TWD_SK_Recipes::parts_menu( TWD_SK_Embed::can_manage() && ! TWD_SK_Safe::on() ) : array(),", $php );
 } );

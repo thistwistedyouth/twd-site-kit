@@ -61,6 +61,12 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_editor_classic' ),
 			'permission_callback' => array( __CLASS__, 'can_use_editor' ),
 		) );
+		// View as (session 5, 29 Oct 2026): an administrator's choice to see the Simple editor as a client does.
+		register_rest_route( self::ROUTE_NS, '/editor/view-as', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_editor_view_as' ),
+			'permission_callback' => array( __CLASS__, 'can_use_editor' ),
+		) );
 		// Where the Edit with AI window sits (0.15.0): a per-person preference, like the switch.
 		register_rest_route( self::ROUTE_NS, '/editor/window', array(
 			'methods'             => 'POST',
@@ -585,6 +591,16 @@ class TWD_SK_REST {
 		$on = self::truthy( $request->get_param( 'on' ) );
 		TWD_SK_Editor::set_classic( $on );
 		return array( 'on' => $on );
+	}
+
+	/** Administrators only: a person who is not one has no switch (their role decides), so the request is refused. */
+	public static function post_editor_view_as( $request ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return self::error( 'twd_sk_forbidden', 'Only an administrator can choose a view. Your account always has the simple editor.', 403 );
+		}
+		$as = 'client' === $request->get_param( 'as' ) ? 'client' : 'admin';
+		TWD_SK_Editor::set_view_as( $as );
+		return array( 'as' => $as );
 	}
 
 	public static function post_editor_window( $request ) {

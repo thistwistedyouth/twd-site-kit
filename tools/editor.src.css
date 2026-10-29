@@ -214,6 +214,29 @@
   .twd-sk-ed__overlay--sheet .twd-sk-ed__winbtn { display: none; }
 }
 
+/* ---- the Simple editor (session 5, 29 Oct 2026) ----
+   For everyone who is not an administrator, and for an administrator viewing as the client: one round pen button
+   (the minimised pencil's look, bottom right, glowing softly) and, pressed, one small panel in its place with the
+   Visual editor's words and pictures, Bold, Link, Save, Undo, Redo, History and Done. Nothing else floats. */
+.twd-sk-ed__pen { display: inline-flex; width: 56px; height: 56px; cursor: pointer; }
+.twd-sk-ed__simple { left: auto; right: 24px; width: 380px; }
+.twd-sk-ed__simple .twd-sk-ed__inlineactions { flex: 1 1 100%; flex-wrap: wrap; justify-content: space-between; margin: 0; }
+.twd-sk-ed__steps { display: flex; flex-wrap: wrap; gap: 8px; }
+.twd-sk-ed__simple .twd-sk-ed__tellus { order: 1; font-weight: 400; color: $color-body; }
+.twd-sk-ed__simple .twd-sk-ed__versions { flex: 1 1 100%; margin: 0; }
+/* The thin tag an administrator sees while viewing as the client, with the way back. */
+.twd-sk-ed__clienttag {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; flex: 1 1 100%; margin: 0; padding: 4px 10px;
+  border-radius: $radius-field; background-color: $color-tint; color: $color-title; font-size: $size-small; font-weight: 600;
+}
+/* Before the person clicks on words or changes something: the hint and Done only. Bold and Link only for words. */
+.twd-sk-ed__simple[data-twd-sk-engaged="off"] .twd-sk-ed__steps, .twd-sk-ed__simple[data-twd-sk-engaged="off"] .twd-sk-ed__tellus,
+.twd-sk-ed__simple[data-twd-sk-engaged="off"] .twd-sk-ed__inlinetools--words, .twd-sk-ed__simple:not([data-twd-sk-ctx="words"]) .twd-sk-ed__inlinetools--words { display: none; }
+/* A phone: a slim sheet across the bottom (the card's own phone rule below brings it in to 12px from the edges). */
+@media (max-width: 700px) {
+  .twd-sk-ed__simple { max-height: 70%; padding: 10px 12px; }
+}
+
 /* ---- the AI tab in the one window (0.15.0, phase 2): the section a pencil named, the "cannot do" cards, the pencils' numbers ---- */
 .twd-sk-ed__aisec { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: $size-small; font-weight: 600; color: $color-title; }
 .twd-sk-ed__small { min-height: 32px; padding: 4px 12px; font-size: $size-small; }

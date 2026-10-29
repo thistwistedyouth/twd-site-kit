@@ -241,8 +241,14 @@ twd_sk_test( 'ai js: the editor sends the version it started from, and offers th
 	twd_sk_true( 1 !== preg_match( '/(^|[^.\w])(alert|confirm|prompt)\s*\(/m', $js ), 'no native dialogs' );
 } );
 
-twd_sk_test( 'ai: the editor is told about AI only for an editor on a kit page when a key is set up', function () {
+twd_sk_test( 'ai: the editor is told about AI only for an administrator on a kit page when a key is set up (the Simple editor has no AI)', function () {
+	// Session 5: an editor who is not an administrator gets the Simple editor, which never offers the AI.
 	twd_sk_ed_setup();
+	twd_sk_ai_provider( 'x', true );
+	twd_sk_true( twd_sk_ed_loaded() );
+	twd_sk_eq( false, $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['ai'], 'not in the Simple editor' );
+	twd_sk_eq( false, $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['aiAvailable'], 'not even as available' );
+	twd_sk_ed_setup( array( 'edit_pages', 'edit_post:12', 'edit_post:20', 'manage_options' ) );
 	$GLOBALS['twd_stub']['hooks'] = array();
 	twd_sk_true( twd_sk_ed_loaded() );
 	twd_sk_eq( false, $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['ai'], 'no provider' );

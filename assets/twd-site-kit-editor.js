@@ -16,6 +16,12 @@
 	 * Visual editor's own, unchanged. The classic editor (this full-screen pop-up and the separate card) stays behind a
 	 * per-person switch, "Use the classic editor", in the Your Edits menu. */
 	var oneWindow = !cfg.classic;
+	/* The Simple editor (session 5, 29 Oct 2026): everyone who is not an administrator gets it, and an administrator who
+	 * chose "View as: Client". It is a role check on this editor, not a second editor: one round pen button, then the
+	 * Visual editor's words and pictures with Bold, Link, Save, Undo, Redo and History (all in twd-site-kit-inline.js)
+	 * and nothing else. The window, the pencils, the AI and the Settings never build here, and the server already left
+	 * out the admin-only scripts and data. It only hides tools: saving runs with the person's real capabilities. */
+	var simple = !!cfg.simple;
 	var root = document.getElementById('twd-sk-ed');
 	var openBtn = document.getElementById('twd-sk-ed-open');
 	if (!cfg || !root || !openBtn) {
@@ -328,7 +334,15 @@
 			body.insertBefore(el('div', { className: 'twd-sk-ed__banner', role: 'status', text: 'Safe mode is on. The Site tab, header and footer, SEO fields and the newest features are switched off. Your pages and this editor still work.' }), body.firstChild);
 		}
 
-		var header = el('div', { className: 'twd-sk-ed__header' }, [title, el('div', { className: 'twd-sk-ed__winbtns' }, [winBtn, minBtn, closeBtn])]);
+		// View as (19e): an administrator can see the page with the Simple editor, exactly as the client gets it.
+		var viewBtn = null;
+		if (cfg.canSwitchView && !simple) {
+			viewBtn = el('button', { type: 'button', className: 'twd-sk-ed__close twd-sk-ed__viewbtn', text: 'View as Client', title: 'See this page with the Simple editor, exactly as the client gets it' });
+			viewBtn.addEventListener('click', function () {
+				switchView('client');
+			});
+		}
+		var header = el('div', { className: 'twd-sk-ed__header' }, [title, el('div', { className: 'twd-sk-ed__winbtns' }, [viewBtn, winBtn, minBtn, closeBtn])]);
 		var resize = el('div', { className: 'twd-sk-ed__resize', 'aria-hidden': 'true', title: 'Drag to resize' });
 		var dialog = el('div', {
 			className: 'twd-sk-ed__dialog' + (oneWindow ? ' twd-sk-ed__dialog--compact' : ''), role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'twd-sk-ed-title'
@@ -1083,6 +1097,9 @@
 	}
 
 	function buildPencils() {
+		if (simple) {
+			return;
+		}
 		pencils.forEach(function (p) {
 			if (p.node.parentNode) {
 				p.node.parentNode.removeChild(p.node);
@@ -1596,8 +1613,9 @@
 			}
 			return res.text().then(function (html) {
 				var fresh = new DOMParser().parseFromString(html, 'text/html');
-				var oldWraps = Array.prototype.slice.call(document.querySelectorAll('.twd-sk-page'));
-				var newWraps = Array.prototype.slice.call(fresh.querySelectorAll('.twd-sk-page'));
+				// Only the wrappers the server printed: the Reading box (a script's, carrying the page class for the styles) is not one.
+				var oldWraps = Array.prototype.slice.call(document.querySelectorAll('.twd-sk-page:not(.twd-sk-reading__box)'));
+				var newWraps = Array.prototype.slice.call(fresh.querySelectorAll('.twd-sk-page:not(.twd-sk-reading__box)'));
 				if (!oldWraps.length || oldWraps.length !== newWraps.length) {
 					return false;
 				}
@@ -2159,6 +2177,13 @@
 	}
 
 	function open() {
+		if (simple) {
+			var EDs = window.TWD_SK_ED;
+			if (EDs && typeof EDs.startInline === 'function') {
+				EDs.startInline();
+			}
+			return;
+		}
 		if (!state.built) {
 			build();
 			document.addEventListener('keydown', onDocKeys);
@@ -2449,21 +2474,82 @@
 		}
 	}
 
-	function buildMenu() {
+	// The Your Edits drop-down in the WordPress admin bar, right after the WordPress logo, so it sits at the top left.
+	function buildBarMenu() {
 		var list = document.getElementById('wp-admin-bar-root-default');
-		if (list) {
-			var top = el('a', { className: 'ab-item', href: '#', 'aria-haspopup': 'true', 'aria-expanded': 'false', text: 'Your Edits' });
-			menu.list = el('ul', { id: 'wp-admin-bar-twd-sk-edits-default', className: 'ab-submenu' });
-			menu.bar = el('li', { id: 'wp-admin-bar-twd-sk-edits', className: 'menupop' }, [top, el('div', { className: 'ab-sub-wrapper' }, [menu.list])]);
-			top.addEventListener('click', function (e) {
-				e.preventDefault();
-				var on = menu.bar.classList.toggle('hover');
-				top.setAttribute('aria-expanded', on ? 'true' : 'false');
+		if (!list) {
+			return;
+		}
+		var top = el('a', { className: 'ab-item', href: '#', 'aria-haspopup': 'true', 'aria-expanded': 'false', text: 'Your Edits' });
+		menu.list = el('ul', { id: 'wp-admin-bar-twd-sk-edits-default', className: 'ab-submenu' });
+		menu.bar = el('li', { id: 'wp-admin-bar-twd-sk-edits', className: 'menupop' }, [top, el('div', { className: 'ab-sub-wrapper' }, [menu.list])]);
+		top.addEventListener('click', function (e) {
+			e.preventDefault();
+			var on = menu.bar.classList.toggle('hover');
+			top.setAttribute('aria-expanded', on ? 'true' : 'false');
+		});
+		list.insertBefore(menu.bar, list.children.length > 1 ? list.children[1] : null);
+		root.setAttribute('data-twd-sk-ab', '1');
+	}
+
+	/* View as (19e): one click each way, remembered on the server for this administrator, then the page reloads so
+	 * the server hands out exactly what a client gets (or everything). Never offered to anyone else. */
+	function switchView(as) {
+		if (!cfg.canSwitchView) {
+			return;
+		}
+		if (state.built && !ui.overlay.hasAttribute('hidden') && unsavedList().length) {
+			requestClose();
+			return;
+		}
+		api('POST', '/editor/view-as', { as: as }).then(function () {
+			window.location.reload();
+		}, function () {
+			window.location.reload();
+		});
+	}
+
+	/* The Simple editor's launchers (19b): the one round pen button, bottom right, glowing softly, labelled "Edit this
+	 * page", and one plain "Edit this page" in the admin bar in place of the Your Edits menu. An administrator viewing
+	 * as the client keeps the Your Edits drop-down, holding only Edit this page and the way back. Nothing else floats. */
+	function buildSimpleLaunchers() {
+		openBtn.className = 'twd-sk-ed__mini twd-sk-ed__pen';
+		openBtn.textContent = '';
+		openBtn.setAttribute('aria-label', 'Edit this page');
+		openBtn.setAttribute('title', 'Edit this page');
+		openBtn.removeAttribute('aria-haspopup');
+		openBtn.appendChild(pencilIcon());
+		var list = document.getElementById('wp-admin-bar-root-default');
+		if (list && cfg.canSwitchView) {
+			buildBarMenu();
+			addLauncher({ id: 'ai', order: 20, label: function () { return 'Edit this page'; }, run: open });
+			addLauncher({ id: 'viewas', order: 85, label: function () { return 'Viewing as Client - switch back'; }, run: function () {
+				switchView('admin');
+			} });
+			document.addEventListener('click', function (e) {
+				if (menu.bar && menu.bar.classList.contains('hover') && !menu.bar.contains(e.target)) {
+					closeMenu();
+				}
 			});
-			// Right after the WordPress logo, so it sits at the top left.
-			list.insertBefore(menu.bar, list.children.length > 1 ? list.children[1] : null);
+		} else if (list) {
+			var a = el('a', { className: 'ab-item', href: '#', text: 'Edit this page' });
+			a.addEventListener('click', function (e) {
+				e.preventDefault();
+				open();
+			});
+			list.insertBefore(el('li', { id: 'wp-admin-bar-twd-sk-edit' }, [a]), list.children.length > 1 ? list.children[1] : null);
 			root.setAttribute('data-twd-sk-ab', '1');
 		}
+		menu.built = true;
+		drawMenu();
+	}
+
+	function buildMenu() {
+		if (simple) {
+			buildSimpleLaunchers();
+			return;
+		}
+		buildBarMenu();
 		menu.button = el('button', { type: 'button', className: 'twd-sk-ed__menu', 'aria-haspopup': 'true', 'aria-expanded': 'false', text: 'Your Edits' });
 		menu.popList = el('ul', { className: 'twd-sk-ed__menulist' });
 		menu.pop = el('div', { className: 'twd-sk-ed__menupop', hidden: '' }, [menu.popList]);
@@ -2512,6 +2598,12 @@
 			} });
 		}
 		addLauncher({ id: 'tools', order: 90, kind: 'switch', label: toolsLabel, checked: function () { return !tools.off; }, run: flipTools });
+		// View as (19e): administrators only; a real client never has this item.
+		if (cfg.canSwitchView) {
+			addLauncher({ id: 'viewas', order: 85, label: function () { return 'View as Client (see what the client sees)'; }, run: function () {
+				switchView('client');
+			} });
+		}
 		if (version && version.textContent) {
 			addLauncher({ id: 'version', order: 99, kind: 'note', label: function () { return 'Site Kit ' + version.textContent; } });
 		}
@@ -2532,6 +2624,27 @@
 		// Your Edits menu (0.15.0): { id, order, label(), run(), show()?, kind: 'item' | 'switch' (with checked()) | 'note' }.
 		addLauncher: addLauncher,
 		redrawMenu: drawMenu,
+		// The Simple editor (session 5): run a launcher another script registered (the panel's Tell us line), and the switch.
+		hasLauncher: function (id) {
+			return menu.items.some(function (it) {
+				return it.id === id;
+			});
+		},
+		runLauncher: function (id) {
+			menu.items.forEach(function (it) {
+				if (it.id === id) {
+					it.run();
+				}
+			});
+		},
+		simple: simple,
+		switchView: switchView,
+		formatDate: formatDate,
+		// The page version the editor works from, set by a script that saved, undid or restored without a reload.
+		setVersion: function (v) {
+			state.version = parseInt(v, 10) || 0;
+			cfg.currentVersion = state.version;
+		},
 		W: W,
 		api: api,
 		el: el,

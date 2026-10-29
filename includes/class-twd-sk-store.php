@@ -156,6 +156,16 @@ class TWD_SK_Store {
 				break;
 			}
 		}
+		// A copy that was dropped at the cap (session 5, 29 Oct 2026): the version that still holds the same words
+		// stands in for it, so a number an editor remembers (the Simple editor's Undo of a save) keeps working.
+		if ( null === $source ) {
+			foreach ( $store['items'] as $item ) {
+				if ( in_array( (int) $version_id, $item['also'], true ) ) {
+					$source = $item;
+					break;
+				}
+			}
+		}
 		if ( null === $source ) {
 			return new WP_Error( 'twd_sk_version_not_found', 'That version does not exist (it may have been dropped once more than ' . self::MAX_VERSIONS . ' were saved).' );
 		}
@@ -275,6 +285,7 @@ class TWD_SK_Store {
 				foreach ( $items as $j => $other ) {
 					if ( $j !== $i && $other['html'] === $item['html'] ) {
 						$drop = $i;
+						$items[ $j ]['also'] = array_values( array_unique( array_merge( $items[ $j ]['also'], array( (int) $item['id'] ), $item['also'] ) ) );
 						break 2;
 					}
 				}
@@ -351,6 +362,8 @@ class TWD_SK_Store {
 					'restored_from' => isset( $item['restored_from'] ) ? (int) $item['restored_from'] : 0,
 					'bytes'         => strlen( (string) $item['html'] ),
 					'fix'           => isset( $item['fix'] ) ? (int) $item['fix'] : self::must_fix_count( (string) $item['html'] ),
+					// The numbers of dropped copies whose words this version still holds (session 5).
+					'also'          => isset( $item['also'] ) && is_array( $item['also'] ) ? array_values( array_map( 'intval', $item['also'] ) ) : array(),
 				);
 			}
 		}
@@ -421,6 +434,7 @@ class TWD_SK_Store {
 			'restored_from' => $meta['restored_from'],
 			'bytes'         => strlen( $clean ),
 			'fix'           => self::must_fix_count( $clean ),
+			'also'          => array(),
 		);
 		$items = self::trim( $items );
 

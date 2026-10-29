@@ -22,6 +22,17 @@
 	var PICTURE_TYPES = /^image\/(jpeg|png|gif|webp|avif)$/;
 	var S = { on: false, texts: [], pics: [], spots: [], orig: {}, origText: {}, origPic: {}, hrefs: {}, picks: {}, spotPicks: {}, removes: {}, removeOrder: [], looks: {}, origLook: {}, lookSec: null, last: null, range: null, linkTarget: null, target: null, saving: false, uploading: false, styles: {}, origStyles: {}, levels: {}, origLevel: {} };
 	var ui = {};
+	/* The Simple editor (session 5, 29 Oct 2026): the role check in TWD_SK_Editor says who gets it (everyone who is not
+	 * an administrator, and an administrator viewing as the client). The same editor with fewer tools: words and
+	 * pictures, Bold, Link, Save, Undo, Redo, History and Done, in one small panel where the pen was. */
+	var SIMPLE = !!cfg.simple;
+	/* Its Undo and Redo: one list of steps for everything done in this session. An in-page step is typing in one piece
+	 * (grouped until the cursor leaves it or another step happens), a Bold, a link, a picture swap or a new
+	 * description, kept as the piece's number with its words before and after. A save (or History's Go back) is a
+	 * server step kept as the version before and after: undoing it restores the earlier version through the normal
+	 * restore route (a new version, nothing lost) and the page redraws without a reload. A server step absorbs the
+	 * in-page steps before it, so after a save Undo steps back to the previous saved version, as the plan says. */
+	var H = { steps: [], at: 0, typing: null, snap: {}, busy: false, quiet: false, hold: '' };
 
 	function texts() {
 		return Array.prototype.slice.call(document.querySelectorAll('[data-twd-sk-t]'));
@@ -217,6 +228,12 @@
 
 	function counter() {
 		var n = changedCount();
+		if (SIMPLE) {
+			status((H.hold ? H.hold + ' ' : '') + (n ? n + ' change' + (n === 1 ? '' : 's') + ' not saved yet.' : (H.hold ? '' : 'Click on any words or a picture to change them.')));
+			ui.save.disabled = S.saving || S.uploading;
+			engaged();
+			return;
+		}
 		status(n ? n + ' change' + (n === 1 ? '' : 's') + ' not saved yet.' : 'Click any words to change them. Click a picture to change it' + (S.spots.length ? ', or a dashed Add a picture box to put one there.' : '.') + ' Click something, then Remove, to take it out. Click inside a section, then Look, to change its layout or options, or to move it or add a new one after it.');
 		ui.save.disabled = !n || S.saving || S.uploading;
 		adminBar();
@@ -237,7 +254,7 @@
 
 	function buildAdminBar() {
 		var list = document.getElementById('wp-admin-bar-root-default');
-		if (!list) {
+		if (!list || SIMPLE) {
 			return;
 		}
 		ui.abMain = adminItem(list, 'twd-sk-text', function () {
@@ -878,7 +895,7 @@
 	}
 
 	// The one editing window (0.15.0, phase 1): the tools live in its On page edits tab and show for what was clicked.
-	var oneWindow = !cfg.classic;
+	var oneWindow = !cfg.classic && !SIMPLE;
 
 	function buildBar() {
 		ui.status = el('span', { className: 'twd-sk-ed__inlinestatus', role: 'status', 'aria-live': 'polite' });
@@ -889,7 +906,7 @@
 		});
 		ui.ctxHead = el('p', { className: 'twd-sk-ed__inlinehead twd-sk-ed__ctxhead' }, [ui.ctxText, ui.allSections]);
 		ui.viewHint = el('p', { className: 'twd-sk-ed__inlinehead twd-sk-ed__viewhint', text: 'Click any words in this section to edit them.', hidden: '' });
-		ui.save = ED.button('Save changes', 'primary', save);
+		ui.save = ED.button(SIMPLE ? 'Save' : 'Save changes', 'primary', save);
 		ui.save.className += ' twd-sk-ed__inlinesave';
 		ui.cancel = ED.button('Cancel', 'secondary', cancel);
 		ui.bold = toolButton('B', 'Bold', function () {
@@ -1004,7 +1021,7 @@
 		ui.linkPanel = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' }, [
 			el('label', { 'for': 'twd-sk-inline-link', text: 'Link address' }),
 			ui.linkInput,
-			ED.button('Set the link', 'primary', setLink),
+			ED.button(SIMPLE ? 'Add the link' : 'Set the link', 'primary', setLink),
 			ED.button('Remove the link', 'secondary', removeLink),
 			ED.button('Close', 'secondary', closePanels)
 		]);
@@ -1036,7 +1053,7 @@
 		var sectionTools = oneWindow
 			? (kinds.length ? [ui.look, ui.moveUp, ui.moveDown, ui.addSec, ui.remove] : [ui.look, ui.moveUp, ui.moveDown, ui.remove])
 			: (kinds.length ? [ui.addSec, ui.moveUp, ui.moveDown, ui.undo] : [ui.moveUp, ui.moveDown, ui.undo]);
-		var kids = oneWindow
+		var kids = SIMPLE ? simpleKids() : oneWindow
 			? [
 				ui.ctxHead,
 				ui.viewHint,
@@ -1057,7 +1074,7 @@
 				el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.save, ui.cancel]),
 				ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel, ui.confirm
 			];
-		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar' + (oneWindow ? ' twd-sk-ed__inlinebar--inwin' : ''), role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '', 'data-twd-sk-ctx': 'none', 'data-twd-sk-more': 'off' }, kids);
+		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar' + (oneWindow ? ' twd-sk-ed__inlinebar--inwin' : '') + (SIMPLE ? ' twd-sk-ed__simple' : ''), role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '', 'data-twd-sk-ctx': 'none', 'data-twd-sk-more': 'off', 'data-twd-sk-engaged': 'off' }, kids);
 		root.appendChild(ui.bar);
 		if (oneWindow) {
 			show(ui.putBack, false);
@@ -1080,6 +1097,14 @@
 			kind = 'picture';
 		} else if (sec) {
 			kind = 'section';
+		}
+		if (SIMPLE) {
+			kind = kind === 'words' || kind === 'picture' ? kind : 'none';
+			ui.bar.setAttribute('data-twd-sk-ctx', kind);
+			ui.ctxText.textContent = kind === 'words' ? 'Type to change these words. Select some of them for Bold or Link.'
+				: (kind === 'picture' ? 'Choose a picture, or change its description.' : 'Click on any words or a picture to change them.');
+			engaged();
+			return;
 		}
 		if (sec) {
 			var index = parseInt(sec.getAttribute('data-twd-sk-sec'), 10);
@@ -1120,7 +1145,9 @@
 			status('Button words cannot be bold or italic.');
 			return;
 		}
-		document.execCommand(command, false, null);
+		recordText(t, command === 'bold' ? 'bold' : 'italic', function () {
+			document.execCommand(command, false, null);
+		});
 		markChanged(t);
 	}
 
@@ -1130,11 +1157,14 @@
 		show(ui.picPanel, false);
 		show(ui.lookPanel, false);
 		show(ui.addPanel, false);
+		if (ui.histPanel) {
+			show(ui.histPanel, false);
+		}
 		S.linkTarget = null;
 	}
 
 	function panelOpen() {
-		return !ui.linkPanel.hasAttribute('hidden') || !ui.altPanel.hasAttribute('hidden') || !ui.picPanel.hasAttribute('hidden') || !ui.lookPanel.hasAttribute('hidden') || !ui.addPanel.hasAttribute('hidden');
+		return !ui.linkPanel.hasAttribute('hidden') || !ui.altPanel.hasAttribute('hidden') || !ui.picPanel.hasAttribute('hidden') || !ui.lookPanel.hasAttribute('hidden') || !ui.addPanel.hasAttribute('hidden') || !!(ui.histPanel && !ui.histPanel.hasAttribute('hidden'));
 	}
 
 	function openLink() {
@@ -1182,16 +1212,18 @@
 			ui.linkInput.focus();
 			return;
 		}
-		if (target.a === target.t) {
-			S.hrefs[target.i] = v;
-		} else if (target.a) {
-			target.a.setAttribute('href', v);
-		} else if (S.range) {
-			var sel = window.getSelection();
-			sel.removeAllRanges();
-			sel.addRange(S.range);
-			document.execCommand('createLink', false, v);
-		}
+		recordText(target.t, 'the link', function () {
+			if (target.a === target.t) {
+				S.hrefs[target.i] = v;
+			} else if (target.a) {
+				target.a.setAttribute('href', v);
+			} else if (S.range) {
+				var sel = window.getSelection();
+				sel.removeAllRanges();
+				sel.addRange(S.range);
+				document.execCommand('createLink', false, v);
+			}
+		});
 		closePanels();
 		markChanged(target.t);
 	}
@@ -1199,11 +1231,13 @@
 	function removeLink() {
 		var target = S.linkTarget;
 		if (target && target.a && target.a !== target.t) {
-			var a = target.a;
-			while (a.firstChild) {
-				a.parentNode.insertBefore(a.firstChild, a);
-			}
-			a.parentNode.removeChild(a);
+			recordText(target.t, 'removing the link', function () {
+				var a = target.a;
+				while (a.firstChild) {
+					a.parentNode.insertBefore(a.firstChild, a);
+				}
+				a.parentNode.removeChild(a);
+			});
 			markChanged(target.t);
 		} else if (target && target.a === target.t) {
 			status('A button needs a link. Change its address instead.');
@@ -1330,6 +1364,15 @@
 
 	// Show the chosen picture where it will go, before it is saved.
 	function usePicture(target, pic) {
+		recordPic(target, 'the picture', function () {
+			placePicture(target, pic);
+		});
+		S.target = target;
+		openAlt(pic.alt);
+		counter();
+	}
+
+	function placePicture(target, pic) {
 		var i = target.i;
 		if (target.kind === 'pic') {
 			var img = picOf(i);
@@ -1364,9 +1407,6 @@
 			spot.setAttribute('data-twd-sk-filled', '1');
 			S.spotPicks[i] = { i: parseInt(i, 10), id: pic.id, alt: pic.alt };
 		}
-		S.target = target;
-		openAlt(pic.alt);
-		counter();
 	}
 
 	// The class the server gives a picture in each kind of box (TWD_SK_Inline::picture_class).
@@ -1428,6 +1468,16 @@
 	function setAlt() {
 		var t = S.target;
 		var v = ui.altInput.value.trim();
+		if (t) {
+			recordPic(t, 'the description', function () {
+				applyAlt(t, v);
+			});
+		}
+		show(ui.altPanel, false);
+		counter();
+	}
+
+	function applyAlt(t, v) {
 		if (t && t.kind === 'pic') {
 			var img = picOf(t.i);
 			var was = S.origPic[t.i] && S.origPic[t.i].alt ? S.origPic[t.i].alt : '';
@@ -1450,8 +1500,6 @@
 				shown.setAttribute('alt', v);
 			}
 		}
-		show(ui.altPanel, false);
-		counter();
 	}
 
 	/* ---- typing ---- */
@@ -1535,6 +1583,7 @@
 	function onInput(e) {
 		var t = editableOf(e.target);
 		if (t) {
+			noteTyping(t);
 			markChanged(t);
 			syncGroup(t);
 		}
@@ -1800,6 +1849,8 @@
 		S.lookSec = null;
 		S.last = null;
 		S.target = null;
+		H.typing = null;
+		H.snap = {};
 		if (ui.putBack) {
 			ui.putBack.disabled = true;
 			syncPutBack();
@@ -1808,6 +1859,7 @@
 			var i = t.getAttribute('data-twd-sk-t');
 			S.orig[i] = copyChildren(t);
 			S.origText[i] = serialize(t);
+			H.snap[i] = snapOf(t);
 			S.origQuote[i] = t.classList.contains(QUOTE);
 			S.origNote[i] = t.classList.contains(NOTE);
 			S.origStyles[i] = stylesOf(t);
@@ -1835,14 +1887,25 @@
 		closePanels();
 		show(ui.confirm, false);
 		counter();
-		if (S.texts[0] && !oneWindow) {
+		if (S.texts[0] && !oneWindow && !SIMPLE) {
 			S.texts[0].focus();
+		}
+		if (SIMPLE) {
+			show(ui.tellus, !!(ED.hasLauncher && ED.hasLauncher('tellus')));
+			refreshSteps();
 		}
 		updateContext();
 	}
 
 	function stop() {
 		S.on = false;
+		// The Simple editor: the in-page steps are gone with the session; the saves stay, so Undo can still step back.
+		H.typing = null;
+		H.hold = '';
+		H.steps = H.steps.slice(0, H.at).filter(function (st) {
+			return st.kind === 'server';
+		});
+		H.at = H.steps.length;
 		S.texts.forEach(function (t) {
 			t.removeAttribute('contenteditable');
 			t.removeAttribute('spellcheck');
@@ -1951,8 +2014,8 @@
 			return;
 		}
 		ED.clear(ui.confirm);
-		ui.confirm.appendChild(el('span', { text: 'Throw away ' + n + ' change' + (n === 1 ? '' : 's') + '? ' }));
-		var yes = ED.button('Throw them away', 'primary', function () {
+		ui.confirm.appendChild(el('span', { text: SIMPLE ? 'You have ' + n + ' change' + (n === 1 ? '' : 's') + ' not saved. Leave anyway? ' : 'Throw away ' + n + ' change' + (n === 1 ? '' : 's') + '? ' }));
+		var yes = ED.button(SIMPLE ? 'Leave and lose them' : 'Throw them away', 'primary', function () {
 			show(ui.confirm, false);
 			throwAway();
 		});
@@ -1973,6 +2036,7 @@
 			status('Wait for the picture to finish uploading.');
 			return;
 		}
+		commitTyping();
 		var body = { base_version: cfg.currentVersion, texts: [], pictures: [], spots: [] };
 		S.texts.forEach(function (t) {
 			var i = t.getAttribute('data-twd-sk-t');
@@ -2012,14 +2076,34 @@
 			return S.looks[k];
 		});
 		if (!body.texts.length && !body.pictures.length && !body.spots.length && !body.removes.length && !body.looks.length) {
-			status('Nothing has changed yet.');
+			status(SIMPLE ? 'Nothing to save.' : 'Nothing has changed yet.');
 			return;
 		}
 		S.saving = true;
 		ui.save.disabled = true;
 		adminBar();
 		status('Saving...');
+		if (SIMPLE) {
+			refreshSteps();
+		}
 		ED.api('POST', '/pages/' + cfg.pageId + '/inline', body).then(function (data) {
+			if (SIMPLE) {
+				// Saved: the page redraws from the server (no reload) and the session carries on from the saved words.
+				// The save is one step: Undo brings the previous saved version back.
+				var from = cfg.currentVersion;
+				ED.setVersion(data.version);
+				pushStep({ kind: 'server', from: from, to: data.version, label: 'the save' });
+				holdStatus('Saved at ' + timeNow() + '.');
+				ED.redraw().then(function (ok) {
+					S.saving = false;
+					counter();
+					refreshSteps();
+					if (!ok) {
+						holdStatus('Saved at ' + timeNow() + '. Reload the page to see it as visitors will.');
+					}
+				});
+				return;
+			}
 			if (data.resume_at !== undefined && data.resume_at !== null) {
 				// The section moved to a layout with a picture behind it: come back editing, at the picture box.
 				status('Saved as version ' + data.version + '. Reloading at the section: click its "Add a picture" box to choose the picture.');
@@ -2034,8 +2118,436 @@
 			S.saving = false;
 			ui.save.disabled = false;
 			adminBar();
+			if (SIMPLE) {
+				refreshSteps();
+			}
 			status(err.status === 409 ? err.message + ' Your changes are still on screen: copy any you need, then reload.' : err.message);
 		});
+	}
+
+	/* ---- the Simple editor (session 5, 29 Oct 2026) ---- */
+
+	// The panel: the hint and Done before anything is touched; Bold and Link for words, then Save, Undo, Redo and
+	// History, and one plain line to Tell us, once the person clicks on words or changes something.
+	function simpleKids() {
+		ui.undoStep = toolButton('Undo', 'Undo the last thing you did', undoStep);
+		ui.redoStep = toolButton('Redo', 'Do again what you undid', redoStep);
+		ui.history = toolButton('History', 'Saved versions of this page, to go back to one', openHistory);
+		ui.done = ED.button('Done', 'secondary', cancel);
+		ui.undoStep.disabled = true;
+		ui.redoStep.disabled = true;
+		ui.histHead = el('p', { className: 'twd-sk-ed__inlinehead', tabindex: '-1', text: 'Saved versions, newest first' });
+		ui.histBody = el('ol', { className: 'twd-sk-ed__versions' });
+		ui.histPanel = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' }, [
+			ui.histHead, el('p', { className: 'twd-sk-ed__inlinehead', text: 'Going back saves a new version, so nothing is ever lost.' }), ui.histBody, ED.button('Close', 'secondary', closePanels)
+		]);
+		var tell = el('button', { type: 'button', className: 'twd-sk-ed__allsections', text: 'Tell us' });
+		tell.addEventListener('click', function () {
+			if (ED.runLauncher) {
+				ED.runLauncher('tellus');
+			}
+		});
+		ui.tellus = el('p', { className: 'twd-sk-ed__inlinehead twd-sk-ed__tellus', hidden: '' }, [el('span', { text: 'Need something else changed? ' }), tell]);
+		var kids = [];
+		// An administrator viewing as the client sees a thin tag, so they never forget which view they are in.
+		if (cfg.canSwitchView) {
+			var back = el('button', { type: 'button', className: 'twd-sk-ed__allsections', text: 'Switch back to Administrator view' });
+			back.addEventListener('click', function () {
+				if (ED.switchView) {
+					ED.switchView('admin');
+				}
+			});
+			ui.clientTag = el('p', { className: 'twd-sk-ed__clienttag' }, [el('span', { text: 'Client view' }), back]);
+			kids.push(ui.clientTag);
+		}
+		return kids.concat([
+			ui.ctxHead,
+			el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words', role: 'group', 'aria-label': 'Words' }, [ui.bold, ui.link]),
+			el('div', { className: 'twd-sk-ed__inlineactions' }, [
+				el('div', { className: 'twd-sk-ed__steps' }, [ui.save, ui.undoStep, ui.redoStep, ui.history]),
+				ui.done
+			]),
+			ui.status, ui.tellus, ui.linkPanel, ui.altPanel, ui.picPanel, ui.histPanel, ui.confirm
+		]);
+	}
+
+	// The panel opens up once the person has clicked on words or changed something.
+	function engaged() {
+		if (!ui.bar || !SIMPLE) {
+			return;
+		}
+		var on = H.steps.length > 0 || !!H.typing || changedCount() > 0 || ui.bar.getAttribute('data-twd-sk-ctx') !== 'none';
+		ui.bar.setAttribute('data-twd-sk-engaged', on ? 'on' : 'off');
+	}
+
+	function holdStatus(text) {
+		H.hold = text;
+		status(text);
+	}
+
+	function timeNow() {
+		return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+	}
+
+	function textByNumber(i) {
+		return document.querySelector('[data-twd-sk-t="' + i + '"]');
+	}
+
+	// A piece's words as they are now: a copy of its nodes, their markup for comparing, and a button's address.
+	function snapOf(t) {
+		var i = t.getAttribute('data-twd-sk-t');
+		return { frag: copyChildren(t), text: serialize(t), href: S.hrefs[i] };
+	}
+
+	function applySnap(i, snap) {
+		var t = textByNumber(i);
+		if (!t) {
+			return false;
+		}
+		restoreChildren(t, snap.frag);
+		if (snap.href === undefined) {
+			delete S.hrefs[i];
+		} else {
+			S.hrefs[i] = snap.href;
+		}
+		H.snap[i] = snap;
+		markChanged(t);
+		syncGroup(t);
+		return true;
+	}
+
+	function pieceName(t) {
+		var words = (t.textContent || '').trim().replace(/\s+/g, ' ');
+		return words.length > 30 ? '"' + words.slice(0, 30) + '..."' : (words ? '"' + words + '"' : 'the words');
+	}
+
+	function noteTyping(t) {
+		if (!SIMPLE || H.quiet) {
+			return;
+		}
+		var i = t.getAttribute('data-twd-sk-t');
+		if (H.typing && H.typing.i !== i) {
+			commitTyping();
+		}
+		if (!H.typing) {
+			H.hold = '';
+			H.typing = { i: i, before: H.snap[i] || snapOf(t) };
+		}
+		refreshSteps();
+	}
+
+	// Typing in one piece becomes one step when the cursor leaves it, another step happens, or Save, Undo or Redo is pressed.
+	function commitTyping() {
+		if (!H.typing) {
+			return;
+		}
+		var i = H.typing.i;
+		var t = textByNumber(i);
+		var before = H.typing.before;
+		H.typing = null;
+		if (!t) {
+			return;
+		}
+		var after = snapOf(t);
+		if (after.text !== before.text || after.href !== before.href) {
+			pushStep({ kind: 'text', i: i, before: before, after: after, label: 'typing in ' + pieceName(t) });
+			H.snap[i] = after;
+		}
+	}
+
+	function recordText(t, label, fn) {
+		if (!SIMPLE) {
+			fn();
+			return;
+		}
+		commitTyping();
+		H.hold = '';
+		var i = t.getAttribute('data-twd-sk-t');
+		var before = H.snap[i] || snapOf(t);
+		H.quiet = true;
+		try {
+			fn();
+		} finally {
+			H.quiet = false;
+		}
+		var after = snapOf(t);
+		if (after.text !== before.text || after.href !== before.href) {
+			pushStep({ kind: 'text', i: i, before: before, after: after, label: label });
+			H.snap[i] = after;
+		}
+	}
+
+	// A picture (or a place for one) as it is now, enough to put it back.
+	function picState(target) {
+		if (target.kind === 'pic') {
+			var img = picOf(target.i);
+			return { filled: true, src: img ? img.getAttribute('src') : '', srcset: img ? img.getAttribute('srcset') : null, alt: img ? img.getAttribute('alt') || '' : '', pick: S.picks[target.i] ? JSON.parse(JSON.stringify(S.picks[target.i])) : null };
+		}
+		var shown = shownFor(target.i);
+		return { filled: !!S.spotPicks[target.i], src: shown ? shown.getAttribute('src') : '', srcset: null, alt: shown ? shown.getAttribute('alt') || '' : '', pick: S.spotPicks[target.i] ? JSON.parse(JSON.stringify(S.spotPicks[target.i])) : null };
+	}
+
+	function applyPic(target, st) {
+		if (target.kind === 'pic') {
+			var img = picOf(target.i);
+			if (!img) {
+				return false;
+			}
+			img.setAttribute('src', st.src);
+			img.setAttribute('alt', st.alt);
+			if (st.srcset) {
+				img.setAttribute('srcset', st.srcset);
+			} else {
+				img.removeAttribute('srcset');
+				img.removeAttribute('sizes');
+			}
+			if (st.pick) {
+				S.picks[target.i] = JSON.parse(JSON.stringify(st.pick));
+			} else {
+				delete S.picks[target.i];
+			}
+			counter();
+			return true;
+		}
+		var spot = spotOf(target.i);
+		if (!spot) {
+			return false;
+		}
+		if (st.filled && st.pick) {
+			placePicture(target, { url: st.src, alt: st.alt, id: st.pick.id });
+		} else {
+			var shown = shownFor(target.i);
+			if (shown && shown.parentNode) {
+				shown.parentNode.removeChild(shown);
+			}
+			spot.removeAttribute('data-twd-sk-filled');
+			delete S.spotPicks[target.i];
+		}
+		counter();
+		return true;
+	}
+
+	function recordPic(target, label, fn) {
+		if (!SIMPLE) {
+			fn();
+			return;
+		}
+		commitTyping();
+		H.hold = '';
+		var before = picState(target);
+		fn();
+		var after = picState(target);
+		if (JSON.stringify(before) !== JSON.stringify(after)) {
+			pushStep({ kind: 'pic', target: { kind: target.kind, i: target.i }, before: before, after: after, label: label });
+		}
+	}
+
+	function pushStep(step) {
+		if (!SIMPLE) {
+			return;
+		}
+		H.steps = H.steps.slice(0, H.at);
+		if (step.kind === 'server') {
+			// A save absorbs the in-page steps before it: from here Undo steps back to the previous saved version.
+			H.steps = H.steps.filter(function (st) {
+				return st.kind === 'server';
+			});
+		}
+		H.steps.push(step);
+		H.at = H.steps.length;
+		refreshSteps();
+	}
+
+	function refreshSteps() {
+		if (!ui.undoStep) {
+			return;
+		}
+		var canUndo = !H.busy && !S.saving && (H.at > 0 || !!H.typing);
+		var canRedo = !H.busy && !S.saving && H.at < H.steps.length;
+		ui.undoStep.disabled = !canUndo;
+		ui.redoStep.disabled = !canRedo;
+		ui.undoStep.title = canUndo ? 'Undo ' + (H.typing ? 'the typing' : H.steps[H.at - 1].label) : 'Nothing to undo';
+		ui.redoStep.title = canRedo ? 'Redo ' + H.steps[H.at].label : 'Nothing to redo';
+		ui.undoStep.setAttribute('aria-label', ui.undoStep.title);
+		ui.redoStep.setAttribute('aria-label', ui.redoStep.title);
+		ui.history.disabled = H.busy || S.saving;
+		engaged();
+	}
+
+	function confirmThen(text, yesLabel, fn) {
+		ED.clear(ui.confirm);
+		ui.confirm.appendChild(el('span', { text: text + ' ' }));
+		var yes = ED.button(yesLabel, 'primary', function () {
+			show(ui.confirm, false);
+			fn();
+		});
+		var no = ED.button('Not now', 'secondary', function () {
+			show(ui.confirm, false);
+		});
+		ui.confirm.appendChild(yes);
+		ui.confirm.appendChild(no);
+		show(ui.confirm, true);
+		yes.focus();
+	}
+
+	// One step back or forward. An in-page step changes the piece on screen; a server step restores a version.
+	function runStep(step, back, done) {
+		if (step.kind === 'text') {
+			done(applySnap(step.i, back ? step.before : step.after));
+			return;
+		}
+		if (step.kind === 'pic') {
+			done(applyPic(step.target, back ? step.before : step.after));
+			return;
+		}
+		var version = back ? step.from : step.to;
+		if (!(version > 0)) {
+			status('There is no earlier version to go back to.');
+			done(false);
+			return;
+		}
+		var n = changedCount();
+		if (n) {
+			confirmThen('You have ' + n + ' change' + (n === 1 ? '' : 's') + ' not saved. ' + (back ? 'Undo the save anyway' : 'Go forward anyway') + ' and lose them?', back ? 'Undo the save anyway' : 'Go forward anyway', function () {
+				restoreTo(version, false, done);
+			});
+			return;
+		}
+		restoreTo(version, false, done);
+	}
+
+	function undoStep() {
+		if (H.busy || S.saving) {
+			return;
+		}
+		commitTyping();
+		if (!H.at) {
+			status('Nothing to undo.');
+			refreshSteps();
+			return;
+		}
+		var step = H.steps[H.at - 1];
+		runStep(step, true, function (ok) {
+			if (ok) {
+				H.at--;
+				holdStatus('Undid ' + step.label + '.');
+				counter();
+			}
+			refreshSteps();
+		});
+	}
+
+	function redoStep() {
+		if (H.busy || S.saving) {
+			return;
+		}
+		commitTyping();
+		if (H.at >= H.steps.length) {
+			status('Nothing to redo.');
+			refreshSteps();
+			return;
+		}
+		var step = H.steps[H.at];
+		runStep(step, false, function (ok) {
+			if (ok) {
+				H.at++;
+				holdStatus('Redid ' + step.label + '.');
+				counter();
+			}
+			refreshSteps();
+		});
+	}
+
+	// Bring a saved version back as a new version, through the normal restore route (the same checks as the window's
+	// History), and redraw the page in place; the session carries on from the restored words. The blank starter asks once.
+	function restoreTo(version, allow, done) {
+		H.busy = true;
+		S.saving = true;
+		refreshSteps();
+		status('Going back...');
+		ED.api('POST', '/pages/' + cfg.pageId + '/restore', { version: version, base_version: cfg.currentVersion, allow_placeholders: !!allow }).then(function (data) {
+			ED.setVersion(data.version);
+			return ED.redraw().then(function (ok) {
+				H.busy = false;
+				S.saving = false;
+				counter();
+				if (!ok) {
+					holdStatus('Done. Reload the page to see it.');
+				}
+				done(true);
+			});
+		}, function (err) {
+			H.busy = false;
+			S.saving = false;
+			refreshSteps();
+			if (err.status === 409 && err.code === 'twd_sk_placeholders') {
+				confirmThen(err.message, 'Go back to it anyway', function () {
+					restoreTo(version, true, done);
+				});
+				return;
+			}
+			status(err.status === 409 ? err.message + ' Reload the page and try again.' : err.message);
+			done(false);
+		});
+	}
+
+	// History: the saved versions, newest first, each with Go back to this; a blank starter is marked.
+	function openHistory() {
+		closePanels();
+		show(ui.confirm, false);
+		ED.clear(ui.histBody);
+		ui.histBody.appendChild(el('li', { className: 'twd-sk-ed__version', text: 'Loading...' }));
+		show(ui.histPanel, true);
+		ui.histHead.focus();
+		ED.api('GET', '/pages/' + cfg.pageId + '/versions').then(function (data) {
+			ED.clear(ui.histBody);
+			(data.versions || []).slice(0, 10).forEach(function (v) {
+				var when = ED.formatDate ? ED.formatDate(v.created) : String(v.created);
+				var kids = [el('span', { className: v.current ? 'twd-sk-ed__current' : '', text: when + (v.current ? ' (the page now)' : '') })];
+				var label = v.label || v.note;
+				if (label) {
+					kids.push(el('span', { className: 'twd-sk-ed__version-note', text: label }));
+				}
+				if (v.fix > 0) {
+					kids.push(el('span', { className: 'twd-sk-ed__badge', text: (/^Outline/.test(label || '') ? 'Blank starter: ' : 'Unfinished: ') + 'example text in ' + v.fix + ' place' + (v.fix === 1 ? '' : 's') }));
+				}
+				var row = el('li', { className: 'twd-sk-ed__version' }, [el('span', { className: 'twd-sk-ed__version-text' }, kids)]);
+				if (!v.current) {
+					row.appendChild(ED.button('Go back to this', 'secondary', function () {
+						goBack(v.id, when);
+					}));
+				}
+				ui.histBody.appendChild(row);
+			});
+		}, function (err) {
+			ED.clear(ui.histBody);
+			status(err.message);
+		});
+	}
+
+	function goBack(id, when) {
+		if (H.busy || S.saving) {
+			return;
+		}
+		commitTyping();
+		var run = function () {
+			var from = cfg.currentVersion;
+			closePanels();
+			restoreTo(id, false, function (ok) {
+				if (ok) {
+					pushStep({ kind: 'server', from: from, to: id, label: 'going back to the version of ' + when });
+					holdStatus('Went back to the version of ' + when + '.');
+					counter();
+				}
+				refreshSteps();
+			});
+		};
+		var n = changedCount();
+		if (n) {
+			confirmThen('You have ' + n + ' change' + (n === 1 ? '' : 's') + ' not saved. Go back anyway and lose them?', 'Go back anyway', run);
+			return;
+		}
+		run();
 	}
 
 	/* ---- set up ---- */
@@ -2075,7 +2587,14 @@
 	}
 	document.addEventListener('selectionchange', selectMarker);
 	ui.open.addEventListener('click', start);
-	root.appendChild(ui.open);
+	if (!SIMPLE) {
+		root.appendChild(ui.open);
+	}
+	document.addEventListener('focusout', function (e) {
+		if (SIMPLE && H.typing && editableOf(e.target)) {
+			commitTyping();
+		}
+	}, true);
 	document.addEventListener('keydown', onKey, true);
 	document.addEventListener('paste', onPaste, true);
 	document.addEventListener('input', onInput, true);
@@ -2087,7 +2606,7 @@
 		}
 	});
 	document.addEventListener('selectionchange', function () {
-		if (S.on && oneWindow) {
+		if (S.on && (oneWindow || SIMPLE)) {
 			window.clearTimeout(S.ctxTimer);
 			S.ctxTimer = window.setTimeout(updateContext, 80);
 		}
@@ -2155,7 +2674,7 @@
 		start();
 	};
 	if (ED.addLauncher) {
-		ED.addLauncher({ id: 'text', order: 10, label: function () { return 'Visual editor'; }, run: start, show: function () { return !oneWindow && !S.on && !(ED.toolsOff && ED.toolsOff()); } });
+		ED.addLauncher({ id: 'text', order: 10, label: function () { return 'Visual editor'; }, run: start, show: function () { return !oneWindow && !SIMPLE && !S.on && !(ED.toolsOff && ED.toolsOff()); } });
 	}
 	// Every way out runs the one revert routine: Cancel and Escape (cancel(), asking first), the pop-up's "Close and
 	// lose these changes" (through this check), and a page redraw (the nodes are gone, so the session ends).
@@ -2169,6 +2688,17 @@
 	});
 	if (typeof ED.onRedraw === 'function') {
 		ED.onRedraw(function () {
+			if (S.on && SIMPLE) {
+				// The words were swapped for the fresh ones from the server: the session starts again on them,
+				// keeping the panel, the step list and the status line.
+				S.on = false;
+				H.typing = null;
+				var hold = H.hold;
+				start();
+				H.hold = hold;
+				counter();
+				return;
+			}
 			if (S.on) {
 				throwAway();
 				status('The page was redrawn, so the Visual editor closed. Press Visual editor to carry on.');

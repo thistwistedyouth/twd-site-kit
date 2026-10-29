@@ -174,11 +174,15 @@ twd_sk_test( 'seo js: no code injection, no storage, no web addresses, no native
 	}
 } );
 
-twd_sk_test( 'seo: the Search script loads for an editor on a kit page and not in safe mode', function () {
+twd_sk_test( 'seo: the Search script loads for an administrator on a kit page, not in safe mode and not in the Simple editor', function () {
+	// Session 5: the Simple editor (anyone who is not an administrator) has no Search tab.
 	twd_sk_ed_setup( array( 'edit_pages', 'edit_post:12' ) );
 	twd_sk_true( twd_sk_ed_loaded() );
+	twd_sk_true( ! isset( $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor-seo'] ), 'not in the Simple editor' );
+	twd_sk_ed_setup( array( 'edit_pages', 'edit_post:12', 'manage_options' ) );
+	twd_sk_true( twd_sk_ed_loaded() );
 	twd_sk_true( ! empty( $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor-seo']['enqueued'] ) );
-	twd_sk_ed_setup( array( 'edit_pages', 'edit_post:12' ) );
+	twd_sk_ed_setup( array( 'edit_pages', 'edit_post:12', 'manage_options' ) );
 	$GLOBALS['twd_stub']['scripts'] = array();
 	TWD_SK_Safe::set( true );
 	twd_sk_true( twd_sk_ed_loaded() );

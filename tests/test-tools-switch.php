@@ -17,18 +17,26 @@ twd_sk_test( 'tools switch: kept per person as user meta, on by default, and swi
 	twd_sk_true( ! TWD_SK_Editor::tools_off() );
 } );
 
-twd_sk_test( 'tools switch: the script gets the saved state, and the button wrapper is marked off before any script runs', function () {
-	twd_sk_ed_setup();
+twd_sk_test( 'tools switch: the script gets the saved state, and the button wrapper is marked off before any script runs (never in the Simple editor)', function () {
+	$admin = array( 'edit_pages', 'edit_post:12', 'edit_post:20', 'manage_options' );
+	twd_sk_ed_setup( $admin );
 	twd_sk_true( twd_sk_ed_loaded() );
 	twd_sk_true( false === $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['toolsOff'], 'on: toolsOff is false' );
 	twd_sk_hasnt( 'data-twd-sk-tools', twd_sk_ed_markup() );
 	TWD_SK_Editor::set_tools_off( true );
-	twd_sk_ed_setup();
+	twd_sk_ed_setup( $admin );
 	twd_sk_true( twd_sk_ed_loaded() );
 	twd_sk_true( true === $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['toolsOff'], 'off: toolsOff is true' );
 	twd_sk_has( '<div id="twd-sk-ed" class="twd-sk-ed" data-twd-sk-tools="off">', twd_sk_ed_markup(), 'the version label hides at once, not after the script loads' );
+	// Session 5: the Simple editor ignores the switch (a client must always find the pen), for an editor and in Client view.
+	twd_sk_ed_setup();
+	twd_sk_true( twd_sk_ed_loaded() );
+	twd_sk_true( false === $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['toolsOff'], 'an editor: the pen always shows' );
+	twd_sk_hasnt( 'data-twd-sk-tools', twd_sk_ed_markup() );
+	twd_sk_true( TWD_SK_Editor::tools_off(), 'the meta itself is kept' );
+	twd_sk_ed_setup( $admin );
 	$snags = file_get_contents( ABSPATH . 'includes/class-twd-sk-snags.php' );
-	twd_sk_has( "TWD_SK_Editor::tools_off() ? ' data-twd-sk-tools=\"off\"' : ''", $snags, 'the Tell us wrapper follows the same state' );
+	twd_sk_has( "TWD_SK_Editor::launchers_hidden() ? ' data-twd-sk-tools=\"off\"' : ''", $snags, 'the Tell us wrapper follows the same state' );
 	TWD_SK_Editor::set_tools_off( false );
 } );
 
