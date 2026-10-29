@@ -1049,6 +1049,19 @@
   .twd-sk-resources__row { grid-template-columns: 1fr 2fr; }
 }
 
+/* ---- box, border and padding round a section's content (0.15.0): Look panel choices, no class = as before ---- */
+.twd-sk-box-card > .twd-sk-inner { padding: $card-pad; border-radius: $radius-card; background-color: $color-surface; box-shadow: $shadow-card; }
+.twd-sk-box-outline > .twd-sk-inner { padding: $card-pad; border: 1px solid $color-border; border-radius: $radius-card; }
+.twd-sk-border-thin > .twd-sk-inner { border: 1px solid $color-border; border-radius: $radius-card; }
+.twd-sk-border-accent > .twd-sk-inner { border: 2px solid $color-accent; border-radius: $radius-card; }
+.twd-sk-border-thin:not(.twd-sk-box-card):not(.twd-sk-box-outline) > .twd-sk-inner, .twd-sk-border-accent:not(.twd-sk-box-card):not(.twd-sk-box-outline) > .twd-sk-inner { padding: $card-pad; }
+.twd-sk-pad-compact > .twd-sk-inner { padding: $card-pad-sm; }
+.twd-sk-pad-roomy > .twd-sk-inner { padding: calc(#{$card-pad} * 1.6); }
+@media (max-width: 768px) {
+  .twd-sk-box-card > .twd-sk-inner, .twd-sk-box-outline > .twd-sk-inner, .twd-sk-border-thin > .twd-sk-inner, .twd-sk-border-accent > .twd-sk-inner, .twd-sk-pad-roomy > .twd-sk-inner { padding: $card-pad-sm; }
+  .twd-sk-box-card > .twd-sk-inner, .twd-sk-box-outline > .twd-sk-inner, .twd-sk-border-thin > .twd-sk-inner, .twd-sk-border-accent > .twd-sk-inner { width: calc(100% - 2 * #{$gutter-sm}); }
+}
+
 /* ---- space above and below a section (0.15.0): Look panel choices, no class = as before ---- */
 /* Last in the file on purpose: equal specificity with every section rule, so these win on the paddings. */
 .twd-sk-space-top-0 { padding-top: 0; }

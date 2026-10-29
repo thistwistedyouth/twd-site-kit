@@ -81,6 +81,13 @@ class TWD_SK_Registry {
 			'twd-sk-overlay-strong',
 			'twd-sk-overlay-fade',
 			'twd-sk-text-lg',
+			// 0.15.0: a box round a section's content (a soft card or an outline), a border, and the padding inside.
+			'twd-sk-box-card',
+			'twd-sk-box-outline',
+			'twd-sk-border-thin',
+			'twd-sk-border-accent',
+			'twd-sk-pad-compact',
+			'twd-sk-pad-roomy',
 			'twd-sk-eyebrow',
 			'twd-sk-title',
 			'twd-sk-lead',

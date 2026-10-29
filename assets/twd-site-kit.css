@@ -3386,6 +3386,51 @@
     grid-template-columns: 1fr 2fr;
   }
 }
+/* ---- box, border and padding round a section's content (0.15.0): Look panel choices, no class = as before ---- */
+.twd-sk-page .twd-sk-box-card.twd-sk-box-card > .twd-sk-inner.twd-sk-inner {
+  padding: var(--twd-site-card-pad) !important;
+  border-radius: var(--twd-site-radius-card) !important;
+  background-color: var(--twd-site-color-surface) !important;
+  box-shadow: var(--twd-site-shadow-card) !important;
+}
+.twd-sk-page .twd-sk-box-outline.twd-sk-box-outline > .twd-sk-inner.twd-sk-inner {
+  padding: var(--twd-site-card-pad) !important;
+  border: 1px solid var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-card) !important;
+}
+.twd-sk-page .twd-sk-border-thin.twd-sk-border-thin > .twd-sk-inner.twd-sk-inner {
+  border: 1px solid var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-card) !important;
+}
+.twd-sk-page .twd-sk-border-accent.twd-sk-border-accent > .twd-sk-inner.twd-sk-inner {
+  border: 2px solid var(--twd-site-color-accent) !important;
+  border-radius: var(--twd-site-radius-card) !important;
+}
+.twd-sk-page .twd-sk-border-thin.twd-sk-border-thin:not(.twd-sk-box-card.twd-sk-box-card):not(.twd-sk-box-outline.twd-sk-box-outline) > .twd-sk-inner.twd-sk-inner,
+.twd-sk-page .twd-sk-border-accent.twd-sk-border-accent:not(.twd-sk-box-card.twd-sk-box-card):not(.twd-sk-box-outline.twd-sk-box-outline) > .twd-sk-inner.twd-sk-inner {
+  padding: var(--twd-site-card-pad) !important;
+}
+.twd-sk-page .twd-sk-pad-compact.twd-sk-pad-compact > .twd-sk-inner.twd-sk-inner {
+  padding: var(--twd-site-card-pad-sm) !important;
+}
+.twd-sk-page .twd-sk-pad-roomy.twd-sk-pad-roomy > .twd-sk-inner.twd-sk-inner {
+  padding: calc(var(--twd-site-card-pad) * 1.6) !important;
+}
+@media (max-width: 768px) {
+  .twd-sk-page .twd-sk-box-card.twd-sk-box-card > .twd-sk-inner.twd-sk-inner,
+  .twd-sk-page .twd-sk-box-outline.twd-sk-box-outline > .twd-sk-inner.twd-sk-inner,
+  .twd-sk-page .twd-sk-border-thin.twd-sk-border-thin > .twd-sk-inner.twd-sk-inner,
+  .twd-sk-page .twd-sk-border-accent.twd-sk-border-accent > .twd-sk-inner.twd-sk-inner,
+  .twd-sk-page .twd-sk-pad-roomy.twd-sk-pad-roomy > .twd-sk-inner.twd-sk-inner {
+    padding: var(--twd-site-card-pad-sm) !important;
+  }
+  .twd-sk-page .twd-sk-box-card.twd-sk-box-card > .twd-sk-inner.twd-sk-inner,
+  .twd-sk-page .twd-sk-box-outline.twd-sk-box-outline > .twd-sk-inner.twd-sk-inner,
+  .twd-sk-page .twd-sk-border-thin.twd-sk-border-thin > .twd-sk-inner.twd-sk-inner,
+  .twd-sk-page .twd-sk-border-accent.twd-sk-border-accent > .twd-sk-inner.twd-sk-inner {
+    width: calc(100% - 2 * var(--twd-site-gutter-sm));
+  }
+}
 /* ---- space above and below a section (0.15.0): Look panel choices, no class = as before ---- */
 /* Last in the file on purpose: equal specificity with every section rule, so these win on the paddings. */
 .twd-sk-page .twd-sk-space-top-0.twd-sk-space-top-0 {

@@ -44,10 +44,11 @@ twd_sk_test( 'looks: the browser gets small, static data: labels and class names
 	twd_sk_eq( '_', $c['standard'] );
 	twd_sk_true( ! isset( $c['components']['notice'] ), 'the safety notice is left out' );
 	twd_sk_true( isset( $c['components']['hero']['options'][0]['choices'] ) );
-	twd_sk_eq( array( 'space_top', 'space_bottom', 'background' ), array_map( function ( $o ) { return $o['key']; }, $c['shared'] ), 'the shared options go once' );
+	twd_sk_eq( array( 'space_top', 'space_bottom', 'box', 'border', 'padding', 'background' ), array_map( function ( $o ) { return $o['key']; }, $c['shared'] ), 'the shared options go once' );
+	twd_sk_eq( array( 'box', 'border', 'padding' ), $c['advanced'] );
 	twd_sk_eq( array(), $c['components']['faq']['options'], 'a component with no options of its own sends none' );
 	$json = json_encode( $c );
-	twd_sk_true( strlen( $json ) < 8000, 'light: ' . strlen( $json ) . ' bytes' );
+	twd_sk_true( strlen( $json ) < 12000, 'light: ' . strlen( $json ) . ' bytes' ); // 8000 until the nearest-choice hints joined in 0.15.0
 	twd_sk_hasnt( 'PLACEHOLDER', $json );
 	// Every class named in it is one the registry allows.
 	$allowed = TWD_SK_Registry::allowed_classes();
@@ -398,4 +399,50 @@ twd_sk_test( 'words over a picture (0.15.0): the AI editor names the nearest Loo
 			twd_sk_eq( strtolower( $w ), $w, 'lower case word: ' . $w );
 		}
 	}
+} );
+
+twd_sk_test( 'box, border and padding (0.15.0): shared classes on any section, styled from tokens, offered to administrators until the switch offers them to everyone; the route holds them back otherwise', function () {
+	twd_stub_reset();
+	$all = TWD_SK_Looks::all_options( 'faq' );
+	twd_sk_eq( array( 'space_top', 'space_bottom', 'box', 'border', 'padding', 'background' ), array_keys( $all ) );
+	foreach ( array( 'twd-sk-box-card', 'twd-sk-box-outline', 'twd-sk-border-thin', 'twd-sk-border-accent', 'twd-sk-pad-compact', 'twd-sk-pad-roomy' ) as $cls ) {
+		twd_sk_true( in_array( $cls, TWD_SK_Registry::shared_classes(), true ), $cls . ' is shared' );
+		twd_sk_has( $cls, file_get_contents( ABSPATH . 'assets/twd-site-kit.css' ) );
+	}
+	$base = array( 'twd-sk-faq', 'twd-sk-tone-surface' );
+	$set  = TWD_SK_Looks::classes_for( 'faq', $base, null, array( 'box' => 'twd-sk-box-card', 'border' => 'twd-sk-border-accent', 'padding' => 'twd-sk-pad-roomy' ) );
+	twd_sk_eq( array( 'twd-sk-faq', 'twd-sk-tone-surface', 'twd-sk-box-card', 'twd-sk-border-accent', 'twd-sk-pad-roomy' ), $set );
+	twd_sk_eq( $base, TWD_SK_Looks::classes_for( 'faq', $set, null, array( 'box' => '_', 'border' => '_', 'padding' => '_' ) ), 'none puts it back' );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Looks::classes_for( 'faq', $base, null, array( 'box' => 'twd-sk-box-huge' ) ) );
+	// The gate: an editor who may not set them is refused, plainly; space and background still work.
+	twd_sk_is_error( 'twd_sk_forbidden', TWD_SK_Looks::classes_for( 'faq', $base, null, array( 'box' => 'twd-sk-box-card' ), false ) );
+	twd_sk_eq( array( 'twd-sk-faq', 'twd-sk-tone-tint' ), TWD_SK_Looks::classes_for( 'faq', $base, null, array( 'background' => 'twd-sk-tone-tint' ), false ) );
+	$page = TWD_SK_Sanitizer::clean( TWD_SK_Starters::build( array( array( 'hero', 'twd-sk-hero--compact' ), array( 'faq', '' ) ) ) );
+	twd_sk_is_error( 'twd_sk_forbidden', TWD_SK_Looks::apply( $page, array( array( 'i' => 1, 'options' => array( 'padding' => 'twd-sk-pad-compact' ) ) ), false ) );
+	$ok = TWD_SK_Looks::apply( $page, array( array( 'i' => 1, 'options' => array( 'padding' => 'twd-sk-pad-compact' ) ) ), true );
+	twd_sk_has( 'twd-sk-pad-compact', $ok['html'] );
+	twd_sk_eq( $ok['html'], TWD_SK_Sanitizer::clean( $ok['html'] ) );
+	// The switch: off by default (administrators only), on for everyone, and in what the browser gets.
+	twd_sk_true( ! TWD_SK_Looks::advanced_for_all() );
+	$GLOBALS['twd_stub']['caps'] = array( 'edit_pages', 'edit_post' );
+	twd_sk_true( ! TWD_SK_Looks::advanced_allowed(), 'an editor may not' );
+	twd_sk_true( ! TWD_SK_Looks::config()['advancedOk'] );
+	$GLOBALS['twd_stub']['caps'] = array( 'edit_pages', 'edit_post', 'manage_options' );
+	twd_sk_true( TWD_SK_Looks::advanced_allowed(), 'an administrator may' );
+	$GLOBALS['twd_stub']['caps'] = array( 'edit_pages', 'edit_post' );
+	TWD_SK_Editor::set_advanced_looks_for_all( true );
+	twd_sk_true( TWD_SK_Looks::advanced_allowed(), 'everyone may once the switch is on' );
+	twd_sk_true( TWD_SK_Looks::config()['advancedOk'] );
+	TWD_SK_Editor::set_advanced_looks_for_all( false );
+	twd_sk_true( ! TWD_SK_Looks::advanced_for_all(), 'off again' );
+	twd_sk_hasnt( 'get_option', file_get_contents( ABSPATH . 'includes/class-twd-sk-looks.php' ) );
+	// The Site tab switch route, and the inline script holding the options back.
+	$GLOBALS['twd_stub']['caps'] = array( 'edit_pages', 'edit_post', 'manage_options' );
+	twd_sk_eq( true, TWD_SK_REST::post_site_looks( twd_sk_rest_req( array( 'advanced_for_all' => true ) ) )['advanced_for_all'] );
+	twd_sk_eq( false, TWD_SK_REST::post_site_looks( twd_sk_rest_req( array( 'advanced_for_all' => '0' ) ) )['advanced_for_all'] );
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
+	twd_sk_has( 'cfg.look.advancedOk', $js );
+	$site = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' );
+	twd_sk_has( "'/site/looks'", $site );
+	twd_sk_has( 'Box, Border and Padding', $site );
 } );

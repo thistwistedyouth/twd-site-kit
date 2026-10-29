@@ -239,6 +239,19 @@ class TWD_SK_REST {
 				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 			),
 		) );
+		// Box, Border and Padding for every editor, or administrators only (0.15.0).
+		register_rest_route( self::ROUTE_NS, '/site/looks', array(
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'get_site_looks' ),
+				'permission_callback' => array( __CLASS__, 'can_read_site' ),
+			),
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_site_looks' ),
+				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+			),
+		) );
 		register_rest_route( self::ROUTE_NS, '/site/mode', array(
 			array(
 				'methods'             => 'GET',
@@ -800,6 +813,15 @@ class TWD_SK_REST {
 		return self::mode_payload();
 	}
 
+	public static function get_site_looks( $request ) {
+		return array( 'advanced_for_all' => TWD_SK_Looks::advanced_for_all(), 'advanced' => TWD_SK_Looks::advanced_keys() );
+	}
+
+	public static function post_site_looks( $request ) {
+		TWD_SK_Editor::set_advanced_looks_for_all( self::truthy( $request->get_param( 'advanced_for_all' ) ) );
+		return self::get_site_looks( $request );
+	}
+
 	/** Changes wording, the search details type and which fields show. Never rewrites a page. */
 	public static function post_site_mode( $request ) {
 		$saved = TWD_SK_Mode::set( $request->get_param( 'mode' ) );
@@ -1146,9 +1168,9 @@ class TWD_SK_REST {
 		$html  = TWD_SK_Store::get_current( $id );
 		$looks = array( 'html' => $html, 'changed' => 0 );
 		if ( is_array( $request->get_param( 'looks' ) ) && $request->get_param( 'looks' ) ) {
-			$looks = TWD_SK_Looks::apply( $html, $request->get_param( 'looks' ) );
+			$looks = TWD_SK_Looks::apply( $html, $request->get_param( 'looks' ), TWD_SK_Looks::advanced_allowed() );
 			if ( is_wp_error( $looks ) ) {
-				return self::error( $looks->get_error_code(), $looks->get_error_message(), 'twd_sk_conflict' === $looks->get_error_code() ? 409 : 400 );
+				return self::error( $looks->get_error_code(), $looks->get_error_message(), 'twd_sk_conflict' === $looks->get_error_code() ? 409 : ( 'twd_sk_forbidden' === $looks->get_error_code() ? 403 : 400 ) );
 			}
 		}
 		$others = array( $request->get_param( 'texts' ), $request->get_param( 'pictures' ), $request->get_param( 'spots' ), $request->get_param( 'removes' ) );

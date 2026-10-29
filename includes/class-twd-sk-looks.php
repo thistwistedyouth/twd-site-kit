@@ -254,11 +254,54 @@ class TWD_SK_Looks {
 		);
 	}
 
-	/** All options for a component: its own, then space above and below, background last. key => option. */
+	/**
+	 * Box, Border and Padding (0.15.0): shared classes on any section, drawn on its content column from tokens.
+	 * Offered to administrators; the switch TWD_SK_Editor::advanced_looks_for_all() offers them to every editor.
+	 */
+
+	public static function advanced_options() {
+		return array(
+			'box'     => array(
+				'label'   => 'Box',
+				'kind'    => 'choice',
+				'choices' => array( '' => 'None', 'twd-sk-box-card' => 'Soft card', 'twd-sk-box-outline' => 'Outlined' ),
+				'help'    => 'A card or an outline round the words of this section.',
+			),
+			'border'  => array(
+				'label'   => 'Border',
+				'kind'    => 'choice',
+				'choices' => array( '' => 'None', 'twd-sk-border-thin' => 'Thin', 'twd-sk-border-accent' => 'Accent' ),
+			),
+			'padding' => array(
+				'label'   => 'Padding',
+				'kind'    => 'choice',
+				'choices' => array( '' => 'Normal', 'twd-sk-pad-compact' => 'Compact', 'twd-sk-pad-roomy' => 'Roomy' ),
+				'help'    => 'The space inside the box or border.',
+			),
+		);
+	}
+
+	/** The option keys only an administrator sees unless the switch offers them to everyone. */
+	public static function advanced_keys() {
+		return array_keys( self::advanced_options() );
+	}
+
+	/** Whether Box, Border and Padding are offered to every editor (the Site tab switch), or only to administrators. */
+	public static function advanced_for_all() {
+		return TWD_SK_Editor::advanced_looks_for_all();
+	}
+
+	/** Whether the person using the editor now may set them. */
+	public static function advanced_allowed() {
+		return self::advanced_for_all() || ( function_exists( 'current_user_can' ) && current_user_can( 'manage_options' ) );
+	}
+
+	/** All options for a component: its own, then space above and below, box, border, padding, background last. key => option. */
 	public static function all_options( $component ) {
 		return self::options( $component ) + array(
 			'space_top'    => self::space_option( 'top' ),
 			'space_bottom' => self::space_option( 'bottom' ),
+		) + self::advanced_options() + array(
 			'background'   => self::background_option(),
 		);
 	}
@@ -421,6 +464,9 @@ class TWD_SK_Looks {
 		}
 		$out['standard'] = self::STANDARD;
 		$out['hints']    = self::hints();
+		// Box, Border and Padding: named so the browser can hold them back from an editor who may not set them.
+		$out['advanced']   = self::advanced_keys();
+		$out['advancedOk'] = self::advanced_allowed();
 		return $out;
 	}
 
@@ -492,7 +538,7 @@ class TWD_SK_Looks {
 	 * @param array      $values  option key => class, '' / false for none, true for a toggle that is on.
 	 * @return array|WP_Error
 	 */
-	public static function classes_for( $component, $classes, $layout, $values ) {
+	public static function classes_for( $component, $classes, $layout, $values, $advanced_ok = true ) {
 		$layouts = self::layouts( $component );
 		$current = self::current_layout( $component, $classes );
 		$new     = $classes;
@@ -519,6 +565,9 @@ class TWD_SK_Looks {
 		foreach ( (array) $values as $key => $value ) {
 			if ( ! isset( $options[ $key ] ) ) {
 				return new WP_Error( 'twd_sk_bad_input', 'That option is not one this section has.' );
+			}
+			if ( ! $advanced_ok && in_array( $key, self::advanced_keys(), true ) ) {
+				return new WP_Error( 'twd_sk_forbidden', 'Box, Border and Padding are set by an administrator on this site.' );
 			}
 			$o = $options[ $key ];
 			if ( 'toggle' === $o['kind'] ) {
@@ -561,7 +610,7 @@ class TWD_SK_Looks {
 	 * @param array  $looks List of { i (section number), layout? (class or "_"), options? (key => value) }.
 	 * @return array|WP_Error { html, changed (sections whose classes are different now) }
 	 */
-	public static function apply( $html, $looks ) {
+	public static function apply( $html, $looks, $advanced_ok = true ) {
 		if ( ! is_array( $looks ) || ! $looks ) {
 			return array( 'html' => (string) $html, 'changed' => 0 );
 		}
@@ -587,7 +636,7 @@ class TWD_SK_Looks {
 			}
 			$layout = isset( $look['layout'] ) && is_string( $look['layout'] ) ? $look['layout'] : null;
 			$values = isset( $look['options'] ) && is_array( $look['options'] ) ? $look['options'] : array();
-			$new    = self::classes_for( $component, $classes, $layout, $values );
+			$new    = self::classes_for( $component, $classes, $layout, $values, $advanced_ok );
 			if ( is_wp_error( $new ) ) {
 				return new WP_Error( $new->get_error_code(), 'Section ' . ( $i + 1 ) . ': ' . $new->get_error_message() );
 			}

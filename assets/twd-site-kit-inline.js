@@ -295,6 +295,14 @@
 		}
 		var src = (cfg.look && cfg.look.components) || {};
 		var shared = (cfg.look && cfg.look.shared) || [];
+		// Box, Border and Padding (0.15.0) are for administrators until the Site tab switch offers them to everyone;
+		// a class an administrator set stays on the section either way (only options listed here are touched).
+		var advanced = (cfg.look && cfg.look.advanced) || [];
+		if (!(cfg.look && cfg.look.advancedOk)) {
+			shared = shared.filter(function (o) {
+				return advanced.indexOf(o.key) < 0;
+			});
+		}
 		LOOK = {};
 		Object.keys(src).forEach(function (id) {
 			LOOK[id] = { label: src[id].label, layouts: src[id].layouts, options: (src[id].options || []).concat(shared) };

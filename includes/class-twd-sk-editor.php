@@ -23,6 +23,8 @@ class TWD_SK_Editor {
 	const META_TOOLS = 'twd_sk_tools_off';
 	// 0.15.0: where the Edit with AI window sits for a person (docked, free or centred, its size, the minimised pencil's place).
 	const META_WINDOW = 'twd_sk_window';
+	// 0.15.0: the site switch that offers Box, Border and Padding in the Look panel to every editor (administrators always have them).
+	const OPTION_ADVANCED_LOOKS = 'twd_sk_looks_advanced';
 
 	/**
 	 * True when the signed-in person has switched the editing tools off: the floating buttons, the Edit header and
@@ -101,6 +103,15 @@ class TWD_SK_Editor {
 			update_user_meta( $uid, self::META_WINDOW, $clean );
 		}
 		return $clean;
+	}
+
+	public static function advanced_looks_for_all() {
+		return function_exists( 'get_option' ) && '1' === (string) get_option( self::OPTION_ADVANCED_LOOKS, '' );
+	}
+
+	public static function set_advanced_looks_for_all( $on ) {
+		update_option( self::OPTION_ADVANCED_LOOKS, $on ? '1' : '0' );
+		return (bool) $on;
 	}
 
 	public static function init() {

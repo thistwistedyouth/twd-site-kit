@@ -1869,6 +1869,43 @@
 
 	/* ---- site type: therapy or business ---- */
 
+	/* ---- the Look panel (0.15.0): Box, Border and Padding for every editor, or administrators only ---- */
+	function buildLooksSection(panel) {
+		var msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		var id = 'twd-sk-looks-advanced';
+		var box = el('input', { id: id, type: 'checkbox' });
+		var row = el('label', { className: 'twd-sk-ed__check', 'for': id }, [box, el('span', { text: 'Offer Box, Border and Padding to everyone who edits pages (otherwise administrators only)' })]);
+		var saved = null;
+		api('GET', '/site/looks').then(function (data) {
+			saved = !!data.advanced_for_all;
+			box.checked = saved;
+		}, function () {});
+		var save = button('Save', 'primary', function () {
+			message(msg, 'Saving...', true);
+			api('POST', '/site/looks', { advanced_for_all: box.checked }).then(function (data) {
+				saved = !!data.advanced_for_all;
+				box.checked = saved;
+				message(msg, 'Saved. ' + (saved ? 'Everyone who edits pages now sees Box, Border and Padding in the Look panel after a reload.' : 'Box, Border and Padding show for administrators only.'), true);
+			}, function (err) {
+				message(msg, err.message, false);
+			});
+		});
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Look panel' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'The Visual editor\'s Look panel offers Layout, Space above and below, and Background to everyone. Box, Border and Padding are for you unless you offer them to clients too.' }),
+			row,
+			el('div', { className: 'twd-sk-ed__actions' }, [save]),
+			msg
+		]));
+		ED.addDirtyCheck(function () {
+			return (saved !== null && box.checked !== saved) ? 'the Look panel switch' : '';
+		}, function () {
+			if (saved !== null) {
+				box.checked = saved;
+			}
+		});
+	}
+
 	function buildModeSection(panel) {
 		var msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
 		var group = el('div', { className: 'twd-sk-ed__modes', role: 'radiogroup', 'aria-label': 'Site type' });
@@ -2371,6 +2408,7 @@
 
 	function buildSite(panel) {
 		buildModeSection(panel);
+		buildLooksSection(panel);
 		buildBriefSection(panel);
 		buildStyleSection(panel);
 		buildProfileSection(panel);
@@ -2395,6 +2433,7 @@
 			'Set up a new site': 'Create the starter pages',
 			'Launch check': 'Everything to check before going live',
 			'Tell us notes': 'Let clients send you notes, and how long you keep them',
+			'Look panel': 'Box, Border and Padding: for you, or for clients too',
 			'Site report': 'A plain-text report to paste when something looks wrong'
 		};
 		summaries[FACTS_TITLE] = 'The master document the AI writes from';
