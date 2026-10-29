@@ -253,6 +253,12 @@
 		var title = el('h2', { id: 'twd-sk-ed-title', className: 'twd-sk-ed__title', text: 'Edit with AI', tabindex: '-1' });
 		var closeBtn = el('button', { type: 'button', className: 'twd-sk-ed__close', text: 'Close', 'aria-label': 'Close the editor' });
 		closeBtn.addEventListener('click', requestClose);
+		var minBtn = el('button', { type: 'button', className: 'twd-sk-ed__close twd-sk-ed__minbtn', text: 'Minimise', 'aria-label': 'Minimise the editor to a pencil button', title: 'Shrink the editor to a pencil button; everything in it is kept' });
+		minBtn.addEventListener('click', minimise);
+		var winBtn = el('button', { type: 'button', className: 'twd-sk-ed__close twd-sk-ed__winbtn', text: 'Window', 'aria-haspopup': 'true', 'aria-expanded': 'false', title: 'Dock the editor to a side, or let it float' });
+		winBtn.addEventListener('click', function () {
+			toggleWindowMenu(winBtn);
+		});
 
 		var tabs = el('div', { className: 'twd-sk-ed__tabs', role: 'tablist', 'aria-label': 'Editor sections' });
 		tabs.addEventListener('keydown', onTabKeys);
@@ -285,18 +291,24 @@
 			body.insertBefore(el('div', { className: 'twd-sk-ed__banner', role: 'status', text: 'Safe mode is on. The Site tab, header and footer, SEO fields and the newest features are switched off. Your pages and this editor still work.' }), body.firstChild);
 		}
 
+		var header = el('div', { className: 'twd-sk-ed__header' }, [title, el('div', { className: 'twd-sk-ed__winbtns' }, [winBtn, minBtn, closeBtn])]);
+		var resize = el('div', { className: 'twd-sk-ed__resize', 'aria-hidden': 'true', title: 'Drag to resize' });
 		var dialog = el('div', {
 			className: 'twd-sk-ed__dialog', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'twd-sk-ed-title'
 		}, [
-			el('div', { className: 'twd-sk-ed__header' }, [title, closeBtn]),
+			header,
 			tabs,
-			body
+			body,
+			resize
 		]);
 		dialog.addEventListener('keydown', trapFocus);
+		ui.header = header;
+		ui.resize = resize;
+		ui.winBtn = winBtn;
 
 		ui.overlay = el('div', { id: 'twd-sk-ed-overlay', className: 'twd-sk-ed__overlay', hidden: '' }, [dialog]);
 		ui.overlay.addEventListener('mousedown', function (e) {
-			if (e.target === ui.overlay) {
+			if (e.target === ui.overlay && win.mode === 'centre') {
 				requestClose();
 			}
 		});
@@ -305,6 +317,285 @@
 		root.appendChild(ui.overlay);
 		state.built = true;
 		selectTab(ui.tabs.edit ? 'edit' : 'pages');
+		setUpWindow();
+	}
+
+	/* ---- the window (0.15.0): drag by the title bar, resize from the corner, dock left or right, minimise to a pencil ----
+	 * Centred (as before) the window is a modal over a dimmed page. Docked or free, the page behind stays usable: the
+	 * overlay stops dimming and lets clicks through, Tab is no longer trapped, and only the window itself takes
+	 * pointer events. Where it sits is kept per person on the server (cfg.window, POST /editor/window), never in the
+	 * browser. Minimise hides the window and shows one large pencil button; nothing inside is thrown away, so the
+	 * typed text, a preview, the open fold-outs and unsaved changes are all still there when it comes back. */
+	var win = { mode: 'centre', x: 0, y: 0, w: 0, h: 0, mx: -1, my: -1, esc: 'close', minimised: false, menu: null, saveTimer: 0 };
+
+	function phoneWidth() {
+		return window.innerWidth <= 700;
+	}
+
+	function setUpWindow() {
+		var saved = cfg.window || {};
+		['mode', 'x', 'y', 'w', 'h', 'mx', 'my', 'esc'].forEach(function (k) {
+			if (saved[k] !== undefined) {
+				win[k] = saved[k];
+			}
+		});
+		if (win.mode !== 'left' && win.mode !== 'right' && win.mode !== 'free') {
+			win.mode = 'centre';
+		}
+		ui.header.addEventListener('pointerdown', startDrag);
+		ui.resize.addEventListener('pointerdown', startResize);
+		window.addEventListener('resize', function () {
+			applyWindow();
+		});
+		applyWindow();
+	}
+
+	function clamp(n, lo, hi) {
+		return Math.max(lo, Math.min(hi, n));
+	}
+
+	// Put the window where its state says. On a phone it is always full screen, as before.
+	function applyWindow() {
+		var o = ui.overlay;
+		var d = ui.dialog;
+		var mode = phoneWidth() ? 'centre' : win.mode;
+		['left', 'right', 'free'].forEach(function (m) {
+			o.classList.toggle('twd-sk-ed__overlay--' + m, mode === m);
+		});
+		d.setAttribute('aria-modal', mode === 'centre' ? 'true' : 'false');
+		d.style.left = '';
+		d.style.top = '';
+		d.style.width = '';
+		d.style.height = '';
+		if (mode === 'free') {
+			var maxW = Math.max(320, window.innerWidth - 16);
+			var maxH = Math.max(240, window.innerHeight - 16);
+			var w = clamp(win.w || 760, 320, maxW);
+			var h = clamp(win.h || Math.round(window.innerHeight * 0.8), 240, maxH);
+			var x = clamp(win.x, 0, Math.max(0, window.innerWidth - w));
+			var y = clamp(win.y, 0, Math.max(0, window.innerHeight - h));
+			d.style.left = x + 'px';
+			d.style.top = y + 'px';
+			d.style.width = w + 'px';
+			d.style.height = h + 'px';
+		} else if (mode === 'left' || mode === 'right') {
+			d.style.width = clamp(win.w || 480, 320, Math.max(320, window.innerWidth - 40)) + 'px';
+		}
+		if (ui.winBtn) {
+			ui.winBtn.textContent = mode === 'centre' ? 'Window' : (mode === 'free' ? 'Window: floating' : 'Window: ' + mode);
+		}
+		placeMini();
+	}
+
+	function saveWindow() {
+		window.clearTimeout(win.saveTimer);
+		win.saveTimer = window.setTimeout(function () {
+			api('POST', '/editor/window', { state: { mode: win.mode, x: win.x, y: win.y, w: win.w, h: win.h, mx: win.mx, my: win.my, esc: win.esc } }).catch(function () {});
+		}, 400);
+	}
+
+	function dockWindow(mode) {
+		win.mode = mode;
+		applyWindow();
+		saveWindow();
+		closeWindowMenu();
+		ui.title.focus();
+	}
+
+	// Drag by the title bar (not its buttons). Dragging a centred or docked window makes it free, from where it is.
+	function startDrag(e) {
+		if (e.button !== 0 || e.target.closest('button') || phoneWidth()) {
+			return;
+		}
+		var r = ui.dialog.getBoundingClientRect();
+		if (win.mode !== 'free') {
+			win.mode = 'free';
+			win.w = Math.round(r.width);
+			win.h = Math.round(r.height);
+		}
+		var dx = e.clientX - r.left;
+		var dy = e.clientY - r.top;
+		e.preventDefault();
+		function move(ev) {
+			win.x = Math.round(ev.clientX - dx);
+			win.y = Math.round(ev.clientY - dy);
+			applyWindow();
+		}
+		function up() {
+			document.removeEventListener('pointermove', move);
+			document.removeEventListener('pointerup', up);
+			saveWindow();
+		}
+		document.addEventListener('pointermove', move);
+		document.addEventListener('pointerup', up);
+	}
+
+	// Resize from the bottom corner (free) or the inner edge (docked: width only).
+	function startResize(e) {
+		if (e.button !== 0 || phoneWidth() || win.mode === 'centre') {
+			return;
+		}
+		var r = ui.dialog.getBoundingClientRect();
+		var startX = e.clientX;
+		var startY = e.clientY;
+		var w0 = r.width;
+		var h0 = r.height;
+		e.preventDefault();
+		function move(ev) {
+			if (win.mode === 'left') {
+				win.w = Math.round(w0 + (ev.clientX - startX));
+			} else if (win.mode === 'right') {
+				win.w = Math.round(w0 - (ev.clientX - startX));
+			} else {
+				win.w = Math.round(w0 + (ev.clientX - startX));
+				win.h = Math.round(h0 + (ev.clientY - startY));
+			}
+			applyWindow();
+		}
+		function up() {
+			document.removeEventListener('pointermove', move);
+			document.removeEventListener('pointerup', up);
+			saveWindow();
+		}
+		document.addEventListener('pointermove', move);
+		document.addEventListener('pointerup', up);
+	}
+
+	function toggleWindowMenu(btn) {
+		if (win.menu) {
+			closeWindowMenu();
+			return;
+		}
+		var items = [
+			['left', 'Dock on the left'],
+			['right', 'Dock on the right'],
+			['free', 'Floating (drag the title bar to move it, the corner to resize)'],
+			['centre', 'Centred over the page']
+		];
+		var list = el('div', { className: 'twd-sk-ed__winmenu', role: 'group', 'aria-label': 'Where the editor sits' });
+		items.forEach(function (it) {
+			var b = el('button', { type: 'button', className: 'twd-sk-ed__winitem', text: it[1], 'aria-pressed': win.mode === it[0] ? 'true' : 'false' });
+			b.addEventListener('click', function () {
+				dockWindow(it[0]);
+			});
+			list.appendChild(b);
+		});
+		var escId = 'twd-sk-ed-esc-min';
+		var escBox = el('input', { id: escId, type: 'checkbox' });
+		escBox.checked = win.esc === 'minimise';
+		escBox.addEventListener('change', function () {
+			win.esc = escBox.checked ? 'minimise' : 'close';
+			saveWindow();
+		});
+		list.appendChild(el('label', { className: 'twd-sk-ed__check', 'for': escId }, [escBox, el('span', { text: 'Escape minimises the editor instead of closing it' })]));
+		list.appendChild(el('p', { className: 'twd-sk-ed__help', text: 'Docked or floating, the page behind stays usable. Your choice is remembered.' }));
+		ui.header.appendChild(list);
+		win.menu = list;
+		btn.setAttribute('aria-expanded', 'true');
+		list.querySelector('button').focus();
+	}
+
+	function closeWindowMenu() {
+		if (win.menu && win.menu.parentNode) {
+			win.menu.parentNode.removeChild(win.menu);
+		}
+		win.menu = null;
+		if (ui.winBtn) {
+			ui.winBtn.setAttribute('aria-expanded', 'false');
+		}
+	}
+
+	// Minimise: hide the window, keep everything in it, show the pencil.
+	function minimise() {
+		if (!state.built || ui.overlay.hasAttribute('hidden')) {
+			return;
+		}
+		closeWindowMenu();
+		win.minimised = true;
+		show(ui.overlay, false);
+		queuePencils();
+		buildMini();
+		show(ui.mini, true);
+		placeMini();
+		ui.mini.focus();
+	}
+
+	function restoreWindow() {
+		if (!win.minimised) {
+			return;
+		}
+		win.minimised = false;
+		if (ui.mini) {
+			show(ui.mini, false);
+		}
+		show(ui.overlay, true);
+		queuePencils();
+		applyWindow();
+		ui.title.focus();
+	}
+
+	function buildMini() {
+		if (ui.mini) {
+			return;
+		}
+		var b = el('button', { type: 'button', id: 'twd-sk-ed-mini', className: 'twd-sk-ed__mini', 'aria-label': 'Open Edit with AI, minimised', title: 'Open Edit with AI (drag to move this button)', hidden: '' }, [pencilIcon(), el('span', { className: 'twd-sk-ed__mini-plus', 'aria-hidden': 'true', text: '+' })]);
+		var moved = false;
+		b.addEventListener('click', function () {
+			// The click that ends a drag is not a request to open.
+			if (moved) {
+				return;
+			}
+			restoreWindow();
+		});
+		b.addEventListener('pointerdown', function (e) {
+			if (e.button !== 0 || phoneWidth()) {
+				return;
+			}
+			var r = b.getBoundingClientRect();
+			var dx = e.clientX - r.left;
+			var dy = e.clientY - r.top;
+			var sx = e.clientX;
+			var sy = e.clientY;
+			function move(ev) {
+				if (!moved && Math.abs(ev.clientX - sx) + Math.abs(ev.clientY - sy) < 4) {
+					return;
+				}
+				moved = true;
+				win.mx = Math.round(ev.clientX - dx);
+				win.my = Math.round(ev.clientY - dy);
+				placeMini();
+			}
+			function up() {
+				document.removeEventListener('pointermove', move);
+				document.removeEventListener('pointerup', up);
+				if (moved) {
+					saveWindow();
+					// The browser's own click for this pointer press comes next; the one after that opens again.
+					window.setTimeout(function () {
+						moved = false;
+					}, 0);
+				}
+			}
+			document.addEventListener('pointermove', move);
+			document.addEventListener('pointerup', up);
+		});
+		root.appendChild(b);
+		ui.mini = b;
+	}
+
+	// The pencil starts bottom right (clear of the Your Edits button bottom left) and stays inside the window.
+	function placeMini() {
+		if (!ui.mini) {
+			return;
+		}
+		var size = phoneWidth() ? 48 : 64;
+		ui.mini.style.left = '';
+		ui.mini.style.top = '';
+		if (phoneWidth() || win.mx < 0 || win.my < 0) {
+			return;
+		}
+		ui.mini.style.left = clamp(win.mx, 0, Math.max(0, window.innerWidth - size)) + 'px';
+		ui.mini.style.top = clamp(win.my, 0, Math.max(0, window.innerHeight - size)) + 'px';
 	}
 
 	function selectTab(name) {
@@ -1588,7 +1879,7 @@
 	}
 
 	function trapFocus(e) {
-		if (e.key !== 'Tab') {
+		if (e.key !== 'Tab' || !windowIsModal()) {
 			return;
 		}
 		var items = focusables();
@@ -1619,22 +1910,38 @@
 		e.preventDefault();
 	}
 
+	function windowIsModal() {
+		return phoneWidth() || win.mode === 'centre';
+	}
+
 	function onDocKeys(e) {
 		if (ui.overlay.hasAttribute('hidden')) {
 			return;
 		}
 		if (e.key === 'Escape') {
+			if (win.menu) {
+				e.preventDefault();
+				closeWindowMenu();
+				ui.winBtn.focus();
+				return;
+			}
+			// Docked or floating, Escape pressed on the page itself is the page's business.
+			if (!windowIsModal() && !ui.dialog.contains(document.activeElement)) {
+				return;
+			}
 			e.preventDefault();
 			if (ui.closeCard) {
 				keepEditing();
+			} else if (win.esc === 'minimise') {
+				minimise();
 			} else {
 				requestClose();
 			}
 			return;
 		}
 		// If the focused control was hidden or removed (a confirmation closing, say), focus falls to the page.
-		// Bring it back inside the pop-up instead of letting Tab wander out.
-		if (e.key === 'Tab' && !ui.dialog.contains(document.activeElement)) {
+		// Bring it back inside the pop-up instead of letting Tab wander out. Only while the window is a modal.
+		if (e.key === 'Tab' && windowIsModal() && !ui.dialog.contains(document.activeElement)) {
 			e.preventDefault();
 			var items = focusables();
 			(e.shiftKey ? items[items.length - 1] : items[0] || ui.title).focus();
@@ -1645,6 +1952,10 @@
 		if (!state.built) {
 			build();
 			document.addEventListener('keydown', onDocKeys);
+		}
+		if (win.minimised) {
+			restoreWindow();
+			return;
 		}
 		show(ui.overlay, true);
 		queuePencils();
@@ -1778,6 +2089,11 @@
 	}
 
 	function close() {
+		closeWindowMenu();
+		win.minimised = false;
+		if (ui.mini) {
+			show(ui.mini, false);
+		}
 		show(ui.overlay, false);
 		queuePencils();
 		openBtn.setAttribute('aria-expanded', 'false');
@@ -2011,6 +2327,12 @@
 		},
 		foldSection: foldSection,
 		revealFold: revealFold,
+		// The window (0.15.0): shrink it to the pencil, or bring it back.
+		minimise: minimise,
+		restoreWindow: restoreWindow,
+		isMinimised: function () {
+			return win.minimised;
+		},
 		// Fetch the page again and swap the kit wrappers in place (no reload). Resolves true when it worked.
 		redraw: redrawPage,
 		onRedraw: function (fn) {

@@ -21,6 +21,8 @@ class TWD_SK_Editor {
 
 	/** User meta: set to 1 when this person has switched the editing tools off (0.14.1). */
 	const META_TOOLS = 'twd_sk_tools_off';
+	// 0.15.0: where the Edit with AI window sits for a person (docked, free or centred, its size, the minimised pencil's place).
+	const META_WINDOW = 'twd_sk_window';
 
 	/**
 	 * True when the signed-in person has switched the editing tools off: the floating buttons, the Edit header and
@@ -44,6 +46,61 @@ class TWD_SK_Editor {
 			delete_user_meta( $uid, self::META_TOOLS );
 		}
 		return true;
+	}
+
+	/**
+	 * The Edit with AI window's place for a person (0.15.0): mode (centre, left, right, free), its size and place
+	 * when free, the minimised pencil's place, and whether Escape minimises instead of closing. Always a complete,
+	 * checked set, so the browser never reads a bad value; the default is the centred window as before.
+	 */
+	public static function window_defaults() {
+		return array( 'mode' => 'centre', 'x' => 0, 'y' => 0, 'w' => 0, 'h' => 0, 'mx' => -1, 'my' => -1, 'esc' => 'close' );
+	}
+
+	/** A checked window state: unknown keys dropped, numbers bounded, words from the list; anything else is the default. */
+	public static function clean_window( $state ) {
+		$out = self::window_defaults();
+		if ( ! is_array( $state ) ) {
+			return $out;
+		}
+		if ( isset( $state['mode'] ) && in_array( $state['mode'], array( 'centre', 'left', 'right', 'free' ), true ) ) {
+			$out['mode'] = $state['mode'];
+		}
+		foreach ( array( 'x', 'y', 'w', 'h' ) as $k ) {
+			if ( isset( $state[ $k ] ) && is_numeric( $state[ $k ] ) ) {
+				$out[ $k ] = max( 0, min( 20000, (int) $state[ $k ] ) );
+			}
+		}
+		foreach ( array( 'mx', 'my' ) as $k ) {
+			if ( isset( $state[ $k ] ) && is_numeric( $state[ $k ] ) ) {
+				$out[ $k ] = max( -1, min( 20000, (int) $state[ $k ] ) );
+			}
+		}
+		if ( isset( $state['esc'] ) && in_array( $state['esc'], array( 'close', 'minimise' ), true ) ) {
+			$out['esc'] = $state['esc'];
+		}
+		return $out;
+	}
+
+	public static function window_state( $user_id = 0 ) {
+		$uid = $user_id > 0 ? (int) $user_id : ( function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0 );
+		$raw = $uid > 0 ? get_user_meta( $uid, self::META_WINDOW, true ) : '';
+		return self::clean_window( is_array( $raw ) ? $raw : array() );
+	}
+
+	/** Remember the window for a person. The default state removes the meta, so nothing is left behind. */
+	public static function set_window_state( $state, $user_id = 0 ) {
+		$uid = $user_id > 0 ? (int) $user_id : ( function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0 );
+		if ( $uid <= 0 ) {
+			return false;
+		}
+		$clean = self::clean_window( $state );
+		if ( $clean === self::window_defaults() ) {
+			delete_user_meta( $uid, self::META_WINDOW );
+		} else {
+			update_user_meta( $uid, self::META_WINDOW, $clean );
+		}
+		return $clean;
 	}
 
 	public static function init() {
@@ -129,6 +186,8 @@ class TWD_SK_Editor {
 			'setupUrl'       => current_user_can( 'manage_options' ) ? esc_url_raw( TWD_SK_Build::admin_url() ) : '',
 			// The editing tools switch (0.14.1): hides the launchers for this person until switched on again.
 			'toolsOff'       => self::tools_off(),
+			// Where the Edit with AI window sits for this person (0.15.0): docked, free or centred, and the minimised pencil.
+			'window'         => self::window_state(),
 			// Whether the page is live, so Add a section can warn that its placeholder words would show (0.14.1).
 			'pagePublished'  => $context['page_id'] > 0 && 'publish' === get_post_status( $context['page_id'] ),
 		) );

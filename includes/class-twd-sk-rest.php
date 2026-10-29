@@ -55,6 +55,12 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_editor_tools' ),
 			'permission_callback' => array( __CLASS__, 'can_use_editor' ),
 		) );
+		// Where the Edit with AI window sits (0.15.0): a per-person preference, like the switch.
+		register_rest_route( self::ROUTE_NS, '/editor/window', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_editor_window' ),
+			'permission_callback' => array( __CLASS__, 'can_use_editor' ),
+		) );
 		if ( ! TWD_SK_Safe::on() ) {
 			self::register_site_routes();
 		}
@@ -554,6 +560,15 @@ class TWD_SK_REST {
 		$off = self::truthy( $request->get_param( 'off' ) );
 		TWD_SK_Editor::set_tools_off( $off );
 		return array( 'off' => $off );
+	}
+
+	public static function post_editor_window( $request ) {
+		$state = $request->get_param( 'state' );
+		if ( ! is_array( $state ) ) {
+			return self::error( 'twd_sk_bad_input', 'Send the window state as a set of fields.', 400 );
+		}
+		$saved = TWD_SK_Editor::set_window_state( $state );
+		return array( 'state' => false === $saved ? TWD_SK_Editor::window_defaults() : $saved );
 	}
 
 	public static function get_info( $request ) {

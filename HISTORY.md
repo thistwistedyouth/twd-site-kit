@@ -2,6 +2,12 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 29 Oct 2026: a window that docks, floats and minimises, instead of a pop-out (sections 13 and 13b of the owner's plan)
+
+The owner wanted the Edit with AI window movable, resizable, dockable and draggable to a second monitor. A page overlay cannot leave its browser window, so a true pop-out (a second window talking to the first) was left out; docking the window to the left or right of the page, with the page still usable beside it, is the answer the plan settled on. The modal behaviour (a dimmed page, Tab trapped inside, Escape closes, a click outside closes) is kept only for the centred mode, which is still the default, so nothing changes for anyone who never touches the Window menu. Docked or floating, the overlay stops dimming and lets clicks through, and Escape pressed on the page belongs to the page.
+
+Where the window sits is user meta (`twd_sk_window`), like the editing tools switch, because the editor scripts may not use browser storage; a checked, complete state is handed to the script and the default removes the meta. Minimise hides the window rather than closing it, so a typed request, a preview, the open fold-outs and unsaved Visual editor changes are all still there, and the close prompt still counts them. The pencil button reuses the drawn pencil (no icon file) with a plus sign, glows with a CSS animation from the button colour token (off under reduced motion), starts bottom right so it never covers the Your Edits button bottom left, and on a phone is small and fixed. Escape minimising instead of closing is a setting in the Window menu, off by default, as the plan asked.
+
 ## 29 Oct 2026: words in a frame over a picture, and an AI editor that says when it cannot (sections 12 and 12b of the owner's plan)
 
 The owner asked the AI editor for text over the desert picture with a graduated overlay and a dark frame, and the preview showed the old page with no reason: the reply used style attributes and made-up class names, the sanitiser took them out (by design), and nothing said so. Three decisions follow.

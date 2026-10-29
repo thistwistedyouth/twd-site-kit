@@ -102,3 +102,47 @@ twd_sk_test( 'tools switch js: built with DOM calls into the admin bar after the
 		twd_sk_hasnt( 'innerHTML', $src );
 	}
 } );
+
+twd_sk_test( 'window (0.15.0): where the Edit with AI window sits is kept per person as checked user meta, the default leaves nothing behind, and the route saves it', function () {
+	twd_stub_reset();
+	$d = TWD_SK_Editor::window_defaults();
+	twd_sk_eq( 'centre', $d['mode'] );
+	twd_sk_eq( $d, TWD_SK_Editor::window_state(), 'the default is the centred window as before' );
+	// Checked: unknown keys dropped, bad words fall back, numbers bounded and whole.
+	$c = TWD_SK_Editor::clean_window( array( 'mode' => 'left', 'x' => '12.7', 'y' => -40, 'w' => 99999, 'h' => 600, 'mx' => 30, 'my' => 'abc', 'esc' => 'minimise', 'evil' => '<script>' ) );
+	twd_sk_eq( array( 'mode' => 'left', 'x' => 12, 'y' => 0, 'w' => 20000, 'h' => 600, 'mx' => 30, 'my' => -1, 'esc' => 'minimise' ), $c );
+	twd_sk_eq( 'centre', TWD_SK_Editor::clean_window( array( 'mode' => 'popout' ) )['mode'] );
+	twd_sk_eq( 'close', TWD_SK_Editor::clean_window( array( 'esc' => 'reload' ) )['esc'] );
+	twd_sk_eq( $d, TWD_SK_Editor::clean_window( 'nonsense' ) );
+	// Saved for this person only; the default removes the meta.
+	$saved = TWD_SK_Editor::set_window_state( array( 'mode' => 'right', 'w' => 520 ) );
+	twd_sk_eq( 'right', $saved['mode'] );
+	twd_sk_eq( 'right', TWD_SK_Editor::window_state()['mode'] );
+	twd_sk_eq( 520, TWD_SK_Editor::window_state()['w'] );
+	twd_sk_eq( 'centre', TWD_SK_Editor::window_state( 99 )['mode'], 'another person is unaffected' );
+	TWD_SK_Editor::set_window_state( array() );
+	twd_sk_true( empty( $GLOBALS['twd_stub']['user_meta'][7]['twd_sk_window'] ), 'the default removes the meta' );
+	$GLOBALS['twd_stub']['user'] = 0;
+	twd_sk_true( false === TWD_SK_Editor::set_window_state( array( 'mode' => 'left' ) ), 'a visitor has nothing to save' );
+	// The route, and the state handed to the script.
+	twd_stub_reset();
+	$out = TWD_SK_REST::post_editor_window( twd_sk_rest_req( array( 'state' => array( 'mode' => 'free', 'x' => 100, 'y' => 80, 'w' => 700, 'h' => 500, 'esc' => 'minimise' ) ) ) );
+	twd_sk_eq( 'free', $out['state']['mode'] );
+	twd_sk_eq( 'minimise', $out['state']['esc'] );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_REST::post_editor_window( twd_sk_rest_req( array( 'state' => 'left' ) ) ) );
+	twd_sk_ed_setup();
+	twd_sk_true( twd_sk_ed_loaded() );
+	twd_sk_eq( 'free', $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['window']['mode'] );
+	$rest = file_get_contents( ABSPATH . 'includes/class-twd-sk-rest.php' );
+	twd_sk_has( "'/editor/window'", $rest );
+	// The script: drag, resize, dock, minimise to a pencil that restores the window as it was; nothing in browser storage.
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' );
+	foreach ( array( "'/editor/window'", 'function minimise(', 'function restoreWindow(', 'function dockWindow(', 'twd-sk-ed__mini', 'Open Edit with AI, minimised', 'pointerdown', 'cfg.window' ) as $needle ) {
+		twd_sk_has( $needle, $js );
+	}
+	twd_sk_hasnt( 'localStorage', $js );
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.css' );
+	foreach ( array( 'twd-sk-ed__mini', 'twd-sk-ed__overlay--left', 'twd-sk-ed__overlay--right', 'twd-sk-ed__overlay--free', 'twd-sk-ed__resize', '@keyframes twd-sk-ed-glow', 'prefers-reduced-motion' ) as $needle ) {
+		twd_sk_has( $needle, $css );
+	}
+} );
