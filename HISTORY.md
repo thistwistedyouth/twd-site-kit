@@ -2,6 +2,10 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 29 Oct 2026: section spacing as Look choices, not per-site CSS (chunk 2e)
+
+Space above and below are shared registry classes drawn from the section spacing tokens, placed last in the stylesheet so they win the paddings at equal specificity. Four steps (none, small, normal, large) rather than a free number: a person chooses in plain words, every pack keeps its rhythm, and a page without the classes prints exactly as before. The shared look options are sent to the browser once rather than per component, because two more options on eighteen components took the config past its 8 KB budget.
+
 ## 29 Oct 2026: the fixed header's spacer is measured, not calculated (chunk 1)
 
 The spacer under a fixed header was a formula over the size tokens, with the contact strip hard-wired at 36px. Each new header option (the wordmark, the second line, the symbol sizes) added a term, and the formula was already 5px out on the pilot site. The header script now measures the header and sets the spacer; the formula stays only as the value a browser without script gets. The script is one that every page with the kit header already loads, so no visitor gains a request. A token for the strip thickness could then be added without touching the formula's accuracy.

@@ -627,8 +627,11 @@
 .twd-sk-page .twd-sk-image-text--band.twd-sk-image-text--band {
   height: 260px;
 }
+/* min-height 0: the base image rule's min-height (260px) must not win over the band's own height (180px on phones),
+   or the picture spills under the next section's words (seen on a phone, 29 Oct 2026). */
 .twd-sk-page .twd-sk-image-text--band.twd-sk-image-text--band .twd-sk-image-text__img.twd-sk-image-text__img {
   height: 100%;
+  min-height: 0;
   border-radius: 0 !important;
   object-fit: cover;
 }
@@ -3211,6 +3214,40 @@
   /* The articles strip: introduction beside the cards (0.14.0). */
   .twd-sk-page .twd-sk-resources__row.twd-sk-resources__row {
     grid-template-columns: 1fr 2fr;
+  }
+}
+/* ---- space above and below a section (0.15.0): Look panel choices, no class = as before ---- */
+/* Last in the file on purpose: equal specificity with every section rule, so these win on the paddings. */
+.twd-sk-page .twd-sk-space-top-0.twd-sk-space-top-0 {
+  padding-top: 0 !important;
+}
+.twd-sk-page .twd-sk-space-top-sm.twd-sk-space-top-sm {
+  padding-top: var(--twd-site-section-y-sm) !important;
+}
+.twd-sk-page .twd-sk-space-top-lg.twd-sk-space-top-lg {
+  padding-top: calc(var(--twd-site-section-y) * 1.5) !important;
+}
+.twd-sk-page .twd-sk-space-bottom-0.twd-sk-space-bottom-0 {
+  padding-bottom: 0 !important;
+}
+.twd-sk-page .twd-sk-space-bottom-sm.twd-sk-space-bottom-sm {
+  padding-bottom: var(--twd-site-section-y-sm) !important;
+}
+.twd-sk-page .twd-sk-space-bottom-lg.twd-sk-space-bottom-lg {
+  padding-bottom: calc(var(--twd-site-section-y) * 1.5) !important;
+}
+@media (max-width: 768px) {
+  .twd-sk-page .twd-sk-space-top-sm.twd-sk-space-top-sm {
+    padding-top: calc(var(--twd-site-section-y-sm) * 0.6) !important;
+  }
+  .twd-sk-page .twd-sk-space-top-lg.twd-sk-space-top-lg {
+    padding-top: calc(var(--twd-site-section-y-sm) * 1.5) !important;
+  }
+  .twd-sk-page .twd-sk-space-bottom-sm.twd-sk-space-bottom-sm {
+    padding-bottom: calc(var(--twd-site-section-y-sm) * 0.6) !important;
+  }
+  .twd-sk-page .twd-sk-space-bottom-lg.twd-sk-space-bottom-lg {
+    padding-bottom: calc(var(--twd-site-section-y-sm) * 1.5) !important;
   }
 }
 

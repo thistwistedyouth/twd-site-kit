@@ -202,8 +202,19 @@
 	   the registry (cfg.look). Changing one sets the section's classes here so it shows at once; Save sends the
 	   wanted state by section number and the server works the classes out again and checks them. */
 
+	// The shared options (space above and below, background) come once in cfg.look.shared and are added to every component here.
+	var LOOK = null;
 	function lookConfig() {
-		return (cfg.look && cfg.look.components) || {};
+		if (LOOK) {
+			return LOOK;
+		}
+		var src = (cfg.look && cfg.look.components) || {};
+		var shared = (cfg.look && cfg.look.shared) || [];
+		LOOK = {};
+		Object.keys(src).forEach(function (id) {
+			LOOK[id] = { label: src[id].label, layouts: src[id].layouts, options: (src[id].options || []).concat(shared) };
+		});
+		return LOOK;
 	}
 
 	function classesOf(sec) {

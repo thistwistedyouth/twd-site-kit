@@ -43,6 +43,8 @@ twd_sk_test( 'looks: the browser gets small, static data: labels and class names
 	twd_sk_eq( '_', $c['standard'] );
 	twd_sk_true( ! isset( $c['components']['notice'] ), 'the safety notice is left out' );
 	twd_sk_true( isset( $c['components']['hero']['options'][0]['choices'] ) );
+	twd_sk_eq( array( 'space_top', 'space_bottom', 'background' ), array_map( function ( $o ) { return $o['key']; }, $c['shared'] ), 'the shared options go once' );
+	twd_sk_eq( array(), $c['components']['text']['options'], 'a component with no options of its own sends none' );
 	$json = json_encode( $c );
 	twd_sk_true( strlen( $json ) < 8000, 'light: ' . strlen( $json ) . ' bytes' );
 	twd_sk_hasnt( 'PLACEHOLDER', $json );
@@ -228,7 +230,9 @@ twd_sk_test( 'looks: the JavaScript copy of the rules gives the same classes as 
 	);
 	$script = 'var cfg = { look: ' . json_encode( $cfg ) . ' };' . "\n" . $m[0] . "\n"
 		. 'var cases = ' . json_encode( $cases ) . ';' . "\n"
-		. 'console.log(JSON.stringify(cases.map(function (c) { return lookClasses(cfg.look.components[c[0]], c[1], c[2], c[3]); })));';
+		. 'var LOOK = {}; Object.keys(cfg.look.components).forEach(function (id) { var s = cfg.look.components[id]; LOOK[id] = { label: s.label, layouts: s.layouts, options: (s.options || []).concat(cfg.look.shared || []) }; });' . "
+"
+		. 'console.log(JSON.stringify(cases.map(function (c) { return lookClasses(LOOK[c[0]], c[1], c[2], c[3]); })));';
 	$file = sys_get_temp_dir() . '/twd-sk-looks-' . getmypid() . '.js';
 	file_put_contents( $file, $script );
 	$out = json_decode( (string) shell_exec( 'node ' . escapeshellarg( $file ) . ' 2>&1' ), true );
@@ -238,4 +242,28 @@ twd_sk_test( 'looks: the JavaScript copy of the rules gives the same classes as 
 		$php = TWD_SK_Looks::classes_for( $c[0], $c[1], $c[2], $c[3] );
 		twd_sk_eq( $php, $out[ $i ], 'case ' . $i . ' (' . $c[0] . ')' );
 	}
+} );
+
+twd_sk_test( 'looks: every section offers Space above and Space below (none, small, normal, large) as shared classes, saved like any option', function () {
+	foreach ( array( 'text', 'hero', 'faq', 'cta', 'resources' ) as $c ) {
+		$all = TWD_SK_Looks::all_options( $c );
+		twd_sk_true( isset( $all['space_top'], $all['space_bottom'] ), $c );
+		twd_sk_eq( array( '', 'twd-sk-space-top-0', 'twd-sk-space-top-sm', 'twd-sk-space-top-lg' ), array_keys( $all['space_top']['choices'] ) );
+	}
+	$shared = TWD_SK_Registry::shared_classes();
+	foreach ( array( 'twd-sk-space-top-0', 'twd-sk-space-top-sm', 'twd-sk-space-top-lg', 'twd-sk-space-bottom-0', 'twd-sk-space-bottom-sm', 'twd-sk-space-bottom-lg' ) as $cls ) {
+		twd_sk_true( in_array( $cls, $shared, true ), $cls );
+	}
+	$r = TWD_SK_Looks::classes_for( 'text', array( 'twd-sk-text', 'twd-sk-tone-base' ), null, array( 'space_top' => 'twd-sk-space-top-0', 'space_bottom' => 'twd-sk-space-bottom-lg' ) );
+	twd_sk_true( in_array( 'twd-sk-space-top-0', $r, true ) && in_array( 'twd-sk-space-bottom-lg', $r, true ) );
+	$back = TWD_SK_Looks::classes_for( 'text', $r, null, array( 'space_top' => '', 'space_bottom' => '' ) );
+	twd_sk_eq( array( 'twd-sk-text', 'twd-sk-tone-base' ), array_values( $back ), 'Normal takes the classes off again' );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Looks::classes_for( 'text', array( 'twd-sk-text' ), null, array( 'space_top' => 'twd-sk-space-top-huge' ) ) );
+	// The sanitiser keeps the classes on a section, and a page without them prints exactly as before.
+	$html  = '<section class="twd-sk-text twd-sk-tone-base twd-sk-space-top-0"><div class="twd-sk-inner"><p>Hi</p></div></section>';
+	twd_sk_eq( $html, TWD_SK_Sanitizer::clean( $html ) );
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	twd_sk_has( '.twd-sk-page .twd-sk-space-top-0.twd-sk-space-top-0 {', $css );
+	twd_sk_has( '.twd-sk-page .twd-sk-image-text--band.twd-sk-image-text--band .twd-sk-image-text__img.twd-sk-image-text__img {', $css );
+	twd_sk_true( false !== strpos( $css, "min-height: 0;\n  border-radius: 0 !important;" ), 'the band picture never grows past the band (the phone overlap fix)' );
 } );

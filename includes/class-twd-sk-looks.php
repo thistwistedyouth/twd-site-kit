@@ -89,9 +89,29 @@ class TWD_SK_Looks {
 		);
 	}
 
-	/** All options for a component, background last. key => option. */
+	/** Space above or below any section (0.15.0): none, small, as before, large. The classes are shared registry classes. */
+	public static function space_option( $where ) {
+		$top = 'top' === $where;
+		return array(
+			'label'   => $top ? 'Space above' : 'Space below',
+			'kind'    => 'choice',
+			'choices' => array(
+				''                                                 => 'Normal',
+				'twd-sk-space-' . ( $top ? 'top' : 'bottom' ) . '-0'  => 'None',
+				'twd-sk-space-' . ( $top ? 'top' : 'bottom' ) . '-sm' => 'Small',
+				'twd-sk-space-' . ( $top ? 'top' : 'bottom' ) . '-lg' => 'Large',
+			),
+			'help'    => $top ? 'Nudge this section up or down the page without code.' : '',
+		);
+	}
+
+	/** All options for a component: its own, then space above and below, background last. key => option. */
 	public static function all_options( $component ) {
-		return self::options( $component ) + array( 'background' => self::background_option() );
+		return self::options( $component ) + array(
+			'space_top'    => self::space_option( 'top' ),
+			'space_bottom' => self::space_option( 'bottom' ),
+			'background'   => self::background_option(),
+		);
 	}
 
 	/** Every class an option may put on a section. */
@@ -231,31 +251,40 @@ class TWD_SK_Looks {
 				$layouts[] = array( '' === $class ? self::STANDARD : $class, $l['label'] );
 			}
 			$options = array();
-			foreach ( self::all_options( $id ) as $key => $o ) {
-				$item = array( 'key' => $key, 'label' => $o['label'], 'kind' => $o['kind'] );
-				if ( 'toggle' === $o['kind'] ) {
-					$item['class'] = $o['class'];
-				} else {
-					$item['choices'] = array();
-					foreach ( $o['choices'] as $class => $label ) {
-						$item['choices'][] = array( '' === $class ? self::STANDARD : $class, $label );
-					}
-				}
-				if ( isset( $o['requires'] ) ) {
-					$item['requires'] = $o['requires'];
-				}
-				if ( isset( $o['requires_any'] ) ) {
-					$item['requires_any'] = $o['requires_any'];
-				}
-				if ( isset( $o['help'] ) ) {
-					$item['help'] = $o['help'];
-				}
-				$options[] = $item;
+			foreach ( self::options( $id ) as $key => $o ) {
+				$options[] = self::option_item( $key, $o );
 			}
 			$out['components'][ $id ] = array( 'label' => $c['label'], 'layouts' => $layouts, 'options' => $options );
 		}
+		// The options every section has (space above and below, background) go once; the browser adds them to each component.
+		$out['shared'] = array();
+		foreach ( array_diff_key( self::all_options( 'text' ), self::options( 'text' ) ) as $key => $o ) {
+			$out['shared'][] = self::option_item( $key, $o );
+		}
 		$out['standard'] = self::STANDARD;
 		return $out;
+	}
+
+	private static function option_item( $key, $o ) {
+		$item = array( 'key' => $key, 'label' => $o['label'], 'kind' => $o['kind'] );
+		if ( 'toggle' === $o['kind'] ) {
+			$item['class'] = $o['class'];
+		} else {
+			$item['choices'] = array();
+			foreach ( $o['choices'] as $class => $label ) {
+				$item['choices'][] = array( '' === $class ? self::STANDARD : $class, $label );
+			}
+		}
+		if ( isset( $o['requires'] ) ) {
+			$item['requires'] = $o['requires'];
+		}
+		if ( isset( $o['requires_any'] ) ) {
+			$item['requires_any'] = $o['requires_any'];
+		}
+		if ( ! empty( $o['help'] ) ) {
+			$item['help'] = $o['help'];
+		}
+		return $item;
 	}
 
 	/**

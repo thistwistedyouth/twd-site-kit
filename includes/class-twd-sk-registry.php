@@ -61,6 +61,13 @@ class TWD_SK_Registry {
 			'twd-sk-tone-surface',
 			'twd-sk-tone-tint',
 			'twd-sk-tone-band',
+			// 0.15.0: space above and below a section (Look panel; no class is the normal spacing).
+			'twd-sk-space-top-0',
+			'twd-sk-space-top-sm',
+			'twd-sk-space-top-lg',
+			'twd-sk-space-bottom-0',
+			'twd-sk-space-bottom-sm',
+			'twd-sk-space-bottom-lg',
 			'twd-sk-eyebrow',
 			'twd-sk-title',
 			'twd-sk-lead',

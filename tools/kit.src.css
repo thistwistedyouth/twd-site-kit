@@ -210,7 +210,9 @@
 .twd-sk-image-text__body > * + * { margin-top: 1em; }
 .twd-sk-image-text__body .twd-sk-btn { margin-top: 20px; }
 .twd-sk-image-text--band { height: 260px; }
-.twd-sk-image-text--band .twd-sk-image-text__img { height: 100%; border-radius: 0; object-fit: cover; }
+/* min-height 0: the base image rule's min-height (260px) must not win over the band's own height (180px on phones),
+   or the picture spills under the next section's words (seen on a phone, 29 Oct 2026). */
+.twd-sk-image-text--band .twd-sk-image-text__img { height: 100%; min-height: 0; border-radius: 0; object-fit: cover; }
 
 /* ---- quote ---- */
 .twd-sk-quote--cards .twd-sk-title { margin-bottom: 8px; }
@@ -993,4 +995,19 @@
   .twd-sk-faq__group + .twd-sk-faq__group { margin-top: 0; }
   /* The articles strip: introduction beside the cards (0.14.0). */
   .twd-sk-resources__row { grid-template-columns: 1fr 2fr; }
+}
+
+/* ---- space above and below a section (0.15.0): Look panel choices, no class = as before ---- */
+/* Last in the file on purpose: equal specificity with every section rule, so these win on the paddings. */
+.twd-sk-space-top-0 { padding-top: 0; }
+.twd-sk-space-top-sm { padding-top: $section-y-sm; }
+.twd-sk-space-top-lg { padding-top: calc(#{$section-y} * 1.5); }
+.twd-sk-space-bottom-0 { padding-bottom: 0; }
+.twd-sk-space-bottom-sm { padding-bottom: $section-y-sm; }
+.twd-sk-space-bottom-lg { padding-bottom: calc(#{$section-y} * 1.5); }
+@media (max-width: 768px) {
+  .twd-sk-space-top-sm { padding-top: calc(#{$section-y-sm} * 0.6); }
+  .twd-sk-space-top-lg { padding-top: calc(#{$section-y-sm} * 1.5); }
+  .twd-sk-space-bottom-sm { padding-bottom: calc(#{$section-y-sm} * 0.6); }
+  .twd-sk-space-bottom-lg { padding-bottom: calc(#{$section-y-sm} * 1.5); }
 }
