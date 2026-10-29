@@ -1102,7 +1102,9 @@
 .twd-sk-toc__link:hover, .twd-sk-toc__link:focus-visible { color: $color-primary; }
 .twd-sk-toc-target { scroll-margin-top: 120px; }
 /* ---- reading controls (0.15.0, idea 6): the visitor's own text size, line spacing and contrast ---- */
-.twd-sk-reading { position: fixed; right: 16px; bottom: 16px; z-index: 99985; }
+/* The section toggle class is a marker for the script; it must not move the section. The fixed box is the script's own. */
+.twd-sk-reading { position: relative; }
+.twd-sk-reading__box { position: fixed; right: 16px; bottom: 16px; z-index: 99985; }
 .twd-sk-reading__btn {
   min-height: 44px; padding: 10px 16px; border: 1px solid $color-border; border-radius: $radius-pill; background-color: $color-surface;
   color: $color-title; font-family: $font-body; font-size: $size-small; font-weight: $btn-weight; box-shadow: $shadow-card; cursor: pointer;
@@ -1120,7 +1122,7 @@
 &.twd-sk-read-contrast .twd-sk-tone-surface, &.twd-sk-read-contrast .twd-sk-tone-tint { background-color: $color-bg; }
 &.twd-sk-read-contrast .twd-sk-text__body, &.twd-sk-read-contrast .twd-sk-text__body p, &.twd-sk-read-contrast .twd-sk-faq__answer, &.twd-sk-read-contrast .twd-sk-image-text__body p, &.twd-sk-read-contrast .twd-sk-lead, &.twd-sk-read-contrast .twd-sk-card { color: $color-title; }
 @media (max-width: 768px) {
-  .twd-sk-reading { right: 12px; bottom: 76px; }
+  .twd-sk-reading__box { right: 12px; bottom: 76px; }
 }
 /* ---- at a glance (0.15.0, idea 9): three or four short facts in a row, two across on a phone ---- */
 .twd-sk-facts__list { display: grid; grid-template-columns: repeat(4, 1fr); gap: $gap-md; margin: 32px 0 0; }

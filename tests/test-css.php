@@ -276,7 +276,55 @@ twd_sk_test( 'css: the helpline modal is pure CSS, shown with :target and fixed 
 	}
 	// The helpline modal, the optional fixed header (a sticky header option, with a spacer that holds its place), and from
 	// 0.15.0 the optional Leave quickly link and the phone contact bar (both off by default).
-	twd_sk_eq( array( '.twd-sk-page .twd-sk-modal.twd-sk-modal', '.twd-sk-page .twd-sk-header--sticky.twd-sk-header--sticky', '.twd-sk-page .twd-sk-reading.twd-sk-reading', '.twd-sk-page .twd-sk-exit.twd-sk-exit', '.twd-sk-page .twd-sk-contactbar.twd-sk-contactbar' ), $fixed );
+	twd_sk_eq( array( '.twd-sk-page .twd-sk-modal.twd-sk-modal', '.twd-sk-page .twd-sk-header--sticky.twd-sk-header--sticky', '.twd-sk-page .twd-sk-reading__box.twd-sk-reading__box', '.twd-sk-page .twd-sk-exit.twd-sk-exit', '.twd-sk-page .twd-sk-contactbar.twd-sk-contactbar' ), $fixed );
+} );
+
+twd_sk_test( 'css: a class the Look panel puts on a section never takes the section out of the page flow (fixed, absolute or sticky)', function () {
+	// 29 Oct 2026: the reading controls' box shared its class with the section toggle (twd-sk-reading), so the whole prose
+	// section on the pilot site was fixed to the corner of the window over the hero. Every class the Looks engine may write
+	// on a <section> (options, choices, layouts) is checked against every rule whose subject is that class alone.
+	$classes = array();
+	foreach ( TWD_SK_Registry::all() as $id => $c ) {
+		foreach ( TWD_SK_Looks::all_options( $id ) as $o ) {
+			if ( 'toggle' === $o['kind'] ) {
+				$classes[ $o['class'] ] = true;
+			} else {
+				foreach ( array_keys( $o['choices'] ) as $cls ) {
+					if ( '' !== $cls ) {
+						$classes[ $cls ] = true;
+					}
+				}
+			}
+		}
+		foreach ( array_keys( $c['variants'] ) as $cls ) {
+			$classes[ $cls ] = true;
+		}
+	}
+	twd_sk_true( count( $classes ) > 30, 'section classes found: ' . count( $classes ) );
+	$bad = array();
+	foreach ( twd_sk_css_rules() as $rule ) {
+		$pos = '';
+		foreach ( $rule['decls'] as $d ) {
+			if ( 'position' === $d['prop'] && in_array( $d['value'], array( 'fixed', 'absolute', 'sticky' ), true ) ) {
+				$pos = $d['value'];
+			}
+		}
+		if ( '' === $pos ) {
+			continue;
+		}
+		foreach ( $rule['selectors'] as $sel ) {
+			$parts   = preg_split( '/\s+/', trim( $sel ) );
+			$subject = end( $parts );
+			// The subject of the selector: only its classes, pseudo parts dropped.
+			preg_match_all( '/\.(twd-sk-[A-Za-z0-9_-]+)/', $subject, $m );
+			foreach ( array_unique( $m[1] ) as $cls ) {
+				if ( isset( $classes[ $cls ] ) && count( array_unique( $m[1] ) ) === 1 ) {
+					$bad[] = $sel . ' { position: ' . $pos . ' }';
+				}
+			}
+		}
+	}
+	twd_sk_eq( array(), $bad );
 } );
 
 twd_sk_test( 'css: images use the object-position token and object-fit cover, and image rows use grid with stretch, never flex', function () {

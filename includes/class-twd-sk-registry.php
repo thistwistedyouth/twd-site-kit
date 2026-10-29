@@ -100,9 +100,12 @@ class TWD_SK_Registry {
 			'twd-sk-toc__list',
 			'twd-sk-toc__link',
 			'twd-sk-toc-target',
-			// 0.15.0 (idea 6): reading controls on a page that carries twd-sk-reading: the small script draws the button and
-			// panel (never stored) and puts the read-* classes on the page wrappers from the visitor's own choice.
+			// 0.15.0 (idea 6): reading controls on a page that carries twd-sk-reading (a Look toggle on the section): the small
+			// script draws the box with the button and panel (never stored) and puts the read-* classes on the page wrappers
+			// from the visitor's own choice. The box has its own class: a class that marks a section must never carry a
+			// position of its own (the first build fixed the whole section to the corner of the window; a test guards it).
 			'twd-sk-reading',
+			'twd-sk-reading__box',
 			'twd-sk-reading__btn',
 			'twd-sk-reading__panel',
 			'twd-sk-reading__row',

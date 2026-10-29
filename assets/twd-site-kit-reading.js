@@ -52,7 +52,7 @@
 		return n;
 	}
 	function build() {
-		var host = el('div', '', 'twd-sk-page twd-sk-reading');
+		var host = el('div', '', 'twd-sk-page twd-sk-reading__box');
 		var btn = el('button', 'Reading', 'twd-sk-reading__btn', { type: 'button', 'aria-expanded': 'false', 'aria-haspopup': 'true' });
 		var panel = el('div', '', 'twd-sk-reading__panel', { role: 'group', 'aria-label': 'Reading controls', hidden: '' });
 		function ctl(label, run, pressed) {

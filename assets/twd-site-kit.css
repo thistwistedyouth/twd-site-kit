@@ -3582,7 +3582,11 @@
   scroll-margin-top: 120px;
 }
 /* ---- reading controls (0.15.0, idea 6): the visitor's own text size, line spacing and contrast ---- */
+/* The section toggle class is a marker for the script; it must not move the section. The fixed box is the script's own. */
 .twd-sk-page .twd-sk-reading.twd-sk-reading {
+  position: relative;
+}
+.twd-sk-page .twd-sk-reading__box.twd-sk-reading__box {
   position: fixed;
   right: 16px;
   bottom: 16px;
@@ -3682,7 +3686,7 @@
   color: var(--twd-site-color-title) !important;
 }
 @media (max-width: 768px) {
-  .twd-sk-page .twd-sk-reading.twd-sk-reading {
+  .twd-sk-page .twd-sk-reading__box.twd-sk-reading__box {
     right: 12px;
     bottom: 76px;
   }
