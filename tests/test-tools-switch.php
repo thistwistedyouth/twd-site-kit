@@ -165,6 +165,16 @@ twd_sk_test( 'one editing window (0.15.0, phase 1): the classic editor is a per-
 	foreach ( array( "var oneWindow = !cfg.classic", "'On page edits'", "'AI assisted edits'", "'Settings'", 'twd-sk-ed__dialog--compact', "'/editor/classic'", 'Use the classic editor', 'inlineHost:', 'twd-sk-ed__outline', "Click what you want to change on the page" ) as $needle ) {
 		twd_sk_has( $needle, $js );
 	}
+	// 29 Oct 2026 (the owner's two fixes): the one window always opens undocked at its compact size and place, whatever
+	// was saved (a drag holds only while the page is open), and always on On page edits unless the caller asks for a tab.
+	$setup = substr( $js, strpos( $js, 'function setUpWindow()' ) );
+	$setup = substr( $setup, 0, strpos( $setup, 'function clamp(' ) );
+	twd_sk_has( "win.mode = 'free';\n\t\t\twin.placed = false;\n\t\t\twin.sized = false;", $setup );
+	$open = substr( $js, strpos( $js, 'function open() {' ) );
+	$open = substr( $open, 0, strpos( $open, 'function unsavedList()' ) );
+	twd_sk_has( "var wasHidden = ui.overlay.hasAttribute('hidden');", $open );
+	twd_sk_has( "if (oneWindow && wasHidden && ui.tabs.page && state.tab !== 'page') {\n\t\t\tselectTab('page');", $open );
+	twd_sk_true( strpos( $open, "show(ui.overlay, true);" ) < strpos( $open, "selectTab('page');" ), 'the tab is chosen after the window shows, so the Visual editor starts' );
 	$inline = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
 	foreach ( array( 'data-twd-sk-ctx', 'twd-sk-ed__inlinebar--inwin', 'ED.focusSection = ', 'ED.stopInline = ', 'function updateContext' ) as $needle ) {
 		twd_sk_has( $needle, $inline );

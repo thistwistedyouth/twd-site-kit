@@ -438,11 +438,14 @@
 		if (win.mode !== 'left' && win.mode !== 'right' && win.mode !== 'free') {
 			win.mode = 'centre';
 		}
-		// The one window always opens undocked; a place and size the person chose are kept, otherwise it sits top right.
 		win.placed = win.mode === 'free' && (win.x > 0 || win.y > 0);
 		win.sized = win.mode === 'free' && win.w > 0;
+		// The one window always opens undocked, top right, at its compact size for the tab (the owner's choice, 29 Oct
+		// 2026): a drag, a resize or a dock holds only while the page is open. The classic editor keeps the saved place.
 		if (oneWindow) {
 			win.mode = 'free';
+			win.placed = false;
+			win.sized = false;
 		}
 		ui.header.addEventListener('pointerdown', startDrag);
 		ui.resize.addEventListener('pointerdown', startResize);
@@ -2160,11 +2163,17 @@
 			restoreWindow();
 			return;
 		}
+		var wasHidden = ui.overlay.hasAttribute('hidden');
 		if (oneWindow && win.mode !== 'free') {
 			win.mode = 'free';
 			applyWindow();
 		}
 		show(ui.overlay, true);
+		// The one window always opens on On page edits; a caller that wants another tab (the header and footer pills,
+		// openAt) selects it after this. A pencil pressed while the window is already open keeps the tab in use.
+		if (oneWindow && wasHidden && ui.tabs.page && state.tab !== 'page') {
+			selectTab('page');
+		}
 		queuePencils();
 		openBtn.setAttribute('aria-expanded', 'true');
 		ui.title.focus();
