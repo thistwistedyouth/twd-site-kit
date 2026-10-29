@@ -182,6 +182,8 @@
 .twd-sk-text--prose .twd-sk-text__body ol { list-style: decimal; }
 .twd-sk-text--prose .twd-sk-text__body li + li { margin-top: 0.4em; }
 .twd-sk-text--prose .twd-sk-text__body blockquote { padding: 0 0 0 1.2em; border-left: 3px solid $color-accent; color: $color-muted; }
+/* Quote line (0.15.0): the same rule on any paragraph, from the Visual editor's Quote line button. The words keep their colour. */
+.twd-sk-quoteline { padding-left: 1.2em; border-left: 3px solid $color-accent; }
 .twd-sk-text--prose .twd-sk-text__body .twd-sk-btn { margin-top: 8px; text-decoration: none; }
 .twd-sk-text--prose .twd-sk-text__body .twd-sk-btn--primary { color: $color-on-primary; }
 .twd-sk-text__aside > * + * { margin-top: 20px; }

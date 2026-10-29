@@ -404,3 +404,23 @@ twd_sk_test( 'inline remove: the save route takes removes and says so in the not
 	twd_sk_has( 'S.removes[k].removeAttribute(\'hidden\')', $js, 'Cancel puts everything back' );
 	twd_sk_has( 'body.twd-sk-inline-on [data-twd-sk-r][hidden] { display: none !important; }', file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.css' ) );
 } );
+
+twd_sk_test( 'quote line (0.15.0): a shared class on a paragraph, set or cleared through the inline route, kept by the sanitiser, styled from the accent token', function () {
+	twd_sk_true( in_array( 'twd-sk-quoteline', TWD_SK_Registry::shared_classes(), true ) );
+	$html = '<section class="twd-sk-text twd-sk-tone-base"><div class="twd-sk-inner"><div class="twd-sk-text__body"><p>One.</p><p>Two.</p></div></div></section>';
+	$on   = TWD_SK_Inline::apply( $html, array( array( 'i' => 1, 'html' => 'Two.', 'quote' => true ) ), array() )['html'];
+	twd_sk_has( '<p class="twd-sk-quoteline">Two.</p>', $on );
+	twd_sk_has( '<p>One.</p>', $on );
+	twd_sk_eq( $on, TWD_SK_Sanitizer::clean( $on ), 'the sanitiser keeps it' );
+	$off = TWD_SK_Inline::apply( $on, array( array( 'i' => 1, 'html' => 'Two.', 'quote' => false ) ), array() )['html'];
+	twd_sk_eq( $html, $off, 'off again takes the class off and leaves no empty class' );
+	$h2 = '<section class="twd-sk-text twd-sk-tone-base"><div class="twd-sk-inner"><h2 class="twd-sk-title">Hi</h2></div></section>';
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Inline::apply( $h2, array( array( 'i' => 0, 'html' => 'Hi', 'quote' => true ) ), array() ), 'only a paragraph' );
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	twd_sk_has( '.twd-sk-page .twd-sk-quoteline.twd-sk-quoteline {', $css );
+	twd_sk_has( 'border-left: 3px solid var(--twd-site-color-accent) !important;', $css );
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
+	foreach ( array( "toolButton('Quote line'", "var QUOTE = 'twd-sk-quoteline';", 'item.quote = S.quote[i];', 't.classList.toggle(QUOTE, S.origQuote[i]);' ) as $needle ) {
+		twd_sk_has( $needle, $js );
+	}
+} );

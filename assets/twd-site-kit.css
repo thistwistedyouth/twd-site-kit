@@ -550,6 +550,11 @@
   border-left: 3px solid var(--twd-site-color-accent) !important;
   color: var(--twd-site-color-muted) !important;
 }
+/* Quote line (0.15.0): the same rule on any paragraph, from the Visual editor's Quote line button. The words keep their colour. */
+.twd-sk-page .twd-sk-quoteline.twd-sk-quoteline {
+  padding-left: 1.2em !important;
+  border-left: 3px solid var(--twd-site-color-accent) !important;
+}
 .twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body .twd-sk-btn.twd-sk-btn {
   margin-top: 8px !important;
   text-decoration: none !important;

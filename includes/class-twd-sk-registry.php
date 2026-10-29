@@ -68,6 +68,8 @@ class TWD_SK_Registry {
 			'twd-sk-space-bottom-0',
 			'twd-sk-space-bottom-sm',
 			'twd-sk-space-bottom-lg',
+			// 0.15.0: a quote line (accent rule on the left) on any paragraph, toggled in the Visual editor.
+			'twd-sk-quoteline',
 			'twd-sk-eyebrow',
 			'twd-sk-title',
 			'twd-sk-lead',

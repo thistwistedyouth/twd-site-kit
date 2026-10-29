@@ -190,9 +190,31 @@
 		}
 	}
 
+	/* Quote line (0.15.0): a shared class on the paragraph the cursor is in; the bar shows at once, Save keeps it,
+	   pressing again takes it off, Cancel puts back whatever the paragraph had. */
+	var QUOTE = 'twd-sk-quoteline';
+
+	function toggleQuote() {
+		var t = inEditable();
+		if (!t || t.tagName !== 'P') {
+			status('Put the cursor in a paragraph first: a quote line goes on a paragraph.');
+			return;
+		}
+		var i = t.getAttribute('data-twd-sk-t');
+		t.classList.toggle(QUOTE);
+		var now = t.classList.contains(QUOTE);
+		if (now === !!S.origQuote[i]) {
+			delete S.quote[i];
+		} else {
+			S.quote[i] = now;
+		}
+		markChanged(t);
+		status(now ? 'Quote line added. Press Quote line again to take it off.' : 'Quote line taken off.');
+	}
+
 	function markChanged(t) {
 		var i = t.getAttribute('data-twd-sk-t');
-		if (serialize(t) !== S.origText[i] || S.hrefs[i] !== undefined) {
+		if (serialize(t) !== S.origText[i] || S.hrefs[i] !== undefined || S.quote[i] !== undefined) {
 			t.setAttribute('data-twd-sk-changed', '1');
 		} else {
 			t.removeAttribute('data-twd-sk-changed');
@@ -485,6 +507,7 @@
 			format('italic');
 		});
 		ui.link = toolButton('Link', 'Add or change a link', openLink);
+		ui.quote = toolButton('Quote line', 'A line on the left of this paragraph, like a quote', toggleQuote);
 		ui.remove = toolButton('Remove', 'Remove this list entry, card, button or section', removeThis);
 		ui.putBack = toolButton('Put back', 'Put back the last thing removed', putBack);
 		ui.putBack.disabled = true;
@@ -556,7 +579,7 @@
 		]);
 		ui.confirm = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' });
 		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar', role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '' }, [
-			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.bold, ui.italic, ui.link, ui.look, ui.remove, ui.putBack]),
+			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.bold, ui.italic, ui.link, ui.quote, ui.look, ui.remove, ui.putBack]),
 			el('div', { className: 'twd-sk-ed__inlinetools', role: 'group', 'aria-label': 'Sections' }, kinds.length ? [ui.addSec, ui.moveUp, ui.moveDown, ui.undo] : [ui.moveUp, ui.moveDown, ui.undo]),
 			el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.save, ui.cancel]),
 			ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel, ui.confirm
@@ -1233,6 +1256,8 @@
 		S.origText = {};
 		S.origPic = {};
 		S.hrefs = {};
+		S.quote = {};
+		S.origQuote = {};
 		S.picks = {};
 		S.spotPicks = {};
 		S.removes = {};
@@ -1249,6 +1274,7 @@
 			var i = t.getAttribute('data-twd-sk-t');
 			S.orig[i] = copyChildren(t);
 			S.origText[i] = serialize(t);
+			S.origQuote[i] = t.classList.contains(QUOTE);
 			t.setAttribute('contenteditable', 'true');
 			t.setAttribute('spellcheck', 'true');
 		});
@@ -1305,6 +1331,9 @@
 			if (serialize(t) !== S.origText[i]) {
 				restoreChildren(t, S.orig[i]);
 			}
+			if (S.origQuote[i] !== undefined) {
+				t.classList.toggle(QUOTE, S.origQuote[i]);
+			}
 		});
 		S.pics.forEach(function (img) {
 			var o = S.origPic[img.getAttribute('data-twd-sk-p')];
@@ -1337,6 +1366,7 @@
 		S.origLook = {};
 		S.lookSec = null;
 		S.hrefs = {};
+		S.quote = {};
 		S.linkTarget = null;
 		S.range = null;
 		S.picks = {};
@@ -1387,6 +1417,9 @@
 				var item = { i: parseInt(i, 10), html: serialize(t) };
 				if (S.hrefs[i] !== undefined) {
 					item.href = S.hrefs[i];
+				}
+				if (S.quote[i] !== undefined) {
+					item.quote = S.quote[i];
 				}
 				body.texts.push(item);
 			}

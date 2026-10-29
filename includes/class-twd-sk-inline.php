@@ -468,6 +468,22 @@ class TWD_SK_Inline {
 				return new WP_Error( 'twd_sk_bad_input', 'One piece of text is too long. Keep each one under ' . self::MAX_TEXT . ' characters.' );
 			}
 			$el = $found['text'][ $i ];
+			// Quote line (0.15.0): a shared class on the paragraph itself (true adds it, false takes it off).
+			if ( array_key_exists( 'quote', $edit ) ) {
+				if ( 'p' !== strtolower( $el->tagName ) ) {
+					return new WP_Error( 'twd_sk_bad_input', 'A quote line goes on a paragraph.' );
+				}
+				$classes = preg_split( '/\s+/', trim( (string) $el->getAttribute( 'class' ) ), -1, PREG_SPLIT_NO_EMPTY );
+				$classes = array_values( array_diff( $classes, array( 'twd-sk-quoteline' ) ) );
+				if ( $edit['quote'] ) {
+					$classes[] = 'twd-sk-quoteline';
+				}
+				if ( $classes ) {
+					$el->setAttribute( 'class', implode( ' ', $classes ) );
+				} else {
+					$el->removeAttribute( 'class' );
+				}
+			}
 			while ( $el->firstChild ) {
 				$el->removeChild( $el->firstChild );
 			}
