@@ -629,6 +629,119 @@
     font-size: var(--twd-site-size-small) !important;
   }
 }
+/* ---- the one editing window (0.15.0, phase 1): compact, undocked, three tabs; the Visual editor's tools hosted inside ---- */
+.twd-sk-ed .twd-sk-ed__dialog--compact.twd-sk-ed__dialog--compact {
+  max-height: 70%;
+}
+.twd-sk-ed .twd-sk-ed__overlay--free.twd-sk-ed__overlay--free .twd-sk-ed__dialog--compact.twd-sk-ed__dialog--compact {
+  height: auto;
+}
+.twd-sk-ed .twd-sk-ed__dialog--compact.twd-sk-ed__dialog--compact .twd-sk-ed__body.twd-sk-ed__body {
+  padding: 16px 20px !important;
+}
+.twd-sk-ed .twd-sk-ed__subtabs.twd-sk-ed__subtabs {
+  margin: 0 0 14px !important;
+  padding: 0 !important;
+}
+.twd-sk-ed .twd-sk-ed__pagehint.twd-sk-ed__pagehint {
+  margin: 0 0 10px !important;
+}
+.twd-sk-ed .twd-sk-ed__outline.twd-sk-ed__outline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 12px !important;
+  padding: 0 !important;
+  list-style: none;
+}
+.twd-sk-ed .twd-sk-ed__outlineitem.twd-sk-ed__outlineitem {
+  max-width: 100%;
+  min-height: 32px;
+  padding: 4px 10px !important;
+  border: 1px solid var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-pill) !important;
+  background-color: var(--twd-site-color-bg) !important;
+  color: var(--twd-site-color-title) !important;
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  cursor: pointer;
+  overflow: clip;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.twd-sk-ed .twd-sk-ed__outlineitem.twd-sk-ed__outlineitem:hover,
+.twd-sk-ed .twd-sk-ed__outlineitem.twd-sk-ed__outlineitem:focus-visible {
+  border-color: var(--twd-site-color-primary) !important;
+  color: var(--twd-site-color-primary) !important;
+}
+.twd-sk-ed .twd-sk-ed__inlinehost.twd-sk-ed__inlinehost {
+  min-height: 48px;
+}
+.twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin {
+  position: static;
+  width: auto;
+  max-width: none;
+  max-height: none;
+  overflow: visible;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+.twd-sk-ed .twd-sk-ed__ctxhead.twd-sk-ed__ctxhead {
+  order: 0;
+  flex: 1 1 100%;
+  margin: 0 0 4px !important;
+  font-size: var(--twd-site-size-body) !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin .twd-sk-ed__inlinestatus.twd-sk-ed__inlinestatus {
+  order: 1;
+}
+.twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin .twd-sk-ed__inlinepanel.twd-sk-ed__inlinepanel {
+  order: 2;
+}
+.twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin .twd-sk-ed__inlineactions.twd-sk-ed__inlineactions {
+  order: 3;
+  position: sticky;
+  bottom: 0;
+  flex: 1 1 100%;
+  justify-content: flex-end;
+  margin: 8px 0 0 !important;
+  padding: 10px 0 4px !important;
+  border-top: 1px solid var(--twd-site-color-border) !important;
+  background-color: var(--twd-site-color-surface) !important;
+}
+.twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin .twd-sk-ed__inlinetools--view.twd-sk-ed__inlinetools--view {
+  margin-left: auto !important;
+}
+.twd-sk-ed .twd-sk-ed__viewselect.twd-sk-ed__viewselect {
+  min-width: 0;
+  width: auto;
+  max-width: 100%;
+}
+/* Only the tools for what was clicked: words show for words, the section tools for anything in a section. */
+.twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--words.twd-sk-ed__inlinetools--words,
+.twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--section.twd-sk-ed__inlinetools--section,
+.twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="picture"] .twd-sk-ed__inlinetools--words.twd-sk-ed__inlinetools--words,
+.twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="section"] .twd-sk-ed__inlinetools--words.twd-sk-ed__inlinetools--words {
+  display: none;
+}
+@media (max-width: 700px) {
+  .twd-sk-ed .twd-sk-ed__overlay--sheet.twd-sk-ed__overlay--sheet {
+    align-items: flex-end;
+    padding: 0 !important;
+  }
+  .twd-sk-ed .twd-sk-ed__overlay--sheet.twd-sk-ed__overlay--sheet .twd-sk-ed__dialog--compact.twd-sk-ed__dialog--compact {
+    height: auto;
+    max-height: 70%;
+    border-radius: var(--twd-site-radius-card) var(--twd-site-radius-card) 0 0 !important;
+  }
+  .twd-sk-ed .twd-sk-ed__overlay--sheet.twd-sk-ed__overlay--sheet .twd-sk-ed__winbtn.twd-sk-ed__winbtn {
+    display: none;
+  }
+}
 /* ---- info circles (0.15.0): a small (i) that shows a line of help on click ---- */
 .twd-sk-ed .twd-sk-ed__inforow.twd-sk-ed__inforow {
   margin: 0 0 12px !important;

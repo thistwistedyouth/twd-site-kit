@@ -581,8 +581,12 @@
 		return b;
 	}
 
+	// The one editing window (0.15.0, phase 1): the tools live in its On page edits tab and show for what was clicked.
+	var oneWindow = !cfg.classic;
+
 	function buildBar() {
 		ui.status = el('span', { className: 'twd-sk-ed__inlinestatus', role: 'status', 'aria-live': 'polite' });
+		ui.ctxHead = el('p', { className: 'twd-sk-ed__inlinehead twd-sk-ed__ctxhead', text: 'Click what you want to change on the page.' });
 		ui.save = ED.button('Save changes', 'primary', save);
 		ui.save.className += ' twd-sk-ed__inlinesave';
 		ui.cancel = ED.button('Cancel', 'secondary', cancel);
@@ -629,6 +633,20 @@
 		ui.viewPhone = viewAt('Phone', 390, 844);
 		ui.viewTablet = viewAt('Tablet', 768, 1024);
 		ui.viewDesktop = viewAt('Desktop', 1280, 900);
+		// In the one window the three become a small menu.
+		ui.viewSelect = el('select', { className: 'twd-sk-ed__select twd-sk-ed__viewselect', 'aria-label': 'See the page at a size' }, [
+			el('option', { value: '', text: 'View at...' }),
+			el('option', { value: 'Phone', text: 'Phone (390 wide)' }),
+			el('option', { value: 'Tablet', text: 'Tablet (768 wide)' }),
+			el('option', { value: 'Desktop', text: 'Desktop (1280 wide)' })
+		]);
+		ui.viewSelect.addEventListener('change', function () {
+			var pick = { Phone: ui.viewPhone, Tablet: ui.viewTablet, Desktop: ui.viewDesktop }[ui.viewSelect.value];
+			ui.viewSelect.value = '';
+			if (pick) {
+				pick.click();
+			}
+		});
 		ui.undo = toolButton('Undo', 'Step back the last saved change: a move, an added section, or the last save', function () {
 			undoLast(false);
 		});
@@ -682,14 +700,54 @@
 			ui.picHead, ui.library, ui.upload, ui.describe, ED.button('Close', 'secondary', closePanels), ui.file
 		]);
 		ui.confirm = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' });
-		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar', role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '' }, [
-			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.bold, ui.italic, ui.link, ui.quote, ui.note, ui.heading, ui.look, ui.remove, ui.putBack]),
-			el('div', { className: 'twd-sk-ed__inlinetools', role: 'group', 'aria-label': 'Sections' }, kinds.length ? [ui.addSec, ui.moveUp, ui.moveDown, ui.undo] : [ui.moveUp, ui.moveDown, ui.undo]),
-			el('div', { className: 'twd-sk-ed__inlinetools', role: 'group', 'aria-label': 'See the page at a size' }, [el('span', { className: 'twd-sk-ed__inlinehead', text: 'View:' }), ui.viewPhone, ui.viewTablet, ui.viewDesktop]),
-			el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.save, ui.cancel]),
-			ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel, ui.confirm
-		]);
+		var words = el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words', role: 'group', 'aria-label': 'Words' }, [ui.bold, ui.italic, ui.link, ui.quote, ui.note, ui.heading]);
+		var sectionTools = oneWindow
+			? (kinds.length ? [ui.look, ui.remove, ui.putBack, ui.addSec, ui.moveUp, ui.moveDown] : [ui.look, ui.remove, ui.putBack, ui.moveUp, ui.moveDown])
+			: (kinds.length ? [ui.addSec, ui.moveUp, ui.moveDown, ui.undo] : [ui.moveUp, ui.moveDown, ui.undo]);
+		var kids = oneWindow
+			? [
+				ui.ctxHead,
+				words,
+				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section', role: 'group', 'aria-label': 'This section' }, sectionTools),
+				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--view', role: 'group', 'aria-label': 'See the page at a size' }, [ui.viewSelect]),
+				ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel, ui.confirm,
+				el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.undo, ui.save, ui.cancel])
+			]
+			: [
+				el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.bold, ui.italic, ui.link, ui.quote, ui.note, ui.heading, ui.look, ui.remove, ui.putBack]),
+				el('div', { className: 'twd-sk-ed__inlinetools', role: 'group', 'aria-label': 'Sections' }, sectionTools),
+				el('div', { className: 'twd-sk-ed__inlinetools', role: 'group', 'aria-label': 'See the page at a size' }, [el('span', { className: 'twd-sk-ed__inlinehead', text: 'View:' }), ui.viewPhone, ui.viewTablet, ui.viewDesktop]),
+				el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.save, ui.cancel]),
+				ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel, ui.confirm
+			];
+		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar' + (oneWindow ? ' twd-sk-ed__inlinebar--inwin' : ''), role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '', 'data-twd-sk-ctx': 'none' }, kids);
 		root.appendChild(ui.bar);
+	}
+
+	// What was clicked, so the one window shows the right tools: words, a picture, a section, or nothing yet.
+	function updateContext() {
+		if (!ui.bar) {
+			return;
+		}
+		var kind = 'none';
+		var where = '';
+		var t = S.on ? inEditable() : null;
+		var node = S.last;
+		var sec = S.on ? currentSection() : null;
+		if (t) {
+			kind = 'words';
+		} else if (node && pictureTarget(node)) {
+			kind = 'picture';
+		} else if (sec) {
+			kind = 'section';
+		}
+		if (sec) {
+			var index = parseInt(sec.getAttribute('data-twd-sk-sec'), 10);
+			where = 'Section ' + (index + 1) + ': ' + sectionName(sec);
+		}
+		ui.bar.setAttribute('data-twd-sk-ctx', kind);
+		ui.ctxHead.textContent = kind === 'none' ? 'Click what you want to change on the page.'
+			: (kind === 'words' ? 'Words in ' : (kind === 'picture' ? 'Picture in ' : '')) + where;
 	}
 
 	function inEditable() {
@@ -1134,6 +1192,7 @@
 		}
 		S.last = e.target;
 		var target = pictureTarget(e.target);
+		window.setTimeout(updateContext, 0);
 		if (target) {
 			e.preventDefault();
 			e.stopPropagation();
@@ -1328,7 +1387,11 @@
 		} catch (e) {
 			// The address stays as it is; nothing else depends on it.
 		}
-		start();
+		if (oneWindow && ED.openAt) {
+			ED.openAt('page');
+		} else {
+			start();
+		}
 		if (!S.on || !m) {
 			return;
 		}
@@ -1340,6 +1403,7 @@
 				first.focus({ preventScroll: true });
 			}
 			S.last = first || sec;
+			updateContext();
 		}
 	}
 
@@ -1405,9 +1469,10 @@
 		closePanels();
 		show(ui.confirm, false);
 		counter();
-		if (S.texts[0]) {
+		if (S.texts[0] && !oneWindow) {
 			S.texts[0].focus();
 		}
+		updateContext();
 	}
 
 	function stop() {
@@ -1432,6 +1497,7 @@
 		show(ui.bar, false);
 		show(ui.open, true);
 		show(document.getElementById('twd-sk-ed-open'), true);
+		updateContext();
 	}
 
 	function throwAway() {
@@ -1634,14 +1700,50 @@
 	document.addEventListener('focusin', function (e) {
 		if (S.on && ui.bar && !ui.bar.contains(e.target)) {
 			S.last = e.target;
+			updateContext();
 		}
 	});
+	document.addEventListener('selectionchange', function () {
+		if (S.on && oneWindow) {
+			window.clearTimeout(S.ctxTimer);
+			S.ctxTimer = window.setTimeout(updateContext, 80);
+		}
+	});
+	// The one window (0.15.0): the tools move into its On page edits tab when it opens.
+	if (oneWindow && ED.onOpen) {
+		ED.onOpen.push(function () {
+			var host = typeof ED.inlineHost === 'function' ? ED.inlineHost() : null;
+			if (host && ui.bar.parentNode !== host) {
+				host.appendChild(ui.bar);
+			}
+		});
+	}
+	// A section pencil or the outline: put the cursor in that section and show its tools.
+	ED.focusSection = function (index) {
+		var sec = document.querySelector('[data-twd-sk-sec="' + parseInt(index, 10) + '"]');
+		if (!sec) {
+			return;
+		}
+		var first = sec.querySelector('[data-twd-sk-t]');
+		sec.scrollIntoView({ block: 'start' });
+		S.last = first || sec;
+		if (first && S.on) {
+			first.focus({ preventScroll: true });
+		}
+		updateContext();
+	};
+	// The one window closing ends the session (the window asked about unsaved changes first, or there were none).
+	ED.stopInline = function () {
+		if (S.on) {
+			throwAway();
+		}
+	};
 	// The Edit with AI pop-up offers the same, from its Edit this page tab.
 	ED.startInline = function () {
 		start();
 	};
 	if (ED.addLauncher) {
-		ED.addLauncher({ id: 'text', order: 10, label: function () { return 'Visual editor'; }, run: start, show: function () { return !S.on && !(ED.toolsOff && ED.toolsOff()); } });
+		ED.addLauncher({ id: 'text', order: 10, label: function () { return 'Visual editor'; }, run: start, show: function () { return !oneWindow && !S.on && !(ED.toolsOff && ED.toolsOff()); } });
 	}
 	// Every way out runs the one revert routine: Cancel and Escape (cancel(), asking first), the pop-up's "Close and
 	// lose these changes" (through this check), and a page redraw (the nodes are gone, so the session ends).

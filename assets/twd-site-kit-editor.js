@@ -9,6 +9,13 @@
 	'use strict';
 
 	var cfg = window.TWD_SK_EDITOR;
+	/* The one editing window (0.15.0, phase 1). One window with three tabs: On page edits (the Visual editor's tools,
+	 * hosted here and shown for what is clicked on the page), AI assisted edits (the Edit this page panel) and Settings
+	 * (the Pages, Site and Search panels as a second row of tabs). It opens undocked, sized to its content and never
+	 * taller than 70 percent of the window; on a phone it is a bottom sheet. The saving, undo and cancel paths are the
+	 * Visual editor's own, unchanged. The classic editor (this full-screen pop-up and the separate card) stays behind a
+	 * per-person switch, "Use the classic editor", in the Your Edits menu. */
+	var oneWindow = !cfg.classic;
 	var root = document.getElementById('twd-sk-ed');
 	var openBtn = document.getElementById('twd-sk-ed-open');
 	if (!cfg || !root || !openBtn) {
@@ -264,8 +271,10 @@
 		tabs.addEventListener('keydown', onTabKeys);
 		var body = el('div', { className: 'twd-sk-ed__body' });
 		ui.tabs = {};
+		ui.subTabs = oneWindow ? el('div', { className: 'twd-sk-ed__tabs twd-sk-ed__subtabs', role: 'tablist', 'aria-label': 'Settings sections' }) : null;
 
-		function addTab(name, label, buildPanel) {
+		// A tab: in the main row, or (the one window) in the Settings tab's own row.
+		function addTab(name, label, buildPanel, sub) {
 			var tab = el('button', {
 				type: 'button', role: 'tab', id: 'twd-sk-ed-tab-' + name, className: 'twd-sk-ed__tab',
 				'aria-selected': 'false', 'aria-controls': 'twd-sk-ed-panel-' + name, text: label
@@ -275,18 +284,32 @@
 			tab.addEventListener('click', function () {
 				selectTab(name);
 			});
-			tabs.appendChild(tab);
+			(sub && ui.subTabs ? ui.subTabs : tabs).appendChild(tab);
 			body.appendChild(panel);
-			ui.tabs[name] = { tab: tab, panel: panel };
+			ui.tabs[name] = { tab: tab, panel: panel, sub: !!(sub && ui.subTabs) };
 		}
 
-		if (cfg.isKitPage && cfg.pageId) {
-			addTab('edit', 'Edit this page', buildEditPanel);
+		if (oneWindow) {
+			addTab('page', 'On page edits', buildPagePanel);
+			if (cfg.isKitPage && cfg.pageId) {
+				addTab('edit', 'AI assisted edits', buildEditPanel);
+			}
+			addTab('settings', 'Settings', function (panel) {
+				panel.appendChild(ui.subTabs);
+			});
+			addTab('pages', 'Pages', buildPagesPanel, true);
+			((window.TWD_SK_ED && window.TWD_SK_ED.extraTabs) || []).forEach(function (t) {
+				addTab(t.name, t.label, t.build, true);
+			});
+		} else {
+			if (cfg.isKitPage && cfg.pageId) {
+				addTab('edit', 'Edit this page', buildEditPanel);
+			}
+			addTab('pages', 'Pages', buildPagesPanel);
+			((window.TWD_SK_ED && window.TWD_SK_ED.extraTabs) || []).forEach(function (t) {
+				addTab(t.name, t.label, t.build);
+			});
 		}
-		addTab('pages', 'Pages', buildPagesPanel);
-		((window.TWD_SK_ED && window.TWD_SK_ED.extraTabs) || []).forEach(function (t) {
-			addTab(t.name, t.label, t.build);
-		});
 		if (cfg.safeMode) {
 			body.insertBefore(el('div', { className: 'twd-sk-ed__banner', role: 'status', text: 'Safe mode is on. The Site tab, header and footer, SEO fields and the newest features are switched off. Your pages and this editor still work.' }), body.firstChild);
 		}
@@ -294,7 +317,7 @@
 		var header = el('div', { className: 'twd-sk-ed__header' }, [title, el('div', { className: 'twd-sk-ed__winbtns' }, [winBtn, minBtn, closeBtn])]);
 		var resize = el('div', { className: 'twd-sk-ed__resize', 'aria-hidden': 'true', title: 'Drag to resize' });
 		var dialog = el('div', {
-			className: 'twd-sk-ed__dialog', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'twd-sk-ed-title'
+			className: 'twd-sk-ed__dialog' + (oneWindow ? ' twd-sk-ed__dialog--compact' : ''), role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'twd-sk-ed-title'
 		}, [
 			header,
 			tabs,
@@ -316,8 +339,67 @@
 		ui.title = title;
 		root.appendChild(ui.overlay);
 		state.built = true;
-		selectTab(ui.tabs.edit ? 'edit' : 'pages');
+		if (oneWindow) {
+			title.textContent = 'Your Edits';
+		}
+		selectTab(oneWindow ? 'page' : (ui.tabs.edit ? 'edit' : 'pages'));
 		setUpWindow();
+	}
+
+	/* ---- the On page edits tab (0.15.0, phase 1) ----
+	 * "Click what you want to change on the page." The Visual editor (twd-site-kit-inline.js) puts its tool bar into
+	 * this tab when the window opens and shows the right tools for what was clicked (words, a picture, a section).
+	 * Above them a small outline of the sections, to jump to one. */
+	function buildPagePanel(panel) {
+		if (!cfg.inline) {
+			panel.appendChild(el('p', { className: 'twd-sk-ed__help', text: 'This page has no words to change here. Use the Settings tab for the site, or make a kit page first.' }));
+			return;
+		}
+		ui.pageHint = el('p', { className: 'twd-sk-ed__help twd-sk-ed__pagehint', text: 'Click what you want to change on the page. The tools for it appear here. Nothing is saved until you press Save changes.' });
+		ui.outline = el('ol', { className: 'twd-sk-ed__outline', 'aria-label': 'Sections on this page' });
+		ui.inlineHost = el('div', { className: 'twd-sk-ed__inlinehost' });
+		panel.appendChild(ui.pageHint);
+		panel.appendChild(ui.outline);
+		panel.appendChild(ui.inlineHost);
+	}
+
+	function buildOutline() {
+		if (!ui.outline) {
+			return;
+		}
+		clear(ui.outline);
+		Array.prototype.forEach.call(document.querySelectorAll('section[data-twd-sk-sec]'), function (sec) {
+			var index = parseInt(sec.getAttribute('data-twd-sk-sec'), 10);
+			var b = el('button', { type: 'button', className: 'twd-sk-ed__outlineitem', text: (index + 1) + '. ' + sectionName(sec), title: 'Go to this section' });
+			b.addEventListener('click', function () {
+				var ED = window.TWD_SK_ED;
+				if (ED && typeof ED.focusSection === 'function') {
+					ED.focusSection(index);
+				} else {
+					sec.scrollIntoView({ block: 'start' });
+				}
+			});
+			ui.outline.appendChild(el('li', {}, [b]));
+		});
+	}
+
+	// The window's width for a tab, until the person resizes it: the page tools are narrow, the settings forms wide.
+	function tabWidth(name) {
+		if (name === 'page') {
+			return 480;
+		}
+		if (name === 'edit') {
+			return 560;
+		}
+		return 780;
+	}
+
+	// Start the Visual editor for the On page edits tab (its own script does the work), once it has loaded.
+	function startInlineForPage() {
+		var ED = window.TWD_SK_ED;
+		if (oneWindow && cfg.inline && state.tab === 'page' && !ui.overlay.hasAttribute('hidden') && ED && typeof ED.startInline === 'function') {
+			ED.startInline();
+		}
 	}
 
 	/* ---- the window (0.15.0): drag by the title bar, resize from the corner, dock left or right, minimise to a pencil ----
@@ -326,7 +408,7 @@
 	 * pointer events. Where it sits is kept per person on the server (cfg.window, POST /editor/window), never in the
 	 * browser. Minimise hides the window and shows one large pencil button; nothing inside is thrown away, so the
 	 * typed text, a preview, the open fold-outs and unsaved changes are all still there when it comes back. */
-	var win = { mode: 'centre', x: 0, y: 0, w: 0, h: 0, mx: -1, my: -1, esc: 'close', minimised: false, menu: null, saveTimer: 0 };
+	var win = { mode: 'centre', x: 0, y: 0, w: 0, h: 0, mx: -1, my: -1, esc: 'close', minimised: false, menu: null, saveTimer: 0, placed: false, sized: false };
 
 	function phoneWidth() {
 		return window.innerWidth <= 700;
@@ -341,6 +423,12 @@
 		});
 		if (win.mode !== 'left' && win.mode !== 'right' && win.mode !== 'free') {
 			win.mode = 'centre';
+		}
+		// The one window always opens undocked; a place and size the person chose are kept, otherwise it sits top right.
+		win.placed = win.mode === 'free' && (win.x > 0 || win.y > 0);
+		win.sized = win.mode === 'free' && win.w > 0;
+		if (oneWindow) {
+			win.mode = 'free';
 		}
 		ui.header.addEventListener('pointerdown', startDrag);
 		ui.resize.addEventListener('pointerdown', startResize);
@@ -362,6 +450,8 @@
 		['left', 'right', 'free'].forEach(function (m) {
 			o.classList.toggle('twd-sk-ed__overlay--' + m, mode === m);
 		});
+		// The one window on a phone: a bottom sheet, not the full screen.
+		o.classList.toggle('twd-sk-ed__overlay--sheet', oneWindow && phoneWidth());
 		d.setAttribute('aria-modal', mode === 'centre' ? 'true' : 'false');
 		d.style.left = '';
 		d.style.top = '';
@@ -370,14 +460,18 @@
 		if (mode === 'free') {
 			var maxW = Math.max(320, window.innerWidth - 16);
 			var maxH = Math.max(240, window.innerHeight - 16);
-			var w = clamp(win.w || 760, 320, maxW);
+			var w = clamp(oneWindow ? (win.sized ? win.w : tabWidth(state.tab)) : (win.w || 760), 320, maxW);
 			var h = clamp(win.h || Math.round(window.innerHeight * 0.8), 240, maxH);
-			var x = clamp(win.x, 0, Math.max(0, window.innerWidth - w));
-			var y = clamp(win.y, 0, Math.max(0, window.innerHeight - h));
+			var bar = document.getElementById('wpadminbar');
+			var top = bar ? bar.offsetHeight + 16 : 16;
+			var x = clamp(oneWindow && !win.placed ? window.innerWidth - w - 24 : win.x, 0, Math.max(0, window.innerWidth - w));
+			var y = clamp(oneWindow && !win.placed ? top : win.y, 0, Math.max(0, window.innerHeight - (oneWindow ? 120 : h)));
 			d.style.left = x + 'px';
 			d.style.top = y + 'px';
 			d.style.width = w + 'px';
-			d.style.height = h + 'px';
+			if (!oneWindow) {
+				d.style.height = h + 'px';
+			}
 		} else if (mode === 'left' || mode === 'right') {
 			d.style.width = clamp(win.w || 480, 320, Math.max(320, window.innerWidth - 40)) + 'px';
 		}
@@ -419,6 +513,7 @@
 		function move(ev) {
 			win.x = Math.round(ev.clientX - dx);
 			win.y = Math.round(ev.clientY - dy);
+			win.placed = true;
 			applyWindow();
 		}
 		function up() {
@@ -450,6 +545,7 @@
 				win.w = Math.round(w0 + (ev.clientX - startX));
 				win.h = Math.round(h0 + (ev.clientY - startY));
 			}
+			win.sized = true;
 			applyWindow();
 		}
 		function up() {
@@ -599,12 +695,33 @@
 	}
 
 	function selectTab(name) {
+		var entry = ui.tabs[name];
+		if (!entry) {
+			return;
+		}
+		if (name === 'settings') {
+			var first = Object.keys(ui.tabs).filter(function (k) {
+				return ui.tabs[k].sub;
+			})[0];
+			if (first) {
+				selectTab(first);
+				return;
+			}
+		}
 		Object.keys(ui.tabs).forEach(function (key) {
-			var on = key === name;
-			ui.tabs[key].tab.setAttribute('aria-selected', on ? 'true' : 'false');
-			show(ui.tabs[key].panel, on);
+			var e = ui.tabs[key];
+			var on = key === name || (entry.sub && key === 'settings');
+			e.tab.setAttribute('aria-selected', on ? 'true' : 'false');
+			show(e.panel, on);
 		});
 		state.tab = name;
+		if (oneWindow && state.built) {
+			applyWindow();
+			if (name === 'page') {
+				buildOutline();
+				startInlineForPage();
+			}
+		}
 		if (name === 'pages') {
 			loadInfo();
 		}
@@ -918,7 +1035,7 @@
 
 	function placePencils() {
 		pencilQueued = false;
-		var hidden = tools.off || document.body.classList.contains('twd-sk-inline-on') || (ui.overlay && !ui.overlay.hasAttribute('hidden'));
+		var hidden = tools.off || (!oneWindow && (document.body.classList.contains('twd-sk-inline-on') || (ui.overlay && !ui.overlay.hasAttribute('hidden'))));
 		pencils.forEach(function (p) {
 			var r = p.host.getBoundingClientRect();
 			var visible = !hidden && r.height > 0 && r.bottom > 40 && r.top < window.innerHeight - 40;
@@ -949,6 +1066,17 @@
 			var name = sectionName(sec);
 			var node = el('button', { type: 'button', className: 'twd-sk-ed__pencil', 'aria-label': 'Change this section: ' + name, title: 'Change this section', hidden: '' }, [pencilIcon()]);
 			node.addEventListener('click', function () {
+				if (oneWindow) {
+					open();
+					selectTab('page');
+					window.setTimeout(function () {
+						var ED = window.TWD_SK_ED;
+						if (ED && typeof ED.focusSection === 'function') {
+							ED.focusSection(index);
+						}
+					}, 60);
+					return;
+				}
 				if (cfg.ai) {
 					pickSection(index, name);
 				} else if (window.TWD_SK_ED && window.TWD_SK_ED.startInline) {
@@ -1957,6 +2085,10 @@
 			restoreWindow();
 			return;
 		}
+		if (oneWindow && win.mode !== 'free') {
+			win.mode = 'free';
+			applyWindow();
+		}
 		show(ui.overlay, true);
 		queuePencils();
 		openBtn.setAttribute('aria-expanded', 'true');
@@ -1977,6 +2109,10 @@
 				// A broken extra script must never stop the editor opening.
 			}
 		});
+		if (oneWindow) {
+			buildOutline();
+			startInlineForPage();
+		}
 	}
 
 	// Everything the person has changed but not saved, as short plain phrases. Other scripts add their own checks.
@@ -2093,6 +2229,11 @@
 		win.minimised = false;
 		if (ui.mini) {
 			show(ui.mini, false);
+		}
+		// The one window: closing ends the page tools too (unsaved changes were asked about, or there were none).
+		var ED = window.TWD_SK_ED;
+		if (oneWindow && ED && typeof ED.stopInline === 'function') {
+			ED.stopInline();
 		}
 		show(ui.overlay, false);
 		queuePencils();
@@ -2262,7 +2403,16 @@
 			}
 		});
 		var version = root.querySelector('.twd-sk-ed__version');
-		addLauncher({ id: 'ai', order: 20, label: function () { return 'Edit with AI'; }, run: open, show: function () { return !tools.off; } });
+		addLauncher({ id: 'ai', order: 20, label: function () { return oneWindow ? 'Edit this page' : 'Edit with AI'; }, run: open, show: function () { return !tools.off; } });
+		// The classic editor (the full-screen pop-up and the separate Visual editor card), by choice, until the one window has settled.
+		addLauncher({ id: 'classic', order: 92, kind: 'switch', label: function () { return 'Use the classic editor: ' + (cfg.classic ? 'on' : 'off'); }, checked: function () { return !!cfg.classic; }, run: function () {
+			var on = !cfg.classic;
+			api('POST', '/editor/classic', { on: on }).then(function () {
+				window.location.reload();
+			}, function () {
+				window.location.reload();
+			});
+		} });
 		if (cfg.pageId) {
 			addLauncher({ id: 'undo-page', order: 40, label: function () { return 'Undo the last page change'; }, show: function () { return !tools.off; }, run: function () {
 				open();
@@ -2344,6 +2494,16 @@
 		},
 		addTab: function (name, label, build) {
 			this.extraTabs.push({ name: name, label: label, build: build });
+		},
+		// The one window (0.15.0, phase 1): where the Visual editor puts its tools, and whether the one window is on.
+		oneWindow: oneWindow,
+		inlineHost: function () {
+			return ui.inlineHost || null;
+		},
+		selectTab: function (name) {
+			if (state.built) {
+				selectTab(name);
+			}
 		}
 	};
 

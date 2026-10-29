@@ -146,3 +146,35 @@ twd_sk_test( 'window (0.15.0): where the Edit with AI window sits is kept per pe
 		twd_sk_has( $needle, $css );
 	}
 } );
+
+twd_sk_test( 'one editing window (0.15.0, phase 1): the classic editor is a per-person switch kept as user meta (off by default), saved by its route, handed to the script; the shell has three tabs, opens undocked and content-sized, hosts the Visual editor, and the classic pop-up stays behind the switch', function () {
+	twd_stub_reset();
+	twd_sk_true( ! TWD_SK_Editor::classic_on(), 'the one window by default' );
+	twd_sk_true( TWD_SK_Editor::set_classic( true ) );
+	twd_sk_true( TWD_SK_Editor::classic_on() );
+	twd_sk_true( ! TWD_SK_Editor::classic_on( 99 ), 'another person is unaffected' );
+	TWD_SK_Editor::set_classic( false );
+	twd_sk_true( empty( $GLOBALS['twd_stub']['user_meta'][7]['twd_sk_classic'] ), 'the one window removes the meta' );
+	twd_sk_eq( true, TWD_SK_REST::post_editor_classic( twd_sk_rest_req( array( 'on' => true ) ) )['on'] );
+	twd_sk_true( TWD_SK_Editor::classic_on() );
+	twd_sk_eq( false, TWD_SK_REST::post_editor_classic( twd_sk_rest_req( array( 'on' => '0' ) ) )['on'] );
+	twd_sk_ed_setup();
+	twd_sk_true( twd_sk_ed_loaded() );
+	twd_sk_true( false === $GLOBALS['twd_stub']['scripts']['twd-site-kit-editor']['data']['classic'] );
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' );
+	foreach ( array( "var oneWindow = !cfg.classic", "'On page edits'", "'AI assisted edits'", "'Settings'", 'twd-sk-ed__dialog--compact', "'/editor/classic'", 'Use the classic editor', 'inlineHost:', 'twd-sk-ed__outline', "Click what you want to change on the page" ) as $needle ) {
+		twd_sk_has( $needle, $js );
+	}
+	$inline = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
+	foreach ( array( 'data-twd-sk-ctx', 'twd-sk-ed__inlinebar--inwin', 'ED.focusSection = ', 'ED.stopInline = ', 'function updateContext' ) as $needle ) {
+		twd_sk_has( $needle, $inline );
+	}
+	// The saving, undo and cancel paths are the same functions as before (the window only hosts them).
+	foreach ( array( 'function save() {', 'function cancel() {', 'function throwAway() {', "ED.api('POST', '/pages/' + cfg.pageId + '/inline', body)", "ED.api('POST', '/pages/' + cfg.pageId + '/undo'" ) as $needle ) {
+		twd_sk_has( $needle, $inline );
+	}
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.css' );
+	foreach ( array( 'twd-sk-ed__dialog--compact', 'twd-sk-ed__inlinebar--inwin', 'twd-sk-ed__overlay--sheet', 'max-height: 70%', 'twd-sk-ed__subtabs', 'data-twd-sk-ctx="none"' ) as $needle ) {
+		twd_sk_has( $needle, $css );
+	}
+} );

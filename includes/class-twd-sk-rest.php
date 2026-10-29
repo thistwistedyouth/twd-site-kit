@@ -55,6 +55,12 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_editor_tools' ),
 			'permission_callback' => array( __CLASS__, 'can_use_editor' ),
 		) );
+		// The classic editor switch (0.15.0): a per-person preference, like the tools switch.
+		register_rest_route( self::ROUTE_NS, '/editor/classic', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_editor_classic' ),
+			'permission_callback' => array( __CLASS__, 'can_use_editor' ),
+		) );
 		// Where the Edit with AI window sits (0.15.0): a per-person preference, like the switch.
 		register_rest_route( self::ROUTE_NS, '/editor/window', array(
 			'methods'             => 'POST',
@@ -573,6 +579,12 @@ class TWD_SK_REST {
 		$off = self::truthy( $request->get_param( 'off' ) );
 		TWD_SK_Editor::set_tools_off( $off );
 		return array( 'off' => $off );
+	}
+
+	public static function post_editor_classic( $request ) {
+		$on = self::truthy( $request->get_param( 'on' ) );
+		TWD_SK_Editor::set_classic( $on );
+		return array( 'on' => $on );
 	}
 
 	public static function post_editor_window( $request ) {

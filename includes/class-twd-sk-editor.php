@@ -25,6 +25,9 @@ class TWD_SK_Editor {
 	const META_WINDOW = 'twd_sk_window';
 	// 0.15.0: the site switch that offers Box, Border and Padding in the Look panel to every editor (administrators always have them).
 	const OPTION_ADVANCED_LOOKS = 'twd_sk_looks_advanced';
+	// 0.15.0: a person's switch back to the classic editor (the full-screen pop-up and the separate Visual editor card)
+	// while the one editing window is new. Off by default: the one window.
+	const META_CLASSIC = 'twd_sk_classic';
 
 	/**
 	 * True when the signed-in person has switched the editing tools off: the floating buttons, the Edit header and
@@ -103,6 +106,25 @@ class TWD_SK_Editor {
 			update_user_meta( $uid, self::META_WINDOW, $clean );
 		}
 		return $clean;
+	}
+
+	public static function classic_on( $user_id = 0 ) {
+		$uid = $user_id > 0 ? (int) $user_id : ( function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0 );
+		return $uid > 0 && '1' === (string) get_user_meta( $uid, self::META_CLASSIC, true );
+	}
+
+	/** Remember the classic choice for a person. Choosing the one window removes the meta, so nothing is left behind. */
+	public static function set_classic( $on, $user_id = 0 ) {
+		$uid = $user_id > 0 ? (int) $user_id : ( function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0 );
+		if ( $uid <= 0 ) {
+			return false;
+		}
+		if ( $on ) {
+			update_user_meta( $uid, self::META_CLASSIC, '1' );
+		} else {
+			delete_user_meta( $uid, self::META_CLASSIC );
+		}
+		return true;
 	}
 
 	public static function advanced_looks_for_all() {
@@ -199,6 +221,8 @@ class TWD_SK_Editor {
 			'toolsOff'       => self::tools_off(),
 			// Where the Edit with AI window sits for this person (0.15.0): docked, free or centred, and the minimised pencil.
 			'window'         => self::window_state(),
+			// The one editing window (0.15.0): off means the classic pop-up and the separate Visual editor card, by this person's choice.
+			'classic'        => self::classic_on(),
 			// Whether the page is live, so Add a section can warn that its placeholder words would show (0.14.1).
 			'pagePublished'  => $context['page_id'] > 0 && 'publish' === get_post_status( $context['page_id'] ),
 		) );
