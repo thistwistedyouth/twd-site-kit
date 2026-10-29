@@ -53,7 +53,7 @@
 		return frag;
 	}
 
-	function putBack(node, frag) {
+	function restoreChildren(node, frag) {
 		while (node.firstChild) {
 			node.removeChild(node.firstChild);
 		}
@@ -113,7 +113,7 @@
 	function putBack() {
 		var key = S.removeOrder.pop();
 		if (key === undefined) {
-			status('Nothing to put back.');
+			status('Nothing to put back: Put back only returns things you removed with Remove. Use Undo to step back a move, an added section or the last save.');
 			return;
 		}
 		var node = S.removes[key];
@@ -487,6 +487,9 @@
 		ui.moveDown = toolButton('Move down', 'Move this section down the page', function () {
 			moveSection('down');
 		});
+		ui.undo = toolButton('Undo', 'Step back the last saved change: a move, an added section, or the last save', function () {
+			undoLast(false);
+		});
 		// A hero (one main heading per page) and an embed (it needs a saved embed, chosen in the Site tab) are not offered here.
 		var kinds = Object.keys(cfg.components || {}).filter(function (id) {
 			return id !== 'hero' && id !== 'embed';
@@ -539,7 +542,7 @@
 		ui.confirm = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' });
 		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar', role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '' }, [
 			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.bold, ui.italic, ui.link, ui.look, ui.remove, ui.putBack]),
-			el('div', { className: 'twd-sk-ed__inlinetools', role: 'group', 'aria-label': 'Sections' }, kinds.length ? [ui.addSec, ui.moveUp, ui.moveDown] : [ui.moveUp, ui.moveDown]),
+			el('div', { className: 'twd-sk-ed__inlinetools', role: 'group', 'aria-label': 'Sections' }, kinds.length ? [ui.addSec, ui.moveUp, ui.moveDown, ui.undo] : [ui.moveUp, ui.moveDown, ui.undo]),
 			el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.save, ui.cancel]),
 			ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel, ui.confirm
 		]);
@@ -1080,6 +1083,42 @@
 		structure({ op: 'move', index: parseInt(sec.getAttribute('data-twd-sk-sec'), 10), dir: dir }, 'Moving it ' + dir + '...', 'Moved ' + dir + '.');
 	}
 
+	/* Undo (0.15.0): step back the last SAVED change (a move, an added section, a save) through the page history,
+	 * then reload into the editor at the same section. Unsaved edits block it, like Add and Move: use Cancel for those.
+	 * The blank starter is refused with a plain question first. */
+	function undoLast(allow) {
+		if (notNow()) {
+			return;
+		}
+		var sec = currentSection();
+		var at = sec ? parseInt(sec.getAttribute('data-twd-sk-sec'), 10) : 0;
+		S.saving = true;
+		status('Undoing the last saved change...');
+		ED.api('POST', '/pages/' + cfg.pageId + '/undo', { base_version: cfg.currentVersion, allow_placeholders: !!allow }).then(function (data) {
+			status('Undid: ' + (data.undid || 'the last change') + '. The page now shows version ' + data.target + '. Reloading so you see it.');
+			reloadEditing(at);
+		}, function (err) {
+			S.saving = false;
+			if (err.status === 409 && err.code === 'twd_sk_placeholders') {
+				ED.clear(ui.confirm);
+				ui.confirm.appendChild(el('span', { text: err.message + ' ' }));
+				var yes = ED.button('Go back to it anyway', 'primary', function () {
+					show(ui.confirm, false);
+					undoLast(true);
+				});
+				var no = ED.button('Not now', 'secondary', function () {
+					show(ui.confirm, false);
+				});
+				ui.confirm.appendChild(yes);
+				ui.confirm.appendChild(no);
+				show(ui.confirm, true);
+				yes.focus();
+				return;
+			}
+			status(err.message);
+		});
+	}
+
 	function fillLayouts() {
 		var c = (cfg.components || {})[ui.addKind.value];
 		ED.clear(ui.addLayout);
@@ -1249,7 +1288,7 @@
 		S.texts.forEach(function (t) {
 			var i = t.getAttribute('data-twd-sk-t');
 			if (serialize(t) !== S.origText[i]) {
-				putBack(t, S.orig[i]);
+				restoreChildren(t, S.orig[i]);
 			}
 		});
 		S.pics.forEach(function (img) {
@@ -1281,10 +1320,19 @@
 		});
 		S.looks = {};
 		S.origLook = {};
+		S.lookSec = null;
+		S.hrefs = {};
+		S.linkTarget = null;
+		S.range = null;
 		S.picks = {};
 		S.spotPicks = {};
 		S.removes = {};
 		S.removeOrder = [];
+		if (ui.putBack) {
+			ui.putBack.disabled = true;
+		}
+		closePanels();
+		show(ui.confirm, false);
 		stop();
 	}
 
@@ -1411,6 +1459,31 @@
 	// The Edit with AI pop-up offers the same, from its Edit this page tab.
 	ED.startInline = function () {
 		start();
+	};
+	// Every way out runs the one revert routine: Cancel and Escape (cancel(), asking first), the pop-up's "Close and
+	// lose these changes" (through this check), and a page redraw (the nodes are gone, so the session ends).
+	ED.addDirtyCheck(function () {
+		var n = S.on ? changedCount() : 0;
+		return n ? n + ' change' + (n === 1 ? '' : 's') + ' made with the Visual editor and not saved' : '';
+	}, function () {
+		if (S.on) {
+			throwAway();
+		}
+	});
+	if (typeof ED.onRedraw === 'function') {
+		ED.onRedraw(function () {
+			if (S.on) {
+				throwAway();
+				status('The page was redrawn, so the Visual editor closed. Press Visual editor to carry on.');
+			}
+		});
+	}
+	// For the Your Edits menu and other scripts: step back the last saved change, asking first about the blank starter.
+	ED.inlineUndo = function () {
+		if (!S.on) {
+			start();
+		}
+		undoLast(false);
 	};
 	ED.inlineCount = function () {
 		return texts().length + pictures().length + spots().length;

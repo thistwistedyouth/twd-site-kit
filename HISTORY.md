@@ -2,6 +2,12 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 29 Oct 2026: every way out of the Visual editor reverts (chunks 2c and 2f)
+
+The owner saw edits stay on the page after throwing them away. The cause was a name clash in the script (two `putBack` functions; JavaScript keeps the last declaration), introduced when Remove and Put back were added in 0.14 on top of the 0.10 revert code, and never caught because the browser checks drove looks and pictures, not words. Lesson recorded in the test: one function of that name, and the revert routine is named for what it does.
+
+Undo in the Visual editor goes through the page history and reloads, like Add and Move, rather than redrawing in place: the Visual editor holds its originals as node copies tied to the page as drawn, so after a version change the safe thing is to draw again and reopen at the same section. The pop-up, which holds no such state, redraws in place.
+
 ## 29 Oct 2026: Undo that can be trusted (chunk 2i of the owner's plan)
 
 What went wrong on the pilot site: Undo in the pop-up walked back one version per press, never redrew the page and never stopped at the blank starter outline, so a person trying to undo a move pressed it until two pages showed placeholder words. Page history and site settings were also separate: a footer change had no undo at all.

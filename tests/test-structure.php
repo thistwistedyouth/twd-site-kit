@@ -179,6 +179,18 @@ twd_sk_test( 'structure js: Add section, Move up and Move down in the toolbar, s
 	twd_sk_has( "toolButton('Add section'", $js );
 	twd_sk_has( "toolButton('Move up'", $js );
 	twd_sk_has( "toolButton('Move down'", $js );
+	// Undo (0.15.0): steps back the last saved change through the page history and reloads at the same section.
+	twd_sk_has( "toolButton('Undo'", $js );
+	twd_sk_has( "'/undo', { base_version: cfg.currentVersion, allow_placeholders: !!allow }", $js );
+	twd_sk_has( "err.code === 'twd_sk_placeholders'", $js );
+	twd_sk_has( "Nothing to put back: Put back only returns things you removed with Remove. Use Undo", $js );
+	// One revert routine for every way out: the pop-up's close prompt counts unsaved Visual editor changes and reverts them.
+	twd_sk_has( "ED.addDirtyCheck(function () {", $js );
+	twd_sk_has( "ED.onRedraw(function () {", $js );
+	// 0.15.0 fault found in the browser: two functions were both called putBack (the one that restores a piece's
+	// words and the toolbar's Put back), so the later one shadowed the first and Cancel never put the words back.
+	twd_sk_has( "restoreChildren(t, S.orig[i]);", $js );
+	twd_sk_eq( 1, substr_count( $js, 'function putBack(' ), 'one function of that name' );
 	twd_sk_has( "'/pages/' + cfg.pageId + '/structure'", $js );
 	twd_sk_has( "twd_sk_edit=1&twd_sk_at=", $js, 'the page reloads into the editor at that section' );
 	twd_sk_has( 'cfg.pagePublished', $js, 'a live page is warned' );
