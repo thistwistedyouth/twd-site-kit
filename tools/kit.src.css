@@ -22,6 +22,8 @@
   padding-left: $gutter; padding-right: $gutter;
 }
 .twd-sk-inner--narrow { max-width: $container-narrow; }
+/* 0.15.0 (Base, Adapt, Replace): a section of custom HTML; its look comes from the site's own stylesheet (TWD_SK_Css). */
+.twd-sk-custom { display: block; }
 /* Stray content: any direct child of the page that is not a section (a loose paragraph,
    a heading outside a component) gets a readable column and side padding so it never
    touches the viewport edge. Sections and their own containers are left alone. */

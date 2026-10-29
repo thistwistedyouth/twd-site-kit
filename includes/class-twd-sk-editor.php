@@ -256,6 +256,8 @@ class TWD_SK_Editor {
 			'inline'         => (bool) $context['is_kit_page'] && ! TWD_SK_Safe::on(),
 			// The layouts and options the Visual editor's Look panel offers (0.15.0): labels and class names only.
 			'look'           => ( (bool) $context['is_kit_page'] && ! TWD_SK_Safe::on() && ! $simple ) ? TWD_SK_Looks::config() : array(),
+			// Base, Adapt, Replace (0.15.0, section 20): Replace this section with HTML and Describe a change, administrators only.
+			'custom'         => (bool) $context['is_kit_page'] && ! TWD_SK_Safe::on() && ! $simple && $can_manage,
 			// Uploading a picture from the computer while changing the page in place (0.10.1).
 			'canUpload'      => current_user_can( 'upload_files' ),
 			'mediaUrl'       => esc_url_raw( rest_url( 'wp/v2/media' ) ),

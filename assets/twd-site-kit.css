@@ -86,6 +86,9 @@
 .twd-sk-page .twd-sk-inner--narrow.twd-sk-inner--narrow {
   max-width: var(--twd-site-container-narrow);
 }
+.twd-sk-page .twd-sk-custom.twd-sk-custom {
+  display: block;
+}
 .twd-sk-page > :not(section):not(.twd-sk-inner.twd-sk-inner):not(.twd-sk-gallery-label.twd-sk-gallery-label):not(.twd-sk-header.twd-sk-header):not(.twd-sk-footer.twd-sk-footer) {
   width: 100%;
   max-width: var(--twd-site-container);

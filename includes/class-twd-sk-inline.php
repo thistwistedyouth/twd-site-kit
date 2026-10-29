@@ -189,6 +189,11 @@ class TWD_SK_Inline {
 			if ( 'section' === $tag && self::section_locked( $child ) ) {
 				continue;
 			}
+			// A custom section (0.15.0, Base, Adapt, Replace): only its labelled words and pictures can be changed.
+			if ( 'section' === $tag && self::has_class( $child, TWD_SK_Css::CUSTOM_CLASS ) ) {
+				self::walk_custom( $child, $found );
+				continue;
+			}
 			if ( 'img' === $tag ) {
 				$found['pics'][] = $child;
 				continue;
@@ -203,6 +208,49 @@ class TWD_SK_Inline {
 			}
 			self::walk( $child, $found );
 		}
+	}
+
+	/**
+	 * Inside a custom section only an element carrying data-twd-edit (words) or an img carrying data-twd-pic (a
+	 * picture) is numbered, so the Simple editor offers exactly what the section's author labelled. A labelled
+	 * element still has to hold only words and simple inline markup, or it is left alone.
+	 */
+	private static function walk_custom( DOMElement $node, array &$found ) {
+		foreach ( $node->childNodes as $child ) {
+			if ( ! $child instanceof DOMElement ) {
+				continue;
+			}
+			$tag = strtolower( $child->nodeName );
+			if ( 'img' === $tag ) {
+				if ( $child->hasAttribute( TWD_SK_Replace::PIC_ATTR ) ) {
+					$found['pics'][] = $child;
+				}
+				continue;
+			}
+			if ( $child->hasAttribute( TWD_SK_Replace::LABEL_ATTR ) && self::is_labelled_text( $child ) ) {
+				$found['text'][] = $child;
+				continue;
+			}
+			self::walk_custom( $child, $found );
+		}
+	}
+
+	/** A labelled element holds words and simple inline markup only, and no shortcode. */
+	private static function is_labelled_text( DOMElement $el ) {
+		if ( '' === trim( (string) $el->textContent ) ) {
+			return false;
+		}
+		$codes = array_keys( TWD_SK_Registry::allowed_shortcodes() );
+		if ( $codes && 1 === preg_match( '/\[(?:' . implode( '|', array_map( 'preg_quote', $codes ) ) . ')[\s\]]/i', (string) $el->textContent ) ) {
+			return false;
+		}
+		$inline = self::inline_tags();
+		foreach ( $el->getElementsByTagName( '*' ) as $child ) {
+			if ( ! in_array( strtolower( $child->nodeName ), $inline, true ) ) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/** The changeable text and pictures of a page, in document order. */
@@ -244,6 +292,11 @@ class TWD_SK_Inline {
 				}
 				if ( 0 === $child->getElementsByTagName( 'h1' )->length ) {
 					$list[] = $child;
+				}
+				// A custom section (0.15.0) can go as a whole; nothing inside it is removed piece by piece, so its
+				// layout cannot be broken from the page.
+				if ( self::has_class( $child, TWD_SK_Css::CUSTOM_CLASS ) ) {
+					continue;
 				}
 			}
 			self::walk_removables( $child, $list );
@@ -832,9 +885,10 @@ class TWD_SK_Inline {
 					}
 					$el->setAttribute( 'href', $href );
 				}
-				// Kit classes only (the accent words in a heading, say). The sanitiser checks them again.
+				// Kit classes only (the accent words in a heading, say), and a custom section's own c- classes (0.15.0).
+				// The sanitiser checks them again.
 				$classes = array_filter( preg_split( '/\s+/', trim( (string) $node->getAttribute( 'class' ) ) ), function ( $c ) {
-					return 0 === strpos( $c, 'twd-sk-' );
+					return 0 === strpos( $c, 'twd-sk-' ) || 0 === strpos( $c, TWD_SK_Css::CLASS_PREFIX );
 				} );
 				if ( $classes ) {
 					$el->setAttribute( 'class', implode( ' ', $classes ) );

@@ -885,6 +885,325 @@
 		show(ui.lookPanel, true);
 	}
 
+	/* ---- Base, Adapt, Replace (section 20 of the owner's plan) ----
+	 * Replace this section (or the page) with custom HTML and CSS, and Describe a change (the AI writes the
+	 * replacement). Both show a preview with the candidate stylesheet, at desktop and phone width, with plain
+	 * warnings; Apply saves the stylesheet and the page as one change and reloads into the editor at the section.
+	 * Administrators only (cfg.custom; CUSTOM is set beside oneWindow below). The design tools (Look, Move, Add,
+	 * Delete) sit behind Advanced. */
+
+	function toggleAdvanced() {
+		S.adv = !S.adv;
+		ui.bar.setAttribute('data-twd-sk-adv', S.adv ? 'on' : 'off');
+		ui.advanced.textContent = S.adv ? 'Fewer tools' : 'Advanced';
+		ui.advanced.setAttribute('aria-expanded', S.adv ? 'true' : 'false');
+	}
+
+	function sectionIndex(sec) {
+		return parseInt(sec.getAttribute('data-twd-sk-sec'), 10);
+	}
+
+	function drawWarnings(box, list) {
+		ED.clear(box);
+		(list || []).forEach(function (w) {
+			box.appendChild(el('li', { text: w }));
+		});
+		show(box, !!(list && list.length));
+	}
+
+	// The server's full list of check errors when it sent one, else the message.
+	function errorLines(err) {
+		var lines = err && err.data && err.data.errors && err.data.errors.length ? err.data.errors.slice() : [];
+		if (!lines.length) {
+			lines.push(err.message);
+		}
+		return lines;
+	}
+
+	function openSized(url, label, width, height) {
+		if (!url) {
+			return;
+		}
+		var w = window.open(url, 'twd-sk-view-' + label.toLowerCase(), 'width=' + width + ',height=' + height + ',resizable=yes,scrollbars=yes');
+		if (!w) {
+			status('The browser blocked the new window. Allow pop-ups for this site, then try again.');
+		}
+	}
+
+	function sizedButtons(getUrl) {
+		var desk = toolButton('Desktop', 'See the preview in a 1280 pixel wide window', function () {
+			openSized(getUrl(), 'Desktop', 1280, 900);
+		});
+		var phone = toolButton('Phone', 'See the preview in a 390 pixel wide window', function () {
+			openSized(getUrl(), 'Phone', 390, 844);
+		});
+		return el('div', { className: 'twd-sk-ed__inlinetools', role: 'group', 'aria-label': 'See the preview at a size' }, [el('span', { className: 'twd-sk-ed__inlinehead', text: 'See it at:' }), desk, phone]);
+	}
+
+	function openReplace(prefill) {
+		var sec = currentSection();
+		if (!sec || sec.tagName !== 'SECTION') {
+			status('Click inside the section you want to replace first.');
+			return;
+		}
+		if (notNow()) {
+			return;
+		}
+		closePanels();
+		show(ui.confirm, false);
+		S.rep = { sec: sectionIndex(sec), previewed: null, token: '', url: '' };
+		ui.repHead.textContent = 'Replace section ' + (S.rep.sec + 1) + ' (' + sectionName(sec) + ') with HTML';
+		ui.repSection.checked = true;
+		if (prefill) {
+			ui.repHtml.value = prefill.html || '';
+			ui.repCss.value = prefill.css || '';
+		}
+		ui.repMsg.textContent = 'Paste the section\'s HTML (one <section>). Label what the client may edit: data-twd-edit="Heading" on words, data-twd-pic="Photo" on a picture. Then Preview.';
+		drawWarnings(ui.repWarn, []);
+		show(ui.repFrame, false);
+		show(ui.repSizes, false);
+		ui.repApply.disabled = true;
+		show(ui.repPanel, true);
+		ui.repHtml.focus();
+	}
+
+	function replaceBody() {
+		return {
+			target: ui.repPage.checked ? 'page' : 'section',
+			index: S.rep ? S.rep.sec : 0,
+			html: ui.repHtml.value,
+			css: ui.repCss.value
+		};
+	}
+
+	function replacePreview() {
+		if (!S.rep || S.saving) {
+			return;
+		}
+		if (!ui.repHtml.value.trim()) {
+			ui.repMsg.textContent = 'Paste the HTML first.';
+			return;
+		}
+		var body = replaceBody();
+		body.mode = 'preview';
+		S.saving = true;
+		ui.repMsg.textContent = 'Checking and building the preview...';
+		ED.api('POST', '/pages/' + cfg.pageId + '/replace', body).then(function (data) {
+			S.saving = false;
+			S.rep.previewed = JSON.stringify(replaceBody());
+			S.rep.token = data.token;
+			S.rep.url = data.preview_url;
+			ui.repMsg.textContent = data.same ? 'Nothing changed: this is the same as the page has now.' : 'Preview ready (nothing saved yet). The site stylesheet would be ' + Math.round(data.css_bytes / 102.4) / 10 + ' KB of its ' + Math.round(data.css_budget / 1024) + ' KB budget.';
+			drawWarnings(ui.repWarn, data.warnings);
+			ui.repFrame.setAttribute('src', data.preview_url);
+			show(ui.repFrame, true);
+			show(ui.repSizes, true);
+			ui.repApply.disabled = !!data.same;
+		}, function (err) {
+			S.saving = false;
+			ui.repMsg.textContent = 'Not accepted. Nothing was changed.';
+			drawWarnings(ui.repWarn, errorLines(err));
+			ui.repApply.disabled = true;
+		});
+	}
+
+	function replaceApply() {
+		if (!S.rep || S.saving || S.rep.previewed !== JSON.stringify(replaceBody())) {
+			ui.repMsg.textContent = 'Preview it first (the text changed since the last preview).';
+			ui.repApply.disabled = true;
+			return;
+		}
+		if (notNow()) {
+			return;
+		}
+		var body = replaceBody();
+		body.mode = 'apply';
+		body.base_version = cfg.currentVersion;
+		S.saving = true;
+		ui.repMsg.textContent = 'Saving the stylesheet and the page...';
+		ED.api('POST', '/pages/' + cfg.pageId + '/replace', body).then(function (data) {
+			ui.repMsg.textContent = 'Saved as version ' + data.version + ' (stylesheet version ' + data.css_v + '). Undo takes both back. Reloading so you see it.';
+			reloadEditing(data.at);
+		}, function (err) {
+			S.saving = false;
+			ui.repMsg.textContent = err.status === 409 ? 'The page changed since you opened it. Reload the page and try again.' : 'Not saved. Nothing was changed.';
+			drawWarnings(ui.repWarn, errorLines(err));
+		});
+	}
+
+	function openAdapt() {
+		var sec = currentSection();
+		if (!sec || sec.tagName !== 'SECTION') {
+			status('Click inside the section you want changed first.');
+			return;
+		}
+		if (notNow()) {
+			return;
+		}
+		closePanels();
+		show(ui.confirm, false);
+		S.ad = { sec: sectionIndex(sec), html: '', css: '', token: '', url: '', busy: false };
+		ui.adHead.textContent = 'Describe a change to section ' + (S.ad.sec + 1) + ' (' + sectionName(sec) + ')';
+		ui.adMsg.textContent = 'Say what you would like changed, in plain words. The AI changes only that and keeps the rest.';
+		ED.clear(ui.adWhat);
+		show(ui.adWhat, false);
+		drawWarnings(ui.adWarn, []);
+		show(ui.adFrame, false);
+		show(ui.adSizes, false);
+		show(ui.adApply, false);
+		show(ui.adEdit, false);
+		show(ui.adPanel, true);
+		ui.adText.focus();
+	}
+
+	function runAdapt() {
+		if (!S.ad || S.ad.busy) {
+			return;
+		}
+		var text = ui.adText.value.trim();
+		if (!text) {
+			ui.adMsg.textContent = 'Say what you would like changed first.';
+			return;
+		}
+		S.ad.busy = true;
+		ui.adAsk.disabled = true;
+		ui.adMsg.textContent = 'Asking the AI (this can take half a minute)...';
+		show(ui.adApply, false);
+		show(ui.adEdit, false);
+		ED.api('POST', '/pages/' + cfg.pageId + '/adapt', { index: S.ad.sec, instruction: text, base_version: cfg.currentVersion }).then(function (data) {
+			S.ad.busy = false;
+			ui.adAsk.disabled = false;
+			S.ad.html = data.html;
+			S.ad.css = data.css;
+			S.ad.token = data.token;
+			S.ad.url = data.preview_url;
+			ui.adMsg.textContent = data.same ? 'The AI made no change to the section.' : 'Here is the preview. Nothing is saved until you press Apply.';
+			ED.clear(ui.adWhat);
+			if (data.what_changed) {
+				ui.adWhat.appendChild(el('strong', { text: 'What changed: ' }));
+				ui.adWhat.appendChild(el('span', { text: data.what_changed }));
+			}
+			show(ui.adWhat, !!data.what_changed);
+			drawWarnings(ui.adWarn, data.warnings);
+			ui.adFrame.setAttribute('src', data.preview_url);
+			show(ui.adFrame, true);
+			show(ui.adSizes, true);
+			show(ui.adApply, !data.same);
+			show(ui.adEdit, true);
+		}, function (err) {
+			S.ad.busy = false;
+			ui.adAsk.disabled = false;
+			ui.adMsg.textContent = err.status === 429 ? err.message : 'Nothing was changed.';
+			drawWarnings(ui.adWarn, err.status === 429 ? [] : errorLines(err));
+			// The AI's reply can still be fixed by hand.
+			if (err.data && typeof err.data.html === 'string' && err.data.html) {
+				S.ad.html = err.data.html;
+				S.ad.css = typeof err.data.css === 'string' ? err.data.css : '';
+				show(ui.adEdit, true);
+			}
+		});
+	}
+
+	function adaptApply() {
+		if (!S.ad || !S.ad.html || S.ad.busy) {
+			return;
+		}
+		if (notNow()) {
+			return;
+		}
+		S.ad.busy = true;
+		ui.adMsg.textContent = 'Saving the stylesheet and the page...';
+		ED.api('POST', '/pages/' + cfg.pageId + '/replace', { mode: 'apply', target: 'section', index: S.ad.sec, html: S.ad.html, css: S.ad.css, base_version: cfg.currentVersion }).then(function (data) {
+			ui.adMsg.textContent = 'Saved as version ' + data.version + '. Undo takes it back. Reloading so you see it.';
+			reloadEditing(data.at);
+		}, function (err) {
+			S.ad.busy = false;
+			ui.adMsg.textContent = err.status === 409 ? 'The page changed since you opened it. Reload the page and try again.' : 'Not saved. Nothing was changed.';
+			drawWarnings(ui.adWarn, errorLines(err));
+		});
+	}
+
+	// The AI's HTML and CSS into the Replace panel, to fix by hand.
+	function adaptEdit() {
+		if (!S.ad || !S.ad.html) {
+			return;
+		}
+		var sec = document.querySelector('[data-twd-sk-sec="' + S.ad.sec + '"]');
+		if (sec) {
+			S.last = sec;
+		}
+		var fill = { html: S.ad.html, css: S.ad.css };
+		openReplace(fill);
+	}
+
+	function buildCustom() {
+		ui.describe = toolButton('Describe a change', 'Tell the AI what to change in this section; see a preview first', openAdapt);
+		ui.replace = toolButton('Replace this section', 'Replace this section (or the page) with your own HTML and CSS', function () {
+			openReplace(null);
+		});
+		ui.advanced = toolButton('Advanced', 'The design tools: Look, Move up, Move down, Add section after, Delete section', toggleAdvanced);
+		ui.advanced.setAttribute('aria-expanded', 'false');
+		// Replace this section with HTML.
+		ui.repHead = el('p', { className: 'twd-sk-ed__inlinehead', tabindex: '-1' });
+		ui.repSection = el('input', { type: 'radio', name: 'twd-sk-rep-target', id: 'twd-sk-rep-section', value: 'section', checked: '' });
+		ui.repPage = el('input', { type: 'radio', name: 'twd-sk-rep-target', id: 'twd-sk-rep-page', value: 'page' });
+		ui.repHtml = el('textarea', { id: 'twd-sk-rep-html', className: 'twd-sk-ed__textarea', spellcheck: 'false', placeholder: '<section class="c-intro">...</section>' });
+		ui.repCss = el('textarea', { id: 'twd-sk-rep-css', className: 'twd-sk-ed__textarea twd-sk-ed__textarea--css', spellcheck: 'false', placeholder: '.c-intro { padding: var(--twd-site-section-y) 0; color: var(--twd-site-color-body); }' });
+		ui.repMsg = el('p', { className: 'twd-sk-ed__inlinehead', role: 'status', 'aria-live': 'polite' });
+		ui.repWarn = el('ul', { className: 'twd-sk-ed__warnings', hidden: '' });
+		ui.repFrame = el('iframe', { className: 'twd-sk-ed__miniframe', title: 'Preview of the page with the new section. Nothing is saved yet.', tabindex: '-1', hidden: '' });
+		ui.repSizes = sizedButtons(function () {
+			return S.rep ? S.rep.url : '';
+		});
+		show(ui.repSizes, false);
+		ui.repPreview = ED.button('Preview', 'secondary', replacePreview);
+		ui.repApply = ED.button('Apply', 'primary', replaceApply);
+		ui.repApply.disabled = true;
+		[ui.repHtml, ui.repCss].forEach(function (box) {
+			box.addEventListener('input', function () {
+				if (S.rep && S.rep.previewed !== JSON.stringify(replaceBody())) {
+					ui.repApply.disabled = true;
+				}
+			});
+		});
+		ui.repPanel = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' }, [
+			ui.repHead,
+			el('div', { className: 'twd-sk-ed__radios', role: 'radiogroup', 'aria-label': 'What to replace' }, [
+				el('label', { 'for': 'twd-sk-rep-section' }, [ui.repSection, el('span', { text: 'This section' })]),
+				el('label', { 'for': 'twd-sk-rep-page' }, [ui.repPage, el('span', { text: 'The whole page' })])
+			]),
+			el('label', { 'for': 'twd-sk-rep-html', text: 'HTML' }),
+			ui.repHtml,
+			el('label', { 'for': 'twd-sk-rep-css', text: 'CSS to add or change (optional; colours and fonts as var(--twd-site-...), classes named c-...)' }),
+			ui.repCss,
+			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.repPreview, ui.repApply, ED.button('Close', 'secondary', closePanels)]),
+			ui.repMsg, ui.repWarn, ui.repFrame, ui.repSizes
+		]);
+		// Describe a change.
+		ui.adHead = el('p', { className: 'twd-sk-ed__inlinehead', tabindex: '-1' });
+		ui.adText = el('textarea', { id: 'twd-sk-ad-text', className: 'twd-sk-ed__textarea twd-sk-ed__textarea--css', maxlength: '1500', placeholder: 'For example: make this a row of three cards with a soft background, keep the words' });
+		ui.adMsg = el('p', { className: 'twd-sk-ed__inlinehead', role: 'status', 'aria-live': 'polite' });
+		ui.adWhat = el('p', { className: 'twd-sk-ed__whatchanged', hidden: '' });
+		ui.adWarn = el('ul', { className: 'twd-sk-ed__warnings', hidden: '' });
+		ui.adFrame = el('iframe', { className: 'twd-sk-ed__miniframe', title: 'Preview of the page with the changed section. Nothing is saved yet.', tabindex: '-1', hidden: '' });
+		ui.adSizes = sizedButtons(function () {
+			return S.ad ? S.ad.url : '';
+		});
+		show(ui.adSizes, false);
+		ui.adAsk = ED.button('Ask the AI', 'secondary', runAdapt);
+		ui.adApply = ED.button('Apply', 'primary', adaptApply);
+		ui.adEdit = ED.button('Edit the HTML first', 'secondary', adaptEdit);
+		show(ui.adApply, false);
+		show(ui.adEdit, false);
+		ui.adPanel = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' }, [
+			ui.adHead,
+			el('label', { 'for': 'twd-sk-ad-text', text: 'What would you like changed?' }),
+			ui.adText,
+			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.adAsk, ui.adApply, ui.adEdit, ED.button('Close', 'secondary', closePanels)]),
+			ui.adMsg, ui.adWhat, ui.adWarn, ui.adFrame, ui.adSizes
+		]);
+	}
+
 	/* ---- the toolbar ---- */
 
 	function toolButton(label, title, onClick) {
@@ -899,6 +1218,7 @@
 
 	// The one editing window (0.15.0, phase 1): the tools live in its On page edits tab and show for what was clicked.
 	var oneWindow = !cfg.classic && !SIMPLE;
+	var CUSTOM = !!cfg.custom && oneWindow;
 
 	function buildBar() {
 		ui.status = el('span', { className: 'twd-sk-ed__inlinestatus', role: 'status', 'aria-live': 'polite' });
@@ -1056,20 +1376,38 @@
 		var sectionTools = oneWindow
 			? (kinds.length ? [ui.look, ui.moveUp, ui.moveDown, ui.addSec, ui.remove] : [ui.look, ui.moveUp, ui.moveDown, ui.remove])
 			: (kinds.length ? [ui.addSec, ui.moveUp, ui.moveDown, ui.undo] : [ui.moveUp, ui.moveDown, ui.undo]);
+		// Section 20 (Base, Adapt, Replace): for an administrator the section row is Describe a change (with the AI)
+		// and Replace this section, and the design tools above sit behind Advanced.
+		var sectionRow = [];
+		if (CUSTOM) {
+			buildCustom();
+			if (cfg.ai) {
+				sectionRow.push(ui.describe);
+			}
+			sectionRow.push(ui.replace, ui.advanced);
+		}
+		var sectionGroups = CUSTOM
+			? [
+				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section', role: 'group', 'aria-label': 'This section' }, sectionRow),
+				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section twd-sk-ed__inlinetools--advanced', role: 'group', 'aria-label': 'Design tools for this section' }, sectionTools)
+			]
+			: [el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section', role: 'group', 'aria-label': 'This section' }, sectionTools)];
 		var kids = SIMPLE ? simpleKids() : oneWindow
 			? [
 				ui.ctxHead,
 				ui.viewHint,
-				words,
-				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section', role: 'group', 'aria-label': 'This section' }, sectionTools),
+				words
+			].concat(sectionGroups, [
 				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--putback' }, [ui.putBack]),
 				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--morebtn' }, [ui.more]),
 				wordsMore,
 				ui.styleRow || el('span', { hidden: '' }),
 				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--view twd-sk-ed__inlinetools--more', role: 'group', 'aria-label': 'See the page at a size' }, [ui.viewSelect]),
-				ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel, ui.confirm,
+				ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel,
+				ui.repPanel || el('span', { hidden: '' }), ui.adPanel || el('span', { hidden: '' }),
+				ui.confirm,
 				el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.undo, ui.save, ui.cancel])
-			]
+			])
 			: [
 				el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.bold, ui.italic, ui.link, ui.quote, ui.note, ui.heading, ui.look, ui.remove, ui.putBack]),
 				el('div', { className: 'twd-sk-ed__inlinetools', role: 'group', 'aria-label': 'Sections' }, sectionTools),
@@ -1077,7 +1415,7 @@
 				el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.save, ui.cancel]),
 				ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel, ui.confirm
 			];
-		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar' + (oneWindow ? ' twd-sk-ed__inlinebar--inwin' : '') + (SIMPLE ? ' twd-sk-ed__simple' : ''), role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '', 'data-twd-sk-ctx': 'none', 'data-twd-sk-more': 'off', 'data-twd-sk-engaged': 'off' }, kids);
+		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar' + (oneWindow ? ' twd-sk-ed__inlinebar--inwin' : '') + (SIMPLE ? ' twd-sk-ed__simple' : ''), role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '', 'data-twd-sk-ctx': 'none', 'data-twd-sk-more': 'off', 'data-twd-sk-adv': 'off', 'data-twd-sk-engaged': 'off' }, kids);
 		root.appendChild(ui.bar);
 		if (oneWindow) {
 			show(ui.putBack, false);
@@ -1163,11 +1501,17 @@
 		if (ui.histPanel) {
 			show(ui.histPanel, false);
 		}
+		if (ui.repPanel) {
+			show(ui.repPanel, false);
+		}
+		if (ui.adPanel) {
+			show(ui.adPanel, false);
+		}
 		S.linkTarget = null;
 	}
 
 	function panelOpen() {
-		return !ui.linkPanel.hasAttribute('hidden') || !ui.altPanel.hasAttribute('hidden') || !ui.picPanel.hasAttribute('hidden') || !ui.lookPanel.hasAttribute('hidden') || !ui.addPanel.hasAttribute('hidden') || !!(ui.histPanel && !ui.histPanel.hasAttribute('hidden'));
+		return !ui.linkPanel.hasAttribute('hidden') || !ui.altPanel.hasAttribute('hidden') || !ui.picPanel.hasAttribute('hidden') || !ui.lookPanel.hasAttribute('hidden') || !ui.addPanel.hasAttribute('hidden') || !!(ui.histPanel && !ui.histPanel.hasAttribute('hidden')) || !!(ui.repPanel && !ui.repPanel.hasAttribute('hidden')) || !!(ui.adPanel && !ui.adPanel.hasAttribute('hidden'));
 	}
 
 	function openLink() {

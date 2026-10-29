@@ -54,9 +54,9 @@ class TWD_SK_Sanitizer {
 	/** Attributes kept, per tag. '*' applies to every tag. */
 	private static function allowed_attributes( $tag ) {
 		$map = array(
-			'*'       => array( 'class', 'id' ),
+			'*'       => array( 'class', 'id', 'data-twd-edit' ),
 			'a'       => array( 'href', 'target', 'rel', 'title' ),
-			'img'     => array( 'src', 'alt', 'width', 'height', 'title' ),
+			'img'     => array( 'src', 'alt', 'width', 'height', 'title', 'data-twd-pic' ),
 			'details' => array( 'open' ),
 		);
 		$out = $map['*'];
@@ -534,11 +534,15 @@ class TWD_SK_Sanitizer {
 	 * children are processed, so their classes can be trusted here.
 	 */
 	private static function is_hero_title( DOMElement $node, array $keep ) {
-		if ( ! isset( $keep['class'] ) || ! in_array( 'twd-sk-hero__title', explode( ' ', $keep['class'] ), true ) ) {
-			return false;
-		}
+		$titled = isset( $keep['class'] ) && in_array( 'twd-sk-hero__title', explode( ' ', $keep['class'] ), true );
 		for ( $parent = $node->parentNode; $parent instanceof DOMElement; $parent = $parent->parentNode ) {
-			if ( in_array( 'twd-sk-hero', explode( ' ', $parent->getAttribute( 'class' ) ), true ) ) {
+			$classes = explode( ' ', $parent->getAttribute( 'class' ) );
+			if ( $titled && in_array( 'twd-sk-hero', $classes, true ) ) {
+				return true;
+			}
+			// A custom section (0.15.0, Base, Adapt, Replace) may hold the page's one h1 whatever its class: a page
+			// replaced with custom HTML needs its title too. Only the first h1 counts, as everywhere.
+			if ( 'section' === strtolower( $parent->nodeName ) && in_array( 'twd-sk-custom', $classes, true ) ) {
 				return true;
 			}
 		}
@@ -654,6 +658,18 @@ class TWD_SK_Sanitizer {
 				case 'open':
 					$keep['open'] = '';
 					break;
+
+				case 'data-twd-edit':
+				case 'data-twd-pic':
+					// A words label goes on anything but a picture; a picture label only on a picture.
+					if ( ( 'img' === $tag ) === ( 'data-twd-pic' === $lname ) && self::valid_label( $value ) ) {
+						$keep[ $lname ] = $value;
+					} elseif ( ( 'img' === $tag ) === ( 'data-twd-pic' === $lname ) ) {
+						$ctx['removed']['attributes'][] = $lname . ' on <' . $tag . '> (the label must be plain words, at most 60 characters)';
+					} else {
+						$ctx['removed']['attributes'][] = $lname . ' on <' . $tag . '>';
+					}
+					break;
 			}
 		}
 
@@ -688,8 +704,26 @@ class TWD_SK_Sanitizer {
 		return $new;
 	}
 
+	/**
+	 * The registry's classes, plus (0.15.0, Base, Adapt, Replace) the c- classes the site's own stylesheet defines,
+	 * and only those: a class name pasted from anywhere else is dropped like any unknown class.
+	 */
 	private static function class_allowlist() {
-		return TWD_SK_Registry::allowed_classes();
+		$list = TWD_SK_Registry::allowed_classes();
+		if ( class_exists( 'TWD_SK_Css' ) ) {
+			foreach ( TWD_SK_Css::allowed_classes() as $class => $on ) {
+				$list[ $class ] = true;
+			}
+		}
+		return $list;
+	}
+
+	/**
+	 * The two labels a custom section may carry (0.15.0): data-twd-edit names words a client may change,
+	 * data-twd-pic a picture. Plain words only. Every other data- attribute still goes.
+	 */
+	private static function valid_label( $value ) {
+		return is_string( $value ) && 1 === preg_match( '/^[A-Za-z0-9][A-Za-z0-9 _\'.,:;()\/&+!?-]{0,59}$/', $value );
 	}
 
 	private static function shorten( $value ) {

@@ -24,6 +24,8 @@
  *   wp twd-sk embeds [--code]            list the embeds (code kept apart from the pages)
  *   wp twd-sk embed-set --label= --kind= --code= [--id=]   save an embed
  *   wp twd-sk embed-delete <id>          delete an embed
+ *   wp twd-sk css [--source] [--unused]  the site's own stylesheet: size against its budget, versions, the rules no page uses (0.15.0)
+ *   wp twd-sk css-revert <version>       bring back an earlier stylesheet version (0 is none); pages are not touched
  *   wp twd-sk style status|snapshot|apply|revert|swap   restyle a built site: keep the current look, apply a pack or a kit file (dry run first), go back, change a section's layout (0.14.0)
  *   wp twd-sk build [<brief-file>] [--mode=<mode>] [--set=<slug>] [--pack=<slug>] [--pictures=<file>] [--outlines-only] [--dry-run]
  *                                        set the whole site up from a brief, every page a draft
@@ -951,6 +953,60 @@ class TWD_SK_CLI {
 	 *
 	 *     wp twd-sk embeds
 	 */
+	/**
+	 * The site's own stylesheet (Base, Adapt, Replace): its size against the budget, the classes it defines,
+	 * its versions, and with --unused the rules no page uses. --source prints the stylesheet itself.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--source]
+	 * : Print the stylesheet source after the summary.
+	 *
+	 * [--unused]
+	 * : List the rules no kit page uses.
+	 */
+	public function css( $args, $assoc_args ) {
+		$status = TWD_SK_Css::status();
+		WP_CLI::line( $status['summary'] );
+		if ( $status['classes'] ) {
+			WP_CLI::line( 'Classes: ' . implode( ', ', $status['classes'] ) );
+		}
+		foreach ( $status['versions'] as $v ) {
+			WP_CLI::line( sprintf( '  v%d  %s  page %d  %s  %s', $v['v'], $v['at'], $v['page'], $v['bytes'] . ' bytes', $v['note'] ) );
+		}
+		if ( isset( $assoc_args['unused'] ) ) {
+			$unused = TWD_SK_Css::unused_rules( TWD_SK_Css::pages_html() );
+			WP_CLI::line( $unused ? 'Rules no page uses: ' . implode( '; ', $unused ) : 'Every rule is used by at least one page.' );
+		}
+		if ( isset( $assoc_args['source'] ) ) {
+			WP_CLI::line( TWD_SK_Css::current()['source'] );
+		}
+	}
+
+	/**
+	 * Bring back an earlier version of the site stylesheet as a new version. 0 is the empty stylesheet.
+	 * Pages are not touched: a page's own Undo takes its HTML back.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <version>
+	 * : The stylesheet version number to go back to.
+	 *
+	 * @subcommand css-revert
+	 */
+	public function css_revert( $args, $assoc_args ) {
+		if ( ! isset( $args[0] ) || ! is_numeric( $args[0] ) ) {
+			WP_CLI::error( 'Say which stylesheet version to go back to (wp twd-sk css lists them).' );
+			return;
+		}
+		$out = TWD_SK_Css::revert_to( (int) $args[0], 'back to stylesheet version ' . (int) $args[0] . ' from the command line' );
+		if ( is_wp_error( $out ) ) {
+			WP_CLI::error( $out->get_error_message() );
+			return;
+		}
+		WP_CLI::success( $out['unchanged'] ? 'The stylesheet already has those rules (version ' . $out['v'] . ').' : 'The stylesheet is version ' . $out['v'] . ' now, with the rules of version ' . (int) $args[0] . '.' );
+	}
+
 	public function embeds( $args, $assoc_args ) {
 		$rows = array();
 		foreach ( TWD_SK_Embed::listing() as $r ) {

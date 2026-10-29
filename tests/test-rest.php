@@ -29,9 +29,9 @@ function twd_sk_status( $e ) {
 	return is_array( $d ) && isset( $d['status'] ) ? $d['status'] : 0;
 }
 
-twd_sk_test( 'rest: the sixty-five routes exist under twd-site-kit/v1 and none is open to everyone', function () {
+twd_sk_test( 'rest: the sixty-nine routes exist under twd-site-kit/v1 and none is open to everyone', function () {
 	$routes = twd_sk_rest_routes();
-	twd_sk_eq( 65, count( $routes ) );
+	twd_sk_eq( 69, count( $routes ) );
 	foreach ( $routes as $r ) {
 		twd_sk_eq( 'twd-site-kit/v1', $r['ns'] );
 		twd_sk_true( is_array( $r['args']['permission_callback'] ) && 'TWD_SK_REST' === $r['args']['permission_callback'][0], 'a real permission callback on ' . $r['route'] );
@@ -46,7 +46,7 @@ twd_sk_test( 'rest: the sixty-five routes exist under twd-site-kit/v1 and none i
 			$reads[] = $r['route'];
 		}
 	}
-	twd_sk_eq( 20, count( $reads ), 'only prompt, versions, info, the sections, the search details, the site state, the profile, the setup plan, the facts, the Look panel switch, the site type, the launch check, the embeds, the page upgrades, the site history, the logo colours, the build state, the site brief, the site report and the templates are GET' );
+	twd_sk_eq( 21, count( $reads ), 'only prompt, versions, info, the sections, the search details, the site state, the profile, the setup plan, the facts, the Look panel switch, the site type, the launch check, the embeds, the page upgrades, the site history, the site stylesheet, the logo colours, the build state, the site brief, the site report and the templates are GET' );
 } );
 
 twd_sk_test( 'rest security: a visitor, a missing nonce and a wrong nonce are refused on every route (401)', function () {
@@ -84,6 +84,11 @@ twd_sk_test( 'rest security: an editor is allowed on the page they can edit, ref
 			continue; // creating a page and the site settings have no page ID; they have their own tests
 		}
 		$cb = $r['args']['permission_callback'];
+		// Replace this section and Describe a change (0.15.0, section 20) are for administrators: an editor gets 403 everywhere.
+		if ( preg_match( '#/(replace|adapt)$#', $r['route'] ) ) {
+			twd_sk_is_error( 'twd_sk_forbidden', call_user_func( $cb, twd_sk_rest_req( array( 'id' => 12 ) ) ), 'an editor is refused on ' . $r['route'] );
+			continue;
+		}
 		twd_sk_eq( true, call_user_func( $cb, twd_sk_rest_req( array( 'id' => 12 ) ) ), 'allowed on 12 ' . $r['route'] );
 		twd_sk_is_error( 'twd_sk_forbidden', call_user_func( $cb, twd_sk_rest_req( array( 'id' => 13 ) ) ), 'refused on 13 ' . $r['route'] );
 	}
@@ -595,8 +600,8 @@ function twd_sk_site_routes() {
 twd_sk_test( 'rest site: the site routes, each with a real permission callback, none registered in safe mode', function () {
 	twd_sk_site_caps();
 	$routes = twd_sk_site_routes();
-	twd_sk_eq( 39, count( $routes ) );
-	twd_sk_eq( array( '/site', '/site/style', '/site/style/reset', '/site/profile', '/site/profile', '/site/chrome', '/site/setup', '/site/setup', '/site/facts', '/site/facts', '/site/looks', '/site/looks', '/site/mode', '/site/mode', '/site/launch', '/site/embeds', '/site/embeds', '/site/embeds/(?P<eid>\\d+)/delete', '/site/upgrades', '/site/upgrades/apply', '/site/history', '/site/history/undo', '/site/history/restore', '/site/launch/publish', '/site/launch/tidy', '/site/brand', '/site/build', '/site/build/draft', '/site/build/reset', '/site/build/notes', '/site/full/check', '/site/full/prepare', '/site/build/step', '/site/brief', '/site/brief/plan', '/site/brief/apply', '/site/propose', '/site/doctor', '/site/templates' ), array_map( function ( $r ) {
+	twd_sk_eq( 41, count( $routes ) );
+	twd_sk_eq( array( '/site', '/site/style', '/site/style/reset', '/site/profile', '/site/profile', '/site/chrome', '/site/setup', '/site/setup', '/site/facts', '/site/facts', '/site/looks', '/site/looks', '/site/mode', '/site/mode', '/site/launch', '/site/embeds', '/site/embeds', '/site/embeds/(?P<eid>\\d+)/delete', '/site/upgrades', '/site/upgrades/apply', '/site/css', '/site/css/revert', '/site/history', '/site/history/undo', '/site/history/restore', '/site/launch/publish', '/site/launch/tidy', '/site/brand', '/site/build', '/site/build/draft', '/site/build/reset', '/site/build/notes', '/site/full/check', '/site/full/prepare', '/site/build/step', '/site/brief', '/site/brief/plan', '/site/brief/apply', '/site/propose', '/site/doctor', '/site/templates' ), array_map( function ( $r ) {
 		return $r['route'];
 	}, $routes ) );
 	TWD_SK_Safe::set( true );

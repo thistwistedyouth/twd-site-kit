@@ -729,6 +729,62 @@
 .twd-sk-ed .twd-sk-ed__inlinetools--morebtn.twd-sk-ed__inlinetools--morebtn {
   margin-left: auto !important;
 }
+.twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin:not([data-twd-sk-adv="on"]) .twd-sk-ed__inlinetools--advanced.twd-sk-ed__inlinetools--advanced {
+  display: none;
+}
+.twd-sk-ed .twd-sk-ed__inlinepanel.twd-sk-ed__inlinepanel .twd-sk-ed__textarea.twd-sk-ed__textarea {
+  flex: 1 1 100%;
+  min-height: 120px;
+  font-size: var(--twd-site-size-small) !important;
+}
+.twd-sk-ed .twd-sk-ed__inlinepanel.twd-sk-ed__inlinepanel .twd-sk-ed__textarea--css.twd-sk-ed__textarea--css {
+  min-height: 80px;
+}
+.twd-sk-ed .twd-sk-ed__inlinepanel.twd-sk-ed__inlinepanel .twd-sk-ed__radios.twd-sk-ed__radios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  flex: 1 1 100%;
+  font-size: var(--twd-site-size-small) !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-ed .twd-sk-ed__inlinepanel.twd-sk-ed__inlinepanel .twd-sk-ed__radios.twd-sk-ed__radios label {
+  flex: 0 1 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400 !important;
+}
+.twd-sk-ed .twd-sk-ed__warnings.twd-sk-ed__warnings {
+  flex: 1 1 100%;
+  margin: 0 !important;
+  padding: 8px 10px 8px 26px !important;
+  border-radius: var(--twd-site-radius-field) !important;
+  background-color: var(--twd-site-color-tint) !important;
+  color: var(--twd-site-color-title) !important;
+  font-size: var(--twd-site-size-small) !important;
+}
+.twd-sk-ed .twd-sk-ed__warnings.twd-sk-ed__warnings li {
+  margin: 0 0 4px !important;
+}
+.twd-sk-ed .twd-sk-ed__miniframe.twd-sk-ed__miniframe {
+  display: block;
+  flex: 1 1 100%;
+  width: 100%;
+  height: 320px;
+  border: 1px solid var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-field) !important;
+  background-color: var(--twd-site-color-surface) !important;
+}
+.twd-sk-ed .twd-sk-ed__whatchanged.twd-sk-ed__whatchanged {
+  flex: 1 1 100%;
+  margin: 0 !important;
+  padding: 8px 10px !important;
+  border-left: 3px solid var(--twd-site-color-primary) !important;
+  background-color: var(--twd-site-color-surface) !important;
+  color: var(--twd-site-color-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+}
 .twd-sk-ed .twd-sk-ed__ctxhead.twd-sk-ed__ctxhead {
   display: flex;
   flex-wrap: wrap;

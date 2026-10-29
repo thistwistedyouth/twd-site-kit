@@ -171,7 +171,7 @@ twd_sk_test( 'cli: exposes exactly these commands: save, get, versions, undo, pa
 		$methods[] = $m->getName();
 	}
 	sort( $methods );
-	twd_sk_eq( array( 'brand', 'build', 'check', 'doctor', 'embed_delete', 'embed_set', 'embeds', 'export_templates', 'get', 'launch_check', 'mode', 'pack', 'prompt', 'safe_mode', 'save', 'setup', 'snag_status', 'snags', 'snags_setting', 'style', 'undo', 'upgrade', 'versions' ), $methods );
+	twd_sk_eq( array( 'brand', 'build', 'check', 'css', 'css_revert', 'doctor', 'embed_delete', 'embed_set', 'embeds', 'export_templates', 'get', 'launch_check', 'mode', 'pack', 'prompt', 'safe_mode', 'save', 'setup', 'snag_status', 'snags', 'snags_setting', 'style', 'undo', 'upgrade', 'versions' ), $methods );
 } );
 
 twd_sk_test( 'cli: pack with no name lists the packs and marks the active one', function () {

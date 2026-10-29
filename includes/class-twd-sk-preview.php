@@ -44,18 +44,19 @@ class TWD_SK_Preview {
 	/**
 	 * Store cleaned HTML for a page and return its token.
 	 */
-	public static function create( $user_id, $page_id, $clean_html ) {
+	public static function create( $user_id, $page_id, $clean_html, $extra = array() ) {
 		$token = bin2hex( random_bytes( 16 ) );
-		set_transient(
-			self::key( $token ),
-			array(
-				'user'    => (int) $user_id,
-				'page'    => (int) $page_id,
-				'html'    => (string) $clean_html,
-				'created' => time(),
-			),
-			self::TTL
+		$data  = array(
+			'user'    => (int) $user_id,
+			'page'    => (int) $page_id,
+			'html'    => (string) $clean_html,
+			'created' => time(),
 		);
+		// A candidate site stylesheet to show with the draft (0.15.0, Replace): the built CSS, already checked.
+		if ( is_array( $extra ) && isset( $extra['css'] ) && is_string( $extra['css'] ) ) {
+			$data['css'] = $extra['css'];
+		}
+		set_transient( self::key( $token ), $data, self::TTL );
 
 		$index = get_transient( self::index_key( $user_id ) );
 		$index = is_array( $index ) ? $index : array();
@@ -159,6 +160,9 @@ class TWD_SK_Preview {
 			define( 'DONOTCACHEPAGE', true );
 		}
 		add_filter( 'twd_sk_page_html', array( __CLASS__, 'filter_html' ), 10, 2 );
+		if ( isset( $data['css'] ) && class_exists( 'TWD_SK_Css' ) ) {
+			add_filter( TWD_SK_Css::FILTER_BUILT, array( __CLASS__, 'filter_css' ) );
+		}
 		add_filter( 'wp_robots', array( __CLASS__, 'filter_robots' ) );
 		add_action( 'wp_body_open', array( __CLASS__, 'print_bar' ) );
 	}
@@ -173,6 +177,14 @@ class TWD_SK_Preview {
 			return self::$active['html'];
 		}
 		return $html;
+	}
+
+	/** The candidate site stylesheet in place of the saved one, for this preview only. */
+	public static function filter_css( $css ) {
+		if ( null !== self::$active && isset( self::$active['css'] ) ) {
+			return (string) self::$active['css'];
+		}
+		return $css;
 	}
 
 	public static function filter_robots( $robots ) {

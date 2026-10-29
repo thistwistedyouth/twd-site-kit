@@ -27,6 +27,8 @@ require_once TWD_SK_PATH . 'includes/class-twd-sk-mode.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-registry.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-sanitizer.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-store.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-css.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-replace.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-prompt.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-page.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-packs.php';
@@ -76,6 +78,7 @@ require_once TWD_SK_PATH . 'includes/class-twd-sk-modules.php';
 
 add_action( 'init', array( 'TWD_SK_Page', 'init' ) );
 TWD_SK_Assets::init();
+TWD_SK_Css::init();
 TWD_SK_Template::init();
 TWD_SK_Preview::init();
 TWD_SK_REST::init();

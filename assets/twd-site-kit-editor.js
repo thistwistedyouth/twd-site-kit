@@ -116,6 +116,8 @@
 					var err = new Error(friendly(res.status, data));
 					err.status = res.status;
 					err.code = data && data.code ? data.code : '';
+					// What the server said besides the message (a list of check errors, say).
+					err.data = data && data.data && typeof data.data === 'object' ? data.data : null;
 					throw err;
 				}
 				return data;
@@ -130,7 +132,8 @@
 			return 'Your sign-in has timed out. Reload the page and sign in again.';
 		}
 		if (status === 429) {
-			return 'Too many requests. Wait a minute and try again.';
+			// The server says how long for the AI limit (section 20b, point 10).
+			return data && typeof data.message === 'string' && data.message ? data.message : 'Too many requests. Wait a minute and try again.';
 		}
 		if (data && typeof data.message === 'string' && data.message) {
 			return data.message;

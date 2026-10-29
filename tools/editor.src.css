@@ -203,6 +203,17 @@
 /* 18d: the compact row by default; More opens the rest. The More button itself shows once something was clicked. */
 .twd-sk-ed__inlinebar--inwin:not([data-twd-sk-more="on"]) .twd-sk-ed__inlinetools--more, .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--morebtn { display: none; }
 .twd-sk-ed__inlinetools--morebtn { margin-left: auto; }
+/* Section 20 (Base, Adapt, Replace): the section row is Describe a change and Replace this section; Advanced opens
+   the design tools (Look, Move up, Move down, Add section after, Delete section) that were the row before. */
+.twd-sk-ed__inlinebar--inwin:not([data-twd-sk-adv="on"]) .twd-sk-ed__inlinetools--advanced { display: none; }
+.twd-sk-ed__inlinepanel .twd-sk-ed__textarea { flex: 1 1 100%; min-height: 120px; font-size: $size-small; }
+.twd-sk-ed__inlinepanel .twd-sk-ed__textarea--css { min-height: 80px; }
+.twd-sk-ed__inlinepanel .twd-sk-ed__radios { display: flex; flex-wrap: wrap; gap: 8px 16px; flex: 1 1 100%; font-size: $size-small; color: $color-title; }
+.twd-sk-ed__inlinepanel .twd-sk-ed__radios label { flex: 0 1 auto; display: inline-flex; align-items: center; gap: 6px; font-weight: 400; }
+.twd-sk-ed__warnings { flex: 1 1 100%; margin: 0; padding: 8px 10px 8px 26px; border-radius: $radius-field; background-color: $color-tint; color: $color-title; font-size: $size-small; }
+.twd-sk-ed__warnings li { margin: 0 0 4px; }
+.twd-sk-ed__miniframe { display: block; flex: 1 1 100%; width: 100%; height: 320px; border: 1px solid $color-border; border-radius: $radius-field; background-color: $color-surface; }
+.twd-sk-ed__whatchanged { flex: 1 1 100%; margin: 0; padding: 8px 10px; border-left: 3px solid $color-primary; background-color: $color-surface; color: $color-body; font-size: $size-small; }
 /* 18c: the one-section view a pencil opens. */
 .twd-sk-ed__ctxhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
 .twd-sk-ed__allsections { padding: 0; border: 0; background: none; color: $color-accent-text; font-size: $size-small; text-decoration: underline; cursor: pointer; }

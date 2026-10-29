@@ -57,6 +57,9 @@ class TWD_SK_Registry {
 		return array(
 			'twd-sk-inner',
 			'twd-sk-inner--narrow',
+			// 0.15.0 (Base, Adapt, Replace): a section of custom HTML, styled by the site's own stylesheet (TWD_SK_Css).
+			// Inside one, only elements labelled data-twd-edit and data-twd-pic can be changed in place.
+			'twd-sk-custom',
 			'twd-sk-tone-base',
 			'twd-sk-tone-surface',
 			'twd-sk-tone-tint',

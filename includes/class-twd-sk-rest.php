@@ -145,6 +145,18 @@ class TWD_SK_REST {
 				'callback'            => array( __CLASS__, 'post_plan_step' ),
 				'permission_callback' => array( __CLASS__, 'can_plan_step' ),
 			) );
+			// Base, Adapt, Replace (0.15.0, section 20): a section or the page replaced with custom HTML and CSS
+			// (preview, then apply), and Describe a change (the AI writes the replacement). Administrators only.
+			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/replace', array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_replace' ),
+				'permission_callback' => array( __CLASS__, 'can_replace_section' ),
+			) );
+			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/adapt', array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_adapt' ),
+				'permission_callback' => array( __CLASS__, 'can_adapt_section' ),
+			) );
 		}
 		register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/status', array(
 			'methods'             => 'POST',
@@ -310,6 +322,18 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_site_upgrades_apply' ),
 			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 		) );
+		// The site's own stylesheet (0.15.0, Base, Adapt, Replace): size, budget, versions, the rules no page uses;
+		// and a way back to an earlier version. Administrators only.
+		register_rest_route( self::ROUTE_NS, '/site/css', array(
+			'methods'             => 'GET',
+			'callback'            => array( __CLASS__, 'get_site_css' ),
+			'permission_callback' => array( __CLASS__, 'can_read_site' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/css/revert', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_css_revert' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
 		// Site changes (0.15.0): the settings history with Undo and Restore. Administrators only.
 		register_rest_route( self::ROUTE_NS, '/site/history', array(
 			'methods'             => 'GET',
@@ -452,6 +476,30 @@ class TWD_SK_REST {
 		return self::guard( $request, 'write' );
 	}
 
+	/** Replacing a section with custom HTML: an administrator who can edit the page; a preview or a write. */
+	public static function can_replace_section( $request ) {
+		$ok = self::guard( $request, 'apply' === $request->get_param( 'mode' ) ? 'write' : 'preview' );
+		if ( true !== $ok ) {
+			return $ok;
+		}
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return self::error( 'twd_sk_forbidden', 'Only administrators can replace a section with custom HTML.', 403 );
+		}
+		return true;
+	}
+
+	/** Describe a change: an administrator who can edit the page, and the AI limit. */
+	public static function can_adapt_section( $request ) {
+		$ok = self::guard( $request, 'ai' );
+		if ( true !== $ok ) {
+			return $ok;
+		}
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return self::error( 'twd_sk_forbidden', 'Only administrators can ask the AI to change a section this way.', 403 );
+		}
+		return true;
+	}
+
 	/** Site settings need manage_options (administrators), and no page ID. */
 	public static function can_manage_site( $request ) {
 		return self::guard( $request, 'write', false, 'manage_options' );
@@ -534,7 +582,12 @@ class TWD_SK_REST {
 			$state = array( 'start' => $now, 'count' => 0 );
 		}
 		if ( (int) $state['count'] >= $max ) {
-			return self::error( 'twd_sk_rate_limited', 'Too many requests. Wait a minute and try again.', 429 );
+			// The AI buckets say how long, in plain words (section 20b, point 10).
+			$message = 'Too many requests. Wait a minute and try again.';
+			if ( in_array( $bucket, array( 'ai', 'plan' ), true ) ) {
+				$message = 'The AI can be asked ' . $max . ' times in ' . ( $window / 60 ) . ' minutes on this site, and that is used up. Wait a few minutes and try again.';
+			}
+			return self::error( 'twd_sk_rate_limited', $message, 429, array( 'retry_after' => max( 1, $window - ( $now - (int) $state['start'] ) ) ) );
 		}
 		$state['count']++;
 		set_transient( $key, $state, $window );
@@ -784,6 +837,94 @@ class TWD_SK_REST {
 
 	public static function get_site_history( $request ) {
 		return array( 'history' => TWD_SK_Style::site_history_summary() );
+	}
+
+	/** The site's own stylesheet: size against its budget, versions, and the rules no page uses. Read only. */
+	public static function get_site_css( $request ) {
+		$status           = TWD_SK_Css::status();
+		$status['unused'] = TWD_SK_Css::unused_rules( TWD_SK_Css::pages_html() );
+		$status['source'] = TWD_SK_Css::current()['source'];
+		return $status;
+	}
+
+	/** Back to an earlier stylesheet version (0 is none). Pages are not touched: a page's own Undo does that. */
+	public static function post_site_css_revert( $request ) {
+		$v = $request->get_param( 'version' );
+		if ( ! is_numeric( $v ) || (int) $v < 0 ) {
+			return self::error( 'twd_sk_bad_input', 'Choose the stylesheet version to go back to.', 400 );
+		}
+		$out = TWD_SK_Css::revert_to( (int) $v, 'back to stylesheet version ' . (int) $v . ' from the Site tab' );
+		if ( is_wp_error( $out ) ) {
+			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_version_not_found' === $out->get_error_code() ? 404 : 422, (array) $out->get_error_data() );
+		}
+		return $out + array( 'status' => TWD_SK_Css::status() );
+	}
+
+	/**
+	 * Replace a section or the page with custom HTML and CSS (0.15.0, section 20). mode "preview" builds and
+	 * checks the candidate and shows it in the preview frame; mode "apply" saves the stylesheet and the page as one
+	 * change. A check that fails returns 422 with every message, and applies nothing.
+	 */
+	public static function post_replace( $request ) {
+		$id = (int) $request->get_param( 'id' );
+		$in = array(
+			'target' => $request->get_param( 'target' ),
+			'index'  => $request->get_param( 'index' ),
+			'html'   => $request->get_param( 'html' ),
+			'css'    => $request->get_param( 'css' ),
+		);
+		if ( 'apply' === $request->get_param( 'mode' ) ) {
+			$base = self::base_version( $request );
+			if ( is_wp_error( $base ) ) {
+				return $base;
+			}
+			$out = TWD_SK_Replace::apply( $id, $in, $base );
+			if ( is_wp_error( $out ) ) {
+				return self::replace_error( $out );
+			}
+			$done = self::after_write( $id, $out );
+			if ( ! is_wp_error( $done ) ) {
+				foreach ( array( 'warnings', 'css_v', 'css_bytes', 'at' ) as $k ) {
+					if ( isset( $out[ $k ] ) ) {
+						$done[ $k ] = $out[ $k ];
+					}
+				}
+			}
+			return $done;
+		}
+		$out = TWD_SK_Replace::preview( $id, $in, get_current_user_id() );
+		if ( is_wp_error( $out ) ) {
+			return self::replace_error( $out );
+		}
+		return $out + self::leftover_fields( $out['leftovers'] );
+	}
+
+	/** Describe a change: the AI writes the replacement for one section, shown as a preview. Nothing is saved. */
+	public static function post_adapt( $request ) {
+		$id   = (int) $request->get_param( 'id' );
+		$base = self::base_version( $request );
+		if ( is_wp_error( $base ) ) {
+			return $base;
+		}
+		if ( $base !== (int) TWD_SK_Store::get_current_version_id( $id ) ) {
+			return self::error( 'twd_sk_conflict', 'This page changed since you opened it. Reload the page and try again.', 409 );
+		}
+		$out = TWD_SK_Replace::adapt( $id, array(
+			'index'       => $request->get_param( 'index' ),
+			'instruction' => $request->get_param( 'instruction' ),
+		), get_current_user_id() );
+		if ( is_wp_error( $out ) ) {
+			return self::replace_error( $out );
+		}
+		return $out + self::leftover_fields( $out['leftovers'] );
+	}
+
+	private static function replace_error( $e ) {
+		$map    = array( 'twd_sk_bad_input' => 400, 'twd_sk_empty' => 400, 'twd_sk_too_large' => 413, 'twd_sk_conflict' => 409, 'twd_sk_css_invalid' => 422, 'twd_sk_ai_unavailable' => 503, 'twd_sk_ai_bad_result' => 502, 'twd_sk_ai_too_long' => 502, 'twd_sk_version_not_found' => 404 );
+		$code   = $e->get_error_code();
+		$status = isset( $map[ $code ] ) ? $map[ $code ] : 502;
+		$data   = $e->get_error_data();
+		return self::error( $code, $e->get_error_message(), $status, is_array( $data ) ? $data : array() );
 	}
 
 	public static function post_site_history_undo( $request ) {

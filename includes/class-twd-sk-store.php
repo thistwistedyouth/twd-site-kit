@@ -176,6 +176,10 @@ class TWD_SK_Store {
 			return $guard;
 		}
 
+		// The site stylesheet goes back with the page when it can (0.15.0): before the clean, so the classes that
+		// stylesheet defines survive it, and before the version is recorded, so it names the stylesheet it sits on.
+		$css_note = self::follow_css( $post_id, $source );
+
 		// Re-run the sanitiser so a restore can never bring back anything the
 		// current rules would refuse.
 		$result = TWD_SK_Sanitizer::clean_with_report( $source['html'] );
@@ -184,15 +188,16 @@ class TWD_SK_Store {
 			return new WP_Error( 'twd_sk_empty', 'Nothing was left after cleaning that version, so nothing was restored.' );
 		}
 
-		$out = self::commit( $post_id, $store, $clean, array(
+		$out      = self::commit( $post_id, $store, $clean, array(
 			'kind'          => 'restore',
 			'note'          => self::note( $args, 'restore of v' . (int) $source['id'] ),
 			'restored_from' => (int) $source['id'],
 		), $result['report'] );
 		if ( ! is_wp_error( $out ) ) {
-			$out['undid']  = $head ? self::label( $head ) : '';
-			$out['target'] = (int) $source['id'];
-			$out['now']    = self::label( $source );
+			$out['undid']    = $head ? self::label( $head ) : '';
+			$out['target']   = (int) $source['id'];
+			$out['now']      = self::label( $source );
+			$out['css_note'] = $css_note;
 		}
 		return $out;
 	}
@@ -241,8 +246,10 @@ class TWD_SK_Store {
 			return $guard;
 		}
 
-		$result = TWD_SK_Sanitizer::clean_with_report( $target['html'] );
-		$clean  = $result['html'];
+		// The site stylesheet goes back with the page when it can (0.15.0), before the clean (see restore()).
+		$css_note = self::follow_css( $post_id, $target );
+		$result   = TWD_SK_Sanitizer::clean_with_report( $target['html'] );
+		$clean    = $result['html'];
 		if ( '' === $clean ) {
 			return new WP_Error( 'twd_sk_empty', 'Nothing was left after cleaning that version, so nothing was changed.' );
 		}
@@ -260,11 +267,20 @@ class TWD_SK_Store {
 			'restored_from' => (int) $target['id'],
 		), $result['report'] );
 		if ( ! is_wp_error( $out ) ) {
-			$out['undid']  = self::label( $undone );
-			$out['target'] = (int) $target['id'];
-			$out['now']    = self::label( $target );
+			$out['undid']    = self::label( $undone );
+			$out['target']   = (int) $target['id'];
+			$out['now']      = self::label( $target );
+			$out['css_note'] = $css_note;
 		}
 		return $out;
+	}
+
+	/** Going back to a version: take the site stylesheet back with it when every later change was this page's (0.15.0). */
+	private static function follow_css( $post_id, $target ) {
+		if ( ! class_exists( 'TWD_SK_Css' ) || ! isset( $target['css'] ) ) {
+			return '';
+		}
+		return (string) TWD_SK_Css::follow_page( (int) $post_id, (int) $target['css'] );
 	}
 
 	// -- Internals --------------------------------------------------------
@@ -364,6 +380,8 @@ class TWD_SK_Store {
 					'fix'           => isset( $item['fix'] ) ? (int) $item['fix'] : self::must_fix_count( (string) $item['html'] ),
 					// The numbers of dropped copies whose words this version still holds (session 5).
 					'also'          => isset( $item['also'] ) && is_array( $item['also'] ) ? array_values( array_map( 'intval', $item['also'] ) ) : array(),
+					// The site stylesheet version this version was saved with (0.15.0, Base, Adapt, Replace); 0 before any.
+					'css'           => isset( $item['css'] ) ? (int) $item['css'] : 0,
 				);
 			}
 		}
@@ -435,6 +453,7 @@ class TWD_SK_Store {
 			'bytes'         => strlen( $clean ),
 			'fix'           => self::must_fix_count( $clean ),
 			'also'          => array(),
+			'css'           => class_exists( 'TWD_SK_Css' ) ? TWD_SK_Css::version() : 0,
 		);
 		$items = self::trim( $items );
 
