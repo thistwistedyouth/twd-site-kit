@@ -157,6 +157,13 @@ class TWD_SK_REST {
 				'callback'            => array( __CLASS__, 'post_adapt' ),
 				'permission_callback' => array( __CLASS__, 'can_adapt_section' ),
 			) );
+			// Import a page (section 23a): a whole AI reply pasted as it came, read into HTML, CSS and a note, then
+			// the same preview and apply as Replace, or a new draft page. Administrators only.
+			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/import', array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_import' ),
+				'permission_callback' => array( __CLASS__, 'can_import_page' ),
+			) );
 			// Export (session 7, section 21c): the page or one section as a standalone file or a remix brief. Reads only.
 			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/export', array(
 				'methods'             => 'GET',
@@ -497,6 +504,18 @@ class TWD_SK_REST {
 		}
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return self::error( 'twd_sk_forbidden', 'Only administrators can replace a section with custom HTML.', 403 );
+		}
+		return true;
+	}
+
+	/** Import a page: like Replace, plus the page-creation limit when a new draft page is made. */
+	public static function can_import_page( $request ) {
+		$ok = self::can_replace_section( $request );
+		if ( true !== $ok ) {
+			return $ok;
+		}
+		if ( 'apply' === $request->get_param( 'mode' ) && 'new' === $request->get_param( 'target' ) ) {
+			return self::rate_limit( 'create' );
 		}
 		return true;
 	}
@@ -933,6 +952,71 @@ class TWD_SK_REST {
 		if ( is_wp_error( $out ) ) {
 			return self::replace_error( $out );
 		}
+		return $out + self::leftover_fields( $out['leftovers'] );
+	}
+
+	/**
+	 * Import a page (section 23a): the pasted reply is read into HTML, CSS and a note; target 'section' or 'page'
+	 * goes through Replace (preview, then apply with base_version); target 'new' previews in this page's place and
+	 * applies as a new draft page with the given title. The reply's parts come back so the panel can show them.
+	 */
+	public static function post_import( $request ) {
+		$id     = (int) $request->get_param( 'id' );
+		$read   = TWD_SK_Replace::read_paste( $request->get_param( 'reply' ) );
+		if ( is_wp_error( $read ) ) {
+			return self::replace_error( $read );
+		}
+		$target = $request->get_param( 'target' );
+		$target = in_array( $target, array( 'section', 'page', 'new' ), true ) ? $target : 'section';
+		$found  = array(
+			'html_bytes' => strlen( $read['html'] ),
+			'css_bytes'  => strlen( $read['css'] ),
+			'note'       => $read['note'],
+			'how'        => $read['how'],
+		);
+		$in = array(
+			'target' => 'new' === $target ? 'page' : $target,
+			'index'  => $request->get_param( 'index' ),
+			'html'   => $read['html'],
+			'css'    => $read['css'],
+		);
+		if ( 'apply' === $request->get_param( 'mode' ) ) {
+			if ( 'new' === $target ) {
+				$out = TWD_SK_Replace::import_new( $request->get_param( 'title' ), $in, get_current_user_id() );
+				if ( is_wp_error( $out ) ) {
+					return self::replace_error( $out );
+				}
+				return $out + array( 'found' => $found );
+			}
+			$base = self::base_version( $request );
+			if ( is_wp_error( $base ) ) {
+				return $base;
+			}
+			$out = TWD_SK_Replace::apply( $id, $in, $base );
+			if ( is_wp_error( $out ) ) {
+				return self::replace_error( $out );
+			}
+			$done = self::after_write( $id, $out );
+			if ( ! is_wp_error( $done ) ) {
+				foreach ( array( 'warnings', 'css_v', 'css_bytes', 'at' ) as $k ) {
+					if ( isset( $out[ $k ] ) ) {
+						$done[ $k ] = $out[ $k ];
+					}
+				}
+				$done['found'] = $found;
+			}
+			return $done;
+		}
+		if ( 'new' === $target ) {
+			$in['new'] = true;
+		}
+		$out = TWD_SK_Replace::preview( $id, $in, get_current_user_id() );
+		if ( is_wp_error( $out ) ) {
+			return self::replace_error( $out );
+		}
+		$out['found'] = $found;
+		$out['html']  = $read['html'];
+		$out['css']   = $read['css'];
 		return $out + self::leftover_fields( $out['leftovers'] );
 	}
 

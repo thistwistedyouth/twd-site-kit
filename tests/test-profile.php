@@ -7,6 +7,7 @@ function twd_sk_profile_full() {
 		'logo_id'      => 0,
 		'logo_mark_id' => 0,
 		'logo_line'    => 'Therapy',
+		'social_image_id' => 0,
 		'menu'         => array(
 			array( 'label' => 'Home', 'url' => '/', 'children' => array() ),
 			array( 'label' => 'Services', 'url' => '/services', 'children' => array( array( 'label' => 'Anxiety', 'url' => '/services/anxiety' ) ) ),

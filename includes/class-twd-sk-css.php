@@ -210,7 +210,7 @@ class TWD_SK_Css {
 			}
 			$seen[ $key ] = true;
 			foreach ( $rule['selectors'] as $sel ) {
-				if ( preg_match_all( '/\.(c-[a-z0-9_-]+)/', $sel, $m ) ) {
+				if ( preg_match_all( '/\.(c-[a-z0-9_-]+)/', preg_replace( self::attribute_pattern(), '', $sel ), $m ) ) {
 					foreach ( $m[1] as $class ) {
 						$out['classes'][ $class ] = $class;
 					}
@@ -428,28 +428,34 @@ class TWD_SK_Css {
 	/** One selector: c- classes, the allowed tags, a few pseudo-classes and ::before/::after, and combinators. */
 	private static function check_selector( $sel ) {
 		$errors = array();
-		if ( false !== strpos( $sel, '#' ) ) {
+		// Section 23f: attribute selectors are allowed in the plain shapes an accordion or a tab needs: [open], [href],
+		// [data-x="y"], [aria-expanded="true"] (with ~= |= ^= $= *=). Anything else in brackets is refused. The rest of
+		// the checks run on the selector with them taken out (so [href^="#"] is not taken for an id).
+		$sel_plain = preg_replace( self::attribute_pattern(), '', $sel );
+		if ( false !== strpos( $sel_plain, '[' ) || false !== strpos( $sel_plain, ']' ) ) {
+			$errors[] = 'The selector "' . $sel . '" uses an attribute that could not be read. Write it as [name] or [name="value"], for example [open] or [href^="#"].';
+			return $errors;
+		}
+		if ( false !== strpos( $sel_plain, '#' ) ) {
 			$errors[] = 'The selector "' . $sel . '" uses an id (#). Use a c- class instead.';
 			return $errors;
 		}
-		if ( false !== strpos( $sel, '[' ) ) {
-			$errors[] = 'The selector "' . $sel . '" uses an attribute ([...]). Use a c- class instead.';
-			return $errors;
-		}
-		if ( false !== strpos( $sel, '*' ) ) {
+		if ( false !== strpos( $sel_plain, '*' ) ) {
 			$errors[] = 'The selector "' . $sel . '" uses *. Name the elements instead.';
 			return $errors;
 		}
-		if ( preg_match( '/\.(twd-[a-z0-9_-]*)/i', $sel, $m ) ) {
+		if ( preg_match( '/\.(twd-[a-z0-9_-]*)/i', $sel_plain, $m ) ) {
 			$errors[] = 'The selector "' . $sel . '" styles the kit\'s own class .' . $m[1] . ', which would change every page. Give the element a c- class and style that.';
 			return $errors;
 		}
-		if ( ! preg_match( '/\.c-[a-z0-9_-]+/', $sel ) ) {
+		if ( ! preg_match( '/\.c-[a-z0-9_-]+/', $sel_plain ) ) {
 			$errors[] = 'The selector "' . $sel . '" names no c- class. Every rule needs one, so it can only reach the custom section it is for.';
 			return $errors;
 		}
 		// Take the known pieces out; anything left is not allowed.
-		$rest = preg_replace( '/::?(before|after|marker|hover|focus|focus-visible|focus-within|active|visited|first-child|last-child|only-child|first-of-type|last-of-type|empty|checked|disabled)\b/', ' ', $sel );
+		// Longer names first: an alternation that tried "focus" before "focus-visible" left "-visible" behind (found by
+		// the first real import, session 8).
+		$rest = preg_replace( '/::?(-webkit-details-marker|before|after|marker|hover|focus-visible|focus-within|focus|active|visited|first-child|last-child|only-child|first-of-type|last-of-type|empty|checked|disabled|open)\b/', ' ', $sel_plain );
 		$rest = preg_replace( '/:nth-(?:last-)?(?:child|of-type)\(\s*(?:odd|even|\d+|\d*n(?:\s*[+-]\s*\d+)?)\s*\)/', ' ', $rest );
 		$rest = preg_replace( '/:not\(\s*\.c-[a-z0-9_-]+\s*\)/', ' ', $rest );
 		$rest = preg_replace( '/\.c-[a-z0-9_-]+/', ' ', $rest );
@@ -458,12 +464,95 @@ class TWD_SK_Css {
 		if ( '' !== $rest ) {
 			$errors[] = 'The selector "' . $sel . '" holds something not allowed ("' . self::shorten( $rest ) . '"). Use c- classes, the usual element names, :hover and the like, ::before and ::after.';
 		}
-		foreach ( preg_match_all( '/\.(c-[a-z0-9_-]+)/', $sel, $m ) ? $m[1] : array() as $class ) {
+		foreach ( preg_match_all( '/\.(c-[a-z0-9_-]+)/', $sel_plain, $m ) ? $m[1] : array() as $class ) {
 			if ( ! self::valid_class( $class ) ) {
 				$errors[] = 'The class .' . $class . ' is not a valid name: lower case letters and digits after "c-", joined by hyphens or underscores, at most 48 characters.';
 			}
 		}
 		return $errors;
+	}
+
+	/** The attribute selectors a rule may use (section 23f): [name] or [name op "value"], no spaces, no brackets inside. */
+	private static function attribute_pattern() {
+		return '/\[[a-zA-Z][a-zA-Z0-9_-]*(?:[~|^$*]?=(?:"[^"\[\]]*"|\'[^\'\[\]]*\'|[A-Za-z0-9_-]+))?\]/';
+	}
+
+	/**
+	 * Section 23b: the nearest real token to a misspelt one, or '' when nothing is close (edit distance over 4).
+	 * The comparison is on the name after --twd-site-.
+	 */
+	public static function nearest_token( $name ) {
+		$name = strtolower( (string) $name );
+		$best = '';
+		$dist = 5;
+		foreach ( TWD_SK_Packs::token_names() as $known ) {
+			$d = levenshtein( $name, $known );
+			if ( $d < $dist ) {
+				$dist = $d;
+				$best = $known;
+			}
+		}
+		if ( '' === $best ) {
+			// A family hint: the same first word (color, size, radius ...) with a close rest.
+			$head = strstr( $name, '-', true );
+			foreach ( TWD_SK_Packs::token_names() as $known ) {
+				if ( false !== $head && 0 === strpos( $known, $head . '-' ) && levenshtein( substr( $name, strlen( $head ) ), substr( $known, strlen( $head ) ) ) <= 6 ) {
+					return $known;
+				}
+			}
+		}
+		return $best;
+	}
+
+	/**
+	 * Section 23b: the c- classes whose rules some added CSS would CHANGE: a rule with the same media and selectors
+	 * already in $current with different declarations. Identical rules and new rules are not collisions.
+	 *
+	 * @return array class => the selector list of the colliding rule
+	 */
+	public static function collisions( $added, $current = null ) {
+		$current = null === $current ? self::current()['source'] : $current;
+		$have    = array();
+		foreach ( self::rules_of( $current ) as $rule ) {
+			$have[ self::rule_key( $rule ) ] = $rule;
+		}
+		$out = array();
+		foreach ( self::rules_of( $added ) as $rule ) {
+			$key = self::rule_key( $rule );
+			if ( ! isset( $have[ $key ] ) || $have[ $key ]['decls'] === $rule['decls'] ) {
+				continue;
+			}
+			foreach ( $rule['selectors'] as $sel ) {
+				if ( preg_match_all( '/\.(c-[a-z0-9_-]+)/', $sel, $m ) ) {
+					foreach ( $m[1] as $class ) {
+						$out[ $class ] = implode( ', ', $rule['selectors'] );
+					}
+				}
+			}
+		}
+		return $out;
+	}
+
+	/** Section 23b: which of these pages use each class (class => list of page ids), from their current HTML. */
+	public static function class_pages( $classes, $pages_html ) {
+		$out = array();
+		foreach ( (array) $pages_html as $pid => $html ) {
+			if ( ! preg_match_all( '/class="([^"]*)"/', (string) $html, $m ) ) {
+				continue;
+			}
+			$used = array();
+			foreach ( $m[1] as $list ) {
+				foreach ( preg_split( '/\s+/', trim( $list ) ) as $c ) {
+					$used[ $c ] = true;
+				}
+			}
+			foreach ( (array) $classes as $class ) {
+				if ( isset( $used[ $class ] ) ) {
+					$out[ $class ][] = (int) $pid;
+				}
+			}
+		}
+		return $out;
 	}
 
 	private static function valid_media( $query ) {
@@ -578,7 +667,9 @@ class TWD_SK_Css {
 				if ( 0 !== strpos( $var, '--twd-site-' ) ) {
 					$errors[] = 'Only the site\'s own tokens may be used (' . $var . ' in ' . $name . $in . '). They start with --twd-site-.';
 				} elseif ( $known && ! isset( $known[ substr( $var, 11 ) ] ) ) {
-					$errors[] = 'There is no site token called ' . $var . ' (in ' . $name . $in . '). The colours are --twd-site-color-* and the sizes --twd-site-size-*.';
+					// Section 23b: name the nearest real token, so an invented one is caught and fixed in one step.
+					$near     = self::nearest_token( substr( $var, 11 ) );
+					$errors[] = 'There is no site token called ' . $var . ' (in ' . $name . $in . ').' . ( '' !== $near ? ' Did you mean --twd-site-' . $near . '?' : ' The colours are --twd-site-color-* and the sizes --twd-site-size-*.' );
 				}
 			}
 		}

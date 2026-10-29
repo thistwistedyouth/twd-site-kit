@@ -1203,6 +1203,207 @@
 			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.adAsk, ui.adApply, ui.adEdit, ED.button('Close', 'secondary', closePanels)]),
 			ui.adMsg, ui.adWhat, ui.adWarn, ui.adFrame, ui.adSizes
 		]);
+		buildImport();
+	}
+
+	/* ---- Import a page (section 23a): a whole AI reply, pasted as it came ----
+	   One box takes the reply (an html block, a css block, a What changed note, with or without the fences). The
+	   server finds the parts, runs the same checks as Replace and shows the preview; Apply replaces this section,
+	   the whole page, or makes a new draft page with a title (never published). Edit the HTML first moves the parts
+	   into Replace this section. */
+	function openImport(prefill) {
+		var sec = currentSection();
+		if (notNow()) {
+			return;
+		}
+		closePanels();
+		show(ui.confirm, false);
+		S.imp = { sec: sec && sec.tagName === 'SECTION' ? sectionIndex(sec) : -1, previewed: null, token: '', url: '', html: '', css: '' };
+		ui.impSection.disabled = S.imp.sec < 0;
+		if (S.imp.sec < 0 && ui.impSection.checked) {
+			ui.impPage.checked = true;
+		}
+		ui.impHead.textContent = S.imp.sec >= 0 ? 'Import a page or a section (you are in section ' + (S.imp.sec + 1) + ', ' + sectionName(sec) + ')' : 'Import a page (click inside a section first to replace just that one)';
+		if (typeof prefill === 'string' && prefill) {
+			ui.impText.value = prefill;
+		}
+		ui.impMsg.textContent = 'Paste the whole reply as it came: the html block, the css block and the What changed note. Up to ' + Math.round((cfg.pageMax || 204800) / 1024) + ' KB of HTML and ' + Math.round((cfg.cssMax || 24000) / 1024) + ' KB of CSS. Then Preview.';
+		ED.clear(ui.impWhat);
+		show(ui.impWhat, false);
+		drawWarnings(ui.impWarn, []);
+		show(ui.impFrame, false);
+		show(ui.impSizes, false);
+		show(ui.impEdit, false);
+		ui.impApply.disabled = true;
+		impTargetChanged();
+		show(ui.impPanel, true);
+		ui.impText.focus();
+	}
+
+	function impTarget() {
+		return ui.impNew.checked ? 'new' : (ui.impPage.checked ? 'page' : 'section');
+	}
+
+	function impBody() {
+		return { target: impTarget(), index: S.imp ? S.imp.sec : 0, reply: ui.impText.value, title: ui.impTitle.value.trim() };
+	}
+
+	function impTargetChanged() {
+		show(ui.impTitleRow, impTarget() === 'new');
+		ui.impApply.textContent = impTarget() === 'new' ? 'Make the draft page' : 'Apply';
+		if (S.imp && S.imp.previewed !== JSON.stringify(impBody())) {
+			ui.impApply.disabled = true;
+		}
+	}
+
+	function importPreview() {
+		if (!S.imp || S.saving) {
+			return;
+		}
+		if (!ui.impText.value.trim()) {
+			ui.impMsg.textContent = 'Paste the reply first.';
+			return;
+		}
+		if (impTarget() === 'section' && S.imp.sec < 0) {
+			ui.impMsg.textContent = 'Click inside the section to replace first, or choose The whole page or A new draft page.';
+			return;
+		}
+		var body = impBody();
+		body.mode = 'preview';
+		S.saving = true;
+		ui.impMsg.textContent = 'Reading the reply, checking it and building the preview...';
+		ED.api('POST', '/pages/' + cfg.pageId + '/import', body).then(function (data) {
+			S.saving = false;
+			S.imp.previewed = JSON.stringify(impBody());
+			S.imp.token = data.token;
+			S.imp.url = data.preview_url;
+			S.imp.html = data.html || '';
+			S.imp.css = data.css || '';
+			var f = data.found || {};
+			var found = 'Found the HTML (' + Math.round((f.html_bytes || 0) / 102.4) / 10 + ' KB)' + (f.css_bytes ? ' and the CSS (' + Math.round(f.css_bytes / 102.4) / 10 + ' KB)' : ', no CSS') + '. ';
+			ui.impMsg.textContent = found + (data.same ? 'Nothing changed: this is the same as the page has now.' : (impTarget() === 'new' ? 'Preview ready, shown in this page\'s place; nothing saved yet. ' : 'Preview ready (nothing saved yet). ') + 'The site stylesheet would be ' + Math.round(data.css_bytes / 102.4) / 10 + ' KB of its ' + Math.round(data.css_budget / 1024) + ' KB budget.');
+			ED.clear(ui.impWhat);
+			if (f.note) {
+				ui.impWhat.appendChild(el('strong', { text: 'What changed: ' }));
+				ui.impWhat.appendChild(el('span', { text: f.note }));
+			}
+			show(ui.impWhat, !!f.note);
+			drawWarnings(ui.impWarn, data.warnings);
+			ui.impFrame.setAttribute('src', data.preview_url);
+			show(ui.impFrame, true);
+			show(ui.impSizes, true);
+			show(ui.impEdit, true);
+			ui.impApply.disabled = !!data.same && impTarget() !== 'new';
+		}, function (err) {
+			S.saving = false;
+			ui.impMsg.textContent = 'Not accepted. Nothing was changed.';
+			drawWarnings(ui.impWarn, errorLines(err));
+			ui.impApply.disabled = true;
+		});
+	}
+
+	function importApply() {
+		if (!S.imp || S.saving || S.imp.previewed !== JSON.stringify(impBody())) {
+			ui.impMsg.textContent = 'Preview it first (something changed since the last preview).';
+			ui.impApply.disabled = true;
+			return;
+		}
+		if (impTarget() === 'new' && !ui.impTitle.value.trim()) {
+			ui.impMsg.textContent = 'Give the new page a title first.';
+			ui.impTitle.focus();
+			return;
+		}
+		if (notNow()) {
+			return;
+		}
+		var body = impBody();
+		body.mode = 'apply';
+		body.base_version = cfg.currentVersion;
+		S.saving = true;
+		ui.impMsg.textContent = impTarget() === 'new' ? 'Making the draft page...' : 'Saving the stylesheet and the page...';
+		ED.api('POST', '/pages/' + cfg.pageId + '/import', body).then(function (data) {
+			if (impTarget() === 'new') {
+				S.saving = false;
+				ui.impMsg.textContent = 'Made the draft page "' + data.title + '" (version ' + data.version + ', stylesheet version ' + data.css_v + '). It is a draft: nobody sees it until you publish it from the Pages tab. Opening it in the editor...';
+				drawWarnings(ui.impWarn, data.warnings);
+				if (data.edit_url) {
+					window.setTimeout(function () {
+						window.location.assign(data.edit_url);
+					}, 1200);
+				}
+				return;
+			}
+			ui.impMsg.textContent = 'Saved as version ' + data.version + ' (stylesheet version ' + data.css_v + '). Undo takes both back. Reloading so you see it.';
+			reloadEditing(data.at);
+		}, function (err) {
+			S.saving = false;
+			ui.impMsg.textContent = err.status === 409 ? 'The page changed since you opened it. Reload the page and try again.' : 'Not saved. Nothing was changed.';
+			drawWarnings(ui.impWarn, errorLines(err));
+		});
+	}
+
+	// The reply's parts into the Replace panel, to fix by hand.
+	function importEdit() {
+		if (!S.imp || !S.imp.html) {
+			return;
+		}
+		var sec = S.imp.sec >= 0 ? document.querySelector('[data-twd-sk-sec="' + S.imp.sec + '"]') : null;
+		if (sec) {
+			S.last = sec;
+		}
+		var page = impTarget() !== 'section';
+		openReplace({ html: S.imp.html, css: S.imp.css });
+		if (page) {
+			ui.repPage.checked = true;
+		}
+	}
+
+	function buildImport() {
+		ui.importBtn = toolButton('Import a page', 'Paste a whole reply from an AI: the HTML, the CSS and its note are read out and checked, then a preview', function () {
+			openImport('');
+		});
+		ui.impHead = el('p', { className: 'twd-sk-ed__inlinehead', tabindex: '-1' });
+		ui.impSection = el('input', { type: 'radio', name: 'twd-sk-imp-target', id: 'twd-sk-imp-section', value: 'section', checked: '' });
+		ui.impPage = el('input', { type: 'radio', name: 'twd-sk-imp-target', id: 'twd-sk-imp-page', value: 'page' });
+		ui.impNew = el('input', { type: 'radio', name: 'twd-sk-imp-target', id: 'twd-sk-imp-new', value: 'new' });
+		[ui.impSection, ui.impPage, ui.impNew].forEach(function (r) {
+			r.addEventListener('change', impTargetChanged);
+		});
+		ui.impTitle = el('input', { type: 'text', id: 'twd-sk-imp-title', className: 'twd-sk-ed__input', maxlength: '120', placeholder: 'The new page\'s title', autocomplete: 'off' });
+		ui.impTitle.addEventListener('input', impTargetChanged);
+		ui.impTitleRow = el('div', { className: 'twd-sk-ed__inlinerow', hidden: '' }, [el('label', { 'for': 'twd-sk-imp-title', text: 'Title of the new draft page' }), ui.impTitle]);
+		ui.impText = el('textarea', { id: 'twd-sk-imp-text', className: 'twd-sk-ed__textarea', spellcheck: 'false', placeholder: '```html\n<section class="c-...">...</section>\n```\n```css\n.c-... { ... }\n```\nWhat changed: ...' });
+		ui.impText.addEventListener('input', function () {
+			if (S.imp && S.imp.previewed !== JSON.stringify(impBody())) {
+				ui.impApply.disabled = true;
+			}
+		});
+		ui.impMsg = el('p', { className: 'twd-sk-ed__inlinehead', role: 'status', 'aria-live': 'polite' });
+		ui.impWhat = el('p', { className: 'twd-sk-ed__whatchanged', hidden: '' });
+		ui.impWarn = el('ul', { className: 'twd-sk-ed__warnings', hidden: '' });
+		ui.impFrame = el('iframe', { className: 'twd-sk-ed__miniframe', title: 'Preview of the page with the imported HTML. Nothing is saved yet.', tabindex: '-1', hidden: '' });
+		ui.impSizes = sizedButtons(function () {
+			return S.imp ? S.imp.url : '';
+		});
+		show(ui.impSizes, false);
+		ui.impPreview = ED.button('Preview', 'secondary', importPreview);
+		ui.impApply = ED.button('Apply', 'primary', importApply);
+		ui.impApply.disabled = true;
+		ui.impEdit = ED.button('Edit the HTML first', 'secondary', importEdit);
+		show(ui.impEdit, false);
+		ui.impPanel = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' }, [
+			ui.impHead,
+			el('label', { 'for': 'twd-sk-imp-text', text: 'Paste a whole reply' }),
+			ui.impText,
+			el('div', { className: 'twd-sk-ed__radios', role: 'radiogroup', 'aria-label': 'Where it goes' }, [
+				el('label', { 'for': 'twd-sk-imp-section' }, [ui.impSection, el('span', { text: 'Replace this section' })]),
+				el('label', { 'for': 'twd-sk-imp-page' }, [ui.impPage, el('span', { text: 'Replace this page' })]),
+				el('label', { 'for': 'twd-sk-imp-new' }, [ui.impNew, el('span', { text: 'Make a new draft page from this' })])
+			]),
+			ui.impTitleRow,
+			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.impPreview, ui.impApply, ui.impEdit, ED.button('Close', 'secondary', closePanels)]),
+			ui.impMsg, ui.impWhat, ui.impWarn, ui.impFrame, ui.impSizes
+		]);
 	}
 
 	/* ---- Export (session 7, 29 Oct 2026, section 21c): a standalone file or a remix brief ----
@@ -1453,7 +1654,7 @@
 			if (cfg.ai) {
 				sectionRow.push(ui.describe);
 			}
-			sectionRow.push(ui.replace, ui.advanced);
+			sectionRow.push(ui.replace, ui.importBtn, ui.advanced);
 		}
 		var sectionGroups = CUSTOM
 			? [
@@ -1473,7 +1674,7 @@
 				ui.styleRow || el('span', { hidden: '' }),
 				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--view twd-sk-ed__inlinetools--more', role: 'group', 'aria-label': 'See the page at a size' }, [ui.viewSelect]),
 				ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel,
-				ui.repPanel || el('span', { hidden: '' }), ui.adPanel || el('span', { hidden: '' }), ui.exPanel || el('span', { hidden: '' }),
+				ui.repPanel || el('span', { hidden: '' }), ui.adPanel || el('span', { hidden: '' }), ui.impPanel || el('span', { hidden: '' }), ui.exPanel || el('span', { hidden: '' }),
 				ui.confirm,
 				el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.undo, ui.save, ui.cancel])
 			])
@@ -1585,6 +1786,9 @@
 		if (ui.adPanel) {
 			show(ui.adPanel, false);
 		}
+		if (ui.impPanel) {
+			show(ui.impPanel, false);
+		}
 		if (ui.exPanel) {
 			show(ui.exPanel, false);
 		}
@@ -1592,7 +1796,7 @@
 	}
 
 	function panelOpen() {
-		return !ui.linkPanel.hasAttribute('hidden') || !ui.altPanel.hasAttribute('hidden') || !ui.picPanel.hasAttribute('hidden') || !ui.lookPanel.hasAttribute('hidden') || !ui.addPanel.hasAttribute('hidden') || !!(ui.histPanel && !ui.histPanel.hasAttribute('hidden')) || !!(ui.repPanel && !ui.repPanel.hasAttribute('hidden')) || !!(ui.adPanel && !ui.adPanel.hasAttribute('hidden')) || !!(ui.exPanel && !ui.exPanel.hasAttribute('hidden')) || !!(ui.detPanel && !ui.detPanel.hasAttribute('hidden')) || !!(ui.fwPanel && !ui.fwPanel.hasAttribute('hidden'));
+		return !ui.linkPanel.hasAttribute('hidden') || !ui.altPanel.hasAttribute('hidden') || !ui.picPanel.hasAttribute('hidden') || !ui.lookPanel.hasAttribute('hidden') || !ui.addPanel.hasAttribute('hidden') || !!(ui.histPanel && !ui.histPanel.hasAttribute('hidden')) || !!(ui.repPanel && !ui.repPanel.hasAttribute('hidden')) || !!(ui.adPanel && !ui.adPanel.hasAttribute('hidden')) || !!(ui.impPanel && !ui.impPanel.hasAttribute('hidden')) || !!(ui.exPanel && !ui.exPanel.hasAttribute('hidden')) || !!(ui.detPanel && !ui.detPanel.hasAttribute('hidden')) || !!(ui.fwPanel && !ui.fwPanel.hasAttribute('hidden'));
 	}
 
 	function openLink() {
@@ -3463,6 +3667,13 @@
 		ED.focusSection(index);
 		openLook();
 	};
+	// Section 23f: a page or a reply pasted into the AI box moves here, to Import a page (administrators, the one window).
+	ED.openImport = CUSTOM ? function (text) {
+		if (!S.on) {
+			start();
+		}
+		openImport(typeof text === 'string' ? text : '');
+	} : null;
 	// The one window closing ends the session (the window asked about unsaved changes first, or there were none).
 	ED.stopInline = function () {
 		if (S.on) {

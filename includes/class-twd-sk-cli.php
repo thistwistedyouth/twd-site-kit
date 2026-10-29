@@ -27,6 +27,7 @@
  *   wp twd-sk css [--source] [--unused]  the site's own stylesheet: size against its budget, versions, the rules no page uses (0.15.0)
  *   wp twd-sk css-revert <version>       bring back an earlier stylesheet version (0 is none); pages are not touched
  *   wp twd-sk export <page_id> [--section=<n>] [--format=html|brief] [--out=<file>]  a standalone file (html) or a remix brief (brief) for the page or one section; printed, or written to --out (session 7)
+ *   wp twd-sk import <file> --page=<id> [--section=<n>] | --new=<title> [--dry-run]  an AI's whole reply (html block, css block, What changed) into a section, a page, or a new draft page (section 23a)
  *   wp twd-sk style status|snapshot|apply|revert|swap   restyle a built site: keep the current look, apply a pack or a kit file (dry run first), go back, change a section's layout (0.14.0)
  *   wp twd-sk build [<brief-file>] [--mode=<mode>] [--set=<slug>] [--pack=<slug>] [--pictures=<file>] [--outlines-only] [--dry-run]
  *                                        set the whole site up from a brief, every page a draft
@@ -1027,6 +1028,99 @@ class TWD_SK_CLI {
 			return;
 		}
 		WP_CLI::line( $out['content'] );
+	}
+
+	/**
+	 * Import a page from an AI's reply saved to a file (section 23a): the html block, the css block and the
+	 * What changed note are read out of it, checked like Replace, and either replace a section or the whole
+	 * of a page, or make a new DRAFT page. Nothing is published. With --dry-run only the checks and warnings
+	 * are printed.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <file>
+	 * : The reply as copied, saved to a file (or - for stdin).
+	 *
+	 * [--page=<id>]
+	 * : The page to change. With --section it replaces that section (1-based), otherwise the whole page.
+	 *
+	 * [--section=<n>]
+	 * : The section of --page to replace, counted from 1.
+	 *
+	 * [--new=<title>]
+	 * : Make a new draft page with this title instead.
+	 *
+	 * [--dry-run]
+	 * : Check and report; change nothing.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk import reply.md --page=21 --section=3
+	 *     wp twd-sk import reply.md --new="Questions, second look" --user=1
+	 */
+	public function import( $args, $assoc_args ) {
+		$file = isset( $args[0] ) ? (string) $args[0] : '';
+		if ( '' === $file ) {
+			WP_CLI::error( 'Give the file that holds the reply (or - for stdin).' );
+			return;
+		}
+		$text = '-' === $file ? file_get_contents( 'php://stdin' ) : ( is_readable( $file ) ? file_get_contents( $file ) : false );
+		if ( false === $text ) {
+			WP_CLI::error( 'Could not read ' . $file . '.' );
+			return;
+		}
+		$read = TWD_SK_Replace::read_paste( $text );
+		if ( is_wp_error( $read ) ) {
+			WP_CLI::error( $read->get_error_message() );
+			return;
+		}
+		WP_CLI::log( 'Found HTML (' . strlen( $read['html'] ) . ' bytes) and CSS (' . strlen( $read['css'] ) . ' bytes)' . ( '' !== $read['note'] ? '. What changed: ' . $read['note'] : '.' ) );
+		$title = isset( $assoc_args['new'] ) ? (string) $assoc_args['new'] : '';
+		$dry   = ! empty( $assoc_args['dry-run'] );
+		$in    = array( 'html' => $read['html'], 'css' => $read['css'] );
+		if ( '' !== $title ) {
+			$in['target'] = 'page';
+			if ( $dry ) {
+				$out = TWD_SK_Replace::prepare( 0, $in );
+				self::import_report( $out, 'Dry run: a new page "' . $title . '" would be made as a draft.' );
+				return;
+			}
+			$out = TWD_SK_Replace::import_new( $title, $in );
+			self::import_report( $out, is_array( $out ) ? 'Made the draft page "' . $title . '" (ID ' . $out['page_id'] . ') as version ' . $out['version'] . ', stylesheet version ' . $out['css_v'] . '. It is a draft; publish it when it is ready.' : '' );
+			return;
+		}
+		if ( empty( $assoc_args['page'] ) ) {
+			WP_CLI::error( 'Say where it goes: --page=ID (with --section=N for one section) or --new="Title".' );
+			return;
+		}
+		$page_id = self::page_id( $assoc_args['page'] );
+		$section = isset( $assoc_args['section'] ) ? (int) $assoc_args['section'] : 0;
+		$in['target'] = $section > 0 ? 'section' : 'page';
+		$in['index']  = $section > 0 ? $section - 1 : 0;
+		if ( $dry ) {
+			$out = TWD_SK_Replace::prepare( $page_id, $in );
+			self::import_report( $out, 'Dry run: ' . ( $section > 0 ? 'section ' . $section : 'the whole page' ) . ' of page ' . $page_id . ' would be replaced.' );
+			return;
+		}
+		$out = TWD_SK_Replace::apply( $page_id, $in, TWD_SK_Store::get_current_version_id( $page_id ) );
+		self::import_report( $out, is_array( $out ) ? 'Replaced ' . ( $section > 0 ? 'section ' . $section : 'the whole page' ) . ' of page ' . $page_id . ': version ' . $out['version'] . ', stylesheet version ' . $out['css_v'] . '. Undo takes both back (wp twd-sk undo ' . $page_id . ').' : '' );
+	}
+
+	private static function import_report( $out, $done ) {
+		if ( is_wp_error( $out ) ) {
+			$data = $out->get_error_data();
+			if ( is_array( $data ) && ! empty( $data['errors'] ) ) {
+				foreach ( $data['errors'] as $e ) {
+					WP_CLI::log( '  - ' . $e );
+				}
+			}
+			WP_CLI::error( $out->get_error_message() );
+			return;
+		}
+		foreach ( (array) $out['warnings'] as $w ) {
+			WP_CLI::warning( $w );
+		}
+		WP_CLI::success( $done );
 	}
 
 	/**

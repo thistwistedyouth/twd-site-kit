@@ -79,7 +79,7 @@ twd_sk_test( 'export: the remix brief holds the HTML, the stylesheet source, the
 	$out = TWD_SK_Export::brief( 12 );
 	twd_sk_true( is_array( $out ), is_wp_error( $out ) ? $out->get_error_message() : '' );
 	$md = $out['content'];
-	foreach ( array( '# Remix brief:', '## What a reply must contain', '## Rules', '## The HTML as it is now', '## The site stylesheet', '## Site tokens', '## Kit classes', '## Pictures', '## A blank copy', '```html', '```css', '"What changed:"', 'data-twd-edit', 'data-twd-pic', 'c-something', '| color-body | ' . TWD_SK_Packs::active_tokens()['color-body'] . ' |', ".c-try {\n\tcolor: var(--twd-site-color-body);\n}", 'twd-sk-inner, twd-sk-inner--narrow', 'https://example.test/wp-content/uploads/2026/10/van-at-dawn.jpg (A white van at dawn)', 'Replace this section' ) as $needle ) {
+	foreach ( array( '# Remix brief:', '## What a reply must contain', '## Rules', '## The HTML as it is now', '## The site stylesheet', '## Site tokens', '## Kit classes', '## Pictures', '## A blank copy', '```html', '```css', '"What changed:"', 'data-twd-edit', 'data-twd-pic', 'starts with the prefix c-', '| color-body | ' . TWD_SK_Packs::active_tokens()['color-body'] . ' |', ".c-try {\n\tcolor: var(--twd-site-color-body);\n}", 'twd-sk-inner, twd-sk-inner--narrow', 'https://example.test/wp-content/uploads/2026/10/van-at-dawn.jpg (A white van at dawn)', 'Replace this section' ) as $needle ) {
 		twd_sk_has( $needle, $md );
 	}
 	twd_sk_has( '.md', $out['name'] );

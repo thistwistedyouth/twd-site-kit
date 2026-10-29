@@ -174,7 +174,15 @@ class TWD_SK_Launch {
 		}
 
 		// Search engines, https, search details.
-		$items[] = '0' === (string) get_option( 'blog_public', '1' ) ? self::item( 'visible', 'fail', 'Search engines are asked not to index this site', 'Untick "Discourage search engines from indexing this site" in Settings, Reading when you launch.' ) : self::item( 'visible', 'ok', 'Search engines may index the site' );
+		$hidden  = '0' === (string) get_option( 'blog_public', '1' );
+		$items[] = $hidden ? self::item( 'visible', 'fail', 'Search engines are asked not to index this site', 'Untick "Discourage search engines from indexing this site" in Settings, Reading when you launch.' ) : self::item( 'visible', 'ok', 'Search engines may index the site' );
+		// Section 23d: WordPress's own sitemap is off while search engines are discouraged, so its absence is not a fault.
+		$items[] = $hidden ? self::item( 'sitemap', 'warn', 'The sitemap appears once search engines are allowed', 'WordPress lists every published page at /wp-sitemap.xml, and names it in robots.txt, as soon as "Discourage search engines" is unticked in Settings, Reading. Nothing to build.' ) : self::item( 'sitemap', 'ok', 'WordPress lists the pages in its sitemap at /wp-sitemap.xml' );
+		// Section 23b: an absolute address to a staging site in a page would carry over to the live site.
+		$staging = class_exists( 'TWD_SK_Replace' ) ? TWD_SK_Replace::staging_addresses( $all ) : array();
+		if ( $staging ) {
+			$items[] = self::item( 'staging', 'warn', count( $staging ) . ' staging address' . ( 1 === count( $staging ) ? ' is' : 'es are' ) . ' written into the pages', 'Change each to the page\'s own path (/about/) or the live address before launch: ' . implode( ', ', array_slice( $staging, 0, 5 ) ) . ( count( $staging ) > 5 ? ' and more' : '' ) . '.' );
+		}
 		$home    = function_exists( 'home_url' ) ? (string) home_url( '/' ) : '';
 		$items[] = 0 === strpos( $home, 'https://' ) ? self::item( 'https', 'ok', 'The site uses https' ) : self::item( 'https', 'warn', 'The site address does not start with https', 'Ask the host to turn on SSL, then change the site address in Settings, General.' );
 		$items[] = TWD_SK_Schema::nodes() ? self::item( 'schema', 'ok', 'Search engines get the ' . TWD_SK_Mode::w( 'practice' ) . ' details' ) : self::item( 'schema', 'warn', 'Search engines get no ' . TWD_SK_Mode::w( 'practice' ) . ' details', 'Fill in the site name in Site details.' );

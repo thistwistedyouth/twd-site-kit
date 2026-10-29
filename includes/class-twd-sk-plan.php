@@ -76,12 +76,24 @@ class TWD_SK_Plan {
 		return implode( "\n", $out ) . "\n";
 	}
 
+	/** Where a pasted page or a reply from another AI goes (section 23f): not this box. */
+	const WHERE_TO_PASTE = 'To paste a whole page or a reply from another AI, use Your Edits, a pencil, then Import a page or Replace this section.';
+
+	/** Section 23f: does this text look like HTML (it starts with a tag, or holds a <section) rather than a request? */
+	public static function looks_like_html( $text ) {
+		$text = is_string( $text ) ? ltrim( $text ) : '';
+		return '' !== $text && ( 1 === preg_match( '/^(?:```[a-z]*\s*)?<[a-zA-Z!]/', $text ) || false !== stripos( $text, '<section' ) );
+	}
+
 	private static function clean_request( $request ) {
 		if ( ! is_string( $request ) || '' === trim( $request ) ) {
 			return new WP_Error( 'twd_sk_bad_input', 'Say what you want changed first.' );
 		}
+		if ( self::looks_like_html( $request ) ) {
+			return new WP_Error( 'twd_sk_bad_input', 'That looks like a page or HTML, not a request. ' . self::WHERE_TO_PASTE );
+		}
 		if ( strlen( $request ) > self::MAX_REQUEST ) {
-			return new WP_Error( 'twd_sk_bad_input', 'That is too long. Keep it under ' . self::MAX_REQUEST . ' characters, or split it into two goes.' );
+			return new WP_Error( 'twd_sk_bad_input', 'That is too long. Keep it under ' . self::MAX_REQUEST . ' characters, or split it into two goes. ' . self::WHERE_TO_PASTE );
 		}
 		return TWD_SK_Facts::clean( $request );
 	}

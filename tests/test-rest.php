@@ -29,9 +29,9 @@ function twd_sk_status( $e ) {
 	return is_array( $d ) && isset( $d['status'] ) ? $d['status'] : 0;
 }
 
-twd_sk_test( 'rest: the seventy-one routes exist under twd-site-kit/v1 and none is open to everyone', function () {
+twd_sk_test( 'rest: the seventy-two routes exist under twd-site-kit/v1 and none is open to everyone', function () {
 	$routes = twd_sk_rest_routes();
-	twd_sk_eq( 71, count( $routes ) );
+	twd_sk_eq( 72, count( $routes ) );
 	foreach ( $routes as $r ) {
 		twd_sk_eq( 'twd-site-kit/v1', $r['ns'] );
 		twd_sk_true( is_array( $r['args']['permission_callback'] ) && 'TWD_SK_REST' === $r['args']['permission_callback'][0], 'a real permission callback on ' . $r['route'] );
@@ -85,7 +85,7 @@ twd_sk_test( 'rest security: an editor is allowed on the page they can edit, ref
 		}
 		$cb = $r['args']['permission_callback'];
 		// Replace this section, Describe a change (0.15.0, section 20) and Export (session 7) are for administrators: an editor gets 403 everywhere.
-		if ( preg_match( '#/(replace|adapt|export)$#', $r['route'] ) ) {
+		if ( preg_match( '#/(replace|adapt|export|import)$#', $r['route'] ) ) {
 			twd_sk_is_error( 'twd_sk_forbidden', call_user_func( $cb, twd_sk_rest_req( array( 'id' => 12 ) ) ), 'an editor is refused on ' . $r['route'] );
 			continue;
 		}

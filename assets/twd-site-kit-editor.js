@@ -289,6 +289,9 @@
 		winBtn.addEventListener('click', function () {
 			toggleWindowMenu(winBtn);
 		});
+		// Section 23f: Full height fills the screen from top to bottom at the window's width; a second press puts it back.
+		var fullBtn = el('button', { type: 'button', className: 'twd-sk-ed__close twd-sk-ed__winbtn twd-sk-ed__fullbtn', text: 'Full height', 'aria-pressed': 'false', title: 'Fill the screen from top to bottom at this width; press again to go back' });
+		fullBtn.addEventListener('click', toggleFull);
 
 		var tabs = el('div', { className: 'twd-sk-ed__tabs', role: 'tablist', 'aria-label': 'Editor sections' });
 		tabs.addEventListener('keydown', onTabKeys);
@@ -345,20 +348,28 @@
 				switchView('client');
 			});
 		}
-		var header = el('div', { className: 'twd-sk-ed__header' }, [title, el('div', { className: 'twd-sk-ed__winbtns' }, [viewBtn, winBtn, minBtn, closeBtn])]);
+		var header = el('div', { className: 'twd-sk-ed__header' }, [title, el('div', { className: 'twd-sk-ed__winbtns' }, [viewBtn, winBtn, fullBtn, minBtn, closeBtn])]);
 		var resize = el('div', { className: 'twd-sk-ed__resize', 'aria-hidden': 'true', title: 'Drag to resize' });
+		// Section 23f: the bottom edge resizes the height on its own (the corner does both).
+		var resizeB = el('div', { className: 'twd-sk-ed__resize-b', 'aria-hidden': 'true', title: 'Drag to change the height' });
+		resizeB.addEventListener('pointerdown', function (e) {
+			startResize(e, 'height');
+		});
 		var dialog = el('div', {
 			className: 'twd-sk-ed__dialog' + (oneWindow ? ' twd-sk-ed__dialog--compact' : ''), role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'twd-sk-ed-title'
 		}, [
 			header,
 			tabs,
 			body,
+			resizeB,
 			resize
 		]);
 		dialog.addEventListener('keydown', trapFocus);
 		ui.header = header;
 		ui.resize = resize;
+		ui.resizeB = resizeB;
 		ui.winBtn = winBtn;
+		ui.fullBtn = fullBtn;
 
 		ui.overlay = el('div', { id: 'twd-sk-ed-overlay', className: 'twd-sk-ed__overlay', hidden: '' }, [dialog]);
 		ui.overlay.addEventListener('mousedown', function (e) {
@@ -439,7 +450,7 @@
 	 * pointer events. Where it sits is kept per person on the server (cfg.window, POST /editor/window), never in the
 	 * browser. Minimise hides the window and shows one large pencil button; nothing inside is thrown away, so the
 	 * typed text, a preview, the open fold-outs and unsaved changes are all still there when it comes back. */
-	var win = { mode: 'centre', x: 0, y: 0, w: 0, h: 0, mx: -1, my: -1, esc: 'close', minimised: false, menu: null, saveTimer: 0, placed: false, sized: false };
+	var win = { mode: 'centre', x: 0, y: 0, w: 0, h: 0, mx: -1, my: -1, esc: 'close', full: false, prev: null, minimised: false, menu: null, saveTimer: 0, placed: false, sized: false };
 
 	function phoneWidth() {
 		return window.innerWidth <= 700;
@@ -447,11 +458,12 @@
 
 	function setUpWindow() {
 		var saved = cfg.window || {};
-		['mode', 'x', 'y', 'w', 'h', 'mx', 'my', 'esc'].forEach(function (k) {
+		['mode', 'x', 'y', 'w', 'h', 'mx', 'my', 'esc', 'full'].forEach(function (k) {
 			if (saved[k] !== undefined) {
 				win[k] = saved[k];
 			}
 		});
+		win.full = win.full === true;
 		if (win.mode !== 'left' && win.mode !== 'right' && win.mode !== 'free') {
 			win.mode = 'centre';
 		}
@@ -464,8 +476,14 @@
 			win.placed = false;
 			win.sized = false;
 		}
+		// Full height (section 23f) is remembered, and only means something for a free window.
+		if (win.full && win.mode !== 'free') {
+			win.full = false;
+		}
 		ui.header.addEventListener('pointerdown', startDrag);
-		ui.resize.addEventListener('pointerdown', startResize);
+		ui.resize.addEventListener('pointerdown', function (e) {
+			startResize(e, 'both');
+		});
 		window.addEventListener('resize', function () {
 			applyWindow();
 		});
@@ -491,6 +509,10 @@
 		d.style.top = '';
 		d.style.width = '';
 		d.style.height = '';
+		var full = mode === 'free' && win.full;
+		// Section 23f: a tall window (full height, or a height the person dragged) lifts the compact window's 70 percent cap.
+		d.classList.toggle('twd-sk-ed__dialog--tall', !!(oneWindow && (full || (win.sized && win.h > 0))));
+		d.classList.toggle('twd-sk-ed__dialog--full', full);
 		if (mode === 'free') {
 			var maxW = Math.max(320, window.innerWidth - 16);
 			var maxH = Math.max(240, window.innerHeight - 16);
@@ -500,10 +522,15 @@
 			var top = bar ? bar.offsetHeight + 16 : 16;
 			var x = clamp(oneWindow && !win.placed ? window.innerWidth - w - 24 : win.x, 0, Math.max(0, window.innerWidth - w));
 			var y = clamp(oneWindow && !win.placed ? top : win.y, 0, Math.max(0, window.innerHeight - (oneWindow ? 120 : h)));
+			if (full) {
+				// From the bottom of the admin bar to the bottom of the screen; the contents scroll inside.
+				y = bar ? bar.offsetHeight : 0;
+				h = Math.max(240, window.innerHeight - y);
+			}
 			d.style.left = x + 'px';
 			d.style.top = y + 'px';
 			d.style.width = w + 'px';
-			if (!oneWindow) {
+			if (!oneWindow || full || (win.sized && win.h > 0)) {
 				d.style.height = h + 'px';
 			}
 		} else if (mode === 'left' || mode === 'right') {
@@ -512,18 +539,57 @@
 		if (ui.winBtn) {
 			ui.winBtn.textContent = mode === 'centre' ? 'Window' : (mode === 'free' ? 'Window: floating' : 'Window: ' + mode);
 		}
+		if (ui.fullBtn) {
+			ui.fullBtn.textContent = full ? 'Normal height' : 'Full height';
+			ui.fullBtn.setAttribute('aria-pressed', full ? 'true' : 'false');
+			ui.fullBtn.disabled = mode === 'left' || mode === 'right';
+		}
 		placeMini();
+	}
+
+	// Section 23f: fill the screen from top to bottom at the chosen width; a second press returns to the size before.
+	function toggleFull() {
+		if (phoneWidth()) {
+			return;
+		}
+		closeWindowMenu();
+		if (!win.full) {
+			var r = ui.dialog.getBoundingClientRect();
+			win.prev = { mode: win.mode, x: win.x, y: win.y, w: win.w, h: win.h, sized: win.sized, placed: win.placed };
+			if (win.mode !== 'free') {
+				win.mode = 'free';
+				win.w = Math.round(r.width);
+				win.x = Math.round(r.left);
+				win.placed = true;
+			}
+			win.full = true;
+		} else {
+			win.full = false;
+			if (win.prev) {
+				['mode', 'x', 'y', 'w', 'h', 'sized', 'placed'].forEach(function (k) {
+					win[k] = win.prev[k];
+				});
+				win.prev = null;
+			}
+		}
+		applyWindow();
+		saveWindow();
+		ui.title.focus();
 	}
 
 	function saveWindow() {
 		window.clearTimeout(win.saveTimer);
 		win.saveTimer = window.setTimeout(function () {
-			api('POST', '/editor/window', { state: { mode: win.mode, x: win.x, y: win.y, w: win.w, h: win.h, mx: win.mx, my: win.my, esc: win.esc } }).catch(function () {});
+			api('POST', '/editor/window', { state: { mode: win.mode, x: win.x, y: win.y, w: win.w, h: win.h, mx: win.mx, my: win.my, esc: win.esc, full: win.full } }).catch(function () {});
 		}, 400);
 	}
 
 	function dockWindow(mode) {
 		win.mode = mode;
+		if (mode !== 'free') {
+			win.full = false;
+			win.prev = null;
+		}
 		applyWindow();
 		saveWindow();
 		closeWindowMenu();
@@ -546,7 +612,10 @@
 		e.preventDefault();
 		function move(ev) {
 			win.x = Math.round(ev.clientX - dx);
-			win.y = Math.round(ev.clientY - dy);
+			if (!win.full) {
+				// A full-height window moves sideways only; it keeps the top and bottom of the screen.
+				win.y = Math.round(ev.clientY - dy);
+			}
 			win.placed = true;
 			applyWindow();
 		}
@@ -559,9 +628,13 @@
 		document.addEventListener('pointerup', up);
 	}
 
-	// Resize from the bottom corner (free) or the inner edge (docked: width only).
-	function startResize(e) {
+	// Resize from the bottom corner (free: both), the bottom edge (free: height only, section 23f) or the inner edge
+	// (docked: width only). Dragging the height of a full-height window ends full height.
+	function startResize(e, axis) {
 		if (e.button !== 0 || phoneWidth() || win.mode === 'centre') {
+			return;
+		}
+		if (win.mode !== 'free' && axis === 'height') {
 			return;
 		}
 		var r = ui.dialog.getBoundingClientRect();
@@ -570,13 +643,21 @@
 		var w0 = r.width;
 		var h0 = r.height;
 		e.preventDefault();
+		if (win.full) {
+			win.full = false;
+			win.prev = null;
+			win.y = Math.round(r.top);
+			win.placed = true;
+		}
 		function move(ev) {
 			if (win.mode === 'left') {
 				win.w = Math.round(w0 + (ev.clientX - startX));
 			} else if (win.mode === 'right') {
 				win.w = Math.round(w0 - (ev.clientX - startX));
 			} else {
-				win.w = Math.round(w0 + (ev.clientX - startX));
+				if (axis !== 'height') {
+					win.w = Math.round(w0 + (ev.clientX - startX));
+				}
 				win.h = Math.round(h0 + (ev.clientY - startY));
 			}
 			win.sized = true;
@@ -1236,11 +1317,32 @@
 		});
 	}
 
+	// Section 23f: a page or a reply from another AI pasted into this box belongs in Import a page.
+	function looksLikeHtml(text) {
+		var t = text.replace(/^\s+/, '');
+		return /^(```[a-z]*\s*)?<[a-zA-Z!]/.test(t) || /<section/i.test(t);
+	}
+
 	function doPlan() {
 		var request = ui.request.value.trim();
 		if (!request) {
 			message(ui.planMsg, 'Say what you want changed first.', false);
 			ui.request.focus();
+			return;
+		}
+		if (looksLikeHtml(request)) {
+			var ED = window.TWD_SK_ED;
+			message(ui.planMsg, 'That looks like a page or HTML, not a request. To paste a whole page or a reply from another AI, use Import a page (On page edits, a pencil) or Replace this section.', false);
+			if (ED && typeof ED.openImport === 'function') {
+				var moveBtn = button('Move it to Import a page', 'secondary', function () {
+					var text = ui.request.value;
+					ui.request.value = '';
+					show(ui.planMsg, false);
+					selectTab('page');
+					ED.openImport(text);
+				});
+				ui.planMsg.appendChild(el('div', { className: 'twd-sk-ed__actions' }, [moveBtn]));
+			}
 			return;
 		}
 		ui.planBtn.disabled = true;

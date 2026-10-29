@@ -118,7 +118,7 @@ twd_sk_test( 'window (0.15.0): where the Edit with AI window sits is kept per pe
 	twd_sk_eq( $d, TWD_SK_Editor::window_state(), 'the default is the centred window as before' );
 	// Checked: unknown keys dropped, bad words fall back, numbers bounded and whole.
 	$c = TWD_SK_Editor::clean_window( array( 'mode' => 'left', 'x' => '12.7', 'y' => -40, 'w' => 99999, 'h' => 600, 'mx' => 30, 'my' => 'abc', 'esc' => 'minimise', 'evil' => '<script>' ) );
-	twd_sk_eq( array( 'mode' => 'left', 'x' => 12, 'y' => 0, 'w' => 20000, 'h' => 600, 'mx' => 30, 'my' => -1, 'esc' => 'minimise' ), $c );
+	twd_sk_eq( array( 'mode' => 'left', 'x' => 12, 'y' => 0, 'w' => 20000, 'h' => 600, 'mx' => 30, 'my' => -1, 'esc' => 'minimise', 'full' => false ), $c );
 	twd_sk_eq( 'centre', TWD_SK_Editor::clean_window( array( 'mode' => 'popout' ) )['mode'] );
 	twd_sk_eq( 'close', TWD_SK_Editor::clean_window( array( 'esc' => 'reload' ) )['esc'] );
 	twd_sk_eq( $d, TWD_SK_Editor::clean_window( 'nonsense' ) );

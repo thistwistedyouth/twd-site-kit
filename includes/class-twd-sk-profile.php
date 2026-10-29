@@ -32,6 +32,7 @@ class TWD_SK_Profile {
 			'logo_id'      => 0,
 			'logo_mark_id' => 0,   // 0.14.0: a small symbol-only mark for the header on pages other than the front page
 			'logo_line'    => '',  // 0.14.0: the small second line under the name in the text wordmark header (a descriptor)
+			'social_image_id' => 0, // section 23d: the picture shared with a page that has none of its own (0: the logo)
 			'menu'         => array(),
 			'cta_label'    => '',
 			'cta_url'      => '',
@@ -275,8 +276,9 @@ class TWD_SK_Profile {
 				return false === $u ? 'The button link is not allowed. Use a page on this site, #anchor, https, mailto or tel.' : array( $u );
 			case 'logo_id':
 			case 'logo_mark_id':
+			case 'social_image_id':
 			case 'about_page_id':
-				$is_logo = 'logo_id' === $key || 'logo_mark_id' === $key;
+				$is_logo = 'logo_id' === $key || 'logo_mark_id' === $key || 'social_image_id' === $key;
 				if ( ! is_int( $value ) && ! ( is_string( $value ) && ctype_digit( $value ) ) ) {
 					return $is_logo ? 'The logo must be the number of a picture in the media library.' : 'That must be a page number.';
 				}
@@ -472,6 +474,7 @@ class TWD_SK_Profile {
 			'logo_id'      => 0,
 			'logo_mark_id' => 0,
 			'logo_line'    => '',
+			'social_image_id' => 0,
 			'menu'         => array(
 				array( 'label' => 'Home', 'url' => '/', 'children' => array() ),
 				array( 'label' => 'About', 'url' => '/about', 'children' => array() ),

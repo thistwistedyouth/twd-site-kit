@@ -704,6 +704,7 @@
 		pui.name.value = p.site_name;
 		pui.logo.value = p.logo_id ? String(p.logo_id) : '';
 		pui.logoMark.value = p.logo_mark_id ? String(p.logo_mark_id) : '';
+		pui.social.value = p.social_image_id ? String(p.social_image_id) : '';
 		pui.logoLine.value = p.logo_line || '';
 		pui.ctaLabel.value = p.cta_label;
 		pui.ctaUrl.value = p.cta_url;
@@ -766,11 +767,16 @@
 		if (mark && !/^\d+$/.test(mark)) {
 			return { error: 'The small logo mark must be the number of a picture in the media library.' };
 		}
+		var social = pui.social.value.trim();
+		if (social && !/^\d+$/.test(social)) {
+			return { error: 'The default social picture must be the number of a picture in the media library.' };
+		}
 		return {
 			profile: {
 				site_name: pui.name.value,
 				logo_id: logo ? parseInt(logo, 10) : 0,
 				logo_mark_id: mark ? parseInt(mark, 10) : 0,
+				social_image_id: social ? parseInt(social, 10) : 0,
 				logo_line: pui.logoLine.value,
 				menu: menu.list,
 				cta_label: pui.ctaLabel.value,
@@ -821,6 +827,13 @@
 				pui.logoMark.value = String(id);
 			});
 		});
+		// Section 23d: the picture shared with a page that has no social picture of its own (empty: the logo).
+		pui.social = textInput('twd-sk-pf-social', 12);
+		pui.socialBtn = button('Choose from the media library', 'secondary', function () {
+			pickMedia(function (id) {
+				pui.social.value = String(id);
+			});
+		});
 		pui.ctaLabel = textInput('twd-sk-pf-ctalabel', 30);
 		pui.logoLine = textInput('twd-sk-pf-logoline', 40);
 		pui.ctaUrl = textInput('twd-sk-pf-ctaurl', 300);
@@ -849,6 +862,8 @@
 		logoRow.setAttribute('id', 'twd-sk-pf-logo-row');
 		var markRow = el('div', { className: 'twd-sk-ed__inline' }, [pui.logoMark, pui.logoMarkBtn]);
 		markRow.setAttribute('id', 'twd-sk-pf-logomark-row');
+		var socialRow = el('div', { className: 'twd-sk-ed__inline' }, [pui.social, pui.socialBtn]);
+		socialRow.setAttribute('id', 'twd-sk-pf-social-row');
 		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
 			el('h3', { className: 'twd-sk-ed__step-title', text: 'Site details' }),
 			el('p', { className: 'twd-sk-ed__help', text: 'These feed the header, the footer and the search engine details. Only add what the ' + W('person', 'therapist') + ' has given you. Leave a box empty rather than guess.' }),
@@ -857,6 +872,7 @@
 				field('Site name', pui.name, 'Shown as text if there is no logo.'),
 				field('Logo picture number', logoRow, 'Optional. A picture from the media library.'),
 				field('Small logo mark picture number', markRow, 'Optional, a symbol-only version. Used beside the site name on every page but the front page when "Bigger logo on the front page" is on below.'),
+				field('Default social picture number', socialRow, 'Optional. Shown when a page is shared on social media and has no social picture of its own in the Search tab. Empty means the logo is used.'),
 				field('Second line under the name', pui.logoLine, 'Optional, a few words such as the kind of work. Shown under the name in the large front page header when "Text wordmark" is ticked in Header and footer. To show it in the smaller header too (other pages, and the front page once scrolled), also tick "Show the second line under the name in the smaller header too" there.'),
 				field('Header button text', pui.ctaLabel),
 				field('Header button link', pui.ctaUrl, 'A page on this site, such as /contact.'),

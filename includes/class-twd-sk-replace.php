@@ -182,13 +182,42 @@ class TWD_SK_Replace {
 			}
 		}
 		foreach ( TWD_SK_Quality::check( $clean ) as $q ) {
+			// The missing h1 is already said above, in the words that fit a custom page.
+			if ( 0 === $h1s && false !== strpos( $q['label'], 'no main heading' ) ) {
+				continue;
+			}
 			$warnings[] = $q['label'];
 		}
 		foreach ( $check['warnings'] as $w ) {
 			$warnings[] = $w;
 		}
-		// Rules no page would use once this is applied.
+		$new_html = implode( "\n", $new_clean );
+		// Section 23b: the safer remix loop. Each is one plain line; none blocks.
 		$pages = TWD_SK_Css::pages_html();
+		foreach ( self::collision_warnings( $css, (int) $page_id, $pages ) as $w ) {
+			$warnings[] = $w;
+		}
+		foreach ( self::link_warnings( $clean ) as $w ) {
+			$warnings[] = $w;
+		}
+		$staging = self::staging_addresses( $new_html );
+		if ( $staging ) {
+			$warnings[] = 'The HTML holds ' . ( 1 === count( $staging ) ? 'a staging address' : count( $staging ) . ' staging addresses' ) . ' (' . implode( ', ', array_slice( $staging, 0, 3 ) ) . ( count( $staging ) > 3 ? ' and more' : '' ) . '). Change them to the page\'s own path (/about/) or the live address before the site launches; the launch check lists them too.';
+		}
+		if ( $has_custom ) {
+			$controls = self::unlabelled_controls( $new_html );
+			if ( $controls ) {
+				$warnings[] = count( $controls ) . ( 1 === count( $controls ) ? ' link or button has' : ' links or buttons have' ) . ' no label (data-twd-edit), so the client cannot change ' . ( 1 === count( $controls ) ? 'its' : 'their' ) . ' words: ' . implode( ', ', array_map( function ( $t ) {
+					return '"' . $t . '"';
+				}, array_slice( $controls, 0, 4 ) ) ) . ( count( $controls ) > 4 ? ' and more' : '' ) . '.';
+			}
+		}
+		if ( 'section' === $target && isset( $old ) ) {
+			foreach ( self::behaviour_warnings( $old, $new_html ) as $w ) {
+				$warnings[] = $w;
+			}
+		}
+		// Rules no page would use once this is applied.
 		$pages[ (int) $page_id ] = $clean;
 		$unused = TWD_SK_Css::unused_rules( $pages, $check['source'] );
 		if ( $unused ) {
@@ -208,9 +237,330 @@ class TWD_SK_Replace {
 		);
 	}
 
+	// -- Section 23b: the safer remix loop ---------------------------------------------------
+
+	/**
+	 * A rule in the added CSS that would change a c- class another page already uses: one plain line per class,
+	 * with a prefix to use instead (the page's own address), so a remix of one page never restyles another.
+	 */
+	public static function collision_warnings( $css, $page_id, $pages_html ) {
+		$out = array();
+		if ( ! is_string( $css ) || '' === trim( $css ) ) {
+			return $out;
+		}
+		$hit = TWD_SK_Css::collisions( $css );
+		if ( ! $hit ) {
+			return $out;
+		}
+		$others = $pages_html;
+		unset( $others[ (int) $page_id ] );
+		$where  = TWD_SK_Css::class_pages( array_keys( $hit ), $others );
+		$prefix = self::prefix_for( $page_id );
+		foreach ( $hit as $class => $selectors ) {
+			if ( empty( $where[ $class ] ) ) {
+				continue;
+			}
+			$titles = array();
+			foreach ( array_slice( $where[ $class ], 0, 3 ) as $pid ) {
+				$titles[] = '"' . trim( (string) get_the_title( $pid ) ) . '"';
+			}
+			$out[] = '.' . $class . ' already styles ' . implode( ', ', $titles ) . ( count( $where[ $class ] ) > 3 ? ' and more' : '' ) . '; this rule would change it there too. To change only this page, give the new rule its own prefix, such as ' . $prefix . ', and use that class in the HTML.';
+		}
+		return $out;
+	}
+
+	/** The class prefix a page's own rules should use: c- plus the page's address (c-questions-), or c-new- for a new page. */
+	public static function prefix_for( $page_id ) {
+		$post = $page_id > 0 ? get_post( (int) $page_id ) : null;
+		$slug = $post && is_string( $post->post_name ) ? strtolower( preg_replace( '/[^a-z0-9]+/i', '-', $post->post_name ) ) : '';
+		$slug = trim( $slug, '-' );
+		if ( '' === $slug ) {
+			$slug = $page_id > 0 ? 'page' . (int) $page_id : 'new';
+		}
+		return 'c-' . substr( $slug, 0, 20 ) . '-';
+	}
+
+	/** In-page links (#id) in the cleaned page that reach no id on it: one plain line. */
+	public static function link_warnings( $clean ) {
+		$out  = array();
+		$ids  = array();
+		if ( preg_match_all( '/\sid="([^"]+)"/', (string) $clean, $m ) ) {
+			$ids = array_flip( $m[1] );
+		}
+		$known = array( 'content' => true, 'top' => true, 'twd-sk-helplines' => true, 'twd-sk-notice' => true );
+		$gone  = array();
+		if ( preg_match_all( '/\shref="#([^"]+)"/', (string) $clean, $m ) ) {
+			foreach ( array_unique( $m[1] ) as $target ) {
+				if ( '' !== $target && ! isset( $ids[ $target ] ) && ! isset( $known[ $target ] ) ) {
+					$gone[] = '#' . $target;
+				}
+			}
+		}
+		if ( $gone ) {
+			$out[] = ( 1 === count( $gone ) ? 'This link goes nowhere: ' : count( $gone ) . ' links go nowhere: ' ) . implode( ', ', array_slice( $gone, 0, 5 ) ) . ( count( $gone ) > 5 ? ' and more' : '' ) . '. Give the heading or group it should reach an id with that name (inside the custom section), or point the link at a page.';
+		}
+		return $out;
+	}
+
+	/** Hosts that count as a staging site: any host holding the word "staging", plus the twd_sk_staging_hosts filter's list. */
+	public static function staging_hosts() {
+		$list = function_exists( 'apply_filters' ) ? apply_filters( 'twd_sk_staging_hosts', array() ) : array();
+		return is_array( $list ) ? array_values( array_filter( array_map( 'strval', $list ) ) ) : array();
+	}
+
+	/**
+	 * Absolute addresses in some HTML that point at a staging host (full addresses, unique, shortened). A picture
+	 * from this site's own media library (its /wp-content/uploads/ address) is not listed: the Visual editor writes
+	 * pictures that way and every migration tool rewrites them; a link or a picture written to the staging host by
+	 * hand is.
+	 */
+	public static function staging_addresses( $html ) {
+		$out   = array();
+		$hosts = self::staging_hosts();
+		$own   = function_exists( 'home_url' ) ? strtolower( (string) parse_url( home_url( '/' ), PHP_URL_HOST ) ) : '';
+		if ( ! preg_match_all( '#https?://([a-z0-9.-]+)([^\s"\'<>)]*)#i', (string) $html, $m, PREG_SET_ORDER ) ) {
+			return $out;
+		}
+		foreach ( $m as $hit ) {
+			$host = strtolower( $hit[1] );
+			if ( '' !== $own && $host === $own && 0 === strpos( $hit[2], '/wp-content/' . 'uploads/' ) ) {
+				continue;
+			}
+			$is   = false !== strpos( $host, 'staging' );
+			foreach ( $hosts as $h ) {
+				$h = strtolower( trim( $h ) );
+				if ( '' !== $h && ( $host === $h || substr( $host, -strlen( '.' . $h ) ) === '.' . $h ) ) {
+					$is = true;
+				}
+			}
+			if ( $is ) {
+				$addr = $hit[0];
+				$out[ $addr ] = strlen( $addr ) > 70 ? substr( $addr, 0, 67 ) . '...' : $addr;
+			}
+		}
+		return array_values( $out );
+	}
+
+	/** Links in custom HTML whose words carry no data-twd-edit label (on themselves or an element around them). */
+	public static function unlabelled_controls( $html ) {
+		$out = array();
+		if ( ! is_string( $html ) || false === stripos( $html, '<a' ) || ! class_exists( 'DOMDocument' ) ) {
+			return $out;
+		}
+		$doc = new DOMDocument();
+		$was = libxml_use_internal_errors( true );
+		$doc->loadHTML( '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><div data-twd-sk-root>' . $html . '</div></body></html>' );
+		libxml_clear_errors();
+		libxml_use_internal_errors( $was );
+		foreach ( $doc->getElementsByTagName( 'a' ) as $a ) {
+			$text = trim( preg_replace( '/\s+/', ' ', $a->textContent ) );
+			if ( '' === $text ) {
+				continue;
+			}
+			$labelled = false;
+			$custom   = false;
+			for ( $node = $a; $node instanceof DOMElement; $node = $node->parentNode ) {
+				if ( $node->hasAttribute( self::LABEL_ATTR ) ) {
+					$labelled = true;
+				}
+				if ( 'section' === strtolower( $node->nodeName ) && in_array( TWD_SK_Css::CUSTOM_CLASS, preg_split( '/\s+/', trim( $node->getAttribute( 'class' ) ) ), true ) ) {
+					$custom = true;
+				}
+			}
+			if ( $custom && ! $labelled ) {
+				$out[] = strlen( $text ) > 30 ? substr( $text, 0, 27 ) . '...' : $text;
+			}
+		}
+		return $out;
+	}
+
+	/** How many things a visitor can open or follow in some HTML: details, in-page links, other links, group tabs. */
+	public static function interactive( $html ) {
+		$html = (string) $html;
+		return array(
+			'details' => preg_match_all( '/<details\b/i', $html ),
+			'inpage'  => preg_match_all( '/<a\b[^>]*\shref="#[^"]+"/i', $html ),
+			'links'   => preg_match_all( '/<a\b[^>]*\shref="(?!#)[^"]*"/i', $html ),
+			'tabs'    => preg_match_all( '/twd-sk-faq__tablink/', $html ),
+		);
+	}
+
+	/** Section 23b.6: fewer interactive pieces than the section replaced, or group tabs that only jump now. Never blocks. */
+	public static function behaviour_warnings( $old, $new ) {
+		$out = array();
+		$a   = self::interactive( $old );
+		$b   = self::interactive( $new );
+		if ( $a['tabs'] > 0 && 0 === $b['tabs'] && $b['inpage'] > 0 ) {
+			$out[] = 'The kit\'s question group tabs switched which group shows; in the new HTML the in-page links only jump to a group. Keep the kit\'s tabs (class twd-sk-faq__tablink) if the switching matters.';
+		}
+		$fewer = array();
+		if ( $b['details'] < $a['details'] ) {
+			$fewer[] = $a['details'] . ' opening items (details) became ' . $b['details'];
+		}
+		if ( $b['inpage'] + $b['links'] < $a['inpage'] + $a['links'] ) {
+			$fewer[] = ( $a['inpage'] + $a['links'] ) . ' links became ' . ( $b['inpage'] + $b['links'] );
+		}
+		if ( $fewer ) {
+			$out[] = 'The new section has fewer things a visitor can open or follow than the one it replaces (' . implode( '; ', $fewer ) . '). Check nothing stopped working.';
+		}
+		return $out;
+	}
+
+	// -- Section 23a: a whole reply, pasted -------------------------------------------------
+
+	/**
+	 * Read an AI's reply as it was copied: an html fenced block and a css fenced block (with or without the fences
+	 * and their labels), a "What changed" note, or one JSON object as Describe a change returns. Nothing is saved.
+	 *
+	 * @return array|WP_Error { html, css, note, how }
+	 */
+	public static function read_paste( $text ) {
+		$text = is_string( $text ) ? trim( str_replace( array( "\r\n", "\r" ), "\n", $text ) ) : '';
+		if ( '' === $text ) {
+			return new WP_Error( 'twd_sk_bad_input', 'Paste the whole reply first.' );
+		}
+		if ( strlen( $text ) > TWD_SK_Store::MAX_BYTES + TWD_SK_Css::MAX_SOURCE ) {
+			return new WP_Error( 'twd_sk_too_large', 'That is larger than a page can be: the HTML may be up to ' . ( TWD_SK_Store::MAX_BYTES / 1024 ) . ' KB and the CSS up to ' . ( TWD_SK_Css::MAX_SOURCE / 1024 ) . ' KB of source.' );
+		}
+		$html = '';
+		$css  = '';
+		$note = '';
+		$how  = '';
+		// One JSON object (the Describe a change shape).
+		$first = ltrim( TWD_SK_AI::strip_fence( $text ) );
+		if ( '' !== $first && '{' === $first[0] ) {
+			$data = self::read_reply( $text );
+			if ( $data ) {
+				return array( 'html' => $data['html'], 'css' => $data['css'], 'note' => $data['what_changed'], 'how' => 'json' );
+			}
+		}
+		// Fenced blocks, labelled or not.
+		if ( preg_match_all( '/```[ \t]*([a-zA-Z]*)[^\n]*\n(.*?)\n[ \t]*```/s', $text, $blocks, PREG_SET_ORDER ) ) {
+			foreach ( $blocks as $b ) {
+				$label = strtolower( $b[1] );
+				$body  = trim( $b[2] );
+				if ( '' === $body ) {
+					continue;
+				}
+				$kind = in_array( $label, array( 'html', 'css' ), true ) ? $label : self::block_kind( $body );
+				if ( 'html' === $kind && '' === $html ) {
+					$html = $body;
+				} elseif ( 'css' === $kind && '' === $css ) {
+					$css = 'none' === strtolower( $body ) ? '' : $body;
+				} elseif ( 'html' === $kind ) {
+					$html .= "\n" . $body;
+				} elseif ( 'css' === $kind ) {
+					$css .= "\n" . $body;
+				}
+			}
+			$how  = 'fenced';
+			$rest = preg_replace( '/```[^\n]*\n.*?\n[ \t]*```/s', "\n", $text );
+		} else {
+			// No fences: the HTML runs from the first tag to the last closing tag; CSS is what follows with rules in it.
+			$rest = $text;
+			if ( preg_match( '/<(section|div|article|h1|h2|p)\b/i', $text, $m, PREG_OFFSET_CAPTURE ) ) {
+				$start = $m[0][1];
+				$end   = strrpos( $text, '>' );
+				if ( false !== $end && $end > $start ) {
+					$html = trim( substr( $text, $start, $end - $start + 1 ) );
+					$tail = substr( $text, $end + 1 );
+					// CSS between the HTML and a What changed line (or the end).
+					if ( preg_match( '/^(.*?)(?=\n[ \t]*what changed\b|\z)/is', $tail, $t ) && false !== strpos( $t[1], '{' ) && false !== strpos( $t[1], '}' ) ) {
+						$css = trim( $t[1] );
+					}
+					$rest = substr( $text, 0, $start ) . "\n" . ( '' !== $css ? str_replace( $css, '', $tail ) : $tail );
+					$how  = 'bare';
+				}
+			}
+		}
+		if ( '' === $html ) {
+			return new WP_Error( 'twd_sk_bad_input', 'Could not tell which part of the reply is the HTML. Paste the reply as it came: one html block, one css block (or "none") and a line starting "What changed:". Nothing was changed.' );
+		}
+		if ( false !== strpos( $html, '{' ) && false !== strpos( $html, '}' ) && '' === $css && preg_match( '/\n\s*\.c-[a-z0-9_-]+[^{\n]*\{/', $html ) ) {
+			// Both parts landed in one block: cut the CSS off the end of the HTML at the first rule after the last tag.
+			$end = strrpos( $html, '>' );
+			if ( false !== $end ) {
+				$css  = trim( substr( $html, $end + 1 ) );
+				$html = trim( substr( $html, 0, $end + 1 ) );
+			}
+		}
+		if ( preg_match( '/what changed\s*:?\s*(.+)/is', (string) $rest, $n ) ) {
+			$note = TWD_SK_Profile::text( trim( preg_replace( '/\s+/', ' ', $n[1] ) ), 600 );
+		}
+		return array( 'html' => $html, 'css' => trim( $css ), 'note' => $note, 'how' => $how );
+	}
+
+	/** Is an unlabelled fenced block HTML or CSS? ('' when neither.) */
+	private static function block_kind( $body ) {
+		$b = ltrim( $body );
+		if ( '' !== $b && '<' === $b[0] ) {
+			return 'html';
+		}
+		if ( 'none' === strtolower( trim( $b ) ) ) {
+			return 'css';
+		}
+		if ( false === strpos( $b, '<' ) && false !== strpos( $b, '{' ) && false !== strpos( $b, '}' ) && false !== strpos( $b, ':' ) ) {
+			return 'css';
+		}
+		return '';
+	}
+
+	/**
+	 * Section 23a: a new DRAFT page from a pasted reply: the candidate checked against an empty page, the page made
+	 * with the kit template, the stylesheet saved first and the page as its version 1. Never published.
+	 *
+	 * @return array|WP_Error { page_id, title, version, css_v, warnings, edit_url }
+	 */
+	public static function import_new( $title, $in, $user_id = 0 ) {
+		$title = is_string( $title ) ? trim( $title ) : '';
+		if ( '' === $title ) {
+			return new WP_Error( 'twd_sk_bad_input', 'Give the new page a title first.' );
+		}
+		$in['target'] = 'page';
+		$out = self::prepare( 0, $in );
+		if ( is_wp_error( $out ) ) {
+			return $out;
+		}
+		$page_id = TWD_SK_Template::create_page( $title, 'blank' );
+		if ( is_wp_error( $page_id ) ) {
+			return $page_id;
+		}
+		$label   = 'New page "' . TWD_SK_Sanitizer::strip_dashes( $title ) . '" from a pasted reply';
+		$was_v   = TWD_SK_Css::version();
+		$css_out = TWD_SK_Css::save( $out['css'], $label . ' (page ' . (int) $page_id . ')', (int) $page_id );
+		if ( is_wp_error( $css_out ) ) {
+			if ( function_exists( 'wp_delete_post' ) ) {
+				wp_delete_post( (int) $page_id, true );
+			}
+			return $css_out;
+		}
+		$saved = TWD_SK_Store::save( (int) $page_id, $out['html'], array( 'note' => $label ) );
+		if ( is_wp_error( $saved ) ) {
+			if ( ! $css_out['unchanged'] ) {
+				TWD_SK_Css::revert_to( $was_v, 'the new page could not be saved', (int) $page_id );
+			}
+			if ( function_exists( 'wp_delete_post' ) ) {
+				wp_delete_post( (int) $page_id, true );
+			}
+			return $saved;
+		}
+		$link = function_exists( 'get_permalink' ) ? (string) get_permalink( (int) $page_id ) : '';
+		return array(
+			'page_id'   => (int) $page_id,
+			'title'     => $title,
+			'version'   => isset( $saved['version'] ) ? (int) $saved['version'] : 1,
+			'css_v'     => (int) $css_out['v'],
+			'css_bytes' => (int) $css_out['bytes'],
+			'warnings'  => $out['warnings'],
+			'labels'    => $out['labels'],
+			'edit_url'  => '' !== $link ? $link . ( false === strpos( $link, '?' ) ? '?' : '&' ) . 'twd_sk_edit=1&twd_sk_at=0' : '',
+		);
+	}
+
 	/** A preview of the candidate, with the candidate stylesheet, for the normal preview frame. */
 	public static function preview( $page_id, $in, $user_id ) {
-		$out = self::prepare( $page_id, $in );
+		// A new page (section 23a) is checked against an empty page but shown in this page's place.
+		$out = self::prepare( ! empty( $in['new'] ) ? 0 : $page_id, $in );
 		if ( is_wp_error( $out ) ) {
 			return $out;
 		}

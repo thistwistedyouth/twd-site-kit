@@ -62,7 +62,8 @@ class TWD_SK_Editor {
 	 * checked set, so the browser never reads a bad value; the default is the centred window as before.
 	 */
 	public static function window_defaults() {
-		return array( 'mode' => 'centre', 'x' => 0, 'y' => 0, 'w' => 0, 'h' => 0, 'mx' => -1, 'my' => -1, 'esc' => 'close' );
+		// 'full' (section 23f): the window fills the screen from top to bottom at its width.
+		return array( 'mode' => 'centre', 'x' => 0, 'y' => 0, 'w' => 0, 'h' => 0, 'mx' => -1, 'my' => -1, 'esc' => 'close', 'full' => false );
 	}
 
 	/** A checked window state: unknown keys dropped, numbers bounded, words from the list; anything else is the default. */
@@ -86,6 +87,9 @@ class TWD_SK_Editor {
 		}
 		if ( isset( $state['esc'] ) && in_array( $state['esc'], array( 'close', 'minimise' ), true ) ) {
 			$out['esc'] = $state['esc'];
+		}
+		if ( isset( $state['full'] ) ) {
+			$out['full'] = true === $state['full'] || 1 === $state['full'] || '1' === $state['full'] || 'true' === $state['full'];
 		}
 		return $out;
 	}
@@ -239,6 +243,9 @@ class TWD_SK_Editor {
 			'isKitPage'      => (bool) $context['is_kit_page'],
 			'canPublish'     => (bool) $context['can_publish'],
 			'currentVersion' => $context['page_id'] ? TWD_SK_Store::get_current_version_id( $context['page_id'] ) : 0,
+			// Section 23f: the limits the Import and Replace panels say plainly (bytes).
+			'pageMax'        => TWD_SK_Store::MAX_BYTES,
+			'cssMax'         => TWD_SK_Css::BUDGET,
 			'maxBytes'       => TWD_SK_Store::MAX_BYTES,
 			'maxTitle'       => TWD_SK_Template::MAX_TITLE,
 			'starters'       => TWD_SK_Template::starters(),

@@ -303,17 +303,20 @@ class TWD_SK_Export {
 		$lines  = array();
 		$lines[] = '# Remix brief: ' . ( '' !== $src['title'] ? $src['title'] : 'page ' . $src['page_id'] ) . ', ' . $src['what'];
 		$lines[] = '';
-		$lines[] = 'Exported from ' . ( '' !== $name ? $name : 'the site' ) . ' by TWD Site Kit on ' . gmdate( 'Y-m-d' ) . '. Give this file to an AI with what you would like changed, or keep it as a saved look. The reply goes back into the site through Replace this section (paste the HTML and the CSS, Preview, Apply), where the same checks run as for anything else.';
+		$prefix  = TWD_SK_Replace::prefix_for( $src['page_id'] );
+		$lines[] = 'Exported from ' . ( '' !== $name ? $name : 'the site' ) . ' by TWD Site Kit on ' . gmdate( 'Y-m-d' ) . '. Give this file to an AI with what you would like changed, or keep it as a saved look. The whole reply goes back into the site through Import a page (paste it as it came, Preview, Apply) or Replace this section, where the same checks run as for anything else.';
 		$lines[] = '';
 		$lines[] = '## What a reply must contain';
 		$lines[] = '';
-		$lines[] = '1. The replacement HTML in one fenced block marked `html`: ' . ( $section > 0 ? 'one `<section>` element holding everything.' : 'a list of top-level `<section>` elements, the first holding the page\'s one `<h1>`.' );
-		$lines[] = '2. The CSS to add or change in one fenced block marked `css`, or the word none. A rule you repeat replaces the one in the site stylesheet.';
-		$lines[] = '3. A line starting "What changed:" with two or three plain sentences a non-technical person understands.';
+		$lines[] = 'Exactly three things, in this order, and nothing else around them:';
+		$lines[] = '';
+		$lines[] = '1. The replacement HTML in ONE fenced block marked `html`: ' . ( $section > 0 ? 'one `<section>` element holding everything.' : 'a list of top-level `<section>` elements, the first holding the page\'s one `<h1>`.' );
+		$lines[] = '2. The CSS to add or change in ONE fenced block marked `css`, or the word none inside it. A rule you repeat replaces the one in the site stylesheet.';
+		$lines[] = '3. One short note on a line starting "What changed:" with two or three plain sentences a non-technical person understands.';
 		$lines[] = '';
 		$lines[] = '## Rules';
 		$lines[] = '';
-		foreach ( self::rules() as $rule ) {
+		foreach ( self::rules( $prefix ) as $rule ) {
 			$lines[] = '- ' . $rule;
 		}
 		$lines[] = '';
@@ -331,13 +334,18 @@ class TWD_SK_Export {
 		$lines[] = '';
 		$lines[] = '## Site tokens (write them as var(--twd-site-NAME), never the value)';
 		$lines[] = '';
-		$lines[] = 'The style is "' . TWD_SK_Packs::active_slug() . '". Headings use var(--twd-site-font-heading), body text var(--twd-site-font-body).';
-		$lines[] = '';
-		$lines[] = '| Token | Value now |';
-		$lines[] = '| --- | --- |';
-		foreach ( TWD_SK_Packs::token_names() as $tname ) {
-			if ( isset( $tokens[ $tname ] ) && is_string( $tokens[ $tname ] ) ) {
-				$lines[] = '| ' . $tname . ' | ' . str_replace( '|', '\\|', $tokens[ $tname ] ) . ' |';
+		$lines[] = 'The style is "' . TWD_SK_Packs::active_slug() . '". Headings use var(--twd-site-font-heading), body text var(--twd-site-font-body). Only these names exist: a name not in these tables is refused when the reply is imported.';
+		foreach ( self::token_groups( $tokens ) as $group => $rows ) {
+			if ( ! $rows ) {
+				continue;
+			}
+			$lines[] = '';
+			$lines[] = '### ' . $group;
+			$lines[] = '';
+			$lines[] = '| Token | Value now |';
+			$lines[] = '| --- | --- |';
+			foreach ( $rows as $tname => $value ) {
+				$lines[] = '| ' . $tname . ' | ' . str_replace( '|', '\\|', $value ) . ' |';
 			}
 		}
 		$lines[] = '';
@@ -372,17 +380,72 @@ class TWD_SK_Export {
 		);
 	}
 
-	/** The rules a reply must follow: the same ones Describe a change gives the AI, as plain sentences. */
-	public static function rules() {
+	/**
+	 * The rules a reply must follow: the ones Describe a change gives the AI, as plain sentences, plus the section 23c
+	 * rules (behaviour kept, no staging addresses, every control labelled, reduced motion, the Safari marker, a prefix).
+	 */
+	public static function rules( $prefix = 'c-page-' ) {
 		return array(
 			'Change only what is asked for. Keep every other word, link and picture address exactly as it is. Never invent a fact, name, price, qualification or claim; where a fact is missing write [PLACEHOLDER: what is needed] as plain text.',
-			'Classes: first reuse the classes the site stylesheet already defines and the kit classes listed below. A new class is named c-something (lower case letters, digits and hyphens). Never style a class that starts with twd-sk-.',
-			'Every selector names a c- class. Every colour is var(--twd-site-color-NAME) and every font var(--twd-site-font-heading) or var(--twd-site-font-body); font sizes are a site size token or rem. Never a typed colour (hex, rgb, a colour name), a px font size, !important, @import, @font-face, url() to anything but the site\'s media library, position fixed or sticky, an id selector, or anything but plain rules and @media (min-width/max-width) blocks.',
-			'Label what the client may edit later: data-twd-edit="Plain label" on every heading, paragraph, list item and caption, and data-twd-pic="Plain label" on every picture. A labelled element holds only words and simple inline markup (strong, em, a, br).',
-			'One h1 per page, never more; heading levels in order, none skipped.',
+			'Keep the behaviour the same unless asked: tabs that switch what shows, accordions (details and summary), links and their addresses. Do not turn a working control into a plain jump.',
+			'Classes: first reuse the classes the site stylesheet already defines and the kit classes listed below. A new class starts with the prefix ' . $prefix . ' (lower case letters, digits and hyphens, for example ' . $prefix . 'card), so it can never change another page. Never style a class that starts with twd-sk-.',
+			'Every selector names a c- class. Attribute selectors are fine in the plain shapes [open], [href^="#"] and [data-x="y"]. Every colour is var(--twd-site-color-NAME) and every font var(--twd-site-font-heading) or var(--twd-site-font-body); font sizes are a site size token or rem. Only the token names listed below exist. Never a typed colour (hex, rgb, a colour name), a px font size, !important, @import, @font-face, @keyframes, url() to anything but the site\'s media library, position fixed or sticky, an id selector, or anything but plain rules and @media (min-width, max-width, prefers-reduced-motion, hover) blocks.',
+			'Addresses: write links to this site as paths (/about/), never as a full address, and never a staging address. Pictures keep the addresses they have.',
+			'Label what the client may edit later: data-twd-edit="Plain label" on every heading, paragraph, list item, caption and on every button or link whose words they might change, and data-twd-pic="Plain label" on every picture. A labelled element holds only words and simple inline markup (strong, em, a, br).',
+			'Any movement (a transition or hover effect) gets a @media (prefers-reduced-motion: reduce) rule that switches it off.',
+			'An accordion built from details and summary hides the browser\'s default marker for Safari too: summary { list-style: none; } and summary::-webkit-details-marker { display: none; }.',
+			'One h1 per page, never more; heading levels in order, none skipped. In-page links (href="#name") need an element with that id inside the section.',
 			'No scripts, iframes, forms, style attributes, inline event handlers or data attributes other than the two labels. Every picture has alt text. Plain hyphens, never long dashes.',
 			'The result must look finished: nothing left over from the old layout.',
 		);
+	}
+
+	/**
+	 * Section 23c: the tokens in plain groups, each name => value: colours, type, type sizes, spacing, corners and
+	 * edges, band and frame heights, logo and menu, pictures and shadows, then the phone variants (the -sm names).
+	 */
+	public static function token_groups( $tokens ) {
+		$groups = array(
+			'Colours'                         => array(),
+			'Type (fonts, weights, line heights)' => array(),
+			'Type sizes'                      => array(),
+			'Spacing'                         => array(),
+			'Corners and edges'               => array(),
+			'Band, frame and picture heights' => array(),
+			'Logo and menu'                   => array(),
+			'Pictures and shadows'            => array(),
+			'Other'                           => array(),
+			'Phone variants (used under 768px; the same names with -sm)' => array(),
+		);
+		foreach ( TWD_SK_Packs::token_names() as $name ) {
+			if ( ! isset( $tokens[ $name ] ) || ! is_string( $tokens[ $name ] ) ) {
+				continue;
+			}
+			$value = $tokens[ $name ];
+			if ( preg_match( '/-sm$/', $name ) ) {
+				$group = 'Phone variants (used under 768px; the same names with -sm)';
+			} elseif ( 0 === strpos( $name, 'color-' ) ) {
+				$group = 'Colours';
+			} elseif ( preg_match( '/^(font-|heading-style|title-style|heading-align|line-|.*-weight$|menu-font|menu-transform)/', $name ) ) {
+				$group = 'Type (fonts, weights, line heights)';
+			} elseif ( preg_match( '/^(size-|btn-size|eyebrow-size|menu-size)/', $name ) ) {
+				$group = 'Type sizes';
+			} elseif ( preg_match( '/^(gap-|gutter|section-y|para-gap|card-pad|btn-pad|btn-spacing|eyebrow-spacing|container|strip-padding|frame-padding|menu-gap|menu-spacing)/', $name ) ) {
+				$group = 'Spacing';
+			} elseif ( preg_match( '/^(radius-|card-accent-width)/', $name ) ) {
+				$group = 'Corners and edges';
+			} elseif ( preg_match( '/^(band-height|hero-min-height)/', $name ) ) {
+				$group = 'Band, frame and picture heights';
+			} elseif ( preg_match( '/^(logo-|footer-logo-|wordmark-|menu-)/', $name ) ) {
+				$group = 'Logo and menu';
+			} elseif ( preg_match( '/^(image-|shadow-)/', $name ) ) {
+				$group = 'Pictures and shadows';
+			} else {
+				$group = 'Other';
+			}
+			$groups[ $group ][ $name ] = $value;
+		}
+		return $groups;
 	}
 
 	/**

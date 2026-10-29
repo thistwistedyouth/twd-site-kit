@@ -63,7 +63,8 @@ twd_sk_test( 'site css: typed colours, px font sizes, typed fonts, !important, @
 		'.c-a { margin-top: -20px; }'                              => 'Negative margins are not allowed',
 		'.c-a { behavior: url(x.htc); }'                           => 'behavior is not allowed',
 		'.c-a { zoom: 2; }'                                        => 'The property "zoom" is not allowed',
-		'.c-a[data-x] { color: var(--twd-site-color-body); }'      => 'uses an attribute',
+		'.c-a[*] { color: var(--twd-site-color-body); }'           => 'uses an attribute that could not be read',
+		'.c-a[data-x="y" i] { color: var(--twd-site-color-body); }' => 'uses an attribute that could not be read',
 		'@keyframes spin { to { transform: rotate(1turn); } }'     => '@keyframes is not allowed',
 		'@media print { .c-a { display: none; } }'                 => 'The media query "@media print" is not allowed',
 		'.c-a { .c-b { color: var(--twd-site-color-body); } }'     => 'holds another rule inside it',
@@ -243,7 +244,9 @@ twd_sk_test( 'replace prepare: one section swapped for custom HTML with its CSS,
 	twd_sk_eq( 0, TWD_SK_Css::version(), 'nothing saved' );
 	twd_sk_eq( array( 'text' => 3, 'pics' => 1 ), $out['labels'] );
 	twd_sk_eq( false, $out['same'] );
-	twd_sk_eq( array(), $out['warnings'], implode( ' | ', $out['warnings'] ) );
+	// The hero skeleton's sample button points at #twd-sk-services and no section on this page has that id (section 23b).
+	twd_sk_eq( 1, count( $out['warnings'] ), implode( ' | ', $out['warnings'] ) );
+	twd_sk_has( 'This link goes nowhere: #twd-sk-services', $out['warnings'][0] );
 	// Other sections untouched.
 	$before = TWD_SK_Sections::split( $html )['sections'];
 	$after  = TWD_SK_Sections::split( $out['html'] )['sections'];

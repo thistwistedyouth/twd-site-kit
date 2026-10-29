@@ -95,6 +95,9 @@ class TWD_SK_Sanitizer {
 			),
 			// The one h1 a page may have is used up by the first accepted hero title.
 			'h1_used' => false,
+			// Section 23b: the ids in-page links point to, and the ones kept so far (an id is kept once).
+			'anchors'  => array(),
+			'ids_kept' => array(),
 		);
 
 		// Line endings (0.15.0): a page pasted from Windows, or saved from a file, carries carriage returns; every
@@ -109,6 +112,7 @@ class TWD_SK_Sanitizer {
 		if ( '' === trim( $html ) ) {
 			return self::result( '', $ctx['removed'] );
 		}
+		$ctx['anchors'] = self::link_targets( $html );
 
 		$doc = self::load( $html );
 		if ( null === $doc ) {
@@ -533,6 +537,49 @@ class TWD_SK_Sanitizer {
 	 * have already been rebuilt from their cleaned attributes by the time their
 	 * children are processed, so their classes can be trusted here.
 	 */
+	/**
+	 * Section 23b: may this element keep an id that has no twd-sk- prefix? Only inside a custom section (or on one),
+	 * only when a link in the same HTML points to #id, only once per page, and never a name that a script reads on
+	 * window or document (DOM clobbering). The shape is a letter then letters, digits, hyphens and underscores.
+	 */
+	private static function anchor_id_ok( $value, DOMElement $el, array &$ctx ) {
+		if ( ! is_string( $value ) || ! preg_match( '/^[A-Za-z][A-Za-z0-9_-]{0,60}$/', $value ) ) {
+			return false;
+		}
+		if ( empty( $ctx['anchors'][ $value ] ) || ! empty( $ctx['ids_kept'][ $value ] ) ) {
+			return false;
+		}
+		if ( isset( self::clobber_names()[ strtolower( $value ) ] ) ) {
+			return false;
+		}
+		for ( $node = $el; $node instanceof DOMElement; $node = $node->parentNode ) {
+			if ( 'section' === strtolower( $node->nodeName ) && in_array( 'twd-sk-custom', preg_split( '/\s+/', trim( $node->getAttribute( 'class' ) ) ), true ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Names an id must never take: an element with one of these ids would shadow a window or document property. */
+	private static function clobber_names() {
+		static $names = null;
+		if ( null === $names ) {
+			$names = array_flip( explode( ' ', 'window document location name top parent self frames length closed opener status history navigator screen body head forms images links anchors embeds plugins scripts styleSheets cookie domain title url referrer all children childNodes firstChild lastChild activeElement currentScript defaultView documentElement doctype readyState alert confirm prompt open close print focus blur stop fetch event constructor prototype proto __proto__ toString valueOf hasOwnProperty eval setTimeout setInterval localStorage sessionStorage addEventListener removeEventListener getElementById querySelector querySelectorAll createElement write writeln jQuery wp twd_sk' ) );
+		}
+		return $names;
+	}
+
+	/** The ids that in-page links in some HTML point to (href="#id"), as id => true. */
+	private static function link_targets( $html ) {
+		$out = array();
+		if ( preg_match_all( '/\bhref\s*=\s*["\']#([A-Za-z][A-Za-z0-9_-]{0,60})["\']/', (string) $html, $m ) ) {
+			foreach ( $m[1] as $id ) {
+				$out[ $id ] = true;
+			}
+		}
+		return $out;
+	}
+
 	private static function is_hero_title( DOMElement $node, array $keep ) {
 		$titled = isset( $keep['class'] ) && in_array( 'twd-sk-hero__title', explode( ' ', $keep['class'] ), true );
 		for ( $parent = $node->parentNode; $parent instanceof DOMElement; $parent = $parent->parentNode ) {
@@ -596,6 +643,11 @@ class TWD_SK_Sanitizer {
 				case 'id':
 					if ( preg_match( '/^twd-sk-[a-z0-9-]{1,48}$/', $value ) ) {
 						$keep['id'] = $value;
+					} elseif ( self::anchor_id_ok( $value, $el, $ctx ) ) {
+						// Section 23b: an in-page link's target inside a custom section (a heading, a group) keeps its id,
+						// only while a link in the same HTML points to it, once, and never a name a script could clobber.
+						$keep['id']                 = $value;
+						$ctx['ids_kept'][ $value ]  = true;
 					} else {
 						$ctx['removed']['attributes'][] = 'id on <' . $tag . '>';
 					}
@@ -770,11 +822,17 @@ class TWD_SK_Sanitizer {
 
 		// [[escaped]] form first, then opening, self-closing and closing tags.
 		$pattern = '/\[\[[A-Za-z_][\w-]*[^\[\]]*\]\]|\[\/?[A-Za-z_][\w-]*(?:[\s=\/][^\[\]]*)?\]/';
+		// Section 23f: text that is CSS (it holds a rule's braces) keeps its attribute selectors: .c-item[open],
+		// details[open] .c-q, a[href^="#"]. Such a token is glued to the selector before it and holds no space.
+		$css_text = false !== strpos( $text, '{' ) && false !== strpos( $text, '}' );
 
 		return preg_replace_callback(
 			$pattern,
-			function ( $m ) use ( $allowed, &$ctx ) {
-				$token = $m[0];
+			function ( $m ) use ( $allowed, &$ctx, $css_text, $text ) {
+				$token = $m[0][0];
+				if ( $css_text && self::is_attribute_selector( $token, $text, (int) $m[0][1] ) ) {
+					return $token;
+				}
 
 				// A visible stand-in for a detail the client has not supplied, for example
 				// [PLACEHOLDER] or [PLACEHOLDER: registration number]. It is plain text, never a shortcode.
@@ -829,7 +887,26 @@ class TWD_SK_Sanitizer {
 				}
 				return $out . ']';
 			},
-			$text
+			$text,
+			-1,
+			$count,
+			PREG_OFFSET_CAPTURE
 		);
+	}
+
+	/**
+	 * Section 23f: is this bracket token an attribute selector in CSS text rather than a shortcode? It must be glued to
+	 * the selector before it (a class or element name, a ) or a ]), hold no space, and be [name] or [name="value"]
+	 * (with ~= |= ^= $= *= allowed), for example [open], [href], [data-x="y"], [aria-expanded="true"].
+	 */
+	public static function is_attribute_selector( $token, $text, $offset ) {
+		if ( ! preg_match( '/^\[[a-zA-Z][a-zA-Z0-9_-]*(?:[~|^$*]?=(?:"[^"\[\]]*"|\'[^\'\[\]]*\'|[A-Za-z0-9_-]+))?\]$/', $token ) ) {
+			return false;
+		}
+		if ( $offset <= 0 ) {
+			return false;
+		}
+		$before = substr( $text, $offset - 1, 1 );
+		return 1 === preg_match( '/[A-Za-z0-9_)\]-]/', $before );
 	}
 }

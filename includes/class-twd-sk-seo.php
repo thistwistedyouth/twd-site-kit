@@ -308,12 +308,30 @@ class TWD_SK_Seo {
 		return $robots;
 	}
 
+	/**
+	 * Section 23d: the site-wide picture shared with a page that has no social picture of its own: the one chosen in
+	 * Site details (social_image_id), else the logo. 0 when there is neither.
+	 */
+	public static function default_image_id() {
+		if ( ! class_exists( 'TWD_SK_Profile' ) ) {
+			return 0;
+		}
+		$p = TWD_SK_Profile::get();
+		if ( ! empty( $p['social_image_id'] ) ) {
+			return (int) $p['social_image_id'];
+		}
+		return ! empty( $p['logo_id'] ) ? (int) $p['logo_id'] : 0;
+	}
+
 	public static function print_head() {
 		$id = self::printing_for();
 		if ( $id <= 0 ) {
 			return;
 		}
 		$own = self::own( $id );
+		if ( ! $own['image_id'] ) {
+			$own['image_id'] = self::default_image_id();
+		}
 		if ( '' === $own['title'] && '' === $own['description'] && ! $own['image_id'] ) {
 			return;
 		}
