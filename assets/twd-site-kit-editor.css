@@ -20,11 +20,6 @@
 .twd-sk-ed [hidden] {
   display: none !important;
 }
-/* ---- the launchers (0.15.0: the Your Edits menu) ----
-   The old floating buttons (Edit with AI, Visual editor, Tell us) and the version label stay in the markup for the
-   scripts that use them, but never show: every launcher lives in the Your Edits menu (the admin bar drop-down, or
-   the one floating button below on a phone or with no admin bar). The Edit header and footer pills sit over the
-   header and footer corners, never over the page's words, and the editing tools switch still hides them. */
 .twd-sk-ed .twd-sk-ed__open.twd-sk-ed__open,
 .twd-sk-ed .twd-sk-ed__version.twd-sk-ed__version {
   display: none;
@@ -117,7 +112,6 @@
   color: var(--twd-site-color-muted) !important;
   font-size: var(--twd-site-size-small) !important;
 }
-/* With the admin bar menu, the floating button only shows on a phone, where WordPress hides most admin bar items. */
 .twd-sk-ed[data-twd-sk-ab] .twd-sk-ed__menu.twd-sk-ed__menu,
 .twd-sk-ed[data-twd-sk-ab] .twd-sk-ed__menupop.twd-sk-ed__menupop {
   display: none;
@@ -135,8 +129,6 @@
     max-width: none;
   }
 }
-/* ---- the in-place editing card (0.10.2: bottom left, where the floating buttons sit, clear of other
-   plugins' buttons on the right; full width on a phone, above them while editing) ---- */
 .twd-sk-ed .twd-sk-ed__inlinebar.twd-sk-ed__inlinebar {
   position: fixed;
   left: 24px;
@@ -234,7 +226,6 @@
   font-weight: 600 !important;
   color: var(--twd-site-color-title) !important;
 }
-/* ---- the one-box planner's checklist ---- */
 .twd-sk-ed .twd-sk-ed__plan.twd-sk-ed__plan {
   margin: 12px 0 0 !important;
   padding: 0 !important;
@@ -280,7 +271,6 @@
   font-size: var(--twd-site-size-small) !important;
   color: var(--twd-site-color-title) !important;
 }
-/* ---- edit pills (laid over the corner of the header and footer once Edit with AI has been opened) ---- */
 .twd-sk-ed .twd-sk-ed__pill.twd-sk-ed__pill {
   position: fixed;
   z-index: 99980;
@@ -307,7 +297,6 @@
   outline: 2px solid var(--twd-site-color-accent-text);
   outline-offset: 2px;
 }
-/* ---- pencil circles (0.15.0): one round pencil on the top corner of every section, for editors only ---- */
 .twd-sk-ed .twd-sk-ed__pencil.twd-sk-ed__pencil {
   position: fixed;
   z-index: 99980;
@@ -381,7 +370,6 @@
     transition: none;
   }
 }
-/* ---- the window (0.15.0): docked, floating or centred; the resize corner; the Window menu; the minimised pencil ---- */
 .twd-sk-ed .twd-sk-ed__winbtns.twd-sk-ed__winbtns {
   display: flex;
   align-items: center;
@@ -587,7 +575,6 @@
 .twd-sk-ed[data-twd-sk-tools="off"] .twd-sk-ed__mini.twd-sk-ed__mini {
   display: none;
 }
-/* With the phone contact bar on the page (0.15.0), the floating Your Edits button and the pencil sit above it. */
 @media (max-width: 782px) {
   .twd-sk-ed.twd-sk-ed--contactbar.twd-sk-ed--contactbar .twd-sk-ed__menu.twd-sk-ed__menu,
   .twd-sk-ed.twd-sk-ed--contactbar.twd-sk-ed--contactbar .twd-sk-ed__mini.twd-sk-ed__mini {
@@ -629,11 +616,9 @@
     font-size: var(--twd-site-size-small) !important;
   }
 }
-/* ---- the one editing window (0.15.0, phase 1): compact, undocked, three tabs; the Visual editor's tools hosted inside ---- */
 .twd-sk-ed .twd-sk-ed__dialog--compact.twd-sk-ed__dialog--compact {
   max-height: 70%;
 }
-/* The free and docked rules above lift the height cap; the compact window keeps it whatever the mode. */
 .twd-sk-ed .twd-sk-ed__overlay--free.twd-sk-ed__overlay--free .twd-sk-ed__dialog--compact.twd-sk-ed__dialog--compact {
   height: auto;
   max-height: 70%;
@@ -727,14 +712,12 @@
   width: auto;
   max-width: 100%;
 }
-/* Only the tools for what was clicked: words show for words, the section tools for anything in a section. */
 .twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--words.twd-sk-ed__inlinetools--words,
 .twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--section.twd-sk-ed__inlinetools--section,
 .twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="picture"] .twd-sk-ed__inlinetools--words.twd-sk-ed__inlinetools--words,
 .twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="section"] .twd-sk-ed__inlinetools--words.twd-sk-ed__inlinetools--words {
   display: none;
 }
-/* 18d: the compact row by default; More opens the rest. The More button itself shows once something was clicked. */
 .twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin:not([data-twd-sk-more="on"]) .twd-sk-ed__inlinetools--more.twd-sk-ed__inlinetools--more,
 .twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--morebtn.twd-sk-ed__inlinetools--morebtn {
   display: none;
@@ -742,7 +725,6 @@
 .twd-sk-ed .twd-sk-ed__inlinetools--morebtn.twd-sk-ed__inlinetools--morebtn {
   margin-left: auto !important;
 }
-/* 18c: the one-section view a pencil opens. */
 .twd-sk-ed .twd-sk-ed__ctxhead.twd-sk-ed__ctxhead {
   display: flex;
   flex-wrap: wrap;
@@ -783,7 +765,6 @@
     display: none;
   }
 }
-/* ---- the AI tab in the one window (0.15.0, phase 2): the section a pencil named, the "cannot do" cards, the pencils' numbers ---- */
 .twd-sk-ed .twd-sk-ed__aisec.twd-sk-ed__aisec {
   display: flex;
   align-items: center;
@@ -826,7 +807,6 @@
   line-height: 18px !important;
   text-align: center !important;
 }
-/* ---- info circles (0.15.0): a small (i) that shows a line of help on click ---- */
 .twd-sk-ed .twd-sk-ed__inforow.twd-sk-ed__inforow {
   margin: 0 0 12px !important;
 }
@@ -867,7 +847,6 @@
   background-color: var(--twd-site-color-tint) !important;
   color: var(--twd-site-color-body) !important;
 }
-/* ---- preview bar (inside the preview frame) ---- */
 .twd-sk-ed .twd-sk-ed__bar.twd-sk-ed__bar {
   position: fixed;
   top: 0;
@@ -882,7 +861,6 @@
   font-size: var(--twd-site-size-small) !important;
   line-height: 1.4 !important;
 }
-/* ---- overlay and dialog ---- */
 .twd-sk-ed .twd-sk-ed__overlay.twd-sk-ed__overlay {
   position: fixed;
   top: 0;
@@ -965,7 +943,6 @@
   padding: 20px !important;
   overflow: auto;
 }
-/* ---- steps and text ---- */
 .twd-sk-ed .twd-sk-ed__step.twd-sk-ed__step {
   margin: 0 0 24px !important;
 }
@@ -990,7 +967,6 @@
   font-weight: var(--twd-site-title-weight) !important;
   color: var(--twd-site-color-title) !important;
 }
-/* ---- fields ---- */
 .twd-sk-ed .twd-sk-ed__textarea.twd-sk-ed__textarea,
 .twd-sk-ed .twd-sk-ed__input.twd-sk-ed__input {
   display: block;
@@ -1030,7 +1006,6 @@
   outline: 2px solid var(--twd-site-color-accent-text);
   outline-offset: 2px;
 }
-/* ---- buttons ---- */
 .twd-sk-ed .twd-sk-ed__actions.twd-sk-ed__actions {
   display: flex;
   flex-wrap: wrap;
@@ -1083,7 +1058,6 @@
   outline: 2px solid var(--twd-site-color-accent-text);
   outline-offset: 2px;
 }
-/* ---- cards, rows, links and the override checkbox ---- */
 .twd-sk-ed .twd-sk-ed__card.twd-sk-ed__card {
   margin: 12px 0 0 !important;
   padding: 14px !important;
@@ -1145,7 +1119,6 @@
   height: 22px;
   margin: 2px 0 0 !important;
 }
-/* ---- fold-outs ---- */
 .twd-sk-ed .twd-sk-ed__step--fold.twd-sk-ed__step--fold {
   padding: 0 !important;
 }
@@ -1201,7 +1174,6 @@
 .twd-sk-ed .twd-sk-ed__foldbody.twd-sk-ed__foldbody {
   padding: 12px 4px 4px !important;
 }
-/* ---- ask the AI: modes, sections, chips, the external AI toggle ---- */
 .twd-sk-ed .twd-sk-ed__modes.twd-sk-ed__modes {
   margin: 0 0 8px !important;
 }
@@ -1282,7 +1254,6 @@
   border: 1px solid var(--twd-site-color-border) !important;
   border-radius: var(--twd-site-radius-card) !important;
 }
-/* ---- the Site tab ---- */
 .twd-sk-ed .twd-sk-ed__grid.twd-sk-ed__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1322,7 +1293,6 @@
 .twd-sk-ed .twd-sk-ed__packs.twd-sk-ed__packs {
   margin: 0 0 8px !important;
 }
-/* ---- messages, report and banner ---- */
 .twd-sk-ed .twd-sk-ed__msg.twd-sk-ed__msg {
   margin: 12px 0 0 !important;
   padding: 12px 14px !important;
@@ -1355,7 +1325,6 @@
 .twd-sk-ed .twd-sk-ed__banner.twd-sk-ed__banner strong {
   font-weight: var(--twd-site-title-weight) !important;
 }
-/* ---- preview frame ---- */
 .twd-sk-ed .twd-sk-ed__frame.twd-sk-ed__frame {
   display: block;
   width: 100%;
@@ -1366,7 +1335,6 @@
   border-radius: var(--twd-site-radius-field) !important;
   background-color: var(--twd-site-color-surface) !important;
 }
-/* ---- version history ---- */
 .twd-sk-ed .twd-sk-ed__versions.twd-sk-ed__versions {
   margin: 8px 0 0 !important;
   padding: 0 !important;
@@ -1395,7 +1363,6 @@
   font-weight: var(--twd-site-title-weight) !important;
   color: var(--twd-site-color-title) !important;
 }
-/* ---- phones: the pop-up fills the screen and every control is easy to tap ---- */
 @media (max-width: 700px) {
   .twd-sk-ed .twd-sk-ed__overlay.twd-sk-ed__overlay {
     padding: 0 !important;
@@ -1474,7 +1441,6 @@
     min-height: 48px;
   }
 }
-/* ---- Tell us notes (0.11.0) ---- */
 .twd-sk-ed .twd-sk-tu__list.twd-sk-tu__list {
   margin: 0 !important;
   padding: 0 !important;

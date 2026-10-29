@@ -14,7 +14,6 @@
  *    (overflow clip is used instead). Pages sit in a full-width Elementor container.
  */
 
-/* ---- base ---- */
 .twd-sk-page {
   display: block;
   width: 100%;
@@ -76,7 +75,6 @@
   outline: 2px solid var(--twd-site-color-accent);
   outline-offset: 2px;
 }
-/* ---- shared: containers and tones ---- */
 .twd-sk-page .twd-sk-inner.twd-sk-inner {
   width: 100%;
   max-width: var(--twd-site-container);
@@ -88,9 +86,6 @@
 .twd-sk-page .twd-sk-inner--narrow.twd-sk-inner--narrow {
   max-width: var(--twd-site-container-narrow);
 }
-/* Stray content: any direct child of the page that is not a section (a loose paragraph,
-   a heading outside a component) gets a readable column and side padding so it never
-   touches the viewport edge. Sections and their own containers are left alone. */
 .twd-sk-page > :not(section):not(.twd-sk-inner.twd-sk-inner):not(.twd-sk-gallery-label.twd-sk-gallery-label):not(.twd-sk-header.twd-sk-header):not(.twd-sk-footer.twd-sk-footer) {
   width: 100%;
   max-width: var(--twd-site-container);
@@ -112,7 +107,6 @@
   background-color: var(--twd-site-color-band) !important;
   color: var(--twd-site-color-on-band) !important;
 }
-/* section spacing */
 .twd-sk-page .twd-sk-hero--split.twd-sk-hero--split,
 .twd-sk-page .twd-sk-hero--compact.twd-sk-hero--compact,
 .twd-sk-page .twd-sk-text.twd-sk-text,
@@ -139,7 +133,6 @@
   padding-top: 0 !important;
   padding-bottom: 0 !important;
 }
-/* ---- shared: type ---- */
 .twd-sk-page .twd-sk-eyebrow.twd-sk-eyebrow {
   display: block;
   margin: 0 0 10px !important;
@@ -177,8 +170,6 @@
 .twd-sk-page .twd-sk-tone-band.twd-sk-tone-band .twd-sk-accent.twd-sk-accent {
   color: var(--twd-site-color-accent-on-dark) !important;
 }
-/* On the tinted background the heading, eyebrow and text colours switch to the dark
-   title colour, because the heading colour (often a mid green) is too faint there. */
 .twd-sk-page .twd-sk-tone-tint.twd-sk-tone-tint .twd-sk-title.twd-sk-title,
 .twd-sk-page .twd-sk-tone-tint.twd-sk-tone-tint .twd-sk-eyebrow.twd-sk-eyebrow,
 .twd-sk-page .twd-sk-tone-tint.twd-sk-tone-tint .twd-sk-accent.twd-sk-accent,
@@ -228,7 +219,6 @@
   white-space: nowrap;
   overflow: clip;
 }
-/* ---- shared: buttons ---- */
 .twd-sk-page .twd-sk-btn.twd-sk-btn {
   display: inline-block;
   padding: var(--twd-site-btn-pad-y) var(--twd-site-btn-pad-x) !important;
@@ -288,7 +278,6 @@
   border-color: var(--twd-site-color-primary-hover) !important;
   color: var(--twd-site-color-on-primary) !important;
 }
-/* ---- gallery label bar (used only by starters/_gallery.html) ---- */
 .twd-sk-page .twd-sk-gallery-label.twd-sk-gallery-label {
   padding: 10px 0 !important;
   background-color: var(--twd-site-color-title) !important;
@@ -299,7 +288,6 @@
   margin: 0 !important;
   color: var(--twd-site-color-surface) !important;
 }
-/* ---- shared: cards and lists ---- */
 .twd-sk-page .twd-sk-card.twd-sk-card {
   display: block;
   padding: var(--twd-site-card-pad) !important;
@@ -328,7 +316,6 @@
 .twd-sk-page .twd-sk-list.twd-sk-list li + li {
   margin-top: 4px !important;
 }
-/* ---- hero ---- */
 .twd-sk-page .twd-sk-hero.twd-sk-hero {
   position: relative;
 }
@@ -377,8 +364,6 @@
   object-fit: cover;
   object-position: var(--twd-site-image-position);
 }
-/* Picture treatment (0.14.0): a pack may soften or desaturate every kit picture (image-filter) and lay a
-   gentle tint over the hero and image-and-text pictures (image-tint). Both default to nothing. */
 .twd-sk-page .twd-sk-hero__img.twd-sk-hero__img,
 .twd-sk-page .twd-sk-hero__bg.twd-sk-hero__bg,
 .twd-sk-page .twd-sk-pictures__img.twd-sk-pictures__img {
@@ -444,9 +429,6 @@
 .twd-sk-page .twd-sk-hero--image.twd-sk-hero--image .twd-sk-accent.twd-sk-accent {
   color: var(--twd-site-color-accent-on-dark) !important;
 }
-/* Image hero options (0.14.0): a lighter overlay, a stronger one (a second layer of the same colour),
-   the words set to the left, and the parallax picture (the script moves the --twd-sk-parallax value;
-   with no script, on phones and for less motion the picture simply stays put). */
 .twd-sk-page .twd-sk-hero--overlay-light.twd-sk-hero--overlay-light .twd-sk-hero__overlay.twd-sk-hero__overlay {
   opacity: 0.55;
 }
@@ -478,7 +460,6 @@
   height: auto;
   transform: translate3d(0, var(--twd-sk-parallax, 0px), 0);
 }
-/* ---- text ---- */
 .twd-sk-page .twd-sk-text__body.twd-sk-text__body > * + * {
   margin-top: var(--twd-site-para-gap) !important;
 }
@@ -505,14 +486,11 @@
   top: 96px;
   align-self: start;
 }
-/* The default narrow text layout is one centred column. */
 .twd-sk-page .twd-sk-text.twd-sk-text:not(.twd-sk-text--aside.twd-sk-text--aside):not(.twd-sk-text--prose.twd-sk-text--prose) .twd-sk-eyebrow.twd-sk-eyebrow,
 .twd-sk-page .twd-sk-text.twd-sk-text:not(.twd-sk-text--aside.twd-sk-text--aside):not(.twd-sk-text--prose.twd-sk-text--prose) .twd-sk-title.twd-sk-title,
 .twd-sk-page .twd-sk-text.twd-sk-text:not(.twd-sk-text--aside.twd-sk-text--aside):not(.twd-sk-text--prose.twd-sk-text--prose) .twd-sk-text__body.twd-sk-text__body {
   text-align: center !important;
 }
-/* Prose (0.14.0): a reading column. Left aligned, a little more room between paragraphs, sub-headings,
-   lists and quotes styled for long writing. Nothing moves, nothing is centred. */
 .twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-eyebrow.twd-sk-eyebrow,
 .twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-title.twd-sk-title,
 .twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body {
@@ -551,7 +529,6 @@
   border-left: 3px solid var(--twd-site-color-accent) !important;
   color: var(--twd-site-color-muted) !important;
 }
-/* Typography for text-led pages (0.15.0, SK-021): Look choices on a text section, no class = as before. */
 .twd-sk-page .twd-sk-lead-in.twd-sk-lead-in .twd-sk-text__body.twd-sk-text__body > p:first-of-type {
   font-size: var(--twd-site-size-lead) !important;
 }
@@ -621,7 +598,6 @@
   text-decoration: underline !important;
   color: var(--twd-site-color-primary) !important;
 }
-/* The pull line (0.15.0): one short passage set large, centred. */
 .twd-sk-page .twd-sk-text--pull.twd-sk-text--pull .twd-sk-inner.twd-sk-inner {
   text-align: center !important;
 }
@@ -635,7 +611,6 @@
   color: var(--twd-site-color-title) !important;
   text-align: center !important;
 }
-/* Subheading (0.15.0): an h2 or h3 inside the body of any text layout, from the Visual editor's Heading above button or the AI. */
 .twd-sk-page .twd-sk-text__subheading.twd-sk-text__subheading {
   margin-top: 1.6em !important;
   font-family: var(--twd-site-font-heading) !important;
@@ -651,12 +626,10 @@
 .twd-sk-page .twd-sk-text--picture.twd-sk-text--picture .twd-sk-text__subheading.twd-sk-text__subheading {
   color: var(--twd-site-color-on-image) !important;
 }
-/* Quote line (0.15.0): the same rule on any paragraph, from the Visual editor's Quote line button. The words keep their colour. */
 .twd-sk-page .twd-sk-quoteline.twd-sk-quoteline {
   padding-left: 1.2em !important;
   border-left: 3px solid var(--twd-site-color-accent) !important;
 }
-/* Note box (0.15.0, idea 5): a paragraph called out in a soft panel with an accent edge, from the Visual editor's Note box button. */
 .twd-sk-page .twd-sk-notebox.twd-sk-notebox {
   padding: var(--twd-site-card-pad-sm) !important;
   border: 1px solid var(--twd-site-color-border) !important;
@@ -664,10 +637,6 @@
   border-radius: var(--twd-site-radius-card) !important;
   background-color: var(--twd-site-color-surface) !important;
 }
-/* 18a (29 Oct 2026): a box or a line chooses its colours from the section's tone, so the words stay readable on every
-   background: on the soft tone the box takes the page colour; on a band, and in the frame over a picture, a darker
-   see-through box (the frame tint) with the tone's light text and lines. TWD_SK_Contrast::style_pairs() lists every
-   style and tone pair and a test runs them all on every pack. */
 .twd-sk-page .twd-sk-tone-surface.twd-sk-tone-surface .twd-sk-notebox.twd-sk-notebox {
   background-color: var(--twd-site-color-bg) !important;
 }
@@ -699,7 +668,6 @@
 .twd-sk-page .twd-sk-text__aside.twd-sk-text__aside > * + * {
   margin-top: 20px !important;
 }
-/* In side-by-side layouts the heading sits over left-aligned text whatever the pack's heading alignment. */
 .twd-sk-page .twd-sk-text--aside.twd-sk-text--aside .twd-sk-title.twd-sk-title,
 .twd-sk-page .twd-sk-image-text__body.twd-sk-image-text__body .twd-sk-eyebrow.twd-sk-eyebrow,
 .twd-sk-page .twd-sk-image-text__body.twd-sk-image-text__body .twd-sk-title.twd-sk-title,
@@ -708,11 +676,6 @@
 .twd-sk-page .twd-sk-contact--split.twd-sk-contact--split .twd-sk-contact__intro.twd-sk-contact__intro .twd-sk-lead.twd-sk-lead {
   text-align: left !important;
 }
-/* Picture behind a text section (0.15.0): the picture covers the whole section (never repeating) under the
-   same graduated overlay as the picture hero, and the words sit centred over it. With twd-sk-frame (shared, also
-   on the call to action band) the inner column becomes a frame: a dark tint from a token (its depth is a choice:
-   Lighter is the tint faded, Stronger is the tint twice) and a padding choice. The overlay choices (shared) work
-   on this layout and on the call to action band: Lighter, Stronger, or a fade from clear at the top. */
 .twd-sk-page .twd-sk-text--picture.twd-sk-text--picture {
   position: relative;
   display: flex;
@@ -804,7 +767,6 @@
 .twd-sk-page .twd-sk-overlay-fade.twd-sk-overlay-fade .twd-sk-cta__overlay.twd-sk-cta__overlay {
   background: linear-gradient(180deg, transparent 0%, var(--twd-site-color-overlay-mid) 55%, var(--twd-site-color-overlay-bottom) 100%) !important;
 }
-/* Larger text (0.15.0, a Look choice on text and call to action sections): the body copy at the lead size. */
 .twd-sk-page .twd-sk-text-lg.twd-sk-text-lg .twd-sk-text__body.twd-sk-text__body,
 .twd-sk-page .twd-sk-text-lg.twd-sk-text-lg .twd-sk-cta__text.twd-sk-cta__text {
   font-size: var(--twd-site-size-lead) !important;
@@ -820,7 +782,6 @@
     width: calc(100% - 2 * var(--twd-site-gutter-sm));
   }
 }
-/* ---- image and text ---- */
 .twd-sk-page .twd-sk-image-text__grid.twd-sk-image-text__grid {
   display: grid;
   width: 100%;
@@ -884,15 +845,12 @@
 .twd-sk-page .twd-sk-image-text--band-ribbon.twd-sk-image-text--band-ribbon {
   height: var(--twd-site-band-height-ribbon);
 }
-/* min-height 0: the base image rule's min-height (260px) must not win over the band's own height (180px on phones),
-   or the picture spills under the next section's words (seen on a phone, 29 Oct 2026). */
 .twd-sk-page .twd-sk-image-text--band.twd-sk-image-text--band .twd-sk-image-text__img.twd-sk-image-text__img {
   height: 100%;
   min-height: 0;
   border-radius: 0 !important;
   object-fit: cover;
 }
-/* ---- quote ---- */
 .twd-sk-page .twd-sk-quote--cards.twd-sk-quote--cards .twd-sk-title.twd-sk-title {
   margin-bottom: 8px !important;
 }
@@ -939,7 +897,6 @@
   text-align: center !important;
   color: var(--twd-site-color-muted) !important;
 }
-/* Cards options (0.15.0, idea 2): a quote mark in the accent colour, and cards as tall as their own words. */
 .twd-sk-page .twd-sk-quote--marks.twd-sk-quote--marks .twd-sk-quote__card.twd-sk-quote__card::before {
   content: "\201C";
   display: block;
@@ -964,8 +921,6 @@
   line-height: 1.5 !important;
   color: var(--twd-site-color-title) !important;
 }
-/* Slider (0.10.0): one quote at a time. Swiping works with no script; twd-site-kit-slider.js adds
-   the arrows, the dots and arrow keys. Nothing moves on its own. */
 .twd-sk-page .twd-sk-quote--slider.twd-sk-quote--slider .twd-sk-inner.twd-sk-inner {
   max-width: var(--twd-site-container-narrow);
 }
@@ -1040,7 +995,6 @@
 .twd-sk-page .twd-sk-quote__dot.twd-sk-quote__dot[aria-current="true"]::after {
   background-color: var(--twd-site-color-primary) !important;
 }
-/* ---- faq ---- */
 .twd-sk-page .twd-sk-faq__list.twd-sk-faq__list > * + * {
   margin-top: 12px !important;
 }
@@ -1083,9 +1037,6 @@
 .twd-sk-page .twd-sk-faq__answer.twd-sk-faq__answer > * + * {
   margin-top: 1em !important;
 }
-/* Question groups (0.14.0): a row of links to each group, the groups below. No script. On a wide
-   screen one group shows at a time (the one marked --default, or the one linked to with :target);
-   on a phone, and in a browser without :has(), every group stacks under its own heading. */
 .twd-sk-page .twd-sk-faq--groups.twd-sk-faq--groups .twd-sk-title.twd-sk-title {
   margin-bottom: 24px !important;
 }
@@ -1120,7 +1071,6 @@
 .twd-sk-page .twd-sk-faq__group.twd-sk-faq__group {
   scroll-margin-top: 120px;
 }
-/* The chosen tab (0.15.0, set by the tiny groups script): filled with the button colour. */
 .twd-sk-page .twd-sk-faq__tab--on.twd-sk-faq__tab--on .twd-sk-faq__tablink.twd-sk-faq__tablink,
 .twd-sk-page .twd-sk-faq__tab--on.twd-sk-faq__tab--on .twd-sk-faq__tablink.twd-sk-faq__tablink:hover {
   border-color: var(--twd-site-color-primary) !important;
@@ -1143,7 +1093,6 @@
 .twd-sk-page .twd-sk-faq__groups.twd-sk-faq__groups:not(:has(.twd-sk-faq__group.twd-sk-faq__group:target)) .twd-sk-faq__group--default.twd-sk-faq__group--default .twd-sk-faq__groupname.twd-sk-faq__groupname {
   color: var(--twd-site-color-primary) !important;
 }
-/* Two columns (0.14.0): a long list of questions side by side on a wide screen. */
 .twd-sk-page .twd-sk-faq--two.twd-sk-faq--two .twd-sk-faq__list.twd-sk-faq__list {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1153,7 +1102,6 @@
 .twd-sk-page .twd-sk-faq--two.twd-sk-faq--two .twd-sk-faq__list.twd-sk-faq__list > * + * {
   margin-top: 0 !important;
 }
-/* ---- services ---- */
 .twd-sk-page .twd-sk-services--cards.twd-sk-services--cards .twd-sk-title.twd-sk-title {
   margin-bottom: 0 !important;
 }
@@ -1193,7 +1141,6 @@
   gap: 12px;
   margin-top: 8px !important;
 }
-/* Links (0.14.0): a plain list of linked rows with an arrow. */
 .twd-sk-page .twd-sk-services--links.twd-sk-services--links .twd-sk-title.twd-sk-title {
   margin-bottom: 8px !important;
 }
@@ -1239,9 +1186,6 @@
 .twd-sk-page .twd-sk-services__link.twd-sk-services__link:focus-visible .twd-sk-services__name.twd-sk-services__name {
   color: var(--twd-site-color-primary) !important;
 }
-/* Glow (0.10.0): boxes whose outline colour moves slowly between the heading and accent colours.
-   The outline is animated rather than the border, because visual properties carry !important and
-   an animation cannot change an !important value. Still for visitors who ask for less motion. */
 .twd-sk-page .twd-sk-services--glow.twd-sk-services--glow .twd-sk-services__list.twd-sk-services__list {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
@@ -1263,7 +1207,6 @@
   font-weight: var(--twd-site-btn-weight) !important;
   color: var(--twd-site-color-title) !important;
 }
-/* ---- steps ---- */
 .twd-sk-page .twd-sk-steps__list.twd-sk-steps__list {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1295,7 +1238,6 @@
 .twd-sk-page .twd-sk-steps__text.twd-sk-steps__text {
   color: var(--twd-site-color-body) !important;
 }
-/* Row (0.15.0, idea 4): large thin numbers, a rule above each step, nothing else round them. */
 .twd-sk-page .twd-sk-steps--row.twd-sk-steps--row .twd-sk-steps__list.twd-sk-steps__list {
   gap: var(--twd-site-gap-lg);
 }
@@ -1309,7 +1251,6 @@
   font-weight: 300 !important;
   color: var(--twd-site-color-accent-text) !important;
 }
-/* Timeline (0.14.0): the steps one under the other, numbered discs on a line. */
 .twd-sk-page .twd-sk-steps--timeline.twd-sk-steps--timeline .twd-sk-steps__list.twd-sk-steps__list {
   grid-template-columns: 1fr;
   gap: 0;
@@ -1353,7 +1294,6 @@
 .twd-sk-page .twd-sk-steps--timeline.twd-sk-steps--timeline .twd-sk-steps__text.twd-sk-steps__text {
   grid-column: 2;
 }
-/* ---- call to action ---- */
 .twd-sk-page .twd-sk-cta.twd-sk-cta {
   position: relative;
 }
@@ -1430,10 +1370,6 @@
 .twd-sk-page .twd-sk-cta--strip.twd-sk-cta--strip .twd-sk-cta__actions.twd-sk-cta__actions {
   justify-content: flex-end;
 }
-/* ---- articles grid (the articles plugin's [twd_articles] output) ----
-   Styled from the active pack through the plugin's documented classes. Every selector
-   sits under the page wrapper, so these rules do nothing when the plugin is absent or
-   its grid is outside a kit page. Colour, type and shape only; the plugin keeps its layout. */
 .twd-sk-page .twd-ap-articles.twd-ap-articles {
   font-family: var(--twd-site-font-body) !important;
   color: var(--twd-site-color-body) !important;
@@ -1514,7 +1450,6 @@
   border-color: var(--twd-site-color-primary-hover) !important;
   color: var(--twd-site-color-on-primary) !important;
 }
-/* ---- articles strip (0.14.0): a few articles from one category beside a short introduction ---- */
 .twd-sk-page .twd-sk-resources--strip.twd-sk-resources--strip {
   padding-top: var(--twd-site-section-y-sm) !important;
   padding-bottom: var(--twd-site-section-y-sm) !important;
@@ -1545,11 +1480,6 @@
 .twd-sk-page .twd-sk-resources__grid.twd-sk-resources__grid .twd-ap-articles-loadmore-row.twd-ap-articles-loadmore-row {
   display: none;
 }
-/* ---- the line for a grid with no articles yet (0.15.0) ----
-   The line is the site's own words in the page, so it can be changed in the Visual editor. It stays hidden
-   until the articles plugin's grid says it is empty (that plugin shows its own line without the hidden
-   attribute), and then it takes the place of that plugin's line. Each :has() rule is on its own, so a
-   browser without :has() ignores them, keeps this line hidden and shows the plugin's own line as before. */
 .twd-sk-page .twd-sk-resources__none.twd-sk-resources__none {
   display: none;
   margin: var(--twd-site-gap-sm) 0 0 !important;
@@ -1565,14 +1495,12 @@
 .twd-sk-page .twd-sk-resources.twd-sk-resources:has(.twd-sk-resources__none.twd-sk-resources__none) .twd-ap-articles-none.twd-ap-articles-none {
   display: none;
 }
-/* Hide the whole section while its category is empty (0.15.0, a Look choice; the Visual editor shows it anyway). */
 .twd-sk-page .twd-sk-resources--hide-empty.twd-sk-resources--hide-empty:has(.twd-ap-articles-none.twd-ap-articles-none:not([hidden])) {
   display: none;
 }
 .twd-sk-page .twd-sk-resources__grid.twd-sk-resources__grid .twd-sk-resources__none.twd-sk-resources__none {
   text-align: left !important;
 }
-/* ---- contact ---- */
 .twd-sk-page .twd-sk-contact__grid.twd-sk-contact__grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -1628,7 +1556,6 @@
   margin-bottom: 16px !important;
   color: var(--twd-site-color-body) !important;
 }
-/* ---- notice and helpline modal (pure CSS, :target) ---- */
 .twd-sk-page .twd-sk-notice__inner.twd-sk-notice__inner {
   text-align: center !important;
 }
@@ -1739,7 +1666,6 @@
   color: var(--twd-site-color-primary) !important;
   text-decoration: underline !important;
 }
-/* ---- pictures (0.8.0) ---- */
 .twd-sk-page .twd-sk-pictures__grid.twd-sk-pictures__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1768,7 +1694,6 @@
   font-size: var(--twd-site-size-small) !important;
   color: var(--twd-site-color-muted) !important;
 }
-/* ---- logos strip (0.8.0) ---- */
 .twd-sk-page .twd-sk-logos.twd-sk-logos {
   padding-top: var(--twd-site-section-y-sm) !important;
   padding-bottom: var(--twd-site-section-y-sm) !important;
@@ -1793,7 +1718,6 @@
   height: 64px;
   object-fit: contain;
 }
-/* Grid (0.14.0): each logo in its own bordered box. */
 .twd-sk-page .twd-sk-logos--grid.twd-sk-logos--grid .twd-sk-logos__list.twd-sk-logos__list {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1811,7 +1735,6 @@
 .twd-sk-page .twd-sk-logos--grid.twd-sk-logos--grid .twd-sk-logos__img.twd-sk-logos__img {
   max-width: 100%;
 }
-/* ---- prices (0.8.0) ---- */
 .twd-sk-page .twd-sk-pricing__grid.twd-sk-pricing__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1870,7 +1793,6 @@
   font-size: var(--twd-site-size-title) !important;
   color: var(--twd-site-color-primary) !important;
 }
-/* ---- opening hours (0.8.0) ---- */
 .twd-sk-page .twd-sk-hours__list.twd-sk-hours__list {
   margin-top: 24px !important;
 }
@@ -1896,7 +1818,6 @@
   font-size: var(--twd-site-size-small) !important;
   color: var(--twd-site-color-muted) !important;
 }
-/* Card (0.14.0): the hours in a card on a tinted band. */
 .twd-sk-page .twd-sk-hours--card.twd-sk-hours--card .twd-sk-title.twd-sk-title,
 .twd-sk-page .twd-sk-hours--card.twd-sk-hours--card .twd-sk-hours__note.twd-sk-hours__note {
   text-align: center !important;
@@ -1911,7 +1832,6 @@
 .twd-sk-page .twd-sk-hours--card.twd-sk-hours--card .twd-sk-hours__row.twd-sk-hours__row:last-child {
   border-bottom: 0 !important;
 }
-/* ---- areas covered (0.8.0) ---- */
 .twd-sk-page .twd-sk-areas__list.twd-sk-areas__list {
   display: flex;
   flex-wrap: wrap;
@@ -1933,7 +1853,6 @@
   justify-content: flex-start;
   margin-top: 28px !important;
 }
-/* Split (0.14.0): the introduction on the left, the areas and the map link on the right. */
 .twd-sk-page .twd-sk-areas--split.twd-sk-areas--split .twd-sk-inner.twd-sk-inner {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1958,14 +1877,10 @@
   grid-column: 2;
   margin-top: 0 !important;
 }
-/* ---- enquiry form (0.8.1): rendered by the plugin from [twd_enquiry] ---- */
 .twd-sk-page .twd-sk-enquiry.twd-sk-enquiry {
   padding-top: var(--twd-site-section-y) !important;
   padding-bottom: var(--twd-site-section-y) !important;
 }
-/* ---- embed (0.15.0): code an administrator saved apart from the page (a shortcode or HTML) ----
-   The kit only gives it room and keeps pictures and frames inside the column; the code looks as its own
-   maker made it. The missing note is shown to editors only (visitors get nothing). */
 .twd-sk-page .twd-sk-embed.twd-sk-embed {
   padding-top: var(--twd-site-section-y) !important;
   padding-bottom: var(--twd-site-section-y) !important;
@@ -2071,7 +1986,6 @@
 .twd-sk-page .twd-sk-form__status--error.twd-sk-form__status--error {
   border-left: var(--twd-site-card-accent-width) solid var(--twd-site-color-accent) !important;
 }
-/* The honeypot: kept out of sight and out of the tab order; screen readers skip it (aria-hidden). */
 .twd-sk-page .twd-sk-form__hp.twd-sk-form__hp {
   position: absolute;
   left: -10000px;
@@ -2079,10 +1993,6 @@
   height: 1px;
   overflow: clip;
 }
-/* ---- form skin ----
-   A contact form is an Elementor widget, not part of the page HTML. Give the
-   Elementor container that holds it the CSS class twd-sk-page and these rules
-   skin the form with the active pack. */
 .twd-sk-page .elementor-field-group {
   margin-bottom: 18px !important;
 }
@@ -2123,7 +2033,6 @@
   background-color: var(--twd-site-color-primary-hover) !important;
   color: var(--twd-site-color-on-primary) !important;
 }
-/* ---- less motion, when the visitor asks for it ---- */
 @media (prefers-reduced-motion: reduce) {
   .twd-sk-page .twd-sk-header--shrink.twd-sk-header--shrink .twd-sk-header__inner.twd-sk-header__inner,
   .twd-sk-page .twd-sk-header--shrink.twd-sk-header--shrink .twd-sk-header__logo-img.twd-sk-header__logo-img,
@@ -2140,9 +2049,6 @@
     scroll-behavior: auto;
   }
 }
-/* ---- responsive ---- */
-/* ---- site header and footer (printed by [twd_header] and [twd_footer], not part of a page) ---- */
-/* The wrapper is the .twd-sk-page element itself, so these rules sit on it (&) rather than below it. */
 .twd-sk-page.twd-sk-chrome.twd-sk-chrome {
   position: relative;
   z-index: 50;
@@ -2150,13 +2056,9 @@
 .twd-sk-page.twd-sk-chrome--sticky.twd-sk-chrome--sticky {
   height: 76px;
 }
-/* The strip is its paddings plus one line of small text (about 20px). The header script measures the real height and sets it on the spacer; this is the no-script value. */
 .twd-sk-page.twd-sk-chrome--sticky.twd-sk-chrome--sticky.twd-sk-chrome--strip.twd-sk-chrome--strip {
   height: calc(96px + var(--twd-site-strip-padding) * 2);
 }
-/* The text wordmark header's fixed spacer (0.14.0). On the front page the header is the tall stacked lockup, so its height is worked out
-   from the size tokens (the way the front page logo's is): symbol, name, second line and menu line, plus the paddings (no second line
-   takes its space out). On every other page it is the one-row bar: the taller of the symbol and a menu link, plus the paddings. */
 .twd-sk-page.twd-sk-chrome--wordmark.twd-sk-chrome--wordmark {
   --twd-sk-wm-s: var(--twd-site-wordmark-symbol-front);
   --twd-sk-wm-n: var(--twd-site-wordmark-name-front);
@@ -2174,7 +2076,6 @@
 .twd-sk-page.twd-sk-chrome--sticky.twd-sk-chrome--sticky.twd-sk-chrome--wordmark.twd-sk-chrome--wordmark {
   height: calc(max(var(--twd-site-wordmark-symbol), var(--twd-site-menu-size) * 1.3 + 20px) + 29px + var(--twd-sk-wm-strip));
 }
-/* Second line in the smaller header: the bar is as tall as the name and line (before the front page rule, which keeps its own). */
 .twd-sk-page.twd-sk-chrome--sticky.twd-sk-chrome--sticky.twd-sk-chrome--wordmark.twd-sk-chrome--wordmark.twd-sk-chrome--wm-line.twd-sk-chrome--wm-line {
   height: calc(max(var(--twd-site-wordmark-symbol), var(--twd-site-menu-size) * 1.3 + 20px, var(--twd-site-wordmark-name) * 1.2 + 2px + var(--twd-site-wordmark-line-front) * 1.3) + 29px + var(--twd-sk-wm-strip));
 }
@@ -2187,10 +2088,6 @@
   border-bottom: 1px solid var(--twd-site-color-border) !important;
   color: var(--twd-site-color-title) !important;
 }
-/* Transparent over the picture (0.14.0): printed only on a page that opens with a full-width picture hero.
-   The wrapper has no height, so the picture starts at the top and the header floats over its overlay in the
-   on-image colour. The --sticky rule below still wins on position when both are set. When the fixed header
-   shrinks after a scroll it turns back into the normal surface-coloured bar, so the menu stays readable. */
 .twd-sk-page.twd-sk-chrome--over.twd-sk-chrome--over,
 .twd-sk-page.twd-sk-chrome--sticky.twd-sk-chrome--sticky.twd-sk-chrome--over.twd-sk-chrome--over,
 .twd-sk-page.twd-sk-chrome--sticky.twd-sk-chrome--sticky.twd-sk-chrome--strip.twd-sk-chrome--strip.twd-sk-chrome--over.twd-sk-chrome--over,
@@ -2271,7 +2168,6 @@
   color: var(--twd-site-color-on-band) !important;
   text-decoration: underline !important;
 }
-/* Skip link: printed only when Site Kit places the header itself. Hidden until a keyboard user reaches it. */
 .twd-sk-page .twd-sk-skip.twd-sk-skip {
   position: absolute;
   left: 12px;
@@ -2320,7 +2216,6 @@
   max-width: 220px;
   max-height: var(--twd-sk-logo-h, var(--twd-site-logo-height));
 }
-/* Shrink on scroll (0.13.0): a script adds --shrunk after a small scroll. The spacer (--sticky wrapper) keeps its height, so nothing on the page moves. */
 .twd-sk-page .twd-sk-header--shrink.twd-sk-header--shrink .twd-sk-header__inner.twd-sk-header__inner {
   transition: padding .2s ease;
 }
@@ -2334,8 +2229,6 @@
   padding-top: 6px !important;
   padding-bottom: 6px !important;
 }
-/* The small logo mark (0.14.0): beside the site name on every page but the front page; on the front page it is
-   hidden until the header shrinks, when it takes the full logo's place. */
 .twd-sk-page .twd-sk-header__logo-mark.twd-sk-header__logo-mark {
   display: block;
   width: auto;
@@ -2346,7 +2239,6 @@
 .twd-sk-page .twd-sk-header--front.twd-sk-header--front .twd-sk-header__logo-mark.twd-sk-header__logo-mark {
   display: none;
 }
-/* Front page logo (0.14.0): the full logo, larger and centred above the menu, on the front page only. */
 .twd-sk-page.twd-sk-chrome--sticky.twd-sk-chrome--sticky.twd-sk-chrome--front.twd-sk-chrome--front {
   height: calc(var(--twd-site-logo-height-front) + 108px);
 }
@@ -2383,7 +2275,6 @@
 .twd-sk-page .twd-sk-header--front.twd-sk-header--front.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__logo-mark.twd-sk-header__logo-mark ~ .twd-sk-header__logo-img.twd-sk-header__logo-img {
   display: none;
 }
-/* 0.14.1: the site name beside the mark once shrunk, as on every other page. Hidden on the front page until then. */
 .twd-sk-page .twd-sk-header--front.twd-sk-header--front .twd-sk-header__logo-name.twd-sk-header__logo-name {
   display: none;
 }
@@ -2502,7 +2393,6 @@
 .twd-sk-page .twd-sk-header__cta.twd-sk-header__cta {
   white-space: nowrap;
 }
-/* header variants */
 .twd-sk-page .twd-sk-header--bar.twd-sk-header--bar .twd-sk-header__panel.twd-sk-header__panel {
   margin-left: auto !important;
 }
@@ -2537,8 +2427,6 @@
   justify-self: start;
   min-width: 0;
 }
-/* Six menu items run out of room in a third of the bar (0.15.0, SK-017): a tighter gap, and the menu may use the
-   middle column's spare width before the logo. */
 .twd-sk-page .twd-sk-header--split.twd-sk-header--split .twd-sk-header__inner.twd-sk-header__inner {
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 }
@@ -2558,9 +2446,6 @@
   flex-direction: column;
   align-items: flex-start;
 }
-/* The text wordmark header (0.14.0). Printed only when the setting is on, with these classes in place of the layout's own, so nothing else
-   changes. The front page is a centred stack: a small mark, the name and a second line as live text, the menu centred below. Every other
-   page is the one-row bar: the mark and the name at the left, the menu at the right. */
 .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__logo.twd-sk-header__logo {
   flex: 0 1 auto;
   min-width: 0;
@@ -2602,7 +2487,6 @@
   flex-wrap: wrap;
   row-gap: 4px;
 }
-/* The menu, on every page: its own font, size, weight, spacing, capitals and gap, never the body size. */
 .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__menu.twd-sk-header__menu {
   gap: 4px var(--twd-site-menu-gap);
 }
@@ -2617,7 +2501,6 @@
   text-transform: var(--twd-site-menu-transform) !important;
   text-decoration: none !important;
 }
-/* The header button sits in the menu's row at the menu's size, never taller than a menu link, so the row (and the fixed header's spacer) is the same with or without it. */
 .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__cta.twd-sk-header__cta {
   padding: 8px 18px !important;
   font-family: var(--twd-site-menu-font) !important;
@@ -2625,7 +2508,6 @@
   letter-spacing: var(--twd-site-menu-spacing) !important;
   text-transform: var(--twd-site-menu-transform) !important;
 }
-/* The sub-menu links (a dropdown on a computer, listed under their parent on a phone) take the same menu look, and lose the underline too. */
 .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__sublink.twd-sk-header__sublink {
   font-family: var(--twd-site-menu-font) !important;
   font-size: var(--twd-site-menu-size) !important;
@@ -2644,7 +2526,6 @@
   color: inherit !important;
   text-decoration: none !important;
 }
-/* The page you are on: a dot or a bar under the link in the link's own colour (so it follows the transparent and scrolled states), or colour and weight, or nothing. */
 .twd-sk-page .twd-sk-header--mark-dot.twd-sk-header--mark-dot .twd-sk-header__link.twd-sk-header__link[aria-current="page"]::after,
 .twd-sk-page .twd-sk-header--mark-bar.twd-sk-header--mark-bar .twd-sk-header__link.twd-sk-header__link[aria-current="page"]::after {
   content: "";
@@ -2672,7 +2553,6 @@
 .twd-sk-page .twd-sk-header--mark-none.twd-sk-header--mark-none .twd-sk-header__link.twd-sk-header__link[aria-current="page"] {
   text-decoration: none !important;
 }
-/* The front page: the centred stack. */
 .twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__inner.twd-sk-header__inner {
   position: relative;
   flex-direction: column;
@@ -2704,8 +2584,6 @@
 .twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front .twd-sk-header__menu.twd-sk-header__menu {
   justify-content: center;
 }
-/* The front page scrolled: one centred row, the small symbol directly left of the menu. The name leaves the eye but never the screen
-   reader, unless the setting keeps it: then the symbol and name sit at the left and the menu at the right, like the other pages. */
 .twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__inner.twd-sk-header__inner {
   flex-direction: row;
   flex-wrap: wrap;
@@ -2755,7 +2633,6 @@
 .twd-sk-page .twd-sk-header--wm-front.twd-sk-header--wm-front.twd-sk-header--wm-name.twd-sk-header--wm-name.twd-sk-header--shrunk.twd-sk-header--shrunk .twd-sk-header__panel.twd-sk-header__panel {
   margin-left: auto !important;
 }
-/* Second line in the smaller header (a setting, off by default): name and line in one block beside the symbol, on every page but the large front stack and on the scrolled front page. One row, so the fixed height holds. */
 .twd-sk-page .twd-sk-header--wm-line.twd-sk-header--wm-line .twd-sk-header__words.twd-sk-header__words {
   min-width: 0;
 }
@@ -2772,7 +2649,6 @@
   white-space: nowrap;
   overflow: clip;
 }
-/* Over a picture: the name and second line take the on-image colour; scrolled, the header is solid again. */
 .twd-sk-page .twd-sk-header--over.twd-sk-header--over.twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__name.twd-sk-header__name,
 .twd-sk-page .twd-sk-header--over.twd-sk-header--over.twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__line.twd-sk-header__line {
   color: var(--twd-site-color-on-image) !important;
@@ -2787,7 +2663,6 @@
 .twd-sk-page .twd-sk-header--over.twd-sk-header--over.twd-sk-header--shrunk.twd-sk-header--shrunk.twd-sk-header--mark-color.twd-sk-header--mark-color .twd-sk-header__link.twd-sk-header__link[aria-current="page"] {
   color: var(--twd-site-color-accent-text) !important;
 }
-/* the menu button and the collapsed menu: only once the script has run, so with no script the menu just shows */
 .twd-sk-page .twd-sk-header--js.twd-sk-header--js.twd-sk-header--minimal.twd-sk-header--minimal .twd-sk-header__toggle.twd-sk-header__toggle {
   display: inline-flex;
 }
@@ -2807,7 +2682,6 @@
 .twd-sk-page .twd-sk-header--open.twd-sk-header--open .twd-sk-header__toggle.twd-sk-header__toggle {
   background-color: var(--twd-site-color-tint) !important;
 }
-/* footer */
 .twd-sk-page .twd-sk-footer.twd-sk-footer {
   background-color: var(--twd-site-color-surface) !important;
   border-top: 1px solid var(--twd-site-color-border) !important;
@@ -2953,7 +2827,6 @@
 .twd-sk-page .twd-sk-footer--simple.twd-sk-footer--simple .twd-sk-footer__bottom.twd-sk-footer__bottom {
   border-top: 0 !important;
 }
-/* The feature footer (0.14.0): large logo, the footer text as a heading, contact and registration on the left, links in two columns on the right, a slim band-colour strip below. */
 .twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__main.twd-sk-footer__main {
   grid-template-columns: 1.15fr 1fr;
   align-items: start;
@@ -3024,15 +2897,12 @@
   padding-top: 12px !important;
   padding-bottom: 12px !important;
 }
-/* 0.15.0: the registration lines sit in the dark strip (as in the compact footer), between the copyright and the legal links. */
 .twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__reg-line.twd-sk-footer__reg-line {
   margin: 0 !important;
   font-size: var(--twd-site-size-small) !important;
   line-height: var(--twd-site-line-body) !important;
   color: var(--twd-site-color-on-band) !important;
 }
-/* 0.15.0: the links sit level with the footer text, not beside the logo. The left block stops being a box of its own so its
-   pieces take the grid rows (logo, footer text, contact), and the links start on the footer text's row, lined up with its first line. */
 .twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__main.twd-sk-footer__main {
   row-gap: 0;
 }
@@ -3063,8 +2933,6 @@
 .twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__legal-link.twd-sk-footer__legal-link {
   color: var(--twd-site-color-accent-on-dark) !important;
 }
-/* The compact footer (0.14.1): the tagline centred on top, the logo left and the links right, then a dark bar for the
-   small print (copyright, registration, email, legal links). No headings, little height. */
 .twd-sk-page .twd-sk-footer--compact.twd-sk-footer--compact {
   border-top: 1px solid var(--twd-site-color-border) !important;
 }
@@ -3081,8 +2949,6 @@
   line-height: 1.3 !important;
   color: var(--twd-site-color-title) !important;
 }
-/* After every layout's own tagline rule, so the lead style wins on the same specificity. */
-/* Footer text with its first line larger and the rest quieter (0.15.0, a Header and footer choice; off by default). */
 .twd-sk-page .twd-sk-footer__text--lead.twd-sk-footer__text--lead {
   color: var(--twd-site-color-muted) !important;
 }
@@ -3349,7 +3215,6 @@
   .twd-sk-page .twd-sk-header--js.twd-sk-header--js.twd-sk-header--open.twd-sk-header--open .twd-sk-header__panel.twd-sk-header__panel {
     display: flex;
   }
-  /* On a transparent header the open phone menu gets a solid panel, so its links are readable over any picture. */
   .twd-sk-page .twd-sk-header--over.twd-sk-header--over.twd-sk-header--js.twd-sk-header--js .twd-sk-header__panel.twd-sk-header__panel {
     padding: 14px !important;
     background-color: var(--twd-site-color-surface) !important;
@@ -3434,7 +3299,6 @@
     flex-direction: column;
     align-items: flex-start;
   }
-  /* The feature footer stacks its two blocks; the logo takes its phone size and the heading its smaller step, still large. */
   .twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__main.twd-sk-footer__main {
     grid-template-columns: 1fr;
     gap: var(--twd-site-gap-md);
@@ -3456,8 +3320,6 @@
     font-size: var(--twd-site-size-h2-sm) !important;
   }
 }
-/* The text wordmark header on a phone (0.14.0): the bar keeps the symbol and name readable beside the menu button; the front page stack stays
-   centred with the menu button at the corner; scrolled, the symbol (and the name, if kept) sits at the left and the menu button at the right. */
 @media (max-width: 900px) {
   .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__mark.twd-sk-header__mark {
     height: var(--twd-site-wordmark-symbol-sm);
@@ -3542,7 +3404,6 @@
     height: calc(var(--twd-sk-wm-s) + var(--twd-sk-wm-n) * 1.2 + var(--twd-sk-wm-l) * 1.3 + var(--twd-sk-wm-pad) + var(--twd-sk-wm-strip));
   }
 }
-/* After the transitions above, so it wins the tie: the scroll size change does not animate for people who ask for less motion. */
 @media (prefers-reduced-motion: reduce) {
   .twd-sk-page .twd-sk-header--shrink.twd-sk-header--shrink .twd-sk-header__inner.twd-sk-header__inner,
   .twd-sk-page .twd-sk-header--shrink.twd-sk-header--shrink .twd-sk-header__logo-img.twd-sk-header__logo-img,
@@ -3550,7 +3411,6 @@
     transition: none;
   }
 }
-/* Question groups on a wide screen: one group at a time (0.14.0). */
 @media (min-width: 769px) {
   .twd-sk-page .twd-sk-faq__groups.twd-sk-faq__groups:not(:has(.twd-sk-faq__group.twd-sk-faq__group:target)) .twd-sk-faq__group.twd-sk-faq__group:not(.twd-sk-faq__group--default.twd-sk-faq__group--default) {
     display: none;
@@ -3561,12 +3421,10 @@
   .twd-sk-page .twd-sk-faq__group.twd-sk-faq__group + .twd-sk-faq__group.twd-sk-faq__group {
     margin-top: 0 !important;
   }
-  /* The articles strip: introduction beside the cards (0.14.0). */
   .twd-sk-page .twd-sk-resources__row.twd-sk-resources__row {
     grid-template-columns: 1fr 2fr;
   }
 }
-/* ---- on this page (0.15.0, idea 8): a quiet box of links to the page's section headings, built when the page is drawn ---- */
 .twd-sk-page .twd-sk-toc__box.twd-sk-toc__box {
   margin: 28px 0 0 !important;
   padding: var(--twd-site-card-pad-sm) !important;
@@ -3606,8 +3464,6 @@
 .twd-sk-page .twd-sk-toc-target.twd-sk-toc-target {
   scroll-margin-top: 120px;
 }
-/* ---- reading controls (0.15.0, idea 6): the visitor's own text size, line spacing and contrast ---- */
-/* The section toggle class is a marker for the script; it must not move the section. The fixed box is the script's own. */
 .twd-sk-page .twd-sk-reading.twd-sk-reading {
   position: relative;
 }
@@ -3716,7 +3572,6 @@
     bottom: 76px;
   }
 }
-/* ---- at a glance (0.15.0, idea 9): three or four short facts in a row, two across on a phone ---- */
 .twd-sk-page .twd-sk-facts__list.twd-sk-facts__list {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -3751,7 +3606,6 @@
     gap: var(--twd-site-gap-sm);
   }
 }
-/* ---- the contact bar on a phone (0.15.0, idea 7): nothing on a computer; fixed to the bottom on a phone, the footer keeps room for it ---- */
 .twd-sk-page .twd-sk-contactbar.twd-sk-contactbar {
   display: none;
 }
@@ -3807,7 +3661,6 @@
     padding-bottom: 64px !important;
   }
 }
-/* ---- box, border and padding round a section's content (0.15.0): Look panel choices, no class = as before ---- */
 .twd-sk-page .twd-sk-box-card.twd-sk-box-card > .twd-sk-inner.twd-sk-inner {
   padding: var(--twd-site-card-pad) !important;
   border-radius: var(--twd-site-radius-card) !important;
@@ -3831,7 +3684,6 @@
 .twd-sk-page .twd-sk-border-accent.twd-sk-border-accent:not(.twd-sk-box-card.twd-sk-box-card):not(.twd-sk-box-outline.twd-sk-box-outline) > .twd-sk-inner.twd-sk-inner {
   padding: var(--twd-site-card-pad) !important;
 }
-/* 18a: the box and border colours follow the section's tone (see the note box above). */
 .twd-sk-page .twd-sk-tone-surface.twd-sk-tone-surface.twd-sk-box-card.twd-sk-box-card > .twd-sk-inner.twd-sk-inner {
   background-color: var(--twd-site-color-bg) !important;
 }
@@ -3873,8 +3725,6 @@
     width: calc(100% - 2 * var(--twd-site-gutter-sm));
   }
 }
-/* ---- space above and below a section (0.15.0): Look panel choices, no class = as before ---- */
-/* Last in the file on purpose: equal specificity with every section rule, so these win on the paddings. */
 .twd-sk-page .twd-sk-space-top-0.twd-sk-space-top-0 {
   padding-top: 0 !important;
 }
@@ -3894,7 +3744,6 @@
   padding-bottom: calc(var(--twd-site-section-y) * 1.5) !important;
 }
 @media (max-width: 768px) {
-  /* Hide on phones (0.15.0): a Look choice; the Visual editor's own stylesheet shows the section again while editing. */
   .twd-sk-page .twd-sk-hide-phone.twd-sk-hide-phone {
     display: none;
   }

@@ -42,8 +42,9 @@ def parse(text,indent=''):
         m=re.compile(r'\s*').match(text,i); i=m.end()
         if i>=len(text): break
         if text.startswith('/*',i):
+            # Comments stay in the source only (29 Oct 2026): a visitor's stylesheet carries none of them. Before
+            # this they were 15,000 of the 174,000 bytes a visitor downloaded.
             j=text.index('*/',i)+2
-            if 'Selectors are relative' not in text[i:j]: out.append(indent+text[i:j])
             i=j; continue
         j=text.index('{',i); head=text[i:j].strip()
         depth=1;k=j+1
