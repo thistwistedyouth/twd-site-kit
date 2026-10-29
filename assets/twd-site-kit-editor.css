@@ -707,10 +707,14 @@
 .twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin .twd-sk-ed__inlinetools--view.twd-sk-ed__inlinetools--view {
   margin-left: auto !important;
 }
-.twd-sk-ed .twd-sk-ed__viewselect.twd-sk-ed__viewselect {
+.twd-sk-ed .twd-sk-ed__viewselect.twd-sk-ed__viewselect,
+.twd-sk-ed .twd-sk-ed__styleselect.twd-sk-ed__styleselect {
   min-width: 0;
   width: auto;
   max-width: 100%;
+}
+.twd-sk-ed .twd-sk-ed__stylerow.twd-sk-ed__stylerow {
+  flex-wrap: wrap;
 }
 .twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--words.twd-sk-ed__inlinetools--words,
 .twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--section.twd-sk-ed__inlinetools--section,

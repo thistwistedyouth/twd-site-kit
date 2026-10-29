@@ -20,7 +20,7 @@
 	var show = ED.show;
 	var BLOCKS_WITH_BREAKS = { P: 1, LI: 1, DD: 1, FIGCAPTION: 1, BLOCKQUOTE: 1 };
 	var PICTURE_TYPES = /^image\/(jpeg|png|gif|webp|avif)$/;
-	var S = { on: false, texts: [], pics: [], spots: [], orig: {}, origText: {}, origPic: {}, hrefs: {}, picks: {}, spotPicks: {}, removes: {}, removeOrder: [], looks: {}, origLook: {}, lookSec: null, last: null, range: null, linkTarget: null, target: null, saving: false, uploading: false };
+	var S = { on: false, texts: [], pics: [], spots: [], orig: {}, origText: {}, origPic: {}, hrefs: {}, picks: {}, spotPicks: {}, removes: {}, removeOrder: [], looks: {}, origLook: {}, lookSec: null, last: null, range: null, linkTarget: null, target: null, saving: false, uploading: false, styles: {}, origStyles: {}, levels: {}, origLevel: {} };
 	var ui = {};
 
 	function texts() {
@@ -307,6 +307,211 @@
 		toggleParaClass(NOTE, S.note, S.origNote, 'note box');
 	}
 
+	/* ---- shared text styles (18b, 29 Oct 2026) ----
+	   A small fixed set of classes (colour, alignment, size, highlight) on the paragraph or heading the cursor is in,
+	   from the More row of the one window. The server lists them (cfg.look.textStyles) with the colours each tone
+	   allows on this site, so a colour that would not read on the section's background is never offered; Save sends
+	   the set by number (styles), Cancel and Undo revert it. A subheading can also change level (h2 or h3). */
+	var TS = cfg.look && cfg.look.textStyles ? cfg.look.textStyles : null;
+
+	function styleClassList() {
+		var out = [];
+		(TS ? TS.groups : []).forEach(function (g) {
+			if (g.kind === 'toggle') {
+				out.push(g.class);
+				return;
+			}
+			g.choices.forEach(function (ch) {
+				if (ch[0] !== cfg.look.standard) {
+					out.push(ch[0]);
+				}
+			});
+		});
+		return out;
+	}
+
+	function stylesOf(t) {
+		var all = styleClassList();
+		return Array.prototype.filter.call(t.classList, function (c) {
+			return all.indexOf(c) > -1;
+		});
+	}
+
+	// The tone a section's words sit on: the picture layout, else its tone class, else plain (as TWD_SK_Looks::tone_of).
+	function toneOf(sec) {
+		if (!sec) {
+			return 'twd-sk-tone-base';
+		}
+		if (sec.classList.contains('twd-sk-text--picture')) {
+			return 'twd-sk-text--picture';
+		}
+		var tones = TS ? TS.tones : ['twd-sk-tone-base', 'twd-sk-tone-surface', 'twd-sk-tone-tint', 'twd-sk-tone-band'];
+		for (var k = 0; k < tones.length; k++) {
+			if (sec.classList.contains(tones[k])) {
+				return tones[k];
+			}
+		}
+		return 'twd-sk-tone-base';
+	}
+
+	function colorAllowed(cls, sec) {
+		var name = cls.replace(/^twd-sk-s?c-/, '');
+		var allow = TS && TS.allow ? (TS.allow[toneOf(sec)] || []) : [];
+		return allow.indexOf(name) > -1;
+	}
+
+	// The piece of text a style goes on: never a button or a group tab.
+	function styleTarget() {
+		var t = inEditable() || editableOf(S.last);
+		return t && t.tagName !== 'A' ? t : null;
+	}
+
+	function groupOf(key) {
+		return (TS ? TS.groups : []).filter(function (g) {
+			return g.key === key;
+		})[0];
+	}
+
+	function setStyle(key, value) {
+		var t = styleTarget();
+		var g = groupOf(key);
+		if (!t || !g) {
+			status('Click the words you want to style first.');
+			return;
+		}
+		var i = t.getAttribute('data-twd-sk-t');
+		var drop = g.kind === 'toggle' ? [g.class] : g.choices.map(function (ch) {
+			return ch[0];
+		});
+		drop.forEach(function (c) {
+			t.classList.remove(c);
+		});
+		var on = value && value !== cfg.look.standard;
+		if (on) {
+			t.classList.add(value);
+		}
+		var now = stylesOf(t);
+		if (now.join(' ') === (S.origStyles[i] || []).join(' ')) {
+			delete S.styles[i];
+		} else {
+			S.styles[i] = now;
+		}
+		markChanged(t);
+		counter();
+		refreshStyleRow();
+		status(g.label + (on ? ' set.' : ' back to normal.') + ' Save keeps it; Cancel or Undo takes it back.');
+	}
+
+	// Swap an element for one with another tag, keeping its attributes, children and place in the lists.
+	function swapTag(t, tag) {
+		var n = document.createElement(tag);
+		Array.prototype.forEach.call(t.attributes, function (a) {
+			n.setAttribute(a.name, a.value);
+		});
+		while (t.firstChild) {
+			n.appendChild(t.firstChild);
+		}
+		t.parentNode.replaceChild(n, t);
+		var at = S.texts.indexOf(t);
+		if (at > -1) {
+			S.texts[at] = n;
+		}
+		if (S.last === t) {
+			S.last = n;
+		}
+		return n;
+	}
+
+	function setLevel(level) {
+		var t = styleTarget();
+		if (!t || !t.classList.contains(SUBHEADING)) {
+			status('Heading level is for a subheading inside the words. Click one first.');
+			refreshStyleRow();
+			return;
+		}
+		if (t.tagName.toLowerCase() === level) {
+			return;
+		}
+		var i = t.getAttribute('data-twd-sk-t');
+		if (level === 'h3') {
+			var sec = sectionOf(t);
+			var ok = false;
+			Array.prototype.forEach.call(sec ? sec.querySelectorAll('h2') : [], function (h) {
+				if (h !== t && (h.compareDocumentPosition(t) & 4)) {
+					ok = true;
+				}
+			});
+			if (!ok) {
+				status('An h3 needs an h2 above it in the same section, so the headings stay in order.');
+				refreshStyleRow();
+				return;
+			}
+		}
+		var n = swapTag(t, level);
+		if (level === S.origLevel[i]) {
+			delete S.levels[i];
+		} else {
+			S.levels[i] = level;
+		}
+		n.focus({ preventScroll: true });
+		markChanged(n);
+		counter();
+		refreshStyleRow();
+		status('Heading level set to ' + level + '. Save keeps it; Cancel or Undo takes it back.');
+	}
+
+	function styleSelect(key) {
+		var g = groupOf(key);
+		var select = el('select', { className: 'twd-sk-ed__select twd-sk-ed__styleselect', 'aria-label': g ? g.label : key });
+		select.addEventListener('change', function () {
+			setStyle(key, select.value);
+		});
+		return select;
+	}
+
+	// The row shows what the current piece has; the colour list holds only what reads on this section's tone.
+	function refreshStyleRow() {
+		if (!ui.styleRow || !TS) {
+			return;
+		}
+		var t = styleTarget();
+		var sec = t ? sectionOf(t) : null;
+		var std = cfg.look.standard;
+		[['color', ui.styleColor], ['align', ui.styleAlign], ['size', ui.styleSize]].forEach(function (pair) {
+			var g = groupOf(pair[0]);
+			var select = pair[1];
+			if (!g) {
+				return;
+			}
+			var current = std;
+			ED.clear(select);
+			g.choices.forEach(function (ch) {
+				var has = t && ch[0] !== std && t.classList.contains(ch[0]);
+				if (pair[0] === 'color' && ch[0] !== std && !has && !colorAllowed(ch[0], sec)) {
+					return;
+				}
+				select.appendChild(el('option', { value: ch[0], text: g.label + ': ' + ch[1] }));
+				if (has) {
+					current = ch[0];
+				}
+			});
+			select.value = current;
+			select.disabled = !t;
+		});
+		var hl = groupOf('highlight');
+		if (hl && ui.styleHl) {
+			ui.styleHl.setAttribute('aria-pressed', t && t.classList.contains(hl.class) ? 'true' : 'false');
+			ui.styleHl.disabled = !t;
+		}
+		if (ui.styleLevel) {
+			var isSub = !!(t && t.classList.contains(SUBHEADING));
+			show(ui.styleLevel, isSub);
+			if (isSub) {
+				ui.styleLevel.value = t.tagName.toLowerCase();
+			}
+		}
+	}
+
 	/* Heading above (0.15.0): a subheading put in before the paragraph the cursor is in, an h2 or an h3 by position
 	   (an h3 when the section already has an h2 title), with the class twd-sk-text__subheading. It lives only on
 	   screen until Save sends its words with the paragraph; Cancel takes it away; pressing again in it removes it. */
@@ -368,7 +573,7 @@
 
 	function markChanged(t) {
 		var i = t.getAttribute('data-twd-sk-t');
-		if (serialize(t) !== S.origText[i] || S.hrefs[i] !== undefined || S.quote[i] !== undefined || S.note[i] !== undefined || S.headings[i] !== undefined) {
+		if (serialize(t) !== S.origText[i] || S.hrefs[i] !== undefined || S.quote[i] !== undefined || S.note[i] !== undefined || S.headings[i] !== undefined || S.styles[i] !== undefined || S.levels[i] !== undefined) {
 			t.setAttribute('data-twd-sk-changed', '1');
 		} else {
 			t.removeAttribute('data-twd-sk-changed');
@@ -615,7 +820,13 @@
 				return;
 			}
 			var now = lookState(info, classes).options[o.key];
-			ui.lookBody.appendChild(lookSelect(id, o.label, o.choices, now, function (value) {
+			var choices = o.choices;
+			if (o.key === 'text_color') {
+				choices = o.choices.filter(function (ch) {
+					return ch[0] === std || classes.indexOf(ch[0]) > -1 || colorAllowed(ch[0], sec);
+				});
+			}
+			ui.lookBody.appendChild(lookSelect(id, o.label, choices, now, function (value) {
 				var v = {};
 				v[o.key] = value;
 				changeLook(null, v);
@@ -699,6 +910,26 @@
 		ui.putBack.disabled = true;
 		ui.more = toolButton('More', 'More tools for what you clicked', toggleMore);
 		ui.more.setAttribute('aria-expanded', 'false');
+		// 18b: colour, alignment, size, highlight and heading level for the words the cursor is in.
+		if (oneWindow && TS) {
+			ui.styleColor = styleSelect('color');
+			ui.styleAlign = styleSelect('align');
+			ui.styleSize = styleSelect('size');
+			ui.styleHl = toolButton('Highlight', 'A soft marker behind these words', function () {
+				var t = styleTarget();
+				var hl = groupOf('highlight');
+				setStyle('highlight', t && hl && t.classList.contains(hl.class) ? '' : (hl ? hl.class : ''));
+			});
+			ui.styleHl.setAttribute('aria-pressed', 'false');
+			ui.styleLevel = el('select', { className: 'twd-sk-ed__select twd-sk-ed__styleselect', 'aria-label': 'Heading level', hidden: '' }, [
+				el('option', { value: 'h2', text: 'Heading level: h2' }),
+				el('option', { value: 'h3', text: 'Heading level: h3' })
+			]);
+			ui.styleLevel.addEventListener('change', function () {
+				setLevel(ui.styleLevel.value);
+			});
+			ui.styleRow = el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words twd-sk-ed__inlinetools--more twd-sk-ed__stylerow', role: 'group', 'aria-label': 'Text styles' }, [ui.styleColor, ui.styleAlign, ui.styleSize, ui.styleHl, ui.styleLevel]);
+		}
 		ui.look = toolButton('Look', 'Change the layout or options of this section', openLook);
 		ui.lookHead = el('p', { className: 'twd-sk-ed__inlinehead', tabindex: '-1' });
 		ui.lookBody = el('div', { className: 'twd-sk-ed__lookbody' });
@@ -814,6 +1045,7 @@
 				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--putback' }, [ui.putBack]),
 				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--morebtn' }, [ui.more]),
 				wordsMore,
+				ui.styleRow || el('span', { hidden: '' }),
 				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--view twd-sk-ed__inlinetools--more', role: 'group', 'aria-label': 'See the page at a size' }, [ui.viewSelect]),
 				ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel, ui.confirm,
 				el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.undo, ui.save, ui.cancel])
@@ -868,6 +1100,9 @@
 		}
 		show(ui.viewHint, !!(S.view && kind === 'section'));
 		show(ui.allSections, !!S.view);
+		if (kind === 'words') {
+			refreshStyleRow();
+		}
 	}
 
 	function inEditable() {
@@ -1552,6 +1787,10 @@
 		S.note = {};
 		S.origNote = {};
 		S.headings = {};
+		S.styles = {};
+		S.origStyles = {};
+		S.levels = {};
+		S.origLevel = {};
 		S.picks = {};
 		S.spotPicks = {};
 		S.removes = {};
@@ -1571,6 +1810,10 @@
 			S.origText[i] = serialize(t);
 			S.origQuote[i] = t.classList.contains(QUOTE);
 			S.origNote[i] = t.classList.contains(NOTE);
+			S.origStyles[i] = stylesOf(t);
+			if (t.classList.contains(SUBHEADING)) {
+				S.origLevel[i] = t.tagName.toLowerCase();
+			}
 			t.setAttribute('contenteditable', 'true');
 			t.setAttribute('spellcheck', 'true');
 		});
@@ -1641,6 +1884,17 @@
 			}
 			if (S.origNote[i] !== undefined) {
 				t.classList.toggle(NOTE, S.origNote[i]);
+			}
+			if (S.origStyles[i] !== undefined) {
+				styleClassList().forEach(function (c) {
+					t.classList.remove(c);
+				});
+				S.origStyles[i].forEach(function (c) {
+					t.classList.add(c);
+				});
+			}
+			if (S.origLevel[i] !== undefined && t.tagName.toLowerCase() !== S.origLevel[i]) {
+				swapTag(t, S.origLevel[i]);
 			}
 		});
 		S.pics.forEach(function (img) {
@@ -1735,6 +1989,12 @@
 				}
 				if (S.headings[i] !== undefined) {
 					item.heading = S.headings[i].el.textContent;
+				}
+				if (S.styles[i] !== undefined) {
+					item.styles = S.styles[i];
+				}
+				if (S.levels[i] !== undefined) {
+					item.level = S.levels[i];
 				}
 				body.texts.push(item);
 			}

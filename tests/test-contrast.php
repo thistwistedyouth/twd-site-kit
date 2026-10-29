@@ -171,3 +171,26 @@ twd_sk_test( 'contrast: every box, border, quote line, note box and frame style 
 	twd_sk_eq( 'rgba(255,255,255,0.5)', TWD_SK_Contrast::with_alpha( '#ffffff', 0.5 ) );
 	twd_sk_eq( null, TWD_SK_Contrast::with_alpha( 'transparent-ish', 0.5 ) );
 } );
+
+twd_sk_test( 'shared text styles (18b): in every pack each colour is offered on a tone exactly when it reads at 4.5:1 there; Light is offered on a band and in the picture frame and never on the plain tone; Accent and Dark on the plain tone; Dark never on a band', function () {
+	$colors = TWD_SK_Looks::text_colors();
+	foreach ( TWD_SK_Packs::packs() as $slug => $pack ) {
+		$allow = TWD_SK_Looks::text_colors_allowed( $pack['tokens'] );
+		foreach ( TWD_SK_Looks::tone_backgrounds() as $tone => $bg ) {
+			foreach ( $colors as $name => $c ) {
+				$ratio = TWD_SK_Contrast::ratio_for( array( $name, $tone, $c[1], $bg[0], $bg[1] ), $pack['tokens'] );
+				twd_sk_true( null !== $ratio, $slug . ' ' . $tone . ' ' . $name . ' judged' );
+				twd_sk_eq( $ratio >= TWD_SK_Contrast::MIN, in_array( $name, $allow[ $tone ], true ), $slug . ' ' . $tone . ' ' . $name . ' at ' . round( $ratio, 2 ) );
+			}
+		}
+		twd_sk_eq( array( 'light' ), $allow['twd-sk-tone-band'], $slug . ' band' );
+		twd_sk_eq( array( 'light' ), $allow['twd-sk-text--picture'], $slug . ' picture' );
+		twd_sk_true( ! in_array( 'light', $allow['twd-sk-tone-base'], true ), $slug . ' no light on plain' );
+		twd_sk_true( in_array( 'accent', $allow['twd-sk-tone-base'], true ) && in_array( 'dark', $allow['twd-sk-tone-base'], true ), $slug . ' accent and dark on plain' );
+		twd_sk_true( ! in_array( 'dark', $allow['twd-sk-tone-band'], true ), $slug . ' no dark on a band' );
+	}
+	// The sentence the editor shows names the colour.
+	twd_sk_has( 'Light would not be readable', TWD_SK_Looks::text_color_problem( 'twd-sk-c-light', 'twd-sk-tone-base', TWD_SK_Packs::packs()['sage']['tokens'] ) );
+	twd_sk_eq( '', TWD_SK_Looks::text_color_problem( 'twd-sk-c-light', 'twd-sk-tone-band', TWD_SK_Packs::packs()['sage']['tokens'] ) );
+	twd_sk_eq( '', TWD_SK_Looks::text_color_problem( 'twd-sk-al-left', 'twd-sk-tone-base' ), 'not a colour: nothing to say' );
+} );

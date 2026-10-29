@@ -44,7 +44,7 @@ twd_sk_test( 'looks: the browser gets small, static data: labels and class names
 	twd_sk_eq( '_', $c['standard'] );
 	twd_sk_true( ! isset( $c['components']['notice'] ), 'the safety notice is left out' );
 	twd_sk_true( isset( $c['components']['hero']['options'][0]['choices'] ) );
-	twd_sk_eq( array( 'space_top', 'space_bottom', 'box', 'border', 'padding', 'background', 'hide_phone' ), array_map( function ( $o ) { return $o['key']; }, $c['shared'] ), 'the shared options go once' );
+	twd_sk_eq( array( 'space_top', 'space_bottom', 'box', 'border', 'padding', 'background', 'text_color', 'hide_phone' ), array_map( function ( $o ) { return $o['key']; }, $c['shared'] ), 'the shared options go once' );
 	twd_sk_eq( array( 'box', 'border', 'padding' ), $c['advanced'] );
 	twd_sk_eq( array(), $c['components']['faq']['options'], 'a component with no options of its own sends none' );
 	$json = json_encode( $c );
@@ -372,7 +372,7 @@ twd_sk_test( 'words over a picture (0.15.0): the Picture text layout, its layer,
 	}
 	twd_sk_eq( array( 'twd-sk-frame' ), $pic[2] );
 	twd_sk_true( count( $cfg['hints'] ) >= 6 );
-	twd_sk_true( strlen( json_encode( $cfg ) ) < 12000, 'config size ' . strlen( json_encode( $cfg ) ) );
+	twd_sk_true( strlen( json_encode( $cfg ) ) < 13500, 'config size ' . strlen( json_encode( $cfg ) ) ); // 18b added the text styles and the allow list (about 1,300 bytes).
 	// The frame tint is a Site tab choice, and the contrast check reads the words on the frame over the overlay over a photograph.
 	twd_sk_true( in_array( 'color-frame', TWD_SK_Site::editable_names(), true ) );
 	twd_sk_eq( 'rgba(0,0,0,0.3)', TWD_SK_Site::picture_presets()['color-frame'][0][0] );
@@ -404,7 +404,7 @@ twd_sk_test( 'words over a picture (0.15.0): the AI editor names the nearest Loo
 twd_sk_test( 'box, border and padding (0.15.0): shared classes on any section, styled from tokens, offered to administrators until the switch offers them to everyone; the route holds them back otherwise', function () {
 	twd_stub_reset();
 	$all = TWD_SK_Looks::all_options( 'faq' );
-	twd_sk_eq( array( 'space_top', 'space_bottom', 'box', 'border', 'padding', 'background', 'hide_phone' ), array_keys( $all ) );
+	twd_sk_eq( array( 'space_top', 'space_bottom', 'box', 'border', 'padding', 'background', 'text_color', 'hide_phone' ), array_keys( $all ) );
 	foreach ( array( 'twd-sk-box-card', 'twd-sk-box-outline', 'twd-sk-border-thin', 'twd-sk-border-accent', 'twd-sk-pad-compact', 'twd-sk-pad-roomy' ) as $cls ) {
 		twd_sk_true( in_array( $cls, TWD_SK_Registry::shared_classes(), true ), $cls . ' is shared' );
 		twd_sk_has( $cls, file_get_contents( ABSPATH . 'assets/twd-site-kit.css' ) );

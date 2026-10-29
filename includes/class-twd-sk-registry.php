@@ -135,6 +135,25 @@ class TWD_SK_Registry {
 			'twd-sk-card__title',
 			'twd-sk-list',
 			'twd-sk-gallery-label',
+			// 18b (29 Oct 2026): the shared text styles, picked in the Visual editor (on words) or the Look panel (a
+			// section's text colour). TWD_SK_Looks::text_styles() is the list; the stylesheet has one rule per class.
+			'twd-sk-c-heading',
+			'twd-sk-c-accent',
+			'twd-sk-c-muted',
+			'twd-sk-c-light',
+			'twd-sk-c-dark',
+			'twd-sk-al-left',
+			'twd-sk-al-center',
+			'twd-sk-al-right',
+			'twd-sk-sz-small',
+			'twd-sk-sz-large',
+			'twd-sk-sz-lead',
+			'twd-sk-hl',
+			'twd-sk-sc-heading',
+			'twd-sk-sc-accent',
+			'twd-sk-sc-muted',
+			'twd-sk-sc-light',
+			'twd-sk-sc-dark',
 		);
 	}
 

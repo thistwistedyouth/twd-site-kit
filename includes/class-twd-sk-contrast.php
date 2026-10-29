@@ -160,6 +160,12 @@ class TWD_SK_Contrast {
 			$out[] = array( $style, 'twd-sk-tone-band', 'color-on-band', 'color-band', array() );
 			$out[] = array( $style, 'twd-sk-text--picture', 'color-on-image', 'color-frame', $photo );
 		}
+		// The highlight (18b): a soft tinted marker with the title colour; on a band and in the picture frame, the frame tint.
+		foreach ( array( 'twd-sk-tone-base', 'twd-sk-tone-surface', 'twd-sk-tone-tint' ) as $tone ) {
+			$out[] = array( 'twd-sk-hl', $tone, 'color-title', 'color-tint', array() );
+		}
+		$out[] = array( 'twd-sk-hl', 'twd-sk-tone-band', 'color-on-band', 'color-frame', array( 'color-band' ) );
+		$out[] = array( 'twd-sk-hl', 'twd-sk-text--picture', 'color-on-image', 'color-frame', array_merge( $photo, array( 'color-frame' ) ) );
 		// The frame over a picture at its three depths (Lighter is the frame tint at 60 percent; Stronger is it twice).
 		$out[] = array( 'twd-sk-frame', 'twd-sk-text--picture', 'color-on-image', 'color-frame', $photo );
 		$out[] = array( 'twd-sk-frame--light', 'twd-sk-text--picture', 'color-on-image', self::fade( 'color-frame', 0.6 ), $photo );

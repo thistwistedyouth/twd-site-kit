@@ -451,3 +451,65 @@ twd_sk_test( 'heading above (0.15.0): a subheading goes in before a paragraph as
 	twd_sk_has( 'item.heading = S.headings[i].el.textContent', $js );
 	twd_sk_has( 'S.headings = {};', $js );
 } );
+
+twd_sk_test( 'shared text styles (18b): registry classes, set as a group on a piece of text through the inline route, one per group, colours only where they read on the tone, a subheading can change level in order, kept by the sanitiser, drawn by the stylesheet, offered by the script', function () {
+	twd_stub_reset();
+	foreach ( TWD_SK_Looks::text_style_classes() as $cls ) {
+		twd_sk_true( in_array( $cls, TWD_SK_Registry::shared_classes(), true ), 'registered: ' . $cls );
+	}
+	twd_sk_eq( 17, count( TWD_SK_Looks::text_style_classes() ) );
+	$html = '<section class="twd-sk-text twd-sk-tone-base"><div class="twd-sk-inner"><h2 class="twd-sk-title">Hi</h2><div class="twd-sk-text__body"><p>One.</p><h3 class="twd-sk-text__subheading">Sub</h3><p>Two.</p></div></div></section>';
+	// Text pieces: 0 the title, 1 One, 2 Sub, 3 Two.
+	$on = TWD_SK_Inline::apply( $html, array( array( 'i' => 3, 'html' => 'Two.', 'styles' => array( 'twd-sk-c-accent', 'twd-sk-al-center', 'twd-sk-hl' ) ) ), array() )['html'];
+	twd_sk_has( '<p class="twd-sk-c-accent twd-sk-al-center twd-sk-hl">Two.</p>', $on );
+	twd_sk_eq( $on, TWD_SK_Sanitizer::clean( $on ), 'the sanitiser keeps them' );
+	// Replaced as a set: the next save holds only what is sent; an empty set clears them and leaves no empty class.
+	$two = TWD_SK_Inline::apply( $on, array( array( 'i' => 3, 'html' => 'Two.', 'styles' => array( 'twd-sk-sz-small' ) ) ), array() )['html'];
+	twd_sk_has( '<p class="twd-sk-sz-small">Two.</p>', $two );
+	$off = TWD_SK_Inline::apply( $two, array( array( 'i' => 3, 'html' => 'Two.', 'styles' => array() ) ), array() )['html'];
+	twd_sk_eq( $html, $off );
+	// A heading keeps its own classes beside a style.
+	$title = TWD_SK_Inline::apply( $html, array( array( 'i' => 0, 'html' => 'Hi', 'styles' => array( 'twd-sk-al-left' ) ) ), array() )['html'];
+	twd_sk_has( '<h2 class="twd-sk-title twd-sk-al-left">Hi</h2>', $title );
+	// Refused: an unknown class, a section colour on words, two of one group, a colour that does not read on the tone.
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Inline::apply( $html, array( array( 'i' => 1, 'html' => 'One.', 'styles' => array( 'twd-sk-quoteline' ) ) ), array() ), 'not a style' );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Inline::apply( $html, array( array( 'i' => 1, 'html' => 'One.', 'styles' => array( 'twd-sk-sc-dark' ) ) ), array() ), 'a section colour' );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Inline::apply( $html, array( array( 'i' => 1, 'html' => 'One.', 'styles' => array( 'twd-sk-al-left', 'twd-sk-al-right' ) ) ), array() ), 'two alignments' );
+	$light = TWD_SK_Inline::apply( $html, array( array( 'i' => 1, 'html' => 'One.', 'styles' => array( 'twd-sk-c-light' ) ) ), array() );
+	twd_sk_is_error( 'twd_sk_bad_input', $light, 'light on the plain tone' );
+	twd_sk_has( 'readable', $light->get_error_message() );
+	$band = str_replace( 'twd-sk-tone-base', 'twd-sk-tone-band', $html );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Inline::apply( $band, array( array( 'i' => 1, 'html' => 'One.', 'styles' => array( 'twd-sk-c-dark' ) ) ), array() ), 'dark on a band' );
+	twd_sk_has( '<p class="twd-sk-c-light">One.</p>', TWD_SK_Inline::apply( $band, array( array( 'i' => 1, 'html' => 'One.', 'styles' => array( 'twd-sk-c-light' ) ) ), array() )['html'], 'light on a band' );
+	// Heading level: the subheading to h2 and back to h3 (an h2 title is above it); a p cannot; an h3 with no h2 above cannot.
+	$h2 = TWD_SK_Inline::apply( $html, array( array( 'i' => 2, 'html' => 'Sub', 'level' => 'h2' ) ), array() )['html'];
+	twd_sk_has( '<h2 class="twd-sk-text__subheading">Sub</h2>', $h2 );
+	twd_sk_has( '<h3 class="twd-sk-text__subheading">Sub</h3>', TWD_SK_Inline::apply( $h2, array( array( 'i' => 2, 'html' => 'Sub', 'level' => 'h3' ) ), array() )['html'] );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Inline::apply( $html, array( array( 'i' => 1, 'html' => 'One.', 'level' => 'h2' ) ), array() ), 'a paragraph has no level' );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Inline::apply( $html, array( array( 'i' => 2, 'html' => 'Sub', 'level' => 'h4' ) ), array() ), 'h4 is not offered' );
+	$plain = '<section class="twd-sk-text twd-sk-text--prose twd-sk-tone-base"><div class="twd-sk-inner"><div class="twd-sk-text__body"><p>One.</p><h2 class="twd-sk-text__subheading">Sub</h2><p>Two.</p></div></div></section>';
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Inline::apply( $plain, array( array( 'i' => 1, 'html' => 'Sub', 'level' => 'h3' ) ), array() ), 'an h3 needs an h2 above it' );
+	// A whole section's colour through Looks: only where it reads on the tone.
+	$sec = TWD_SK_Looks::classes_for( 'text', array( 'twd-sk-text', 'twd-sk-tone-band' ), null, array( 'text_color' => 'twd-sk-sc-light' ) );
+	twd_sk_true( in_array( 'twd-sk-sc-light', $sec, true ), 'light on a band section' );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Looks::classes_for( 'text', array( 'twd-sk-text', 'twd-sk-tone-band' ), null, array( 'text_color' => 'twd-sk-sc-dark' ) ), 'dark on a band section' );
+	twd_sk_eq( 'twd-sk-text--picture', TWD_SK_Looks::tone_of( 'twd-sk-text twd-sk-text--picture twd-sk-frame twd-sk-tone-surface' ) );
+	twd_sk_eq( 'twd-sk-tone-base', TWD_SK_Looks::tone_of( array( 'twd-sk-faq' ) ) );
+	// The browser gets the groups and the allow list; the script and the Look panel use them.
+	$cfg = TWD_SK_Looks::config();
+	twd_sk_true( isset( $cfg['textStyles']['allow']['twd-sk-tone-band'] ) );
+	twd_sk_eq( array( 'light' ), $cfg['textStyles']['allow']['twd-sk-tone-band'] );
+	twd_sk_eq( 4, count( $cfg['textStyles']['groups'] ) );
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
+	foreach ( array( 'cfg.look.textStyles', 'function setStyle(key, value)', 'function setLevel(level)', 'function refreshStyleRow()', 'function colorAllowed(cls, sec)', 'item.styles = S.styles[i];', 'item.level = S.levels[i];', "toolButton('Highlight'", 'twd-sk-ed__stylerow', "o.key === 'text_color'", 'S.origStyles[i].forEach(function (c) {', 'swapTag(t, S.origLevel[i]);' ) as $needle ) {
+		twd_sk_has( $needle, $js );
+	}
+	// One rule per class, written to beat every layout rule; the section colour leaves links and buttons alone.
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	twd_sk_has( '.twd-sk-page .twd-sk-c-accent.twd-sk-c-accent.twd-sk-c-accent.twd-sk-c-accent.twd-sk-c-accent.twd-sk-c-accent {', $css );
+	twd_sk_has( '.twd-sk-page .twd-sk-sc-light.twd-sk-sc-light.twd-sk-sc-light.twd-sk-sc-light *:not(a),', $css );
+	twd_sk_has( 'font-size: var(--twd-site-size-h3) !important', $css );
+	foreach ( TWD_SK_Looks::text_style_classes() as $cls ) {
+		twd_sk_has( '.' . $cls . '.' . $cls, $css, 'styled: ' . $cls );
+	}
+} );

@@ -194,7 +194,9 @@
   border-top: 1px solid $color-border; background-color: $color-surface;
 }
 .twd-sk-ed__inlinebar--inwin .twd-sk-ed__inlinetools--view { margin-left: auto; }
-.twd-sk-ed__viewselect { min-width: 0; width: auto; max-width: 100%; }
+.twd-sk-ed__viewselect, .twd-sk-ed__styleselect { min-width: 0; width: auto; max-width: 100%; }
+/* 18b: the text style row behind More (colour, alignment, size, highlight, heading level). */
+.twd-sk-ed__stylerow { flex-wrap: wrap; }
 /* Only the tools for what was clicked: words show for words, the section tools for anything in a section. */
 .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--words, .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--section,
 .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="picture"] .twd-sk-ed__inlinetools--words, .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="section"] .twd-sk-ed__inlinetools--words { display: none; }

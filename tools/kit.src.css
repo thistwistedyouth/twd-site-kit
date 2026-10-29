@@ -1174,6 +1174,26 @@
   .twd-sk-box-card > .twd-sk-inner, .twd-sk-box-outline > .twd-sk-inner, .twd-sk-border-thin > .twd-sk-inner, .twd-sk-border-accent > .twd-sk-inner { width: calc(100% - 2 * #{$gutter-sm}); }
 }
 
+/* ---- shared text styles (18b, 29 Oct 2026): a small fixed set a person picks in the Visual editor's More row (on the
+   paragraph or heading the cursor is in) or in the Look panel (a whole section's text colour). Each word-style class is
+   written three times (the build doubles it again) so the rule beats every layout and tone rule: the person chose it
+   on purpose. A section colour reaches every element but links and buttons, below a word's own choice. Colours are
+   tokens; the editor offers only the colours that read on the section's tone (TWD_SK_Looks::text_colors_allowed). ---- */
+.twd-sk-al-left.twd-sk-al-left.twd-sk-al-left { text-align: left; }
+.twd-sk-al-center.twd-sk-al-center.twd-sk-al-center { text-align: center; }
+.twd-sk-al-right.twd-sk-al-right.twd-sk-al-right { text-align: right; }
+.twd-sk-sz-small.twd-sk-sz-small.twd-sk-sz-small { font-size: $size-small; }
+.twd-sk-sz-large.twd-sk-sz-large.twd-sk-sz-large { font-size: $size-lead; }
+.twd-sk-sz-lead.twd-sk-sz-lead.twd-sk-sz-lead { font-size: $size-h3; line-height: $line-heading; }
+.twd-sk-hl.twd-sk-hl.twd-sk-hl { padding: 0.15em 0.4em; border-radius: $radius-btn; background-color: $color-tint; color: $color-title; }
+.twd-sk-tone-band .twd-sk-hl.twd-sk-hl.twd-sk-hl { background-color: $color-frame; color: $color-on-band; }
+.twd-sk-text--picture .twd-sk-hl.twd-sk-hl.twd-sk-hl { background-color: $color-frame; color: $color-on-image; }
+.twd-sk-sc-heading.twd-sk-sc-heading *:not(a), .twd-sk-c-heading.twd-sk-c-heading.twd-sk-c-heading { color: $color-heading; }
+.twd-sk-sc-accent.twd-sk-sc-accent *:not(a), .twd-sk-c-accent.twd-sk-c-accent.twd-sk-c-accent { color: $color-accent-text; }
+.twd-sk-sc-muted.twd-sk-sc-muted *:not(a), .twd-sk-c-muted.twd-sk-c-muted.twd-sk-c-muted { color: $color-muted; }
+.twd-sk-sc-light.twd-sk-sc-light *:not(a), .twd-sk-c-light.twd-sk-c-light.twd-sk-c-light { color: $color-on-band; }
+.twd-sk-sc-dark.twd-sk-sc-dark *:not(a), .twd-sk-c-dark.twd-sk-c-dark.twd-sk-c-dark { color: $color-title; }
+
 /* ---- space above and below a section (0.15.0): Look panel choices, no class = as before ---- */
 /* Last in the file on purpose: equal specificity with every section rule, so these win on the paddings. */
 .twd-sk-space-top-0 { padding-top: 0; }

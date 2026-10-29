@@ -271,6 +271,75 @@ class TWD_SK_Inline {
 		}
 	}
 
+	/** The section an element sits in, or null. */
+	private static function section_of( DOMElement $el ) {
+		for ( $n = $el->parentNode; $n instanceof DOMElement; $n = $n->parentNode ) {
+			if ( 'section' === strtolower( $n->nodeName ) ) {
+				return $n;
+			}
+		}
+		return null;
+	}
+
+	/** True when an h2 comes before this element inside its own section (18b: an h3 must follow an h2). */
+	private static function h2_before( DOMElement $el ) {
+		$sec = self::section_of( $el );
+		if ( ! $sec ) {
+			return false;
+		}
+		$xp = new DOMXPath( $el->ownerDocument );
+		foreach ( $xp->query( 'preceding::h2', $el ) as $h2 ) {
+			for ( $n = $h2->parentNode; $n instanceof DOMElement; $n = $n->parentNode ) {
+				if ( $n === $sec ) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * The shared text styles on a piece of text, replaced as a set (18b). Each must be a word style (never a
+	 * section colour), one per group, and a colour must read on the section's tone with the site's own colours.
+	 */
+	private static function set_styles( DOMElement $el, array $styles ) {
+		$known  = TWD_SK_Looks::text_style_classes();
+		$groups = TWD_SK_Looks::text_styles();
+		$seen   = array();
+		$clean  = array();
+		foreach ( $styles as $cls ) {
+			if ( ! is_string( $cls ) || 0 === strpos( $cls, 'twd-sk-sc-' ) || ! in_array( $cls, $known, true ) ) {
+				return new WP_Error( 'twd_sk_bad_input', 'That text style is not one of the shared styles.' );
+			}
+			$group = '';
+			foreach ( $groups as $key => $g ) {
+				if ( 'toggle' === $g['kind'] ? $g['class'] === $cls : isset( $g['choices'][ $cls ] ) ) {
+					$group = $key;
+				}
+			}
+			if ( isset( $seen[ $group ] ) ) {
+				return new WP_Error( 'twd_sk_bad_input', 'One ' . strtolower( $groups[ $group ]['label'] ) . ' at a time.' );
+			}
+			$seen[ $group ] = true;
+			if ( 'color' === $group ) {
+				$sec     = self::section_of( $el );
+				$problem = TWD_SK_Looks::text_color_problem( $cls, TWD_SK_Looks::tone_of( $sec ? $sec->getAttribute( 'class' ) : '' ) );
+				if ( '' !== $problem ) {
+					return new WP_Error( 'twd_sk_bad_input', $problem );
+				}
+			}
+			$clean[] = $cls;
+		}
+		$classes = preg_split( '/\s+/', trim( (string) $el->getAttribute( 'class' ) ), -1, PREG_SPLIT_NO_EMPTY );
+		$classes = array_merge( array_values( array_diff( $classes, $known ) ), $clean );
+		if ( $classes ) {
+			$el->setAttribute( 'class', implode( ' ', $classes ) );
+		} else {
+			$el->removeAttribute( 'class' );
+		}
+		return true;
+	}
+
 	/** The level a new subheading takes before this paragraph: h3 when its section already has an h2, else h2 (0.15.0). */
 	public static function subheading_level( DOMElement $p ) {
 		for ( $n = $p->parentNode; $n instanceof DOMElement; $n = $n->parentNode ) {
@@ -510,6 +579,37 @@ class TWD_SK_Inline {
 					$el->setAttribute( 'class', implode( ' ', $classes ) );
 				} else {
 					$el->removeAttribute( 'class' );
+				}
+			}
+			// Heading level (18b): a subheading may be an h2 or an h3; an h3 needs an h2 above it in its section.
+			if ( isset( $edit['level'] ) ) {
+				$level = is_string( $edit['level'] ) ? strtolower( $edit['level'] ) : '';
+				if ( ! in_array( $level, array( 'h2', 'h3' ), true ) || ! self::has_class( $el, 'twd-sk-text__subheading' ) ) {
+					return new WP_Error( 'twd_sk_bad_input', 'Only a subheading can change level, to h2 or h3.' );
+				}
+				if ( 'h3' === $level && ! self::h2_before( $el ) ) {
+					return new WP_Error( 'twd_sk_bad_input', 'An h3 needs an h2 above it in the same section, so the headings stay in order.' );
+				}
+				if ( strtolower( $el->tagName ) !== $level ) {
+					$swap = $doc->createElement( $level );
+					foreach ( $el->attributes as $attr ) {
+						$swap->setAttribute( $attr->nodeName, $attr->nodeValue );
+					}
+					while ( $el->firstChild ) {
+						$swap->appendChild( $el->firstChild );
+					}
+					$el->parentNode->replaceChild( $swap, $el );
+					$el = $swap;
+				}
+			}
+			// Shared text styles (18b): the colour, alignment, size and highlight classes on this piece, replaced as a set.
+			if ( isset( $edit['styles'] ) ) {
+				if ( ! is_array( $edit['styles'] ) || self::is_button( $el ) || self::is_tab_link( $el ) ) {
+					return new WP_Error( 'twd_sk_bad_input', 'A text style goes on a paragraph, a heading or a list entry.' );
+				}
+				$set = self::set_styles( $el, $edit['styles'] );
+				if ( is_wp_error( $set ) ) {
+					return $set;
 				}
 			}
 			while ( $el->firstChild ) {

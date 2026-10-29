@@ -364,7 +364,142 @@ class TWD_SK_Looks {
 			'space_bottom' => self::space_option( 'bottom' ),
 		) + self::advanced_options() + array(
 			'background'   => self::background_option(),
+			'text_color'   => self::text_color_option(),
 			'hide_phone'   => self::hide_phone_option(),
+		);
+	}
+
+	/* ---- shared text styles (18b, 29 Oct 2026) ----
+	   A small fixed set of classes a person picks in the Visual editor (on the paragraph or heading the cursor is in)
+	   or in the Look panel (a whole section's text colour). Every colour is a pack token, never a typed colour, and
+	   the editor offers only the colours that read at 4.5:1 on the section's tone with the site's own colours; the
+	   server refuses the rest. The stylesheet has one rule per class, so the cost is fixed however often it is used. */
+
+	/** The styles for words: group => array( label, kind, choices (class => label) or class ). */
+	public static function text_styles() {
+		return array(
+			'color'     => array( 'label' => 'Text colour', 'kind' => 'choice', 'choices' => array( '' => 'Default' ) + self::text_color_labels( 'twd-sk-c-' ) ),
+			'align'     => array( 'label' => 'Alignment', 'kind' => 'choice', 'choices' => array( '' => 'As the layout', 'twd-sk-al-left' => 'Left', 'twd-sk-al-center' => 'Centre', 'twd-sk-al-right' => 'Right' ) ),
+			'size'      => array( 'label' => 'Size', 'kind' => 'choice', 'choices' => array( '' => 'Normal', 'twd-sk-sz-small' => 'Small', 'twd-sk-sz-large' => 'Large', 'twd-sk-sz-lead' => 'Lead' ) ),
+			'highlight' => array( 'label' => 'Highlight', 'kind' => 'toggle', 'class' => 'twd-sk-hl' ),
+		);
+	}
+
+	/** The five colours: name => array( label, token ). */
+	public static function text_colors() {
+		return array(
+			'heading' => array( 'Heading colour', 'color-heading' ),
+			'accent'  => array( 'Accent', 'color-accent-text' ),
+			'muted'   => array( 'Muted', 'color-muted' ),
+			'light'   => array( 'Light', 'color-on-band' ),
+			'dark'    => array( 'Dark', 'color-title' ),
+		);
+	}
+
+	/** The colour classes by prefix ('twd-sk-c-' on words, 'twd-sk-sc-' on a section): class => label. */
+	public static function text_color_labels( $prefix ) {
+		$out = array();
+		foreach ( self::text_colors() as $name => $c ) {
+			$out[ $prefix . $name ] = $c[0];
+		}
+		return $out;
+	}
+
+	/** Every shared text style class: the word styles, then the section colours. */
+	public static function text_style_classes() {
+		$out = array();
+		foreach ( self::text_styles() as $g ) {
+			if ( 'toggle' === $g['kind'] ) {
+				$out[] = $g['class'];
+				continue;
+			}
+			foreach ( array_keys( $g['choices'] ) as $c ) {
+				if ( '' !== $c ) {
+					$out[] = $c;
+				}
+			}
+		}
+		return array_merge( $out, array_keys( self::text_color_labels( 'twd-sk-sc-' ) ) );
+	}
+
+	/** The background a tone's words sit on: tone class => array( token, layers under it from the bottom up ). */
+	public static function tone_backgrounds() {
+		return array(
+			'twd-sk-tone-base'     => array( 'color-bg', array() ),
+			'twd-sk-tone-surface'  => array( 'color-surface', array() ),
+			'twd-sk-tone-tint'     => array( 'color-tint', array() ),
+			'twd-sk-tone-band'     => array( 'color-band', array() ),
+			'twd-sk-text--picture' => array( 'color-frame', array( TWD_SK_Contrast::PHOTO, 'color-overlay-mid' ) ),
+		);
+	}
+
+	/** The tone of a section from its classes (a list or a class string): the picture layout, else its tone class, else plain. */
+	public static function tone_of( $classes ) {
+		$classes = is_array( $classes ) ? $classes : preg_split( '/\s+/', trim( (string) $classes ), -1, PREG_SPLIT_NO_EMPTY );
+		if ( in_array( 'twd-sk-text--picture', $classes, true ) ) {
+			return 'twd-sk-text--picture';
+		}
+		foreach ( array_keys( self::tone_backgrounds() ) as $tone ) {
+			if ( in_array( $tone, $classes, true ) ) {
+				return $tone;
+			}
+		}
+		return 'twd-sk-tone-base';
+	}
+
+	/** The colour names that read at 4.5:1 on each tone with these tokens (the site's own look by default): tone => names. */
+	public static function text_colors_allowed( $tokens = null ) {
+		if ( null === $tokens ) {
+			$tokens = TWD_SK_Packs::active_tokens();
+		}
+		$out = array();
+		foreach ( self::tone_backgrounds() as $tone => $bg ) {
+			$out[ $tone ] = array();
+			foreach ( self::text_colors() as $name => $c ) {
+				$ratio = TWD_SK_Contrast::ratio_for( array( $name, $tone, $c[1], $bg[0], $bg[1] ), $tokens );
+				if ( null !== $ratio && $ratio >= TWD_SK_Contrast::MIN ) {
+					$out[ $tone ][] = $name;
+				}
+			}
+		}
+		return $out;
+	}
+
+	/** A plain sentence when a colour class (twd-sk-c-NAME or twd-sk-sc-NAME) would not read on the tone, else ''. */
+	public static function text_color_problem( $class, $tone, $tokens = null ) {
+		if ( ! preg_match( '/^twd-sk-s?c-([a-z]+)$/', (string) $class, $m ) ) {
+			return '';
+		}
+		$allowed = self::text_colors_allowed( $tokens );
+		if ( in_array( $m[1], isset( $allowed[ $tone ] ) ? $allowed[ $tone ] : array(), true ) ) {
+			return '';
+		}
+		$colors = self::text_colors();
+		return ( isset( $colors[ $m[1] ] ) ? $colors[ $m[1] ][0] : 'That colour' ) . ' would not be readable on this background, so it is not offered here.';
+	}
+
+	/** What the browser gets as cfg.look.textStyles: the groups, the colours, and which each tone allows on this site. */
+	public static function text_styles_config() {
+		$groups = array();
+		foreach ( self::text_styles() as $key => $g ) {
+			$groups[] = self::option_item( $key, $g );
+		}
+		return array(
+			'groups'        => $groups,
+			'colors'        => self::text_color_labels( 'twd-sk-c-' ),
+			'sectionColors' => self::text_color_labels( 'twd-sk-sc-' ),
+			'allow'         => self::text_colors_allowed(),
+			'tones'         => array_keys( self::tone_backgrounds() ),
+		);
+	}
+
+	/** Text colour for a whole section: a Look choice on every section; the browser offers only the tone's readable colours. */
+	private static function text_color_option() {
+		return array(
+			'label'   => 'Text colour for this section',
+			'kind'    => 'choice',
+			'choices' => array( '' => 'As the tone' ) + self::text_color_labels( 'twd-sk-sc-' ),
+			'help'    => 'Only colours that read well on this background are offered. Buttons and links keep their own.',
 		);
 	}
 
@@ -526,6 +661,8 @@ class TWD_SK_Looks {
 		}
 		$out['standard'] = self::STANDARD;
 		$out['hints']    = self::hints();
+		// 18b: the shared text styles and which colours each tone allows with this site's colours.
+		$out['textStyles'] = self::text_styles_config();
 		// Box, Border and Padding: named so the browser can hold them back from an editor who may not set them.
 		$out['advanced']   = self::advanced_keys();
 		$out['advancedOk'] = self::advanced_allowed();
@@ -660,6 +797,15 @@ class TWD_SK_Looks {
 			if ( ! in_array( $o['requires'], $new, true ) ) {
 				$drop = 'toggle' === $o['kind'] ? array( $o['class'] ) : array_keys( $o['choices'] );
 				$new  = array_values( array_diff( $new, $drop ) );
+			}
+		}
+		// 18b: a section's text colour must read on its tone, checked with the site's own colours.
+		foreach ( $new as $cls ) {
+			if ( 0 === strpos( $cls, 'twd-sk-sc-' ) ) {
+				$problem = self::text_color_problem( $cls, self::tone_of( $new ) );
+				if ( '' !== $problem ) {
+					return new WP_Error( 'twd_sk_bad_input', $problem );
+				}
 			}
 		}
 		return $new;
