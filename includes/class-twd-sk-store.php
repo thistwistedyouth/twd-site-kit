@@ -131,6 +131,9 @@ class TWD_SK_Store {
 			'kind'          => 'save',
 			'note'          => self::note( $args, '' ),
 			'restored_from' => 0,
+			// Page details (session 7, 29 Oct 2026): the title and description were changed with this save, so a
+			// version is recorded even when the words on the page are the same.
+			'details'       => ! empty( $args['details'] ),
 		), $result['report'] );
 	}
 
@@ -179,6 +182,8 @@ class TWD_SK_Store {
 		// The site stylesheet goes back with the page when it can (0.15.0): before the clean, so the classes that
 		// stylesheet defines survive it, and before the version is recorded, so it names the stylesheet it sits on.
 		$css_note = self::follow_css( $post_id, $source );
+		// The page title and description go back with it when they can (session 7).
+		$seo_note = self::follow_seo( $post_id, $source, $head );
 
 		// Re-run the sanitiser so a restore can never bring back anything the
 		// current rules would refuse.
@@ -192,12 +197,14 @@ class TWD_SK_Store {
 			'kind'          => 'restore',
 			'note'          => self::note( $args, 'restore of v' . (int) $source['id'] ),
 			'restored_from' => (int) $source['id'],
+			'details'       => self::details_differ( $source, $head ),
 		), $result['report'] );
 		if ( ! is_wp_error( $out ) ) {
 			$out['undid']    = $head ? self::label( $head ) : '';
 			$out['target']   = (int) $source['id'];
 			$out['now']      = self::label( $source );
 			$out['css_note'] = $css_note;
+			$out['seo_note'] = $seo_note;
 		}
 		return $out;
 	}
@@ -233,7 +240,8 @@ class TWD_SK_Store {
 
 		$target = null;
 		foreach ( array_reverse( $items ) as $item ) {
-			if ( (int) $item['id'] < $from && $item['html'] !== $head['html'] ) {
+			// A version whose words are the same but whose page details differ is a change too (session 7).
+			if ( (int) $item['id'] < $from && ( $item['html'] !== $head['html'] || self::details_differ( $item, $head ) ) ) {
 				$target = $item;
 				break;
 			}
@@ -248,6 +256,7 @@ class TWD_SK_Store {
 
 		// The site stylesheet goes back with the page when it can (0.15.0), before the clean (see restore()).
 		$css_note = self::follow_css( $post_id, $target );
+		$seo_note = self::follow_seo( $post_id, $target, $head );
 		$result   = TWD_SK_Sanitizer::clean_with_report( $target['html'] );
 		$clean    = $result['html'];
 		if ( '' === $clean ) {
@@ -265,14 +274,47 @@ class TWD_SK_Store {
 			'kind'          => 'undo',
 			'note'          => self::note( $args, 'undo to v' . (int) $target['id'] ),
 			'restored_from' => (int) $target['id'],
+			'details'       => self::details_differ( $target, $head ),
 		), $result['report'] );
 		if ( ! is_wp_error( $out ) ) {
 			$out['undid']    = self::label( $undone );
 			$out['target']   = (int) $target['id'];
 			$out['now']      = self::label( $target );
 			$out['css_note'] = $css_note;
+			$out['seo_note'] = $seo_note;
 		}
 		return $out;
+	}
+
+	/** The page title and description as they are now, or null when the search module is not loaded (session 7). */
+	private static function details_now( $post_id ) {
+		return class_exists( 'TWD_SK_Seo' ) ? TWD_SK_Seo::details( (int) $post_id ) : null;
+	}
+
+	/** Whether two versions recorded different page details (only when both recorded them). */
+	private static function details_differ( $a, $b ) {
+		return is_array( $a ) && is_array( $b ) && isset( $a['seo'], $b['seo'] ) && is_array( $a['seo'] ) && is_array( $b['seo'] ) && $a['seo'] != $b['seo'];
+	}
+
+	/**
+	 * Going back to a version: take the page title and description back with it when it is safe to (session 7, 29 Oct
+	 * 2026, section 21a). Safe means both versions recorded them, they differ, and the live values still equal what the
+	 * current version recorded (so a change made in the Search tab since, which records no version, is never undone
+	 * by accident). Returns a plain sentence, or '' when there was nothing to do.
+	 */
+	private static function follow_seo( $post_id, $target, $head ) {
+		if ( ! class_exists( 'TWD_SK_Seo' ) || ! self::details_differ( $target, $head ) ) {
+			return '';
+		}
+		$live = TWD_SK_Seo::details( (int) $post_id );
+		if ( $live != $head['seo'] ) {
+			return 'The page title and description were left as they are, because they were changed in the Search tab since.';
+		}
+		$r = TWD_SK_Seo::write( (int) $post_id, $target['seo'] );
+		if ( is_wp_error( $r ) ) {
+			return 'The page title and description could not go back: ' . $r->get_error_message();
+		}
+		return 'The page title and description went back with it.';
 	}
 
 	/** Going back to a version: take the site stylesheet back with it when every later change was this page's (0.15.0). */
@@ -382,6 +424,11 @@ class TWD_SK_Store {
 					'also'          => isset( $item['also'] ) && is_array( $item['also'] ) ? array_values( array_map( 'intval', $item['also'] ) ) : array(),
 					// The site stylesheet version this version was saved with (0.15.0, Base, Adapt, Replace); 0 before any.
 					'css'           => isset( $item['css'] ) ? (int) $item['css'] : 0,
+					// The page title and description at the time (session 7); null for a version saved before then.
+					'seo'           => ( isset( $item['seo'] ) && is_array( $item['seo'] ) ) ? array(
+						'title'       => isset( $item['seo']['title'] ) ? (string) $item['seo']['title'] : '',
+						'description' => isset( $item['seo']['description'] ) ? (string) $item['seo']['description'] : '',
+					) : null,
 				);
 			}
 		}
@@ -432,8 +479,10 @@ class TWD_SK_Store {
 		$items = $store['items'];
 		$head  = $items ? end( $items ) : null;
 
-		// Same HTML as now: nothing to record, and no history slot is used up.
-		if ( $head && $head['html'] === $clean ) {
+		// Same HTML as now: nothing to record, and no history slot is used up. Unless the page details changed with
+		// this write (session 7): then the version is the record of that change, so Undo can take it back.
+		$seo = self::details_now( $post_id );
+		if ( $head && $head['html'] === $clean && ! ( ! empty( $meta['details'] ) && $head['seo'] != $seo ) ) {
 			return array(
 				'version'   => (int) $head['id'],
 				'unchanged' => true,
@@ -454,6 +503,7 @@ class TWD_SK_Store {
 			'fix'           => self::must_fix_count( $clean ),
 			'also'          => array(),
 			'css'           => class_exists( 'TWD_SK_Css' ) ? TWD_SK_Css::version() : 0,
+			'seo'           => $seo,
 		);
 		$items = self::trim( $items );
 

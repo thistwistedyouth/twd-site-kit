@@ -233,8 +233,14 @@ class TWD_SK_Chrome {
 			'contact_bar'    => false,   // 0.15.0: a slim Email and Call bar fixed to the bottom of a phone screen (nothing on a computer)
 			'quick_exit'     => false,   // 0.15.0: a small "Leave quickly" link in the corner of every page
 			'quick_exit_url' => '',      // 0.15.0: where it goes (a full https address chosen by the site; empty means no link)
+			'client_footer_text' => false, // session 7 (section 21b): clients may change the footer words from the Simple editor
 			'placement'      => 'kit',
 		);
+	}
+
+	/** Whether clients may change the footer words from the Simple editor (session 7); never in safe mode. */
+	public static function footer_text_for_clients() {
+		return ! TWD_SK_Safe::on() && (bool) self::settings()['client_footer_text'];
 	}
 
 	/** The stored per-site settings, validated. */
@@ -284,6 +290,7 @@ class TWD_SK_Chrome {
 				case 'show_strip':
 				case 'contact_bar':
 				case 'quick_exit':
+				case 'client_footer_text':
 					if ( is_bool( $value ) || 0 === $value || 1 === $value || '0' === $value || '1' === $value ) {
 						$out['valid'][ $key ] = (bool) $value;
 					} else {

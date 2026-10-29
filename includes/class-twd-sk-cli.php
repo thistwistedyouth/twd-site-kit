@@ -26,6 +26,7 @@
  *   wp twd-sk embed-delete <id>          delete an embed
  *   wp twd-sk css [--source] [--unused]  the site's own stylesheet: size against its budget, versions, the rules no page uses (0.15.0)
  *   wp twd-sk css-revert <version>       bring back an earlier stylesheet version (0 is none); pages are not touched
+ *   wp twd-sk export <page_id> [--section=<n>] [--format=html|brief] [--out=<file>]  a standalone file (html) or a remix brief (brief) for the page or one section; printed, or written to --out (session 7)
  *   wp twd-sk style status|snapshot|apply|revert|swap   restyle a built site: keep the current look, apply a pack or a kit file (dry run first), go back, change a section's layout (0.14.0)
  *   wp twd-sk build [<brief-file>] [--mode=<mode>] [--set=<slug>] [--pack=<slug>] [--pictures=<file>] [--outlines-only] [--dry-run]
  *                                        set the whole site up from a brief, every page a draft
@@ -981,6 +982,51 @@ class TWD_SK_CLI {
 		if ( isset( $assoc_args['source'] ) ) {
 			WP_CLI::line( TWD_SK_Css::current()['source'] );
 		}
+	}
+
+	/**
+	 * Export the page, or one of its sections, as a standalone HTML file or a remix brief (markdown). Nothing is changed.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <page_id>
+	 * : The page.
+	 *
+	 * [--section=<n>]
+	 * : One section only, counted from 1 (as the Visual editor numbers them).
+	 *
+	 * [--format=<format>]
+	 * : html (the default): one file that opens on its own; brief: a markdown file for an AI, with a blank copy.
+	 *
+	 * [--out=<file>]
+	 * : Write the file there instead of printing it. The file holds the client's words: keep it in the private repository.
+	 */
+	public function export( $args, $assoc_args ) {
+		$page_id = self::page_id( isset( $args[0] ) ? $args[0] : '' );
+		$section = isset( $assoc_args['section'] ) ? (int) $assoc_args['section'] : 0;
+		$format  = isset( $assoc_args['format'] ) ? (string) $assoc_args['format'] : 'html';
+		if ( 'brief' === $format ) {
+			$out = TWD_SK_Export::brief( $page_id, $section );
+		} elseif ( 'html' === $format ) {
+			$out = TWD_SK_Export::standalone( $page_id, $section );
+		} else {
+			WP_CLI::error( 'The format is html or brief.' );
+			return;
+		}
+		if ( is_wp_error( $out ) ) {
+			WP_CLI::error( $out->get_error_message() );
+			return;
+		}
+		if ( isset( $assoc_args['out'] ) && '' !== (string) $assoc_args['out'] ) {
+			$path = (string) $assoc_args['out'];
+			if ( false === file_put_contents( $path, $out['content'] ) ) {
+				WP_CLI::error( 'Could not write ' . $path . '.' );
+				return;
+			}
+			WP_CLI::success( 'Wrote ' . $path . ' (' . $out['bytes'] . ' bytes, ' . count( $out['pictures'] ) . ' picture' . ( 1 === count( $out['pictures'] ) ? '' : 's' ) . ' linked from the site). It holds the client\'s words: keep it in the private repository.' );
+			return;
+		}
+		WP_CLI::line( $out['content'] );
 	}
 
 	/**

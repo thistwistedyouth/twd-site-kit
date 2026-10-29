@@ -157,6 +157,12 @@ class TWD_SK_REST {
 				'callback'            => array( __CLASS__, 'post_adapt' ),
 				'permission_callback' => array( __CLASS__, 'can_adapt_section' ),
 			) );
+			// Export (session 7, section 21c): the page or one section as a standalone file or a remix brief. Reads only.
+			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/export', array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'get_export' ),
+				'permission_callback' => array( __CLASS__, 'can_export_page' ),
+			) );
 		}
 		register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/status', array(
 			'methods'             => 'POST',
@@ -238,6 +244,13 @@ class TWD_SK_REST {
 			'methods'             => 'POST',
 			'callback'            => array( __CLASS__, 'post_site_chrome' ),
 			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
+		// The footer words on their own (session 7, section 21b): the Simple editor's Footer words box. An administrator
+		// always; anyone else who can edit pages only when the site's "Clients may edit the footer text" tick is on.
+		register_rest_route( self::ROUTE_NS, '/site/footer-text', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_footer_text' ),
+			'permission_callback' => array( __CLASS__, 'can_edit_footer_text' ),
 		) );
 		register_rest_route( self::ROUTE_NS, '/site/setup', array(
 			array(
@@ -488,6 +501,18 @@ class TWD_SK_REST {
 		return true;
 	}
 
+	/** Export: an administrator who can edit the page (the file holds the client's words). */
+	public static function can_export_page( $request ) {
+		$ok = self::guard( $request, 'read' );
+		if ( true !== $ok ) {
+			return $ok;
+		}
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return self::error( 'twd_sk_forbidden', 'Only administrators can export a page.', 403 );
+		}
+		return true;
+	}
+
 	/** Describe a change: an administrator who can edit the page, and the AI limit. */
 	public static function can_adapt_section( $request ) {
 		$ok = self::guard( $request, 'ai' );
@@ -517,6 +542,18 @@ class TWD_SK_REST {
 	/** Anything about the editor itself (not a page) needs only edit_pages: the editing tools switch. */
 	public static function can_use_editor( $request ) {
 		return self::guard( $request, 'write', false );
+	}
+
+	/** The footer words: an administrator, or an editor when the site allows clients to change them (session 7). */
+	public static function can_edit_footer_text( $request ) {
+		$ok = self::guard( $request, 'write', false );
+		if ( true !== $ok ) {
+			return $ok;
+		}
+		if ( current_user_can( 'manage_options' ) || TWD_SK_Chrome::footer_text_for_clients() ) {
+			return true;
+		}
+		return self::error( 'twd_sk_forbidden', 'The footer text is changed by the site administrator on this site.', 403 );
 	}
 
 	/** New draft pages need only edit_pages, and no page ID. */
@@ -1342,8 +1379,23 @@ class TWD_SK_REST {
 				return self::error( $looks->get_error_code(), $looks->get_error_message(), 'twd_sk_conflict' === $looks->get_error_code() ? 409 : ( 'twd_sk_forbidden' === $looks->get_error_code() ? 403 : 400 ) );
 			}
 		}
+		// Page details (session 7, 29 Oct 2026, section 21a): the page title and description, from the Simple editor's
+		// Page details box. Only those two; written through the search module (refused when another SEO plugin is
+		// in charge), then the version records them so Undo takes them back.
+		$details = $request->get_param( 'details' );
+		$seo_done = false;
+		if ( is_array( $details ) && $details ) {
+			if ( array_diff_key( $details, array( 'title' => 1, 'description' => 1 ) ) ) {
+				return self::error( 'twd_sk_bad_input', 'Only the page title and description can be changed here.', 400 );
+			}
+			$w = TWD_SK_Seo::write( $id, $details );
+			if ( is_wp_error( $w ) ) {
+				return self::error( $w->get_error_code(), $w->get_error_message(), 'twd_sk_seo_other_plugin' === $w->get_error_code() ? 409 : 400 );
+			}
+			$seo_done = true;
+		}
 		$others = array( $request->get_param( 'texts' ), $request->get_param( 'pictures' ), $request->get_param( 'spots' ), $request->get_param( 'removes' ) );
-		if ( $looks['changed'] && ! array_filter( $others ) ) {
+		if ( ( $looks['changed'] || $seo_done ) && ! array_filter( $others ) ) {
 			$out = array( 'html' => $looks['html'], 'changed' => 0, 'removed' => 0 );
 		} else {
 			$out = TWD_SK_Inline::apply( $looks['html'], $others[0], $others[1], $others[2], $others[3] );
@@ -1361,8 +1413,11 @@ class TWD_SK_REST {
 		if ( $looks['changed'] ) {
 			$parts[] = (int) $looks['changed'] . ' section look' . ( 1 === (int) $looks['changed'] ? '' : 's' );
 		}
+		if ( $seo_done ) {
+			$parts[] = 'page details';
+		}
 		$note = 'Changed on the page (' . implode( ', ', $parts ) . ')';
-		$saved = TWD_SK_Store::save( $id, $out['html'], array( 'base_version' => $base, 'note' => $note ) );
+		$saved = TWD_SK_Store::save( $id, $out['html'], array( 'base_version' => $base, 'note' => $note, 'details' => $seo_done ) );
 		$done  = self::after_write( $id, $saved );
 		// A section that moved to a layout with a picture behind it now holds a picture spot: say where (0.15.0).
 		if ( ! is_wp_error( $done ) && ! empty( $looks['spots'] ) ) {
@@ -1478,6 +1533,48 @@ class TWD_SK_REST {
 
 	public static function get_seo( $request ) {
 		return TWD_SK_Seo::read( (int) $request->get_param( 'id' ) );
+	}
+
+	/**
+	 * Save the footer words (session 7, section 21b): recorded in the Site changes history first, so Undo the last site
+	 * change takes them back; validated like the Site details box (three lines, bold, italic and a link at most).
+	 * Returns the saved value and its HTML, so the page can show it without a reload.
+	 */
+	public static function post_site_footer_text( $request ) {
+		$text = $request->get_param( 'text' );
+		if ( ! is_string( $text ) ) {
+			return self::error( 'twd_sk_bad_input', 'Send the footer words as text.', 400 );
+		}
+		$now = TWD_SK_Profile::get()['footer_text'];
+		$new = TWD_SK_Profile::rich( $text, 300, 3 );
+		if ( $new === $now ) {
+			return array( 'text' => $now, 'html' => TWD_SK_Profile::rich_html( $now ), 'unchanged' => true );
+		}
+		TWD_SK_Style::record( 'Footer text changed' . ( current_user_can( 'manage_options' ) ? '' : ' by the client' ) );
+		$r = TWD_SK_Profile::save( array( 'footer_text' => $text ) );
+		if ( is_wp_error( $r ) ) {
+			return self::error( $r->get_error_code(), $r->get_error_message(), 400 );
+		}
+		$saved = TWD_SK_Profile::get()['footer_text'];
+		return array( 'text' => $saved, 'html' => TWD_SK_Profile::rich_html( $saved ), 'unchanged' => false );
+	}
+
+	/** A standalone file or a remix brief for the page or one section (session 7). Nothing is written. */
+	public static function get_export( $request ) {
+		$id      = (int) $request->get_param( 'id' );
+		$format  = $request->get_param( 'format' );
+		$section = (int) $request->get_param( 'section' );
+		if ( 'brief' === $format ) {
+			$out = TWD_SK_Export::brief( $id, $section );
+		} elseif ( 'html' === $format || null === $format || '' === $format ) {
+			$out = TWD_SK_Export::standalone( $id, $section );
+		} else {
+			return self::error( 'twd_sk_bad_input', 'Choose the standalone file (html) or the remix brief (brief).', 400 );
+		}
+		if ( is_wp_error( $out ) ) {
+			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_not_a_page' === $out->get_error_code() ? 404 : 400 );
+		}
+		return $out;
 	}
 
 	public static function post_seo( $request ) {
@@ -1724,8 +1821,9 @@ class TWD_SK_REST {
 			'unchanged'      => ! empty( $result['unchanged'] ),
 			'report'         => TWD_SK_Report::describe( $result['report'] ),
 		);
-		// Undo and Restore say in plain words what they undid and what the page shows now.
-		foreach ( array( 'undid', 'now', 'target' ) as $k ) {
+		// Undo and Restore say in plain words what they undid and what the page shows now, and whether the site
+		// stylesheet and the page details went back with it.
+		foreach ( array( 'undid', 'now', 'target', 'css_note', 'seo_note' ) as $k ) {
 			if ( isset( $result[ $k ] ) ) {
 				$out[ $k ] = $result[ $k ];
 			}

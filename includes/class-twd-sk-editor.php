@@ -271,6 +271,8 @@ class TWD_SK_Editor {
 			// The Simple editor (session 5): on for everyone who is not an administrator, and for an administrator viewing
 			// as the client. viewAs and canSwitchView are for administrators only, so a real client never sees the switch.
 			'simple'         => $simple,
+			// The Footer words box in the Simple editor (session 7, section 21b): only when the site's tick is on.
+			'footerEdit'     => $simple && (bool) $context['is_kit_page'] && TWD_SK_Chrome::footer_text_for_clients(),
 			'viewAs'         => $can_manage ? self::view_as() : '',
 			'canSwitchView'  => $can_manage,
 			// Whether the page is live, so Add a section can warn that its placeholder words would show (0.14.1).

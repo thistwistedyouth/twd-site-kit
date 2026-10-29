@@ -95,6 +95,12 @@ class TWD_SK_Seo {
 		);
 	}
 
+	/** The page title and description only (session 7): what a page version records and what the Simple editor changes. */
+	public static function details( $id ) {
+		$v = self::values( (int) $id );
+		return array( 'title' => (string) $v['title'], 'description' => (string) $v['description'] );
+	}
+
 	public static function read( $id ) {
 		$id     = (int) $id;
 		$det    = self::detect();

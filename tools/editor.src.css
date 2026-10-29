@@ -233,6 +233,15 @@
 .twd-sk-ed__simple { left: auto; right: 24px; width: 380px; }
 .twd-sk-ed__simple .twd-sk-ed__inlineactions { flex: 1 1 100%; flex-wrap: wrap; justify-content: space-between; margin: 0; }
 .twd-sk-ed__steps { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Page details and Footer words (session 7): always offered, beside Done. */
+.twd-sk-ed__extras { display: flex; flex-wrap: wrap; gap: 8px; }
+.twd-sk-ed__count { flex: 1 1 100%; margin: 0; font-size: $size-small; color: $color-muted; }
+.twd-sk-ed__serp { flex: 1 1 100%; min-width: 0; padding: 10px 12px; border: 1px solid $color-border; border-radius: $radius-field; background-color: $color-surface; }
+.twd-sk-ed__serp p { margin: 0; overflow-wrap: anywhere; }
+.twd-sk-ed__serp-title { font-size: $size-body; font-weight: 600; color: $color-primary; }
+.twd-sk-ed__serp-url { font-size: $size-small; color: $color-muted; }
+.twd-sk-ed__serp-desc { font-size: $size-small; color: $color-body; }
+.twd-sk-ed__serp-desc--none { font-style: italic; color: $color-muted; }
 .twd-sk-ed__simple .twd-sk-ed__tellus { order: 1; font-weight: 400; color: $color-body; }
 .twd-sk-ed__simple .twd-sk-ed__versions { flex: 1 1 100%; margin: 0; }
 /* The thin tag an administrator sees while viewing as the client, with the way back. */

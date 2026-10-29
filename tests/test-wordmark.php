@@ -442,5 +442,5 @@ twd_sk_test( 'second line in the smaller header: in the site brief, a style snap
 	foreach ( array( 'twd-sk-ch-wmline', 'wordmark_small_line: cui.wmline.checked', 'cui.wmline.checked = !!c.settings.wordmark_small_line' ) as $needle ) {
 		twd_sk_has( $needle, $js, $needle );
 	}
-	twd_sk_has( 'cui.wordmark.checked, cui.wmname.checked, cui.wmline.checked, cui.marker.value', $js, 'an unsaved tick counts as an unsaved change' );
+	twd_sk_has( 'cui.wordmark.checked, cui.wmname.checked, cui.wmline.checked, cui.clientFooter.checked, cui.marker.value', $js, 'an unsaved tick counts as an unsaved change' );
 } );

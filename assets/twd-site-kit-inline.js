@@ -83,7 +83,7 @@
 				n++;
 			}
 		});
-		return n + Object.keys(S.picks).length + Object.keys(S.spotPicks).length + Object.keys(S.removes).length + Object.keys(S.looks).length;
+		return n + Object.keys(S.picks).length + Object.keys(S.spotPicks).length + Object.keys(S.removes).length + Object.keys(S.looks).length + (detailsChanged() ? 1 : 0);
 	}
 
 	/* ---- removing a section, an item or a button (0.14.0) ----
@@ -1141,8 +1141,9 @@
 		ui.replace = toolButton('Replace this section', 'Replace this section (or the page) with your own HTML and CSS', function () {
 			openReplace(null);
 		});
-		ui.advanced = toolButton('Advanced', 'The design tools: Look, Move up, Move down, Add section after, Delete section', toggleAdvanced);
+		ui.advanced = toolButton('Advanced', 'The design tools: Look, Move up, Move down, Add section after, Delete section, Export', toggleAdvanced);
 		ui.advanced.setAttribute('aria-expanded', 'false');
+		buildExport();
 		// Replace this section with HTML.
 		ui.repHead = el('p', { className: 'twd-sk-ed__inlinehead', tabindex: '-1' });
 		ui.repSection = el('input', { type: 'radio', name: 'twd-sk-rep-target', id: 'twd-sk-rep-section', value: 'section', checked: '' });
@@ -1201,6 +1202,74 @@
 			ui.adText,
 			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.adAsk, ui.adApply, ui.adEdit, ED.button('Close', 'secondary', closePanels)]),
 			ui.adMsg, ui.adWhat, ui.adWarn, ui.adFrame, ui.adSizes
+		]);
+	}
+
+	/* ---- Export (session 7, 29 Oct 2026, section 21c): a standalone file or a remix brief ----
+	   Behind Advanced, administrators only. The server builds the file (GET /pages/{id}/export); the browser saves it.
+	   The file holds the client's words: it belongs in the private clients repository, never in the plugin's. */
+	function openExport() {
+		var sec = currentSection();
+		closePanels();
+		show(ui.confirm, false);
+		S.ex = { sec: sec && sec.tagName === 'SECTION' ? sectionIndex(sec) : -1 };
+		ui.exSection.disabled = S.ex.sec < 0;
+		if (S.ex.sec < 0) {
+			ui.exPage.checked = true;
+		}
+		ui.exHead.textContent = S.ex.sec >= 0 ? 'Export section ' + (S.ex.sec + 1) + ' (' + sectionName(sec) + ') or the page' : 'Export the page (click inside a section first to export just that one)';
+		ui.exMsg.textContent = '';
+		show(ui.exPanel, true);
+		ui.exHead.focus();
+	}
+
+	function runExport() {
+		var format = ui.exBrief.checked ? 'brief' : 'html';
+		var section = ui.exSection.checked && S.ex && S.ex.sec >= 0 ? S.ex.sec + 1 : 0;
+		ui.exGo.disabled = true;
+		ui.exMsg.textContent = 'Building the file...';
+		ED.api('GET', '/pages/' + cfg.pageId + '/export?format=' + format + '&section=' + section).then(function (data) {
+			ui.exGo.disabled = false;
+			var blob = new Blob([data.content], { type: format === 'brief' ? 'text/markdown;charset=utf-8' : 'text/html;charset=utf-8' });
+			var url = URL.createObjectURL(blob);
+			var a = el('a', { href: url, download: data.name });
+			document.body.appendChild(a);
+			a.click();
+			window.setTimeout(function () {
+				URL.revokeObjectURL(url);
+				if (a.parentNode) {
+					a.parentNode.removeChild(a);
+				}
+			}, 1000);
+			var n = data.pictures ? data.pictures.length : 0;
+			ui.exMsg.textContent = 'Saved ' + data.name + ' (' + Math.round(data.bytes / 1024) + ' KB' + (n ? ', ' + n + ' picture' + (n === 1 ? '' : 's') + ' linked from the site' : '') + '). It holds the client\'s words: keep it in the private clients folder, never in the plugin.';
+		}, function (err) {
+			ui.exGo.disabled = false;
+			ui.exMsg.textContent = err.message;
+		});
+	}
+
+	function buildExport() {
+		ui.exportBtn = toolButton('Export', 'Save this section or the page as a standalone file, or as a remix brief for an AI', openExport);
+		ui.exHead = el('p', { className: 'twd-sk-ed__inlinehead', tabindex: '-1' });
+		ui.exSection = el('input', { type: 'radio', name: 'twd-sk-ex-target', id: 'twd-sk-ex-section', value: 'section', checked: '' });
+		ui.exPage = el('input', { type: 'radio', name: 'twd-sk-ex-target', id: 'twd-sk-ex-page', value: 'page' });
+		ui.exHtml = el('input', { type: 'radio', name: 'twd-sk-ex-format', id: 'twd-sk-ex-html', value: 'html', checked: '' });
+		ui.exBrief = el('input', { type: 'radio', name: 'twd-sk-ex-format', id: 'twd-sk-ex-brief', value: 'brief' });
+		ui.exMsg = el('p', { className: 'twd-sk-ed__inlinehead', role: 'status', 'aria-live': 'polite' });
+		ui.exGo = ED.button('Download', 'primary', runExport);
+		ui.exPanel = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' }, [
+			ui.exHead,
+			el('div', { className: 'twd-sk-ed__radios', role: 'radiogroup', 'aria-label': 'What to export' }, [
+				el('label', { 'for': 'twd-sk-ex-section' }, [ui.exSection, el('span', { text: 'This section' })]),
+				el('label', { 'for': 'twd-sk-ex-page' }, [ui.exPage, el('span', { text: 'The whole page' })])
+			]),
+			el('div', { className: 'twd-sk-ed__radios', role: 'radiogroup', 'aria-label': 'What kind of file' }, [
+				el('label', { 'for': 'twd-sk-ex-html' }, [ui.exHtml, el('span', { text: 'Standalone file: opens in a browser as it looks here, no plugin needed' })]),
+				el('label', { 'for': 'twd-sk-ex-brief' }, [ui.exBrief, el('span', { text: 'Remix brief: a markdown file for an AI (the HTML, the stylesheet, the tokens, the rules, and a blank copy)' })])
+			]),
+			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.exGo, ED.button('Close', 'secondary', closePanels)]),
+			ui.exMsg
 		]);
 	}
 
@@ -1389,7 +1458,7 @@
 		var sectionGroups = CUSTOM
 			? [
 				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section', role: 'group', 'aria-label': 'This section' }, sectionRow),
-				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section twd-sk-ed__inlinetools--advanced', role: 'group', 'aria-label': 'Design tools for this section' }, sectionTools)
+				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section twd-sk-ed__inlinetools--advanced', role: 'group', 'aria-label': 'Design tools for this section' }, sectionTools.concat([ui.exportBtn]))
 			]
 			: [el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section', role: 'group', 'aria-label': 'This section' }, sectionTools)];
 		var kids = SIMPLE ? simpleKids() : oneWindow
@@ -1404,7 +1473,7 @@
 				ui.styleRow || el('span', { hidden: '' }),
 				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--view twd-sk-ed__inlinetools--more', role: 'group', 'aria-label': 'See the page at a size' }, [ui.viewSelect]),
 				ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel,
-				ui.repPanel || el('span', { hidden: '' }), ui.adPanel || el('span', { hidden: '' }),
+				ui.repPanel || el('span', { hidden: '' }), ui.adPanel || el('span', { hidden: '' }), ui.exPanel || el('span', { hidden: '' }),
 				ui.confirm,
 				el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.undo, ui.save, ui.cancel])
 			])
@@ -1501,17 +1570,29 @@
 		if (ui.histPanel) {
 			show(ui.histPanel, false);
 		}
+		if (ui.detPanel) {
+			show(ui.detPanel, false);
+		}
+		if (ui.fwPanel) {
+			if (!ui.fwPanel.hasAttribute('hidden')) {
+				footerWordsRevert();
+			}
+			show(ui.fwPanel, false);
+		}
 		if (ui.repPanel) {
 			show(ui.repPanel, false);
 		}
 		if (ui.adPanel) {
 			show(ui.adPanel, false);
 		}
+		if (ui.exPanel) {
+			show(ui.exPanel, false);
+		}
 		S.linkTarget = null;
 	}
 
 	function panelOpen() {
-		return !ui.linkPanel.hasAttribute('hidden') || !ui.altPanel.hasAttribute('hidden') || !ui.picPanel.hasAttribute('hidden') || !ui.lookPanel.hasAttribute('hidden') || !ui.addPanel.hasAttribute('hidden') || !!(ui.histPanel && !ui.histPanel.hasAttribute('hidden')) || !!(ui.repPanel && !ui.repPanel.hasAttribute('hidden')) || !!(ui.adPanel && !ui.adPanel.hasAttribute('hidden'));
+		return !ui.linkPanel.hasAttribute('hidden') || !ui.altPanel.hasAttribute('hidden') || !ui.picPanel.hasAttribute('hidden') || !ui.lookPanel.hasAttribute('hidden') || !ui.addPanel.hasAttribute('hidden') || !!(ui.histPanel && !ui.histPanel.hasAttribute('hidden')) || !!(ui.repPanel && !ui.repPanel.hasAttribute('hidden')) || !!(ui.adPanel && !ui.adPanel.hasAttribute('hidden')) || !!(ui.exPanel && !ui.exPanel.hasAttribute('hidden')) || !!(ui.detPanel && !ui.detPanel.hasAttribute('hidden')) || !!(ui.fwPanel && !ui.fwPanel.hasAttribute('hidden'));
 	}
 
 	function openLink() {
@@ -2277,6 +2358,9 @@
 	}
 
 	function throwAway() {
+		if (D.saved) {
+			setDetails(D.saved);
+		}
 		Object.keys(S.headings || {}).forEach(function (k) {
 			var h = S.headings[k].el;
 			if (h.parentNode) {
@@ -2384,6 +2468,7 @@
 			return;
 		}
 		commitTyping();
+		commitDetails();
 		var body = { base_version: cfg.currentVersion, texts: [], pictures: [], spots: [] };
 		S.texts.forEach(function (t) {
 			var i = t.getAttribute('data-twd-sk-t');
@@ -2422,7 +2507,11 @@
 		body.looks = Object.keys(S.looks).map(function (k) {
 			return S.looks[k];
 		});
-		if (!body.texts.length && !body.pictures.length && !body.spots.length && !body.removes.length && !body.looks.length) {
+		// The page title and description (session 7): only when they differ from what is saved.
+		if (detailsChanged()) {
+			body.details = detailsNow();
+		}
+		if (!body.texts.length && !body.pictures.length && !body.spots.length && !body.removes.length && !body.looks.length && !body.details) {
 			status(SIMPLE ? 'Nothing to save.' : 'Nothing has changed yet.');
 			return;
 		}
@@ -2439,6 +2528,11 @@
 				// The save is one step: Undo brings the previous saved version back.
 				var from = cfg.currentVersion;
 				ED.setVersion(data.version);
+				if (body.details) {
+					D.saved = body.details;
+					D.snap = detailsNow();
+					refreshDetails();
+				}
 				pushStep({ kind: 'server', from: from, to: data.version, label: 'the save' });
 				holdStatus('Saved at ' + timeNow() + '.');
 				ED.redraw().then(function (ok) {
@@ -2495,6 +2589,12 @@
 			}
 		});
 		ui.tellus = el('p', { className: 'twd-sk-ed__inlinehead twd-sk-ed__tellus', hidden: '' }, [el('span', { text: 'Need something else changed? ' }), tell]);
+		buildDetails();
+		var extras = [ui.details];
+		if (cfg.footerEdit) {
+			buildFooterWords();
+			extras.push(ui.footerWords);
+		}
 		var kids = [];
 		// An administrator viewing as the client sees a thin tag, so they never forget which view they are in.
 		if (cfg.canSwitchView) {
@@ -2512,9 +2612,346 @@
 			el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words', role: 'group', 'aria-label': 'Words' }, [ui.bold, ui.link]),
 			el('div', { className: 'twd-sk-ed__inlineactions' }, [
 				el('div', { className: 'twd-sk-ed__steps' }, [ui.save, ui.undoStep, ui.redoStep, ui.history]),
+				el('div', { className: 'twd-sk-ed__extras' }, extras),
 				ui.done
 			]),
-			ui.status, ui.tellus, ui.linkPanel, ui.altPanel, ui.picPanel, ui.histPanel, ui.confirm
+			ui.status, ui.tellus, ui.linkPanel, ui.altPanel, ui.picPanel, ui.histPanel, ui.detPanel, ui.fwPanel || el('span', { hidden: '' }), ui.confirm
+		]);
+	}
+
+	/* ---- Page details (session 7, 29 Oct 2026, section 21a): the page title and description ----
+	   One small box: the title as it shows on Google, the description with a live preview and a character count
+	   (guidance, never a block), and where picture descriptions are changed. Saved with the page through the same
+	   route, as one version, so Undo takes the details back with the words. */
+	var D = { saved: null, snap: null, url: '', page: '', busy: false };
+
+	function detailsNow() {
+		return { title: ui.detTitle.value, description: ui.detDesc.value };
+	}
+
+	function detailsChanged() {
+		return !!(ui.detTitle && D.saved) && (ui.detTitle.value !== D.saved.title || ui.detDesc.value !== D.saved.description);
+	}
+
+	function setDetails(values) {
+		if (!ui.detTitle) {
+			return false;
+		}
+		ui.detTitle.value = values.title || '';
+		ui.detDesc.value = values.description || '';
+		D.snap = detailsNow();
+		refreshDetails();
+		return true;
+	}
+
+	function countLine(n, lo, hi, what) {
+		if (!n) {
+			return 'Nothing yet. Aim for ' + lo + ' to ' + hi + ' characters.';
+		}
+		if (n > hi) {
+			return n + ' characters. Longer than ' + hi + ': a search engine may cut the ' + what + ' short.';
+		}
+		if (n < lo) {
+			return n + ' characters. Aim for ' + lo + ' to ' + hi + '.';
+		}
+		return n + ' characters. Good length.';
+	}
+
+	function refreshDetails() {
+		if (!ui.detTitle) {
+			return;
+		}
+		var title = ui.detTitle.value.trim();
+		var desc = ui.detDesc.value.trim();
+		ui.detTitleCount.textContent = countLine(title.length, 50, 60, 'title');
+		ui.detDescCount.textContent = countLine(desc.length, 140, 160, 'description');
+		ui.serpTitle.textContent = title || D.page || 'This page';
+		ui.serpUrl.textContent = D.url || '';
+		ui.serpDesc.textContent = desc || 'No description yet: a search engine will pick some words from the page itself.';
+		ui.serpDesc.classList.toggle('twd-sk-ed__serp-desc--none', !desc);
+	}
+
+	// A step for Undo and Redo once a box is left (or Save is pressed) with a different value from when it was entered.
+	function commitDetails() {
+		if (!ui.detTitle || !D.snap) {
+			return;
+		}
+		var now = detailsNow();
+		if (now.title !== D.snap.title || now.description !== D.snap.description) {
+			pushStep({ kind: 'details', before: D.snap, after: now, label: 'the page details' });
+			D.snap = now;
+		}
+	}
+
+	function fillDetails(data) {
+		D.saved = { title: data.title || '', description: data.description || '' };
+		D.url = data.permalink || '';
+		D.page = document.title || '';
+		setDetails(D.saved);
+		var other = data.mode === 'other';
+		ui.detTitle.disabled = other;
+		ui.detDesc.disabled = other;
+		ui.detMsg.textContent = other ? (data.plugin || 'Another plugin') + ' looks after the page details on this site, so they are changed there.' : '';
+	}
+
+	function loadDetails(then) {
+		if (D.busy) {
+			return;
+		}
+		D.busy = true;
+		ui.detMsg.textContent = 'Loading...';
+		ED.api('GET', '/pages/' + cfg.pageId + '/seo').then(function (data) {
+			D.busy = false;
+			fillDetails(data);
+			if (then) {
+				then();
+			}
+		}, function (err) {
+			D.busy = false;
+			ui.detMsg.textContent = err.message;
+		});
+	}
+
+	// After going back to a version the details may have gone back with it: read them again when nothing is typed.
+	function reloadDetails() {
+		if (D.saved && !detailsChanged()) {
+			loadDetails();
+		}
+	}
+
+	function openDetails() {
+		closePanels();
+		show(ui.confirm, false);
+		show(ui.detPanel, true);
+		engaged();
+		if (!D.saved) {
+			loadDetails(function () {
+				ui.detTitle.focus();
+			});
+			return;
+		}
+		refreshDetails();
+		ui.detTitle.focus();
+	}
+
+	function buildDetails() {
+		ui.details = toolButton('Page details', 'The page title and description that search engines show', openDetails);
+		ui.detTitle = el('input', { type: 'text', id: 'twd-sk-det-title', className: 'twd-sk-ed__input', maxlength: '120', autocomplete: 'off' });
+		ui.detDesc = el('textarea', { id: 'twd-sk-det-desc', className: 'twd-sk-ed__textarea twd-sk-ed__textarea--css', maxlength: '300', rows: '3' });
+		ui.detTitleCount = el('p', { className: 'twd-sk-ed__count' });
+		ui.detDescCount = el('p', { className: 'twd-sk-ed__count' });
+		ui.serpTitle = el('p', { className: 'twd-sk-ed__serp-title' });
+		ui.serpUrl = el('p', { className: 'twd-sk-ed__serp-url' });
+		ui.serpDesc = el('p', { className: 'twd-sk-ed__serp-desc' });
+		ui.detMsg = el('p', { className: 'twd-sk-ed__inlinehead', role: 'status', 'aria-live': 'polite' });
+		[ui.detTitle, ui.detDesc].forEach(function (box) {
+			box.addEventListener('input', function () {
+				refreshDetails();
+				counter();
+			});
+			box.addEventListener('change', commitDetails);
+		});
+		ui.detPanel = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' }, [
+			el('p', { className: 'twd-sk-ed__inlinehead', tabindex: '-1', text: 'Page details' }),
+			el('label', { 'for': 'twd-sk-det-title', text: 'Page title (as shown on Google)' }),
+			ui.detTitle,
+			ui.detTitleCount,
+			el('label', { 'for': 'twd-sk-det-desc', text: 'Description (the words under the title in a search result)' }),
+			ui.detDesc,
+			ui.detDescCount,
+			el('div', { className: 'twd-sk-ed__serp', role: 'img', 'aria-label': 'How it may look in a search result' }, [ui.serpTitle, ui.serpUrl, ui.serpDesc]),
+			el('p', { className: 'twd-sk-ed__count', text: 'Picture descriptions: click any picture on the page, then Change the description. Press Save to keep the details with the page; Undo takes them back.' }),
+			ui.detMsg,
+			el('div', { className: 'twd-sk-ed__inlinetools' }, [ED.button('Close', 'secondary', closePanels)])
+		]);
+	}
+
+	/* ---- Footer words (session 7, section 21b): the footer text, when the site allows clients to change it ----
+	   Up to three lines with bold and italic, shown in the page's footer as it is typed, saved on its own through
+	   POST /site/footer-text (recorded in the Site changes history, so an administrator can undo it there too). */
+	var FW = { saved: null, orig: null, node: null, busy: false };
+
+	function footerTextNode() {
+		return document.querySelector('.twd-sk-chrome .twd-sk-footer__text, .twd-sk-chrome .twd-sk-footer__tagline');
+	}
+
+	function decodeEntities(text) {
+		return String(text).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'");
+	}
+
+	// Nodes for light text: strong, em, a (with its address) and line breaks; anything else is plain words.
+	function richNodes(text) {
+		var frag = document.createDocumentFragment();
+		var stack = [frag];
+		var parts = String(text || '').replace(/\r\n?/g, '\n').replace(/<br\s*\/?>/gi, '\n').split(/(<\/?(?:strong|em|a|b|i)\b[^>]*>|\n)/i);
+		parts.forEach(function (part) {
+			if (!part) {
+				return;
+			}
+			var top = stack[stack.length - 1];
+			if (part === '\n') {
+				top.appendChild(el('br'));
+				return;
+			}
+			var m = /^<(\/?)(strong|em|a|b|i)\b([^>]*)>$/i.exec(part);
+			if (!m) {
+				top.appendChild(document.createTextNode(decodeEntities(part)));
+				return;
+			}
+			var tag = m[2].toLowerCase();
+			tag = tag === 'b' ? 'strong' : (tag === 'i' ? 'em' : tag);
+			if (m[1]) {
+				if (stack.length > 1) {
+					stack.pop();
+				}
+				return;
+			}
+			var node = el(tag);
+			if (tag === 'a') {
+				var h = /href\s*=\s*"([^"]*)"/i.exec(m[3]) || /href\s*=\s*'([^']*)'/i.exec(m[3]);
+				if (h && /^(https?:|mailto:|tel:|\/|#)/i.test(h[1].trim())) {
+					node.setAttribute('href', h[1].trim());
+				}
+			}
+			top.appendChild(node);
+			stack.push(node);
+		});
+		return frag;
+	}
+
+	// The footer's words as the light text the site keeps: strong, em, a link and line breaks; nothing else.
+	function footerRaw(node) {
+		var out = '';
+		Array.prototype.forEach.call(node.childNodes, function (n) {
+			if (n.nodeType === 3) {
+				out += n.textContent;
+				return;
+			}
+			if (n.nodeType !== 1) {
+				return;
+			}
+			var tag = n.tagName.toLowerCase();
+			if (tag === 'br') {
+				out += '\n';
+			} else if (tag === 'strong' || tag === 'b') {
+				out += '<strong>' + footerRaw(n) + '</strong>';
+			} else if (tag === 'em' || tag === 'i') {
+				out += '<em>' + footerRaw(n) + '</em>';
+			} else if (tag === 'a' && n.getAttribute('href')) {
+				out += '<a href="' + n.getAttribute('href').replace(/"/g, '') + '">' + footerRaw(n) + '</a>';
+			} else {
+				out += footerRaw(n);
+			}
+		});
+		return out;
+	}
+
+	function footerShow(text) {
+		if (!FW.node) {
+			return;
+		}
+		ED.clear(FW.node);
+		FW.node.appendChild(richNodes(text));
+	}
+
+	function footerWordsRevert() {
+		if (FW.saved !== null) {
+			footerShow(FW.saved);
+			ui.fwText.value = FW.saved;
+		}
+	}
+
+	function wrapSelection(box, tag) {
+		var a = box.selectionStart;
+		var b = box.selectionEnd;
+		if (a === b) {
+			ui.fwMsg.textContent = 'Select some words first.';
+			return;
+		}
+		var v = box.value;
+		box.value = v.slice(0, a) + '<' + tag + '>' + v.slice(a, b) + '</' + tag + '>' + v.slice(b);
+		box.focus();
+		footerShow(box.value);
+	}
+
+	function postFooterWords(text, done) {
+		if (FW.busy) {
+			return;
+		}
+		FW.busy = true;
+		ui.fwSave.disabled = true;
+		ui.fwMsg.textContent = 'Saving...';
+		ED.api('POST', '/site/footer-text', { text: text }).then(function (data) {
+			FW.busy = false;
+			ui.fwSave.disabled = false;
+			FW.saved = data.text;
+			ui.fwText.value = data.text;
+			footerShow(data.text);
+			ui.fwMsg.textContent = data.unchanged ? 'Nothing to save.' : 'Footer words saved at ' + timeNow() + '.';
+			done(true, data);
+		}, function (err) {
+			FW.busy = false;
+			ui.fwSave.disabled = false;
+			ui.fwMsg.textContent = err.message;
+			done(false);
+		});
+	}
+
+	function saveFooterWords() {
+		var before = FW.saved;
+		var text = ui.fwText.value;
+		if (text === before) {
+			ui.fwMsg.textContent = 'Nothing to save.';
+			return;
+		}
+		postFooterWords(text, function (ok, data) {
+			if (ok && !data.unchanged) {
+				pushStep({ kind: 'footer', before: before, after: data.text, label: 'the footer words' });
+				refreshSteps();
+			}
+		});
+	}
+
+	function openFooterWords() {
+		closePanels();
+		show(ui.confirm, false);
+		FW.node = footerTextNode();
+		if (!FW.node) {
+			status('The footer text is not on this page.');
+			return;
+		}
+		if (FW.saved === null) {
+			FW.saved = footerRaw(FW.node);
+		}
+		ui.fwText.value = FW.saved;
+		ui.fwMsg.textContent = '';
+		show(ui.fwPanel, true);
+		engaged();
+		ui.fwText.focus();
+	}
+
+	function buildFooterWords() {
+		ui.footerWords = toolButton('Footer words', 'Change the words in the footer at the bottom of every page', openFooterWords);
+		ui.fwText = el('textarea', { id: 'twd-sk-fw-text', className: 'twd-sk-ed__textarea twd-sk-ed__textarea--css', maxlength: '300', rows: '3' });
+		ui.fwText.addEventListener('input', function () {
+			footerShow(ui.fwText.value);
+		});
+		ui.fwBold = toolButton('B', 'Make the selected words bold', function () {
+			wrapSelection(ui.fwText, 'strong');
+		});
+		ui.fwItalic = toolButton('I', 'Make the selected words italic', function () {
+			wrapSelection(ui.fwText, 'em');
+		});
+		ui.fwSave = ED.button('Save footer words', 'primary', saveFooterWords);
+		ui.fwMsg = el('p', { className: 'twd-sk-ed__inlinehead', role: 'status', 'aria-live': 'polite' });
+		ui.fwPanel = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' }, [
+			el('p', { className: 'twd-sk-ed__inlinehead', tabindex: '-1', text: 'Footer words' }),
+			el('p', { className: 'twd-sk-ed__count', text: 'Up to three lines, shown at the bottom of every page. Select words and press B for bold or I for italic. Saved on its own: it is not part of this page\'s Save.' }),
+			el('label', { 'for': 'twd-sk-fw-text', text: 'Footer words' }),
+			ui.fwText,
+			el('div', { className: 'twd-sk-ed__inlinetools', role: 'group', 'aria-label': 'Footer words tools' }, [ui.fwBold, ui.fwItalic]),
+			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.fwSave, ED.button('Close', 'secondary', closePanels)]),
+			ui.fwMsg
 		]);
 	}
 
@@ -2523,7 +2960,7 @@
 		if (!ui.bar || !SIMPLE) {
 			return;
 		}
-		var on = H.steps.length > 0 || !!H.typing || changedCount() > 0 || ui.bar.getAttribute('data-twd-sk-ctx') !== 'none';
+		var on = H.steps.length > 0 || !!H.typing || changedCount() > 0 || ui.bar.getAttribute('data-twd-sk-ctx') !== 'none' || panelOpen();
 		ui.bar.setAttribute('data-twd-sk-engaged', on ? 'on' : 'off');
 	}
 
@@ -2743,6 +3180,18 @@
 			done(applySnap(step.i, back ? step.before : step.after));
 			return;
 		}
+		if (step.kind === 'details') {
+			done(setDetails(back ? step.before : step.after));
+			return;
+		}
+		if (step.kind === 'footer') {
+			// The footer words are saved on their own, so going back saves the earlier words again.
+			FW.node = FW.node || footerTextNode();
+			postFooterWords(back ? step.before : step.after, function (ok) {
+				done(ok);
+			});
+			return;
+		}
 		if (step.kind === 'pic') {
 			done(applyPic(step.target, back ? step.before : step.after));
 			return;
@@ -2768,6 +3217,7 @@
 			return;
 		}
 		commitTyping();
+		commitDetails();
 		if (!H.at) {
 			status('Nothing to undo.');
 			refreshSteps();
@@ -2789,6 +3239,7 @@
 			return;
 		}
 		commitTyping();
+		commitDetails();
 		if (H.at >= H.steps.length) {
 			status('Nothing to redo.');
 			refreshSteps();
@@ -2821,6 +3272,8 @@
 				if (!ok) {
 					holdStatus('Done. Reload the page to see it.');
 				}
+				// The page details may have gone back with the version (session 7).
+				reloadDetails();
 				done(true);
 			});
 		}, function (err) {

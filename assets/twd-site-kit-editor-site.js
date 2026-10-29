@@ -909,6 +909,7 @@
 		cui.wordmark.checked = !!c.settings.wordmark;
 		cui.wmname.checked = !!c.settings.wordmark_scrolled_name;
 		cui.wmline.checked = !!c.settings.wordmark_small_line;
+		cui.clientFooter.checked = !!c.settings.client_footer_text;
 		cui.marker.value = c.settings.menu_marker;
 		cui.button.checked = !!c.settings.show_button;
 		cui.strip.checked = !!c.settings.show_strip;
@@ -970,6 +971,7 @@
 				wordmark: cui.wordmark.checked,
 				wordmark_scrolled_name: cui.wmname.checked,
 				wordmark_small_line: cui.wmline.checked,
+				client_footer_text: cui.clientFooter.checked,
 				menu_marker: cui.marker.value,
 				show_button: cui.button.checked,
 				show_strip: cui.strip.checked,
@@ -1025,6 +1027,8 @@
 		var wordmark = checkbox('twd-sk-ch-wordmark', 'Text wordmark: the logo as live text. On the front page a centred stack: a small symbol (the Small logo mark in Site details), the site name in capitals, an optional second line, and the menu centred below. On every other page one row: the symbol and the name at the left, the menu at the right. The menu gets its own smaller look. Replaces the header layout above while it is ticked. Sizes are in the Style section.');
 		var wmname = checkbox('twd-sk-ch-wmname', 'Keep the name when the front page header is scrolled (otherwise only the small symbol stays, beside the menu). Only works with the fixed header and the smaller-when-scrolling option above.');
 		var wmline = checkbox('twd-sk-ch-wmline', 'Show the second line under the name in the smaller header too: on every page except the large front page header, and on the front page once it is scrolled (this also keeps the name beside the symbol). The second line is set in Site details; keep it short so it fits beside the symbol on a phone.');
+		var clientFooter = checkbox('twd-sk-ch-clientfooter', 'Clients may edit the footer text: a "Footer words" box in their editor (up to three lines, bold and italic). Nothing else in the header or footer; contact details stay in Site details.');
+		cui.clientFooter = clientFooter.input;
 		cui.marker = selectWith('twd-sk-ch-marker', {}, '');
 		cui.wordmark = wordmark.input;
 		cui.wmname = wmname.input;
@@ -1050,9 +1054,22 @@
 		});
 		show(cui.reloadBtn, false);
 		cui.exportBtn = button('Download the Theme Builder templates', 'secondary', downloadTemplates);
+		// Undo from here too (session 7, section 21b): the last site change, whatever it was, with the result shown here.
+		cui.undoBtn = button('Undo the last site change', 'secondary', function () {
+			historyAction('/site/history/undo', {}, 'Went back one site change.', cui.msg);
+		});
+		// The words live in Site details: two plain ways there, so "Header and footer" in Your Edits is one place to start.
+		var toMenu = button('Change the menu', 'secondary', function () {
+			ED.openAt('site', 'twd-sk-pf-menu');
+		});
+		var toFooter = button('Change the footer text', 'secondary', function () {
+			ED.openAt('site', 'twd-sk-pf-footertext');
+		});
 		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
 			el('h3', { className: 'twd-sk-ed__step-title', text: 'Header and footer' }),
-			el('p', { className: 'twd-sk-ed__help', text: 'The header and footer print from the site details above. On the Hello theme Site Kit puts them on every page itself, so Elementor Pro is not needed. Choose how they look here.' })
+			el('p', { className: 'twd-sk-ed__help', text: 'The header and footer print from the site details above. On the Hello theme Site Kit puts them on every page itself, so Elementor Pro is not needed. Choose how they look here.' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'The words (the site name, logo, menu, button, footer text, legal links and contact details) are in Site details above. The layout and options are here. Save, then reload the page to see it; Undo the last site change steps back one Save.' }),
+			el('div', { className: 'twd-sk-ed__actions', id: 'twd-sk-chrome-ways' }, [toMenu, toFooter])
 		].concat(aiBlocks(['header', 'footer'])).concat([
 			field('Who places them', cui.placement),
 			cui.placedNote,
@@ -1076,7 +1093,8 @@
 			cbar.label,
 			exit.label,
 			field('Where Leave quickly goes', cui.exitUrl, 'A full https address of a neutral site, such as a weather or news page. Empty means no link.'),
-			el('div', { className: 'twd-sk-ed__actions' }, [cui.saveBtn, cui.exportBtn, cui.reloadBtn]),
+			clientFooter.label,
+			el('div', { className: 'twd-sk-ed__actions' }, [cui.saveBtn, cui.exportBtn, cui.reloadBtn, cui.undoBtn]),
 			cui.msg
 		])));
 		// The layout names come with the profile, so fill the lists once it has arrived.
@@ -1213,7 +1231,7 @@
 	}
 
 	function chromeSnap() {
-		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.textStyle.value, cui.contactBar.checked, cui.exit.checked, cui.exitUrl.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.over.checked, cui.wordmark.checked, cui.wmname.checked, cui.wmline.checked, cui.marker.value, cui.button.checked, cui.strip.checked, cui.placement.value]);
+		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.textStyle.value, cui.contactBar.checked, cui.exit.checked, cui.exitUrl.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.over.checked, cui.wordmark.checked, cui.wmname.checked, cui.wmline.checked, cui.clientFooter.checked, cui.marker.value, cui.button.checked, cui.strip.checked, cui.placement.value]);
 	}
 
 	ED.addDirtyCheck(function () {
@@ -2367,29 +2385,31 @@
 		return Promise.all(jobs);
 	}
 
-	function historyAction(path, body, what) {
+	function historyAction(path, body, what, where) {
 		if (HIST.busy) {
 			return;
 		}
+		// The message shows where the button was pressed (the Header and footer section has its own Undo, session 7).
+		var msgNode = where || hui.msg;
 		HIST.busy = true;
 		hui.undoBtn.disabled = true;
-		message(hui.msg, 'Working...', true);
+		message(msgNode, 'Working...', true);
 		api('POST', path, body).then(function (data) {
 			HIST.busy = false;
 			HIST.list = data.history || [];
 			drawHistory();
 			var text = data.undid ? 'Undid: ' + data.undid + '.' : (data.unchanged ? 'The site already looked like that.' : what);
-			message(hui.msg, text + ' Redrawing the page...', true);
+			message(msgNode, text + ' Redrawing the page...', true);
 			refreshForms().then(function () {
 				return ED.redraw();
 			}).then(function (ok) {
-				message(hui.msg, text + (ok ? '' : ' Reload the page to see it.'), true);
+				message(msgNode, text + (ok ? '' : ' Reload the page to see it.'), true);
 				show(hui.reloadBtn, !ok);
 			});
 		}, function (err) {
 			HIST.busy = false;
 			drawHistory();
-			message(hui.msg, err.message, false);
+			message(msgNode, err.message, false);
 		});
 	}
 
@@ -2414,6 +2434,12 @@
 		loadHistory();
 	}
 
+	// Your Edits menu (session 7, section 21b): one clearly named way to the header and footer settings.
+	if (ED.addLauncher) {
+		ED.addLauncher({ id: 'chrome', order: 45, label: function () { return 'Header and footer'; }, show: function () { return !(ED.toolsOff && ED.toolsOff()); }, run: function () {
+			ED.openAt('site', 'twd-sk-chrome-ways');
+		} });
+	}
 	// Your Edits menu: undo the last site change from anywhere (opens the Site tab at Site changes so the result is seen).
 	if (ED.addLauncher) {
 		ED.addLauncher({ id: 'undo-site', order: 50, label: function () { return 'Undo the last site change'; }, show: function () { return !(ED.toolsOff && ED.toolsOff()); }, run: function () {

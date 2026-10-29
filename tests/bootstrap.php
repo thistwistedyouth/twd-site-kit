@@ -640,6 +640,7 @@ require_once ABSPATH . 'includes/class-twd-sk-sanitizer.php';
 require_once ABSPATH . 'includes/class-twd-sk-store.php';
 require_once ABSPATH . 'includes/class-twd-sk-css.php';
 require_once ABSPATH . 'includes/class-twd-sk-replace.php';
+require_once ABSPATH . 'includes/class-twd-sk-export.php';
 require_once ABSPATH . 'includes/class-twd-sk-prompt.php';
 require_once ABSPATH . 'includes/class-twd-sk-page.php';
 require_once ABSPATH . 'includes/class-twd-sk-packs.php';
