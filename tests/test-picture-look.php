@@ -23,7 +23,7 @@ twd_sk_test( 'picture look: every ready-made choice is a value the token checker
 			$kinds[ $e['token'] ] = $e['kind'];
 		}
 	}
-	twd_sk_eq( array( 'image-filter' => 'choice', 'image-tint' => 'choice', 'color-frame' => 'choice', 'band-height' => 'size', 'band-height-sm' => 'size', 'band-height-tall' => 'size', 'band-height-tall-sm' => 'size' ), $kinds );
+	twd_sk_eq( array( 'image-filter' => 'choice', 'image-tint' => 'choice', 'color-frame' => 'choice', 'band-height' => 'size', 'band-height-sm' => 'size', 'band-height-tall' => 'size', 'band-height-tall-sm' => 'size', 'band-height-ribbon' => 'size', 'band-height-ribbon-sm' => 'size' ), $kinds );
 	twd_sk_eq( $presets, TWD_SK_Site::state()['presets'], 'the Site tab is given the same list' );
 } );
 

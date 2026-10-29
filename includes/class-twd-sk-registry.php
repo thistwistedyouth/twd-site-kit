@@ -70,6 +70,8 @@ class TWD_SK_Registry {
 			'twd-sk-space-bottom-lg',
 			// 0.15.0: a quote line (accent rule on the left) on any paragraph, toggled in the Visual editor.
 			'twd-sk-quoteline',
+			// 0.15.0: a note box (a soft panel with an accent edge) on any paragraph, toggled in the Visual editor (idea 5).
+			'twd-sk-notebox',
 			// 0.15.0: words in a frame over a picture (the picture text layout and the call to action band):
 			// the frame and its tint, its padding, the overlay over the picture, and larger body text.
 			'twd-sk-frame',
@@ -527,7 +529,7 @@ class TWD_SK_Registry {
 		}
 		return self::lines( array_merge(
 			array(
-				'<section class="twd-sk-steps' . ( 'timeline' === $variant ? ' twd-sk-steps--timeline' : '' ) . ' twd-sk-tone-surface">',
+				'<section class="twd-sk-steps' . ( 'timeline' === $variant ? ' twd-sk-steps--timeline' : ( 'row' === $variant ? ' twd-sk-steps--row' : '' ) ) . ( 'row' === $variant ? ' twd-sk-tone-base' : ' twd-sk-tone-surface' ) . '">',
 				'<div class="twd-sk-inner">',
 				'<span class="twd-sk-eyebrow">Getting started</span>',
 				'<h2 class="twd-sk-title">How it <span class="twd-sk-accent">works</span></h2>',
@@ -1056,8 +1058,9 @@ class TWD_SK_Registry {
 					'twd-sk-image-text--narrow',
 					'twd-sk-image-text--badge',
 					'twd-sk-image-text--band',
-					// 0.15.0: the band at the tall height (a Look choice beside the band layout).
+					// 0.15.0: the band at the tall height, or as a thin ribbon (Look choices beside the band layout).
 					'twd-sk-image-text--band-tall',
+					'twd-sk-image-text--band-ribbon',
 					'twd-sk-image-text__grid',
 					'twd-sk-image-text__media',
 					'twd-sk-image-text__img',
@@ -1112,6 +1115,10 @@ class TWD_SK_Registry {
 					'twd-sk-quote',
 					'twd-sk-quote--cards',
 					'twd-sk-quote--pullout',
+					// 0.15.0: options on the cards layout (idea 2 of the owner's plan): a quote mark in the accent colour on each
+					// card, and cards as tall as their own words rather than all the same height.
+					'twd-sk-quote--marks',
+					'twd-sk-quote--loose',
 					'twd-sk-quote__grid',
 					'twd-sk-quote__card',
 					'twd-sk-quote__text',
@@ -1261,6 +1268,10 @@ class TWD_SK_Registry {
 				'description' => 'A short numbered list of how to get started. The numbers are added automatically.',
 				'skeleton'    => self::steps(),
 				'variants'    => array(
+					'twd-sk-steps--row' => array(
+						'label'    => 'Row: large thin numbers over a title and one short paragraph, three across, a rule above each (one column on a phone)',
+						'skeleton' => self::steps( 'row' ),
+					),
 					'twd-sk-steps--timeline' => array(
 						'label'    => 'Timeline: the steps down the page on a line, one under the other',
 						'skeleton' => self::steps( 'timeline' ),
@@ -1269,6 +1280,8 @@ class TWD_SK_Registry {
 				'classes'     => array(
 					'twd-sk-steps',
 					'twd-sk-steps--timeline',
+					// 0.15.0: the clean row (idea 4 of the owner's plan).
+					'twd-sk-steps--row',
 					'twd-sk-steps__list',
 					'twd-sk-steps__item',
 					'twd-sk-steps__name',

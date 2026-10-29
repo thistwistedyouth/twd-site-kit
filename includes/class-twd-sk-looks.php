@@ -57,11 +57,26 @@ class TWD_SK_Looks {
 		$all = array(
 			'text' => self::picture_options( 'twd-sk-text--picture' ) + self::type_options(),
 			'cta'  => self::picture_options( 'twd-sk-cta--band' ),
+			'quote' => array(
+				'marks' => array(
+					'label'    => 'Quote marks',
+					'kind'     => 'toggle',
+					'class'    => 'twd-sk-quote--marks',
+					'requires' => 'twd-sk-quote--cards',
+					'help'     => 'A quote mark in the accent colour on each card.',
+				),
+				'loose' => array(
+					'label'    => 'Cards as tall as their words',
+					'kind'     => 'toggle',
+					'class'    => 'twd-sk-quote--loose',
+					'requires' => 'twd-sk-quote--cards',
+				),
+			),
 			'image_text' => array(
 				'band_height' => array(
 					'label'    => 'Band height',
 					'kind'     => 'choice',
-					'choices'  => array( '' => 'Normal', 'twd-sk-image-text--band-tall' => 'Tall' ),
+					'choices'  => array( '' => 'Normal', 'twd-sk-image-text--band-tall' => 'Tall', 'twd-sk-image-text--band-ribbon' => 'Ribbon (thin)' ),
 					'requires' => 'twd-sk-image-text--band',
 					'help'     => 'The heights themselves are set in the Site tab under Style, Pictures.',
 				),

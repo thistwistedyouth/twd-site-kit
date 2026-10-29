@@ -493,15 +493,18 @@ class TWD_SK_Inline {
 					$changed++;
 				}
 			}
-			// Quote line (0.15.0): a shared class on the paragraph itself (true adds it, false takes it off).
-			if ( array_key_exists( 'quote', $edit ) ) {
+			// Quote line and note box (0.15.0): a shared class on the paragraph itself (true adds it, false takes it off).
+			foreach ( array( 'quote' => 'twd-sk-quoteline', 'note' => 'twd-sk-notebox' ) as $key => $cls ) {
+				if ( ! array_key_exists( $key, $edit ) ) {
+					continue;
+				}
 				if ( 'p' !== strtolower( $el->tagName ) ) {
-					return new WP_Error( 'twd_sk_bad_input', 'A quote line goes on a paragraph.' );
+					return new WP_Error( 'twd_sk_bad_input', 'quote' === $key ? 'A quote line goes on a paragraph.' : 'A note box goes on a paragraph.' );
 				}
 				$classes = preg_split( '/\s+/', trim( (string) $el->getAttribute( 'class' ) ), -1, PREG_SPLIT_NO_EMPTY );
-				$classes = array_values( array_diff( $classes, array( 'twd-sk-quoteline' ) ) );
-				if ( $edit['quote'] ) {
-					$classes[] = 'twd-sk-quoteline';
+				$classes = array_values( array_diff( $classes, array( $cls ) ) );
+				if ( $edit[ $key ] ) {
+					$classes[] = $cls;
 				}
 				if ( $classes ) {
 					$el->setAttribute( 'class', implode( ' ', $classes ) );

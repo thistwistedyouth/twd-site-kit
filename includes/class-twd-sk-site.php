@@ -46,6 +46,8 @@ class TWD_SK_Site {
 			array( 'pictures', 'band-height-sm', 'Picture band height on phones', 'size' ),
 			array( 'pictures', 'band-height-tall', 'Tall picture band height', 'size' ),
 			array( 'pictures', 'band-height-tall-sm', 'Tall picture band height on phones', 'size' ),
+			array( 'pictures', 'band-height-ribbon', 'Ribbon picture band height', 'size' ),
+			array( 'pictures', 'band-height-ribbon-sm', 'Ribbon picture band height on phones', 'size' ),
 			// 0.15.0 (SK-021): text sizes, the reading width and the space between paragraphs, in pixels.
 			array( 'text', 'size-body', 'Body text size', 'size' ),
 			array( 'text', 'size-lead', 'Introduction text size', 'size' ),

@@ -196,7 +196,7 @@ class TWD_SK_Packs {
 			// 0.15.0: the padding inside the frame behind words over a picture (Medium, Small, Large in the Look panel).
 			'frame-padding', 'frame-padding-sm', 'frame-padding-lg',
 			// 0.15.0: the picture band's height (normal, and the Tall choice), on a computer and on a phone.
-			'band-height', 'band-height-sm', 'band-height-tall', 'band-height-tall-sm',
+			'band-height', 'band-height-sm', 'band-height-tall', 'band-height-tall-sm', 'band-height-ribbon', 'band-height-ribbon-sm',
 			// 0.15.0: the space between paragraphs in a text section (SK-021).
 			'para-gap',
 		) as $name ) {
@@ -257,6 +257,8 @@ class TWD_SK_Packs {
 			'band-height-sm'                => '180px',
 			'band-height-tall'              => '400px',
 			'band-height-tall-sm'           => '260px',
+			'band-height-ribbon'            => '140px',
+			'band-height-ribbon-sm'         => '100px',
 			'para-gap'                      => '1em',
 		);
 	}

@@ -193,23 +193,33 @@
 	/* Quote line (0.15.0): a shared class on the paragraph the cursor is in; the bar shows at once, Save keeps it,
 	   pressing again takes it off, Cancel puts back whatever the paragraph had. */
 	var QUOTE = 'twd-sk-quoteline';
+	var NOTE = 'twd-sk-notebox';
 
-	function toggleQuote() {
+	// A class on the paragraph the cursor is in: the quote line, or the note box (0.15.0, idea 5). Same rules for both.
+	function toggleParaClass(cls, pending, orig, label) {
 		var t = inEditable();
 		if (!t || t.tagName !== 'P') {
-			status('Put the cursor in a paragraph first: a quote line goes on a paragraph.');
+			status('Put the cursor in a paragraph first: a ' + label + ' goes on a paragraph.');
 			return;
 		}
 		var i = t.getAttribute('data-twd-sk-t');
-		t.classList.toggle(QUOTE);
-		var now = t.classList.contains(QUOTE);
-		if (now === !!S.origQuote[i]) {
-			delete S.quote[i];
+		t.classList.toggle(cls);
+		var now = t.classList.contains(cls);
+		if (now === !!orig[i]) {
+			delete pending[i];
 		} else {
-			S.quote[i] = now;
+			pending[i] = now;
 		}
 		markChanged(t);
-		status(now ? 'Quote line added. Press Quote line again to take it off.' : 'Quote line taken off.');
+		status(now ? label.charAt(0).toUpperCase() + label.slice(1) + ' added. Press the button again to take it off.' : label.charAt(0).toUpperCase() + label.slice(1) + ' taken off.');
+	}
+
+	function toggleQuote() {
+		toggleParaClass(QUOTE, S.quote, S.origQuote, 'quote line');
+	}
+
+	function toggleNote() {
+		toggleParaClass(NOTE, S.note, S.origNote, 'note box');
 	}
 
 	/* Heading above (0.15.0): a subheading put in before the paragraph the cursor is in, an h2 or an h3 by position
@@ -273,7 +283,7 @@
 
 	function markChanged(t) {
 		var i = t.getAttribute('data-twd-sk-t');
-		if (serialize(t) !== S.origText[i] || S.hrefs[i] !== undefined || S.quote[i] !== undefined || S.headings[i] !== undefined) {
+		if (serialize(t) !== S.origText[i] || S.hrefs[i] !== undefined || S.quote[i] !== undefined || S.note[i] !== undefined || S.headings[i] !== undefined) {
 			t.setAttribute('data-twd-sk-changed', '1');
 		} else {
 			t.removeAttribute('data-twd-sk-changed');
@@ -584,6 +594,7 @@
 		});
 		ui.link = toolButton('Link', 'Add or change a link', openLink);
 		ui.quote = toolButton('Quote line', 'A line on the left of this paragraph, like a quote', toggleQuote);
+		ui.note = toolButton('Note box', 'Call this paragraph out in a soft box', toggleNote);
 		ui.heading = toolButton('Heading above', 'Put a heading above this paragraph', headingAbove);
 		ui.remove = toolButton('Remove', 'Remove this list entry, card, button or section', removeThis);
 		ui.putBack = toolButton('Put back', 'Put back the last thing removed', putBack);
@@ -656,7 +667,7 @@
 		]);
 		ui.confirm = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' });
 		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar', role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '' }, [
-			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.bold, ui.italic, ui.link, ui.quote, ui.heading, ui.look, ui.remove, ui.putBack]),
+			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.bold, ui.italic, ui.link, ui.quote, ui.note, ui.heading, ui.look, ui.remove, ui.putBack]),
 			el('div', { className: 'twd-sk-ed__inlinetools', role: 'group', 'aria-label': 'Sections' }, kinds.length ? [ui.addSec, ui.moveUp, ui.moveDown, ui.undo] : [ui.moveUp, ui.moveDown, ui.undo]),
 			el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.save, ui.cancel]),
 			ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel, ui.confirm
@@ -1335,6 +1346,8 @@
 		S.hrefs = {};
 		S.quote = {};
 		S.origQuote = {};
+		S.note = {};
+		S.origNote = {};
 		S.headings = {};
 		S.picks = {};
 		S.spotPicks = {};
@@ -1353,6 +1366,7 @@
 			S.orig[i] = copyChildren(t);
 			S.origText[i] = serialize(t);
 			S.origQuote[i] = t.classList.contains(QUOTE);
+			S.origNote[i] = t.classList.contains(NOTE);
 			t.setAttribute('contenteditable', 'true');
 			t.setAttribute('spellcheck', 'true');
 		});
@@ -1419,6 +1433,9 @@
 			if (S.origQuote[i] !== undefined) {
 				t.classList.toggle(QUOTE, S.origQuote[i]);
 			}
+			if (S.origNote[i] !== undefined) {
+				t.classList.toggle(NOTE, S.origNote[i]);
+			}
 		});
 		S.pics.forEach(function (img) {
 			var o = S.origPic[img.getAttribute('data-twd-sk-p')];
@@ -1452,6 +1469,7 @@
 		S.lookSec = null;
 		S.hrefs = {};
 		S.quote = {};
+		S.note = {};
 		S.linkTarget = null;
 		S.range = null;
 		S.picks = {};
@@ -1505,6 +1523,9 @@
 				}
 				if (S.quote[i] !== undefined) {
 					item.quote = S.quote[i];
+				}
+				if (S.note[i] !== undefined) {
+					item.note = S.note[i];
 				}
 				if (S.headings[i] !== undefined) {
 					item.heading = S.headings[i].el.textContent;

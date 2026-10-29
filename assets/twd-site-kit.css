@@ -655,6 +655,14 @@
   padding-left: 1.2em !important;
   border-left: 3px solid var(--twd-site-color-accent) !important;
 }
+/* Note box (0.15.0, idea 5): a paragraph called out in a soft panel with an accent edge, from the Visual editor's Note box button. */
+.twd-sk-page .twd-sk-notebox.twd-sk-notebox {
+  padding: var(--twd-site-card-pad-sm) !important;
+  border: 1px solid var(--twd-site-color-border) !important;
+  border-left: 4px solid var(--twd-site-color-accent) !important;
+  border-radius: var(--twd-site-radius-card) !important;
+  background-color: var(--twd-site-color-surface) !important;
+}
 .twd-sk-page .twd-sk-text--prose.twd-sk-text--prose .twd-sk-text__body.twd-sk-text__body .twd-sk-btn.twd-sk-btn {
   margin-top: 8px !important;
   text-decoration: none !important;
@@ -847,6 +855,9 @@
 .twd-sk-page .twd-sk-image-text--band-tall.twd-sk-image-text--band-tall {
   height: var(--twd-site-band-height-tall);
 }
+.twd-sk-page .twd-sk-image-text--band-ribbon.twd-sk-image-text--band-ribbon {
+  height: var(--twd-site-band-height-ribbon);
+}
 /* min-height 0: the base image rule's min-height (260px) must not win over the band's own height (180px on phones),
    or the picture spills under the next section's words (seen on a phone, 29 Oct 2026). */
 .twd-sk-page .twd-sk-image-text--band.twd-sk-image-text--band .twd-sk-image-text__img.twd-sk-image-text__img {
@@ -901,6 +912,19 @@
   font-size: var(--twd-site-size-small) !important;
   text-align: center !important;
   color: var(--twd-site-color-muted) !important;
+}
+/* Cards options (0.15.0, idea 2): a quote mark in the accent colour, and cards as tall as their own words. */
+.twd-sk-page .twd-sk-quote--marks.twd-sk-quote--marks .twd-sk-quote__card.twd-sk-quote__card::before {
+  content: "\201C";
+  display: block;
+  margin: 0 0 4px !important;
+  font-family: var(--twd-site-font-heading) !important;
+  font-size: calc(var(--twd-site-size-h1) * 1.3) !important;
+  line-height: 0.7 !important;
+  color: var(--twd-site-color-accent-text) !important;
+}
+.twd-sk-page .twd-sk-quote--loose.twd-sk-quote--loose .twd-sk-quote__grid.twd-sk-quote__grid {
+  align-items: start;
 }
 .twd-sk-page .twd-sk-quote__pullout.twd-sk-quote__pullout {
   margin: 0 !important;
@@ -1244,6 +1268,20 @@
 }
 .twd-sk-page .twd-sk-steps__text.twd-sk-steps__text {
   color: var(--twd-site-color-body) !important;
+}
+/* Row (0.15.0, idea 4): large thin numbers, a rule above each step, nothing else round them. */
+.twd-sk-page .twd-sk-steps--row.twd-sk-steps--row .twd-sk-steps__list.twd-sk-steps__list {
+  gap: var(--twd-site-gap-lg);
+}
+.twd-sk-page .twd-sk-steps--row.twd-sk-steps--row .twd-sk-steps__item.twd-sk-steps__item {
+  padding-top: 20px !important;
+  border-top: 1px solid var(--twd-site-color-border) !important;
+}
+.twd-sk-page .twd-sk-steps--row.twd-sk-steps--row .twd-sk-steps__item.twd-sk-steps__item::before {
+  margin-bottom: 14px !important;
+  font-size: calc(var(--twd-site-size-h2) * 2) !important;
+  font-weight: 300 !important;
+  color: var(--twd-site-color-accent-text) !important;
 }
 /* Timeline (0.14.0): the steps one under the other, numbered discs on a line. */
 .twd-sk-page .twd-sk-steps--timeline.twd-sk-steps--timeline .twd-sk-steps__list.twd-sk-steps__list {
@@ -3188,6 +3226,9 @@
   }
   .twd-sk-page .twd-sk-image-text--band-tall.twd-sk-image-text--band-tall {
     height: var(--twd-site-band-height-tall-sm);
+  }
+  .twd-sk-page .twd-sk-image-text--band-ribbon.twd-sk-image-text--band-ribbon {
+    height: var(--twd-site-band-height-ribbon-sm);
   }
   .twd-sk-page .twd-sk-cta--band.twd-sk-cta--band {
     padding-top: calc(var(--twd-site-section-y-sm) * 1.4) !important;

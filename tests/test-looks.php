@@ -560,3 +560,44 @@ twd_sk_test( 'chunk 4, typography (0.15.0, SK-021): lead-in, small capitals, dro
 		twd_sk_eq( array(), TWD_SK_Packs::validate_tokens( $pack['tokens'], true )['errors'], $slug . ' tokens' );
 	}
 } );
+
+twd_sk_test( 'Tier C ideas 2, 3, 4 and 5 (0.15.0): quote marks and loose cards on testimonial cards, a thin ribbon band, the steps row layout, and a note box on a paragraph', function () {
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	// Idea 2: two options on the cards layout only; the quote section's words stay locked for the AI as before.
+	$q = TWD_SK_Looks::options( 'quote' );
+	twd_sk_eq( 'twd-sk-quote--cards', $q['marks']['requires'] );
+	twd_sk_eq( 'twd-sk-quote--cards', $q['loose']['requires'] );
+	$cards = array( 'twd-sk-quote', 'twd-sk-quote--cards', 'twd-sk-tone-base' );
+	twd_sk_eq( array( 'twd-sk-quote', 'twd-sk-quote--cards', 'twd-sk-tone-base', 'twd-sk-quote--marks', 'twd-sk-quote--loose' ), TWD_SK_Looks::classes_for( 'quote', $cards, null, array( 'marks' => true, 'loose' => true ) ) );
+	twd_sk_eq( array( 'twd-sk-quote', 'twd-sk-quote--pullout', 'twd-sk-tone-base' ), TWD_SK_Looks::classes_for( 'quote', array( 'twd-sk-quote', 'twd-sk-quote--pullout', 'twd-sk-tone-base' ), null, array( 'marks' => true ) ), 'not on the pull-out' );
+	twd_sk_true( in_array( 'quote', TWD_SK_Sections::locked_types(), true ) );
+	twd_sk_has( 'twd-sk-quote--marks', $css );
+	twd_sk_has( 'align-items: start', $css );
+	// Idea 3: the ribbon band from its own tokens, on the band layout only.
+	foreach ( TWD_SK_Packs::packs() as $slug => $pack ) {
+		twd_sk_eq( '140px', $pack['tokens']['band-height-ribbon'], $slug );
+	}
+	twd_sk_has( 'var(--twd-site-band-height-ribbon-sm)', $css );
+	twd_sk_has( 'twd-sk-image-text--band-ribbon', $css );
+	twd_sk_eq( array( 'twd-sk-image-text', 'twd-sk-image-text--band', 'twd-sk-image-text--band-ribbon' ), TWD_SK_Looks::classes_for( 'image_text', array( 'twd-sk-image-text', 'twd-sk-image-text--band' ), null, array( 'band_height' => 'twd-sk-image-text--band-ribbon' ) ) );
+	// Idea 4: the steps row shares the standard layout's pieces, so a steps section can move to it in Look.
+	$steps = TWD_SK_Registry::get( 'steps' );
+	twd_sk_true( isset( $steps['variants']['twd-sk-steps--row'] ) );
+	twd_sk_eq( $steps['variants']['twd-sk-steps--row']['skeleton'], TWD_SK_Sanitizer::clean( $steps['variants']['twd-sk-steps--row']['skeleton'] ) );
+	twd_sk_eq( array( '', 'twd-sk-steps--row', 'twd-sk-steps--timeline' ), TWD_SK_Looks::compatible( 'steps', '' ) );
+	twd_sk_has( 'twd-sk-steps--row', $css );
+	// Idea 5: the note box, set and cleared through the inline route like the quote line.
+	twd_sk_true( in_array( 'twd-sk-notebox', TWD_SK_Registry::shared_classes(), true ) );
+	twd_sk_has( 'twd-sk-notebox', $css );
+	$html = twd_sk_inline_page( '<section class="twd-sk-text twd-sk-tone-base"><div class="twd-sk-inner"><h2 class="twd-sk-title">T</h2><div class="twd-sk-text__body"><p>One.</p><p>Two.</p></div></div></section>' );
+	$on = TWD_SK_Inline::apply( $html, array( array( 'i' => 2, 'html' => 'Two.', 'note' => true, 'quote' => true ) ), array() )['html'];
+	twd_sk_has( '<p class="twd-sk-quoteline twd-sk-notebox">Two.</p>', $on );
+	twd_sk_eq( $on, TWD_SK_Sanitizer::clean( $on ) );
+	$off = TWD_SK_Inline::apply( $on, array( array( 'i' => 2, 'html' => 'Two.', 'note' => false ) ), array() )['html'];
+	twd_sk_has( '<p class="twd-sk-quoteline">Two.</p>', $off );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Inline::apply( $html, array( array( 'i' => 0, 'html' => 'T', 'note' => true ) ), array() ) );
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
+	twd_sk_has( "toolButton('Note box'", $js );
+	twd_sk_has( 'item.note = S.note[i]', $js );
+	twd_sk_has( 'S.origNote[i] = t.classList.contains(NOTE)', $js );
+} );
