@@ -90,6 +90,8 @@ class TWD_SK_Registry {
 			'twd-sk-border-accent',
 			'twd-sk-pad-compact',
 			'twd-sk-pad-roomy',
+			// 0.15.0: hide this section on a phone (a Look choice on any section; the Visual editor shows it with a label).
+			'twd-sk-hide-phone',
 			// 0.15.0 (idea 8): "On this page", a list of jump links to the page's h2 headings, built when the page is drawn
 			// (never stored) inside the section that carries twd-sk-toc; the headings get twd-sk-toc-target with their ids.
 			'twd-sk-toc',

@@ -3844,6 +3844,10 @@
   padding-bottom: calc(var(--twd-site-section-y) * 1.5) !important;
 }
 @media (max-width: 768px) {
+  /* Hide on phones (0.15.0): a Look choice; the Visual editor's own stylesheet shows the section again while editing. */
+  .twd-sk-page .twd-sk-hide-phone.twd-sk-hide-phone {
+    display: none;
+  }
   .twd-sk-page .twd-sk-space-top-sm.twd-sk-space-top-sm {
     padding-top: calc(var(--twd-site-section-y-sm) * 0.6) !important;
   }

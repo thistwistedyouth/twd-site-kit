@@ -1166,6 +1166,8 @@
 .twd-sk-space-bottom-sm { padding-bottom: $section-y-sm; }
 .twd-sk-space-bottom-lg { padding-bottom: calc(#{$section-y} * 1.5); }
 @media (max-width: 768px) {
+  /* Hide on phones (0.15.0): a Look choice; the Visual editor's own stylesheet shows the section again while editing. */
+  .twd-sk-hide-phone { display: none; }
   .twd-sk-space-top-sm { padding-top: calc(#{$section-y-sm} * 0.6); }
   .twd-sk-space-top-lg { padding-top: calc(#{$section-y-sm} * 1.5); }
   .twd-sk-space-bottom-sm { padding-bottom: calc(#{$section-y-sm} * 0.6); }

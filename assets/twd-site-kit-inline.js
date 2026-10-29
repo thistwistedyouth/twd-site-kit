@@ -613,6 +613,22 @@
 		ui.moveDown = toolButton('Move down', 'Move this section down the page', function () {
 			moveSection('down');
 		});
+		// See the page at a phone, tablet or computer width (0.15.0): the same page opens in its own window at that size,
+		// so every phone rule really applies (a page cannot shrink its own window). Unsaved changes are not in it until saved.
+		function viewAt(label, width, height) {
+			return toolButton(label, 'Open this page in a ' + label.toLowerCase() + '-sized window (' + width + ' pixels wide)', function () {
+				var url = window.location.pathname + plainSearch();
+				var w = window.open(url, 'twd-sk-view', 'width=' + width + ',height=' + height + ',resizable=yes,scrollbars=yes');
+				if (!w) {
+					status('The browser blocked the new window. Allow pop-ups for this site, then try again.');
+					return;
+				}
+				status(changedCount() ? 'Opened a ' + label.toLowerCase() + '-sized window. Changes not saved yet are not in it.' : 'Opened a ' + label.toLowerCase() + '-sized window.');
+			});
+		}
+		ui.viewPhone = viewAt('Phone', 390, 844);
+		ui.viewTablet = viewAt('Tablet', 768, 1024);
+		ui.viewDesktop = viewAt('Desktop', 1280, 900);
 		ui.undo = toolButton('Undo', 'Step back the last saved change: a move, an added section, or the last save', function () {
 			undoLast(false);
 		});
@@ -669,6 +685,7 @@
 		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar', role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '' }, [
 			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.bold, ui.italic, ui.link, ui.quote, ui.note, ui.heading, ui.look, ui.remove, ui.putBack]),
 			el('div', { className: 'twd-sk-ed__inlinetools', role: 'group', 'aria-label': 'Sections' }, kinds.length ? [ui.addSec, ui.moveUp, ui.moveDown, ui.undo] : [ui.moveUp, ui.moveDown, ui.undo]),
+			el('div', { className: 'twd-sk-ed__inlinetools', role: 'group', 'aria-label': 'See the page at a size' }, [el('span', { className: 'twd-sk-ed__inlinehead', text: 'View:' }), ui.viewPhone, ui.viewTablet, ui.viewDesktop]),
 			el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.save, ui.cancel]),
 			ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel, ui.confirm
 		]);

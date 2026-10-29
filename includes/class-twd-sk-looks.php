@@ -347,13 +347,24 @@ class TWD_SK_Looks {
 		return self::advanced_for_all() || ( function_exists( 'current_user_can' ) && current_user_can( 'manage_options' ) );
 	}
 
-	/** All options for a component: its own, then space above and below, box, border, padding, background last. key => option. */
+	/** Hide on phones (0.15.0): a section that is not wanted on a small screen (a visitor on a phone never sees it). */
+	private static function hide_phone_option() {
+		return array(
+			'label' => 'Hide this section on phones',
+			'kind'  => 'toggle',
+			'class' => 'twd-sk-hide-phone',
+			'help'  => 'Shown on tablets and computers only. While editing it stays visible with a label.',
+		);
+	}
+
+	/** All options for a component: its own, then space above and below, box, border, padding, background, hide on phones last. key => option. */
 	public static function all_options( $component ) {
 		return self::options( $component ) + array(
 			'space_top'    => self::space_option( 'top' ),
 			'space_bottom' => self::space_option( 'bottom' ),
 		) + self::advanced_options() + array(
 			'background'   => self::background_option(),
+			'hide_phone'   => self::hide_phone_option(),
 		);
 	}
 

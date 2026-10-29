@@ -63,6 +63,12 @@ body.twd-sk-inline-on .twd-sk-resources__none[data-twd-sk-t]::before {
   font-size: 0.75rem; font-weight: 700; color: #2271b1; text-align: inherit;
 }
 
+/* A section hidden on phones (0.15.0): shown while editing, with a label, so it can still be reached. */
+body.twd-sk-inline-on .twd-sk-hide-phone { display: block !important; position: relative; }
+body.twd-sk-inline-on .twd-sk-hide-phone::before {
+  content: "Hidden on phones"; position: absolute; top: 4px; left: 4px; z-index: 3; padding: 2px 8px; border-radius: 4px;
+  background-color: #2271b1; color: #fff; font-size: 0.75rem; font-weight: 700;
+}
 /* A section whose look (layout or options) was changed and is not saved yet (0.15.0). */
 body.twd-sk-inline-on section[data-twd-sk-looked] { outline: 2px solid #00a32a !important; outline-offset: -2px !important; }
 

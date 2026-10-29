@@ -44,7 +44,7 @@ twd_sk_test( 'looks: the browser gets small, static data: labels and class names
 	twd_sk_eq( '_', $c['standard'] );
 	twd_sk_true( ! isset( $c['components']['notice'] ), 'the safety notice is left out' );
 	twd_sk_true( isset( $c['components']['hero']['options'][0]['choices'] ) );
-	twd_sk_eq( array( 'space_top', 'space_bottom', 'box', 'border', 'padding', 'background' ), array_map( function ( $o ) { return $o['key']; }, $c['shared'] ), 'the shared options go once' );
+	twd_sk_eq( array( 'space_top', 'space_bottom', 'box', 'border', 'padding', 'background', 'hide_phone' ), array_map( function ( $o ) { return $o['key']; }, $c['shared'] ), 'the shared options go once' );
 	twd_sk_eq( array( 'box', 'border', 'padding' ), $c['advanced'] );
 	twd_sk_eq( array(), $c['components']['faq']['options'], 'a component with no options of its own sends none' );
 	$json = json_encode( $c );
@@ -404,7 +404,7 @@ twd_sk_test( 'words over a picture (0.15.0): the AI editor names the nearest Loo
 twd_sk_test( 'box, border and padding (0.15.0): shared classes on any section, styled from tokens, offered to administrators until the switch offers them to everyone; the route holds them back otherwise', function () {
 	twd_stub_reset();
 	$all = TWD_SK_Looks::all_options( 'faq' );
-	twd_sk_eq( array( 'space_top', 'space_bottom', 'box', 'border', 'padding', 'background' ), array_keys( $all ) );
+	twd_sk_eq( array( 'space_top', 'space_bottom', 'box', 'border', 'padding', 'background', 'hide_phone' ), array_keys( $all ) );
 	foreach ( array( 'twd-sk-box-card', 'twd-sk-box-outline', 'twd-sk-border-thin', 'twd-sk-border-accent', 'twd-sk-pad-compact', 'twd-sk-pad-roomy' ) as $cls ) {
 		twd_sk_true( in_array( $cls, TWD_SK_Registry::shared_classes(), true ), $cls . ' is shared' );
 		twd_sk_has( $cls, file_get_contents( ABSPATH . 'assets/twd-site-kit.css' ) );
@@ -600,4 +600,22 @@ twd_sk_test( 'Tier C ideas 2, 3, 4 and 5 (0.15.0): quote marks and loose cards o
 	twd_sk_has( "toolButton('Note box'", $js );
 	twd_sk_has( 'item.note = S.note[i]', $js );
 	twd_sk_has( 'S.origNote[i] = t.classList.contains(NOTE)', $js );
+} );
+
+twd_sk_test( 'Tier C, the device preview and hide on phones (0.15.0): a shared Look toggle hides a section under 769px (shown with a label while editing), and the Visual editor opens the page in a phone, tablet or desktop sized window', function () {
+	twd_sk_true( in_array( 'twd-sk-hide-phone', TWD_SK_Registry::shared_classes(), true ) );
+	$all = TWD_SK_Looks::all_options( 'faq' );
+	twd_sk_eq( 'twd-sk-hide-phone', $all['hide_phone']['class'] );
+	twd_sk_eq( array( 'twd-sk-faq', 'twd-sk-tone-base', 'twd-sk-hide-phone' ), TWD_SK_Looks::classes_for( 'faq', array( 'twd-sk-faq', 'twd-sk-tone-base' ), null, array( 'hide_phone' => true ) ) );
+	twd_sk_eq( array( 'twd-sk-faq', 'twd-sk-tone-base' ), TWD_SK_Looks::classes_for( 'faq', array( 'twd-sk-faq', 'twd-sk-tone-base', 'twd-sk-hide-phone' ), null, array( 'hide_phone' => false ) ) );
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	twd_sk_true( 1 === preg_match( '/@media \(max-width: 768px\) \{[^@]*\.twd-sk-page \.twd-sk-hide-phone\.twd-sk-hide-phone \{\s*display: none;\s*\}/s', $css ), 'hidden only on a phone, with no !important so the editor can show it' );
+	$inline = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.css' );
+	twd_sk_has( 'body.twd-sk-inline-on .twd-sk-hide-phone { display: block !important;', $inline );
+	twd_sk_has( 'content: "Hidden on phones"', $inline );
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
+	foreach ( array( "viewAt('Phone', 390, 844)", "viewAt('Tablet', 768, 1024)", "viewAt('Desktop', 1280, 900)", "window.open(url, 'twd-sk-view'", 'Allow pop-ups' ) as $needle ) {
+		twd_sk_has( $needle, $js );
+	}
+	twd_sk_hasnt( "window.open('http", $js, 'the window opens this page, never an address written in the script' );
 } );
