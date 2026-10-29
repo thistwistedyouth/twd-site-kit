@@ -59,6 +59,8 @@ class TWD_SK_Build {
 			'step'       => isset( $d['step'] ) && in_array( $d['step'], self::steps(), true ) ? $d['step'] : 'type',
 			'mode'       => isset( $d['mode'] ) && is_string( $d['mode'] ) && isset( TWD_SK_Mode::modes()[ $d['mode'] ] ) ? $d['mode'] : TWD_SK_Mode::stored(),
 			'pack'       => isset( $d['pack'] ) && is_string( $d['pack'] ) && isset( $packs[ $d['pack'] ] ) ? $d['pack'] : TWD_SK_Packs::active_slug(),
+			// 0.15.0 (SK-014): whether a style was chosen here or on the command line; otherwise the brief's own style stands.
+			'pack_chosen' => ! empty( $d['pack_chosen'] ),
 			'brief_text' => isset( $d['brief_text'] ) && is_string( $d['brief_text'] ) ? $d['brief_text'] : '',
 			'pictures'   => TWD_SK_Pictures::validate( isset( $d['pictures'] ) ? $d['pictures'] : array() )['valid'],
 			'built'      => $built,
@@ -111,7 +113,8 @@ class TWD_SK_Build {
 		}
 		if ( isset( $in['pack'] ) ) {
 			if ( is_string( $in['pack'] ) && isset( TWD_SK_Packs::packs()[ $in['pack'] ] ) ) {
-				$d['pack'] = $in['pack'];
+				$d['pack']        = $in['pack'];
+				$d['pack_chosen'] = true;
 			} else {
 				$errors[] = 'Choose one of the styles on offer.';
 			}
@@ -285,7 +288,11 @@ class TWD_SK_Build {
 		$data          = $data ? $data : array( 'schema' => TWD_SK_Brief::SCHEMA );
 		$data['mode']  = $draft['mode'];
 		$style         = isset( $data['style'] ) && is_array( $data['style'] ) ? $data['style'] : array();
-		$style['pack'] = $draft['pack'];
+		// The brief's own style stands unless one was chosen on the setup page or the command line (0.15.0, SK-014).
+		$brief_pack = isset( $style['pack'] ) && is_string( $style['pack'] ) && isset( TWD_SK_Packs::packs()[ $style['pack'] ] ) ? $style['pack'] : '';
+		if ( '' === $brief_pack || ! empty( $draft['pack_chosen'] ) ) {
+			$style['pack'] = $draft['pack'];
+		}
 		$data['style'] = $style;
 		return $data;
 	}

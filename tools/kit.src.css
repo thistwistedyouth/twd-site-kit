@@ -782,7 +782,11 @@
 .twd-sk-header--split .twd-sk-header__inner { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
 .twd-sk-header--split .twd-sk-header__logo { grid-column: 2; grid-row: 1; justify-self: center; }
 .twd-sk-header--split .twd-sk-header__panel { display: contents; }
-.twd-sk-header--split .twd-sk-header__nav { grid-column: 1; grid-row: 1; justify-self: start; }
+.twd-sk-header--split .twd-sk-header__nav { grid-column: 1; grid-row: 1; justify-self: start; min-width: 0; }
+/* Six menu items run out of room in a third of the bar (0.15.0, SK-017): a tighter gap, and the menu may use the
+   middle column's spare width before the logo. */
+.twd-sk-header--split .twd-sk-header__inner { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+.twd-sk-header--split .twd-sk-header__menu { gap: calc(#{$menu-gap} * 0.6); }
 .twd-sk-header--split .twd-sk-header__cta { grid-column: 3; grid-row: 1; justify-self: end; }
 .twd-sk-header--minimal .twd-sk-header__panel { flex-direction: column; align-items: flex-start; }
 .twd-sk-header--minimal .twd-sk-header__menu { flex-direction: column; align-items: flex-start; }

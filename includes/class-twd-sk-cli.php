@@ -25,7 +25,7 @@
  *   wp twd-sk embed-set --label= --kind= --code= [--id=]   save an embed
  *   wp twd-sk embed-delete <id>          delete an embed
  *   wp twd-sk style status|snapshot|apply|revert|swap   restyle a built site: keep the current look, apply a pack or a kit file (dry run first), go back, change a section's layout (0.14.0)
- *   wp twd-sk build [<brief-file>] [--mode=<mode>] [--set=<slug>] [--pack=<slug>] [--pictures=<file>] [--no-ai] [--dry-run]
+ *   wp twd-sk build [<brief-file>] [--mode=<mode>] [--set=<slug>] [--pack=<slug>] [--pictures=<file>] [--outlines-only] [--dry-run]
  *                                        set the whole site up from a brief, every page a draft
  */
 
@@ -355,8 +355,11 @@ class TWD_SK_CLI {
 	 * : A JSON file: {"slots":{"logo":{"id":12},"home_main":{"id":13,"description":"..."}},
 	 *   "custom":[{"name":"front-view","id":14,"description":"...","use_on":"any"}]}. IDs are media library pictures.
 	 *
-	 * [--no-ai]
+	 * [--outlines-only]
 	 * : Make outlines only, even when AI is available.
+	 *
+	 * [--ai]
+	 * : Write the pages with AI when it is available (the default). --no-ai makes outlines only, like --outlines-only.
 	 *
 	 * [--dry-run]
 	 * : Show the plan and stop. Nothing is changed.
@@ -411,7 +414,10 @@ class TWD_SK_CLI {
 		foreach ( $plan['blocking'] as $b ) {
 			WP_CLI::warning( 'Hard to read: ' . $b );
 		}
-		$ai = $plan['ai'] && ! isset( $assoc_args['no-ai'] );
+		// Outlines only (0.15.0, SK-013): --outlines-only, or --no-ai, which WP-CLI hands over as ai => false.
+		$no_ai = isset( $assoc_args['outlines-only'] ) || isset( $assoc_args['no-ai'] )
+			|| ( isset( $assoc_args['ai'] ) && in_array( $assoc_args['ai'], array( false, 'false', '0', 0 ), true ) );
+		$ai = $plan['ai'] && ! $no_ai;
 		WP_CLI::log( 'Plan (' . ( $ai ? 'pages written by AI' : 'outlines only' ) . '):' );
 		foreach ( $plan['steps'] as $s ) {
 			WP_CLI::log( '  - ' . $s['label'] );
@@ -695,6 +701,11 @@ class TWD_SK_CLI {
 	 * @subcommand launch-check
 	 */
 	public function launch_check( $args, $assoc_args ) {
+		if ( isset( $assoc_args['tidy'] ) && ! get_current_user_id() ) {
+			// The command line has no signed-in user unless --user says so; the bin needs one (0.15.0, SK-016).
+			WP_CLI::warning( 'Tidy needs a signed-in administrator: run it again with --user=ID (an administrator\'s user ID or login). The check below still runs.' );
+			unset( $assoc_args['tidy'] );
+		}
 		if ( isset( $assoc_args['tidy'] ) ) {
 			$t = TWD_SK_Launch::tidy();
 			foreach ( $t['trashed'] as $title ) {
@@ -1137,13 +1148,17 @@ class TWD_SK_CLI {
 	}
 
 	private static function warn_if_no_shortcode( $page_id ) {
+		// A page on the kit template draws the stored HTML itself and never holds the shortcode (0.15.0, SK-015).
+		if ( class_exists( 'TWD_SK_Template' ) && TWD_SK_Template::uses_template( $page_id ) ) {
+			return;
+		}
 		$content   = (string) get_post_field( 'post_content', $page_id );
 		$elementor = get_post_meta( $page_id, '_elementor_data', true );
 		if ( is_string( $elementor ) ) {
 			$content .= $elementor;
 		}
 		if ( false === strpos( $content, '[twd_page' ) ) {
-			WP_CLI::warning( 'Page ' . $page_id . ' does not seem to contain the [twd_page] shortcode yet, so the content will not show. Add a Shortcode widget with [twd_page] to it.' );
+			WP_CLI::warning( 'Page ' . $page_id . ' does not seem to contain the [twd_page] shortcode yet, so the content will not show. Add a Shortcode widget with [twd_page] to it, or switch the page to the TWD Kit Page template.' );
 		}
 	}
 }

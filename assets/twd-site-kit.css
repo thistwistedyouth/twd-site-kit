@@ -2384,6 +2384,15 @@
   grid-column: 1;
   grid-row: 1;
   justify-self: start;
+  min-width: 0;
+}
+/* Six menu items run out of room in a third of the bar (0.15.0, SK-017): a tighter gap, and the menu may use the
+   middle column's spare width before the logo. */
+.twd-sk-page .twd-sk-header--split.twd-sk-header--split .twd-sk-header__inner.twd-sk-header__inner {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+.twd-sk-page .twd-sk-header--split.twd-sk-header--split .twd-sk-header__menu.twd-sk-header__menu {
+  gap: calc(var(--twd-site-menu-gap) * 0.6);
 }
 .twd-sk-page .twd-sk-header--split.twd-sk-header--split .twd-sk-header__cta.twd-sk-header__cta {
   grid-column: 3;

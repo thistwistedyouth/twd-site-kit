@@ -385,3 +385,74 @@ twd_sk_test( 'cli: style apply with only --footer (or --header) changes just tha
 	twd_sk_has( 'footer layout', $msg );
 	twd_sk_eq( 'feature', TWD_SK_Chrome::settings()['footer_variant'], 'a refused layout changes nothing' );
 } );
+
+twd_sk_test( 'SK-013 (0.15.0): outlines only is --outlines-only, and --no-ai (which WP-CLI hands over as ai => false) is read the same way', function () {
+	twd_stub_reset();
+	$doc = file_get_contents( ABSPATH . 'includes/class-twd-sk-cli.php' );
+	twd_sk_has( '[--outlines-only]', $doc );
+	twd_sk_has( '[--ai]', $doc, 'declared, so WP-CLI accepts --no-ai (which it hands over as ai => false)' );
+	twd_sk_has( '[--pictures=<file>]', $doc );
+	twd_sk_hasnt( "[--no-ai] [--dry-run]", $doc, 'the usage line no longer shows a flag WP-CLI refuses' );
+	// What WP-CLI makes of each spelling, sent through the command: a dry run says outlines only.
+	foreach ( array( array( 'outlines-only' => true ), array( 'ai' => false ), array( 'no-ai' => true ) ) as $assoc ) {
+		WP_CLI::reset();
+		$assoc['dry-run'] = true;
+		( new TWD_SK_CLI() )->build( array(), $assoc );
+		twd_sk_has( 'outlines only', WP_CLI::all(), json_encode( $assoc ) );
+	}
+} );
+
+twd_sk_test( 'SK-014 (0.15.0): a brief that names a style keeps it when no style was chosen on the setup page or the command line; a chosen style still wins', function () {
+	twd_stub_reset();
+	TWD_SK_Packs::set_active( 'sage' );
+	$brief = json_encode( array( 'schema' => TWD_SK_Brief::SCHEMA, 'style' => array( 'pack' => 'grove' ), 'pages' => array() ) );
+	TWD_SK_Build::save_draft( array( 'brief_text' => $brief ) );
+	$plan = TWD_SK_Build::plan();
+	twd_sk_eq( array(), $plan['errors'] );
+	$r = TWD_SK_Build::run_step( 'settings', 0, array( 'ai' => false ) );
+	twd_sk_true( empty( $r['error'] ), 'settings step ran: ' . json_encode( $r ) );
+	twd_sk_eq( 'grove', TWD_SK_Packs::active_slug(), 'the brief\'s style stands' );
+	// Chosen on the command line or the setup page: the choice wins over the brief.
+	twd_stub_reset();
+	TWD_SK_Packs::set_active( 'sage' );
+	TWD_SK_Build::save_draft( array( 'brief_text' => $brief, 'pack' => 'ink' ) );
+	TWD_SK_Build::run_step( 'settings', 0, array( 'ai' => false ) );
+	twd_sk_eq( 'ink', TWD_SK_Packs::active_slug() );
+	twd_sk_true( TWD_SK_Build::draft()['pack_chosen'] );
+} );
+
+twd_sk_test( 'SK-015 (0.15.0): save does not warn about the shortcode for a page on the kit template, and the warning names the template as the other way', function () {
+	twd_stub_reset();
+	$file = sys_get_temp_dir() . '/twd-sk-cli-' . getmypid() . '.html';
+	file_put_contents( $file, '<section class="twd-sk-text twd-sk-tone-base"><div class="twd-sk-inner"><p>Words.</p></div></section>' );
+	twd_stub_add_post( 12, 'page', '' );
+	update_post_meta( 12, TWD_SK_Template::META_KEY, TWD_SK_Template::SLUG );
+	WP_CLI::reset();
+	( new TWD_SK_CLI() )->save( array( '12', $file ), array() );
+	twd_sk_hasnt( 'does not seem to contain', WP_CLI::all(), 'a kit template page draws its own words' );
+	twd_stub_add_post( 13, 'page', 'Typed words, no shortcode' );
+	WP_CLI::reset();
+	( new TWD_SK_CLI() )->save( array( '13', $file ), array() );
+	twd_sk_has( 'switch the page to the TWD Kit Page template', WP_CLI::all() );
+	@unlink( $file );
+} );
+
+twd_sk_test( 'SK-016 (0.15.0): launch-check --tidy with no signed-in user says to run it again with --user, bins nothing, and still runs the check', function () {
+	twd_sk_launch_site( true );
+	twd_stub_add_post( 2, 'page', 'Sample' );
+	$GLOBALS['twd_stub']['posts'][2]->post_name  = 'sample-page';
+	$GLOBALS['twd_stub']['posts'][2]->post_title = 'Sample Page';
+	$GLOBALS['twd_stub']['user'] = 0;
+	WP_CLI::reset();
+	( new TWD_SK_CLI() )->launch_check( array(), array( 'tidy' => true ) );
+	$all = WP_CLI::all();
+	twd_sk_has( 'run it again with --user=ID', $all );
+	twd_sk_hasnt( 'You cannot move', $all );
+	twd_sk_eq( 'publish', get_post( 2 )->post_status, 'nothing was binned' );
+	twd_sk_true( false !== strpos( $all, 'ok' ) || false !== strpos( $all, 'warn' ) || false !== strpos( $all, 'fail' ), 'the check still printed' );
+	// With a user it works as before.
+	$GLOBALS['twd_stub']['user'] = 7;
+	WP_CLI::reset();
+	( new TWD_SK_CLI() )->launch_check( array(), array( 'tidy' => true ) );
+	twd_sk_has( 'Moved "Sample Page" to the bin.', WP_CLI::all() );
+} );

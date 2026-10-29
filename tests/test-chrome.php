@@ -1001,3 +1001,12 @@ twd_sk_test( 'footer text (0.15.0): up to three lines with bold, italic and a sa
 		twd_sk_has( $needle, $js );
 	}
 } );
+
+twd_sk_test( 'SK-017 (0.15.0): the split header lets its menu use the spare width with a tighter gap, and the Site tab says when six or more items would run out of room', function () {
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-header--split\.twd-sk-header--split \.twd-sk-header__inner\.twd-sk-header__inner \{[^}]*grid-template-columns: minmax\(0, 1fr\) auto minmax\(0, 1fr\)/', $css ), 'the side columns may shrink and grow' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-header--split\.twd-sk-header--split \.twd-sk-header__menu\.twd-sk-header__menu \{[^}]*gap: calc\(var\(--twd-site-menu-gap\) \* 0\.6\)/', $css ), 'a tighter gap from the menu gap token' );
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' );
+	twd_sk_has( 'function splitNote', $js );
+	twd_sk_has( 'the bar header fits them', $js );
+} );

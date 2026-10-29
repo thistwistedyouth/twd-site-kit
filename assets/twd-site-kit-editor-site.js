@@ -885,6 +885,13 @@
 
 	var cui = {};
 
+	// The split header keeps the menu in a third of the bar: with six or more top-level items the bar header fits better (0.15.0, SK-017).
+	function splitNote() {
+		var items = P.data && P.data.profile && P.data.profile.menu ? P.data.profile.menu.length : 0;
+		var split = cui.header.value === 'split' || (cui.header.value === '' && P.data && P.data.chrome && P.data.chrome.effective && P.data.chrome.effective.header === 'split');
+		return (split && items >= 6 && !cui.wordmark.checked) ? ' With ' + items + ' menu items the split header runs out of room; the bar header fits them.' : '';
+	}
+
 	function fillChrome() {
 		var c = P.data.chrome;
 		cui.header.value = c.settings.header_variant;
@@ -905,7 +912,7 @@
 		cui.placement.value = c.settings.placement;
 		var e = c.effective;
 		cui.snap = chromeSnap();
-		cui.note.textContent = 'Now showing: ' + (e.wordmark ? 'the text wordmark header (stacked on the front page, one row elsewhere)' : c.header_variants[e.header]) + ' (header), ' + c.footer_variants[e.footer] + ' (footer).' + (e.sticky_note ? ' The centred header cannot be fixed to the top, so that setting is ignored.' : '');
+		cui.note.textContent = 'Now showing: ' + (e.wordmark ? 'the text wordmark header (stacked on the front page, one row elsewhere)' : c.header_variants[e.header]) + ' (header), ' + c.footer_variants[e.footer] + ' (footer).' + (e.sticky_note ? ' The centred header cannot be fixed to the top, so that setting is ignored.' : '') + splitNote();
 		fillPlacementNote();
 	}
 
