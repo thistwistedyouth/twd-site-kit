@@ -198,6 +198,14 @@
 /* Only the tools for what was clicked: words show for words, the section tools for anything in a section. */
 .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--words, .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--section,
 .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="picture"] .twd-sk-ed__inlinetools--words, .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="section"] .twd-sk-ed__inlinetools--words { display: none; }
+/* 18d: the compact row by default; More opens the rest. The More button itself shows once something was clicked. */
+.twd-sk-ed__inlinebar--inwin:not([data-twd-sk-more="on"]) .twd-sk-ed__inlinetools--more, .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--morebtn { display: none; }
+.twd-sk-ed__inlinetools--morebtn { margin-left: auto; }
+/* 18c: the one-section view a pencil opens. */
+.twd-sk-ed__ctxhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.twd-sk-ed__allsections { padding: 0; border: 0; background: none; color: $color-accent-text; font-size: $size-small; text-decoration: underline; cursor: pointer; }
+.twd-sk-ed__allsections:hover, .twd-sk-ed__allsections:focus-visible { color: $color-primary; }
+.twd-sk-ed__viewhint { order: 0; flex: 1 1 100%; margin: 0 0 6px; font-size: $size-small; color: $color-body; }
 @media (max-width: 700px) {
   .twd-sk-ed__overlay--sheet { align-items: flex-end; padding: 0; }
   .twd-sk-ed__overlay--sheet .twd-sk-ed__dialog--compact { height: auto; max-height: 70%; border-radius: $radius-card $radius-card 0 0; }

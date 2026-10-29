@@ -1100,9 +1100,13 @@
 						selectTab('page');
 					}
 					prefillSection(index, name);
+					// 18c: a pencil means one section: the Visual editor shows that section's view (the list of all
+					// sections is hidden until All sections is pressed).
 					window.setTimeout(function () {
 						var ED = window.TWD_SK_ED;
-						if (ED && typeof ED.focusSection === 'function') {
+						if (ED && typeof ED.sectionView === 'function') {
+							ED.sectionView(true, index);
+						} else if (ED && typeof ED.focusSection === 'function') {
 							ED.focusSection(index);
 						}
 					}, 60);
@@ -2565,6 +2569,15 @@
 		},
 		foldSection: foldSection,
 		revealFold: revealFold,
+		// 18c: the On page edits tab's list of sections, hidden while one section's view is open.
+		showOutline: function (on) {
+			if (ui.outline) {
+				show(ui.outline, !!on);
+			}
+			if (ui.pageHint) {
+				show(ui.pageHint, !!on);
+			}
+		},
 		// The window (0.15.0): shrink it to the pencil, or bring it back.
 		minimise: minimise,
 		restoreWindow: restoreWindow,

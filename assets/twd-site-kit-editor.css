@@ -734,6 +734,41 @@
 .twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="section"] .twd-sk-ed__inlinetools--words.twd-sk-ed__inlinetools--words {
   display: none;
 }
+/* 18d: the compact row by default; More opens the rest. The More button itself shows once something was clicked. */
+.twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin:not([data-twd-sk-more="on"]) .twd-sk-ed__inlinetools--more.twd-sk-ed__inlinetools--more,
+.twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--morebtn.twd-sk-ed__inlinetools--morebtn {
+  display: none;
+}
+.twd-sk-ed .twd-sk-ed__inlinetools--morebtn.twd-sk-ed__inlinetools--morebtn {
+  margin-left: auto !important;
+}
+/* 18c: the one-section view a pencil opens. */
+.twd-sk-ed .twd-sk-ed__ctxhead.twd-sk-ed__ctxhead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+.twd-sk-ed .twd-sk-ed__allsections.twd-sk-ed__allsections {
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  color: var(--twd-site-color-accent-text) !important;
+  font-size: var(--twd-site-size-small) !important;
+  text-decoration: underline !important;
+  cursor: pointer;
+}
+.twd-sk-ed .twd-sk-ed__allsections.twd-sk-ed__allsections:hover,
+.twd-sk-ed .twd-sk-ed__allsections.twd-sk-ed__allsections:focus-visible {
+  color: var(--twd-site-color-primary) !important;
+}
+.twd-sk-ed .twd-sk-ed__viewhint.twd-sk-ed__viewhint {
+  order: 0;
+  flex: 1 1 100%;
+  margin: 0 0 6px !important;
+  font-size: var(--twd-site-size-small) !important;
+  color: var(--twd-site-color-body) !important;
+}
 @media (max-width: 700px) {
   .twd-sk-ed .twd-sk-ed__overlay--sheet.twd-sk-ed__overlay--sheet {
     align-items: flex-end;

@@ -105,9 +105,93 @@
 		S.removes[key] = node;
 		S.removeOrder.push(key);
 		S.last = null;
+		dropCursor(node);
 		counter();
-		status('Removed a ' + kindOf(node) + '. Put back undoes it; Save makes it final (every save is a version you can go back to).');
+		var what = kindOf(node) === 'item' ? (node.tagName === 'P' ? 'a paragraph' : 'an item') : 'a ' + kindOf(node);
+		status((oneWindow ? 'Deleted ' : 'Removed ') + what + '. Put back undoes it; Save makes it final (every save is a version you can go back to).');
 		ui.putBack.disabled = false;
+		syncPutBack();
+		updateContext();
+	}
+
+	// Take the cursor and the selection out of a node (hidden, or about to be the section view's subject).
+	function dropCursor(node) {
+		var sel = window.getSelection ? window.getSelection() : null;
+		if (sel && sel.rangeCount && node && node.contains(sel.anchorNode)) {
+			sel.removeAllRanges();
+		}
+		if (document.activeElement && node && node.contains(document.activeElement) && document.activeElement.blur) {
+			document.activeElement.blur();
+		}
+	}
+
+	function syncPutBack() {
+		if (oneWindow && ui.putBack) {
+			show(ui.putBack, !!S.removeOrder.length);
+		}
+	}
+
+	/* ---- 18c (29 Oct 2026): Delete in plain words, through the same remove and Put back paths ----
+	   "Delete this text" removes the paragraph or item the cursor is in (only one of several alike can go on its own);
+	   "Delete section" asks once, then removes the section the cursor is in. Both are S.removes, so Put back, Cancel,
+	   Save (the inline route's removes) and Undo work exactly as for Remove. */
+	function deleteText() {
+		var t = inEditable() || editableOf(S.last);
+		if (!t) {
+			status('Click the words you want to delete first.');
+			return;
+		}
+		var node = removableOf(t);
+		if (!node || node.tagName === 'SECTION') {
+			status('This text cannot be deleted on its own: it is the only one of its kind here. Change its words instead, or delete the whole section.');
+			return;
+		}
+		var sec = sectionOf(node);
+		S.last = node;
+		removeThis();
+		if (S.view && sec) {
+			S.last = sec;
+			updateContext();
+		}
+	}
+
+	function deleteSection() {
+		var sec = currentSection();
+		if (!sec) {
+			status('Click inside the section you want to delete first.');
+			return;
+		}
+		if (!sec.hasAttribute('data-twd-sk-r')) {
+			status(sec.querySelector('h1') ? 'This section holds the page\'s main heading, so it cannot be deleted.' : 'This section cannot be deleted here.');
+			return;
+		}
+		var index = parseInt(sec.getAttribute('data-twd-sk-sec'), 10);
+		closePanels();
+		ED.clear(ui.confirm);
+		ui.confirm.appendChild(el('span', { text: 'Delete section ' + (index + 1) + ' (' + sectionName(sec) + ')? You can bring it back with Put back before saving, or with Undo after. ' }));
+		var yes = ED.button('Delete it', 'primary', function () {
+			show(ui.confirm, false);
+			S.last = sec;
+			removeThis();
+			if (S.view) {
+				ED.sectionView(false);
+			}
+		});
+		var no = ED.button('Keep it', 'secondary', function () {
+			show(ui.confirm, false);
+		});
+		ui.confirm.appendChild(yes);
+		ui.confirm.appendChild(no);
+		show(ui.confirm, true);
+		yes.focus();
+	}
+
+	// 18d: the compact bar shows a few tools; More opens the rest (the window grows with its content, under its cap).
+	function toggleMore() {
+		S.more = !S.more;
+		ui.bar.setAttribute('data-twd-sk-more', S.more ? 'on' : 'off');
+		ui.more.textContent = S.more ? 'Fewer' : 'More';
+		ui.more.setAttribute('aria-expanded', S.more ? 'true' : 'false');
 	}
 
 	function putBack() {
@@ -124,6 +208,7 @@
 		counter();
 		status('Put back.');
 		ui.putBack.disabled = !S.removeOrder.length;
+		syncPutBack();
 	}
 
 	function status(text) {
@@ -586,7 +671,13 @@
 
 	function buildBar() {
 		ui.status = el('span', { className: 'twd-sk-ed__inlinestatus', role: 'status', 'aria-live': 'polite' });
-		ui.ctxHead = el('p', { className: 'twd-sk-ed__inlinehead twd-sk-ed__ctxhead', text: 'Click what you want to change on the page.' });
+		ui.ctxText = el('span', { text: 'Click what you want to change on the page.' });
+		ui.allSections = el('button', { type: 'button', className: 'twd-sk-ed__allsections', text: 'All sections', title: 'Leave this section and see the list of sections', hidden: '' });
+		ui.allSections.addEventListener('click', function () {
+			ED.sectionView(false);
+		});
+		ui.ctxHead = el('p', { className: 'twd-sk-ed__inlinehead twd-sk-ed__ctxhead' }, [ui.ctxText, ui.allSections]);
+		ui.viewHint = el('p', { className: 'twd-sk-ed__inlinehead twd-sk-ed__viewhint', text: 'Click any words in this section to edit them.', hidden: '' });
 		ui.save = ED.button('Save changes', 'primary', save);
 		ui.save.className += ' twd-sk-ed__inlinesave';
 		ui.cancel = ED.button('Cancel', 'secondary', cancel);
@@ -600,9 +691,14 @@
 		ui.quote = toolButton('Quote line', 'A line on the left of this paragraph, like a quote', toggleQuote);
 		ui.note = toolButton('Note box', 'Call this paragraph out in a soft box', toggleNote);
 		ui.heading = toolButton('Heading above', 'Put a heading above this paragraph', headingAbove);
-		ui.remove = toolButton('Remove', 'Remove this list entry, card, button or section', removeThis);
+		ui.remove = oneWindow
+			? toolButton('Delete section', 'Delete the section the cursor is in (it asks first; Put back or Undo brings it back)', deleteSection)
+			: toolButton('Remove', 'Remove this list entry, card, button or section', removeThis);
+		ui.deleteText = toolButton('Delete this text', 'Delete the paragraph or item the cursor is in (Put back or Undo brings it back)', deleteText);
 		ui.putBack = toolButton('Put back', 'Put back the last thing removed', putBack);
 		ui.putBack.disabled = true;
+		ui.more = toolButton('More', 'More tools for what you clicked', toggleMore);
+		ui.more.setAttribute('aria-expanded', 'false');
 		ui.look = toolButton('Look', 'Change the layout or options of this section', openLook);
 		ui.lookHead = el('p', { className: 'twd-sk-ed__inlinehead', tabindex: '-1' });
 		ui.lookBody = el('div', { className: 'twd-sk-ed__lookbody' });
@@ -610,7 +706,7 @@
 			ui.lookHead, ui.lookBody, ED.button('Close', 'secondary', closePanels)
 		]);
 		// Add a section and move one, no AI (0.14.1). Add needs the list of sections the server gave this page.
-		ui.addSec = toolButton('Add section', 'Add a new section to the page', openAdd);
+		ui.addSec = toolButton(oneWindow ? 'Add section after' : 'Add section', oneWindow ? 'Add a new section after this one' : 'Add a new section to the page', openAdd);
 		ui.moveUp = toolButton('Move up', 'Move this section up the page', function () {
 			moveSection('up');
 		});
@@ -700,16 +796,25 @@
 			ui.picHead, ui.library, ui.upload, ui.describe, ED.button('Close', 'secondary', closePanels), ui.file
 		]);
 		ui.confirm = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' });
-		var words = el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words', role: 'group', 'aria-label': 'Words' }, [ui.bold, ui.italic, ui.link, ui.quote, ui.note, ui.heading]);
+		// 18d: in the one window the compact row is B, I, Link for words and Look, Move up, Move down, Add section after,
+		// Delete section for a section; More opens the rest (Quote line, Note box, Heading above, Delete this text, View at).
+		var words = oneWindow
+			? el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words', role: 'group', 'aria-label': 'Words' }, [ui.bold, ui.italic, ui.link])
+			: el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words', role: 'group', 'aria-label': 'Words' }, [ui.bold, ui.italic, ui.link, ui.quote, ui.note, ui.heading]);
+		var wordsMore = el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words twd-sk-ed__inlinetools--more', role: 'group', 'aria-label': 'More for these words' }, [ui.quote, ui.note, ui.heading, ui.deleteText]);
 		var sectionTools = oneWindow
-			? (kinds.length ? [ui.look, ui.remove, ui.putBack, ui.addSec, ui.moveUp, ui.moveDown] : [ui.look, ui.remove, ui.putBack, ui.moveUp, ui.moveDown])
+			? (kinds.length ? [ui.look, ui.moveUp, ui.moveDown, ui.addSec, ui.remove] : [ui.look, ui.moveUp, ui.moveDown, ui.remove])
 			: (kinds.length ? [ui.addSec, ui.moveUp, ui.moveDown, ui.undo] : [ui.moveUp, ui.moveDown, ui.undo]);
 		var kids = oneWindow
 			? [
 				ui.ctxHead,
+				ui.viewHint,
 				words,
 				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section', role: 'group', 'aria-label': 'This section' }, sectionTools),
-				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--view', role: 'group', 'aria-label': 'See the page at a size' }, [ui.viewSelect]),
+				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--putback' }, [ui.putBack]),
+				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--morebtn' }, [ui.more]),
+				wordsMore,
+				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--view twd-sk-ed__inlinetools--more', role: 'group', 'aria-label': 'See the page at a size' }, [ui.viewSelect]),
 				ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel, ui.confirm,
 				el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.undo, ui.save, ui.cancel])
 			]
@@ -720,8 +825,11 @@
 				el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.save, ui.cancel]),
 				ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel, ui.confirm
 			];
-		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar' + (oneWindow ? ' twd-sk-ed__inlinebar--inwin' : ''), role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '', 'data-twd-sk-ctx': 'none' }, kids);
+		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar' + (oneWindow ? ' twd-sk-ed__inlinebar--inwin' : ''), role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '', 'data-twd-sk-ctx': 'none', 'data-twd-sk-more': 'off' }, kids);
 		root.appendChild(ui.bar);
+		if (oneWindow) {
+			show(ui.putBack, false);
+		}
 	}
 
 	// What was clicked, so the one window shows the right tools: words, a picture, a section, or nothing yet.
@@ -746,8 +854,20 @@
 			where = 'Section ' + (index + 1) + ': ' + sectionName(sec);
 		}
 		ui.bar.setAttribute('data-twd-sk-ctx', kind);
-		ui.ctxHead.textContent = kind === 'none' ? 'Click what you want to change on the page.'
+		ui.ctxText.textContent = kind === 'none' ? (S.view ? 'Click inside the section you want to change.' : 'Click what you want to change on the page.')
 			: (kind === 'words' ? 'Words in ' : (kind === 'picture' ? 'Picture in ' : '')) + where;
+		// 18c: a pencil opens one section. The section is marked on the page, the hint says what to do, and All sections
+		// leads back to the list; clicking inside another section moves the view to it.
+		Array.prototype.forEach.call(document.querySelectorAll('section.twd-sk-ed__secview'), function (old) {
+			if (old !== sec || !S.view) {
+				old.classList.remove('twd-sk-ed__secview');
+			}
+		});
+		if (S.view && sec) {
+			sec.classList.add('twd-sk-ed__secview');
+		}
+		show(ui.viewHint, !!(S.view && kind === 'section'));
+		show(ui.allSections, !!S.view);
 	}
 
 	function inEditable() {
@@ -1225,7 +1345,9 @@
 		var h = sec.querySelector('h1, h2, h3');
 		var text = h ? h.textContent.replace(/\s+/g, ' ').trim() : '';
 		if (!text) {
-			return 'this section';
+			var cls = (sec.className.match(/\btwd-sk-([a-z-]+?)(?:--|\s|$)/) || [])[1] || '';
+			var comp = cfg.look && cfg.look.components && cfg.look.components[cls.replace(/-/g, '_')];
+			return comp ? comp.label : 'this section';
 		}
 		return text.length > 40 ? text.slice(0, 37) + '...' : text;
 	}
@@ -1441,6 +1563,7 @@
 		S.target = null;
 		if (ui.putBack) {
 			ui.putBack.disabled = true;
+			syncPutBack();
 		}
 		S.texts.forEach(function (t) {
 			var i = t.getAttribute('data-twd-sk-t');
@@ -1719,6 +1842,27 @@
 		});
 	}
 	// A section pencil or the outline: put the cursor in that section and show its tools.
+	// 18c: the one-section view a pencil opens (true), or the list of all sections (false).
+	ED.sectionView = function (on, index) {
+		S.view = !!on;
+		if (!S.view) {
+			Array.prototype.forEach.call(document.querySelectorAll('section.twd-sk-ed__secview'), function (old) {
+				old.classList.remove('twd-sk-ed__secview');
+			});
+		}
+		var sec = index === undefined ? null : document.querySelector('[data-twd-sk-sec="' + parseInt(index, 10) + '"]');
+		if (S.view && sec) {
+			sec.scrollIntoView({ block: 'start' });
+			dropCursor(document.body);
+			S.last = sec;
+			closePanels();
+			show(ui.confirm, false);
+		}
+		if (typeof ED.showOutline === 'function') {
+			ED.showOutline(!S.view);
+		}
+		updateContext();
+	};
 	ED.focusSection = function (index) {
 		var sec = document.querySelector('[data-twd-sk-sec="' + parseInt(index, 10) + '"]');
 		if (!sec) {

@@ -176,7 +176,7 @@ twd_sk_test( 'structure: the route is a POST on the page, registered outside saf
 
 twd_sk_test( 'structure js: Add section, Move up and Move down in the toolbar, saved through the structure route, reload back into the editor at the section, with a warning on a live page and no native dialogs', function () {
 	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
-	twd_sk_has( "toolButton('Add section'", $js );
+	twd_sk_has( "toolButton(oneWindow ? 'Add section after' : 'Add section'", $js );
 	twd_sk_has( "toolButton('Move up'", $js );
 	twd_sk_has( "toolButton('Move down'", $js );
 	// Undo (0.15.0): steps back the last saved change through the page history and reloads at the same section.

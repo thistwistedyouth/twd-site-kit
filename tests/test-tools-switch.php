@@ -204,3 +204,39 @@ twd_sk_test( 'one editing window (0.15.0, phase 2): the AI tab is one box headed
 	twd_sk_has( "'cannot'", $plan );
 	twd_sk_has( 'nearest', $plan );
 } );
+
+twd_sk_test( 'one editing window (18c and 18d, 29 Oct 2026): a pencil opens one section view with Look, Move up, Move down, Add section after and Delete section; Delete this text and Delete section go through the existing remove and Put back paths; a compact row with More', function () {
+	$inline = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
+	foreach ( array( "'Delete section'", "'Delete this text'", "'Add section after'", "toolButton('More'", 'function toggleMore()', "'data-twd-sk-more'", 'ED.sectionView = ', "'All sections'", 'Click any words in this section to edit them.', 'twd-sk-ed__secview', 'twd-sk-ed__inlinetools--more', 'function deleteText()', 'function deleteSection()', 'You can bring it back with Put back before saving, or with Undo after.' ) as $needle ) {
+		twd_sk_has( $needle, $inline );
+	}
+	// Both deletes end in removeThis(), the Remove tool's own function: the removal is the same S.removes entry the
+	// inline route saves as removes, Put back returns it, Cancel and Undo revert it.
+	foreach ( array( 'function deleteText()', 'function deleteSection()' ) as $fn ) {
+		$body = substr( $inline, strpos( $inline, $fn ) );
+		$body = substr( $body, 0, strpos( $body, "\n\t}\n" ) );
+		twd_sk_has( 'removeThis();', $body, $fn . ' reuses Remove' );
+		twd_sk_hasnt( 'parentNode.removeChild', $body, $fn . ' never deletes a node itself' );
+	}
+	twd_sk_has( "removes: ", $inline );
+	twd_sk_has( "'removes'", file_get_contents( ABSPATH . 'includes/class-twd-sk-rest.php' ) );
+	// The compact row: B, I, Link for words; the rest behind More. The section row holds Look, the moves, Add after, Delete.
+	twd_sk_has( "[ui.bold, ui.italic, ui.link])", $inline );
+	twd_sk_has( "[ui.quote, ui.note, ui.heading, ui.deleteText]", $inline );
+	twd_sk_has( "[ui.look, ui.moveUp, ui.moveDown, ui.addSec, ui.remove]", $inline );
+	// Put back stands on its own, shown whenever something was deleted (after a section goes there is nothing in it to click).
+	twd_sk_has( "twd-sk-ed__inlinetools--putback' }, [ui.putBack]", $inline );
+	twd_sk_has( 'function syncPutBack()', $inline );
+	// The classic bar is as it was.
+	twd_sk_has( "[ui.bold, ui.italic, ui.link, ui.quote, ui.note, ui.heading, ui.look, ui.remove, ui.putBack]", $inline );
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' );
+	twd_sk_has( 'ED.sectionView(true, index)', $js );
+	twd_sk_has( 'ED.sectionView = function (on, index)', $inline );
+	twd_sk_has( 'function dropCursor(node)', $inline );
+	twd_sk_has( 'showOutline: function (on)', $js );
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.css' );
+	foreach ( array( ':not([data-twd-sk-more="on"]) .twd-sk-ed__inlinetools--more', 'twd-sk-ed__inlinetools--morebtn', 'twd-sk-ed__allsections', 'twd-sk-ed__viewhint' ) as $needle ) {
+		twd_sk_has( $needle, $css );
+	}
+	twd_sk_has( 'section.twd-sk-ed__secview', file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.css' ) );
+} );

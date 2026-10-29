@@ -71,6 +71,8 @@ body.twd-sk-inline-on .twd-sk-hide-phone::before {
 }
 /* A section whose look (layout or options) was changed and is not saved yet (0.15.0). */
 body.twd-sk-inline-on section[data-twd-sk-looked] { outline: 2px solid #00a32a !important; outline-offset: -2px !important; }
+/* 18c (29 Oct 2026): the section a pencil opened in the one window. */
+body.twd-sk-inline-on section.twd-sk-ed__secview { outline: 3px solid #2271b1 !important; outline-offset: -3px !important; }
 
 /* Question groups (0.15.0): on a wide screen only one group shows at a time, so while editing every group is
    shown, stacked, and all their headings and questions can be reached. Visitors are not affected. */
