@@ -633,8 +633,14 @@
 .twd-sk-ed .twd-sk-ed__dialog--compact.twd-sk-ed__dialog--compact {
   max-height: 70%;
 }
+/* The free and docked rules above lift the height cap; the compact window keeps it whatever the mode. */
 .twd-sk-ed .twd-sk-ed__overlay--free.twd-sk-ed__overlay--free .twd-sk-ed__dialog--compact.twd-sk-ed__dialog--compact {
   height: auto;
+  max-height: 70%;
+}
+.twd-sk-ed .twd-sk-ed__overlay--left.twd-sk-ed__overlay--left .twd-sk-ed__dialog--compact.twd-sk-ed__dialog--compact,
+.twd-sk-ed .twd-sk-ed__overlay--right.twd-sk-ed__overlay--right .twd-sk-ed__dialog--compact.twd-sk-ed__dialog--compact {
+  max-height: none;
 }
 .twd-sk-ed .twd-sk-ed__dialog--compact.twd-sk-ed__dialog--compact .twd-sk-ed__body.twd-sk-ed__body {
   padding: 16px 20px !important;
@@ -741,6 +747,49 @@
   .twd-sk-ed .twd-sk-ed__overlay--sheet.twd-sk-ed__overlay--sheet .twd-sk-ed__winbtn.twd-sk-ed__winbtn {
     display: none;
   }
+}
+/* ---- the AI tab in the one window (0.15.0, phase 2): the section a pencil named, the "cannot do" cards, the pencils' numbers ---- */
+.twd-sk-ed .twd-sk-ed__aisec.twd-sk-ed__aisec {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px !important;
+  font-size: var(--twd-site-size-small) !important;
+  font-weight: 600 !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-ed .twd-sk-ed__small.twd-sk-ed__small {
+  min-height: 32px;
+  padding: 4px 12px !important;
+  font-size: var(--twd-site-size-small) !important;
+}
+.twd-sk-ed .twd-sk-ed__cannotcard.twd-sk-ed__cannotcard {
+  margin: 0 0 12px !important;
+  padding: 10px 12px !important;
+  border: 1px solid var(--twd-site-color-border) !important;
+  border-left: 3px solid var(--twd-site-color-accent) !important;
+  border-radius: var(--twd-site-radius-card) !important;
+  background-color: var(--twd-site-color-bg) !important;
+}
+.twd-sk-ed .twd-sk-ed__cannotcard.twd-sk-ed__cannotcard .twd-sk-ed__cannot.twd-sk-ed__cannot,
+.twd-sk-ed .twd-sk-ed__cannotcard.twd-sk-ed__cannotcard .twd-sk-ed__help.twd-sk-ed__help {
+  margin: 0 0 6px !important;
+}
+.twd-sk-ed .twd-sk-ed__pencilnum.twd-sk-ed__pencilnum {
+  position: absolute;
+  right: -6px;
+  top: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px !important;
+  border-radius: var(--twd-site-radius-pill) !important;
+  background-color: var(--twd-site-color-primary) !important;
+  color: var(--twd-site-color-on-primary) !important;
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  font-weight: 700 !important;
+  line-height: 18px !important;
+  text-align: center !important;
 }
 /* ---- info circles (0.15.0): a small (i) that shows a line of help on click ---- */
 .twd-sk-ed .twd-sk-ed__inforow.twd-sk-ed__inforow {

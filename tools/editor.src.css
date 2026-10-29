@@ -169,7 +169,9 @@
 
 /* ---- the one editing window (0.15.0, phase 1): compact, undocked, three tabs; the Visual editor's tools hosted inside ---- */
 .twd-sk-ed__dialog--compact { max-height: 70%; }
-.twd-sk-ed__overlay--free .twd-sk-ed__dialog--compact { height: auto; }
+/* The free and docked rules above lift the height cap; the compact window keeps it whatever the mode. */
+.twd-sk-ed__overlay--free .twd-sk-ed__dialog--compact { height: auto; max-height: 70%; }
+.twd-sk-ed__overlay--left .twd-sk-ed__dialog--compact, .twd-sk-ed__overlay--right .twd-sk-ed__dialog--compact { max-height: none; }
 .twd-sk-ed__dialog--compact .twd-sk-ed__body { padding: 16px 20px; }
 .twd-sk-ed__subtabs { margin: 0 0 14px; padding: 0; }
 .twd-sk-ed__pagehint { margin: 0 0 10px; }
@@ -200,6 +202,16 @@
   .twd-sk-ed__overlay--sheet { align-items: flex-end; padding: 0; }
   .twd-sk-ed__overlay--sheet .twd-sk-ed__dialog--compact { height: auto; max-height: 70%; border-radius: $radius-card $radius-card 0 0; }
   .twd-sk-ed__overlay--sheet .twd-sk-ed__winbtn { display: none; }
+}
+
+/* ---- the AI tab in the one window (0.15.0, phase 2): the section a pencil named, the "cannot do" cards, the pencils' numbers ---- */
+.twd-sk-ed__aisec { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: $size-small; font-weight: 600; color: $color-title; }
+.twd-sk-ed__small { min-height: 32px; padding: 4px 12px; font-size: $size-small; }
+.twd-sk-ed__cannotcard { margin: 0 0 12px; padding: 10px 12px; border: 1px solid $color-border; border-left: 3px solid $color-accent; border-radius: $radius-card; background-color: $color-bg; }
+.twd-sk-ed__cannotcard .twd-sk-ed__cannot, .twd-sk-ed__cannotcard .twd-sk-ed__help { margin: 0 0 6px; }
+.twd-sk-ed__pencilnum {
+  position: absolute; right: -6px; top: -6px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: $radius-pill;
+  background-color: $color-primary; color: $color-on-primary; font-family: $font-body; font-size: $size-small; font-weight: 700; line-height: 18px; text-align: center;
 }
 
 /* ---- info circles (0.15.0): a small (i) that shows a line of help on click ---- */

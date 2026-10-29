@@ -1732,6 +1732,14 @@
 		}
 		updateContext();
 	};
+	// "Do this instead" in the AI tab: the Look panel for a section, in the On page edits tab.
+	ED.openLookFor = function (index) {
+		if (!S.on) {
+			start();
+		}
+		ED.focusSection(index);
+		openLook();
+	};
 	// The one window closing ends the session (the window asked about unsaved changes first, or there were none).
 	ED.stopInline = function () {
 		if (S.on) {

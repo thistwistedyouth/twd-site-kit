@@ -178,3 +178,19 @@ twd_sk_test( 'one editing window (0.15.0, phase 1): the classic editor is a per-
 		twd_sk_has( $needle, $css );
 	}
 } );
+
+twd_sk_test( 'one editing window (0.15.0, phase 2): the AI tab is one box headed Tell us what you would like, pencils carry their number and pre-fill the section, a request that cannot be done offers Do this instead, and the What changed notes stay', function () {
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' );
+	foreach ( array( "'Tell us what you would like'", 'function prefillSection(', "'In section ' + (index + 1) + ' (' + name + '): '", "'Do this instead'", 'twd-sk-ed__cannotcard', 'twd-sk-ed__pencilnum', "'Change section ' + (index + 1) + ': ' + name", 'None of that can be done on this page as asked', "el('strong', { text: 'What changed' })", "el('strong', { text: 'Nothing changed' })" ) as $needle ) {
+		twd_sk_has( $needle, $js );
+	}
+	twd_sk_has( 'ED.openLookFor = ', file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' ) );
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.css' );
+	foreach ( array( 'twd-sk-ed__pencilnum', 'twd-sk-ed__cannotcard', 'twd-sk-ed__aisec' ) as $cls ) {
+		twd_sk_has( $cls, $css );
+	}
+	// The planner still tells the browser what cannot be done and the nearest thing that can (the buttons are built from it).
+	$plan = file_get_contents( ABSPATH . 'includes/class-twd-sk-plan.php' );
+	twd_sk_has( "'cannot'", $plan );
+	twd_sk_has( 'nearest', $plan );
+} );

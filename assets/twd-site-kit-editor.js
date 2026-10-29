@@ -196,6 +196,17 @@
 		if (data.same) {
 			box.appendChild(el('strong', { text: 'Nothing changed' }));
 			listInto(box, nothingChangedWhy(data));
+			if (oneWindow && hintsFor(state.lastRequest).length) {
+				var instead = button('Do this instead', 'secondary', function () {
+					var ED = window.TWD_SK_ED;
+					selectTab('page');
+					if (ED && typeof ED.openLookFor === 'function') {
+						ED.openLookFor(state.secIndex !== undefined ? state.secIndex : 0);
+					}
+				});
+				instead.className += ' twd-sk-ed__small';
+				box.appendChild(el('div', { className: 'twd-sk-ed__actions' }, [instead]));
+			}
 		} else if (data.changes && data.changes.length) {
 			box.appendChild(el('strong', { text: 'What changed' }));
 			listInto(box, data.changes);
@@ -221,6 +232,9 @@
 		if (hints.length) {
 			lines.push('Nearest choices:');
 			lines = lines.concat(hints);
+			if (oneWindow) {
+				lines.push('Press "Do this instead" to open the Look panel for the section.');
+			}
 		} else {
 			lines.push('Try wording it differently, or use the Visual editor: click inside a section and press Look to see its layouts and options.');
 		}
@@ -829,14 +843,18 @@
 		];
 		var outKids = [ui.previewMsg, ui.banner, ui.report, ui.frame, el('p', {}, [ui.newTab])];
 
-		buildInlineEntry(panel);
+		if (!oneWindow) {
+			buildInlineEntry(panel);
+		}
 		if (ai) {
-			buildSectionStep(panel);
+			if (!oneWindow) {
+				buildSectionStep(panel);
+			}
 			buildPlanStep(panel);
 			// The discard button lives with the preview, not inside the tucked-away external section.
 			pasteKids[2] = el('div', { className: 'twd-sk-ed__actions' }, [ui.previewBtn]);
 			outKids.unshift(el('div', { className: 'twd-sk-ed__actions' }, [ui.discardBtn]));
-			panel.appendChild(step('2. Preview it', outKids));
+			panel.appendChild(step(oneWindow ? 'Preview it' : '2. Preview it', outKids));
 		} else {
 			panel.appendChild(step('1. Copy the prompt', copyKids));
 			panel.appendChild(step('2. Paste the result and preview it', pasteKids.concat(outKids)));
@@ -857,7 +875,7 @@
 			ui.note
 		];
 		if (ai) {
-			panel.appendChild(step('3. Save it', [
+			panel.appendChild(step(oneWindow ? 'Save it' : '3. Save it', [
 				el('div', { className: 'twd-sk-ed__actions' }, [ui.applyBtn, ui.reloadBtn]),
 				ui.applyMsg
 			]));
@@ -1000,6 +1018,13 @@
 		if (ui.tabs.edit) {
 			selectTab('edit');
 		}
+		if (oneWindow) {
+			prefillSection(index, name);
+			if (ui.request) {
+				ui.request.focus();
+			}
+			return;
+		}
 		if (!ui.secStep) {
 			return;
 		}
@@ -1064,11 +1089,14 @@
 		Array.prototype.forEach.call(document.querySelectorAll('section[data-twd-sk-sec]'), function (sec) {
 			var index = parseInt(sec.getAttribute('data-twd-sk-sec'), 10);
 			var name = sectionName(sec);
-			var node = el('button', { type: 'button', className: 'twd-sk-ed__pencil', 'aria-label': 'Change this section: ' + name, title: 'Change this section', hidden: '' }, [pencilIcon()]);
+			var node = el('button', { type: 'button', className: 'twd-sk-ed__pencil', 'aria-label': 'Change section ' + (index + 1) + ': ' + name, title: 'Section ' + (index + 1) + ': change it', hidden: '' }, [pencilIcon(), el('span', { className: 'twd-sk-ed__pencilnum', 'aria-hidden': 'true', text: String(index + 1) })]);
 			node.addEventListener('click', function () {
 				if (oneWindow) {
 					open();
-					selectTab('page');
+					if (state.tab !== 'page' && state.tab !== 'edit') {
+						selectTab('page');
+					}
+					prefillSection(index, name);
 					window.setTimeout(function () {
 						var ED = window.TWD_SK_ED;
 						if (ED && typeof ED.focusSection === 'function') {
@@ -1123,8 +1151,22 @@
 		ui.planBtn = button('Plan the changes', 'primary', doPlan);
 		ui.planMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
 		ui.planBox = el('div', { className: 'twd-sk-ed__planbox', hidden: '' });
-		panel.appendChild(step('1. Say what you want changed', [
-			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-request', text: 'What do you want changed?' }),
+		// The one window (phase 2): one box headed "Tell us what you would like"; a pencil names its section above it.
+		ui.aiSecText = el('span', {});
+		var aiSecClear = button('Clear', 'secondary', function () {
+			state.secIndex = undefined;
+			state.secName = '';
+			show(ui.aiSec, false);
+		});
+		aiSecClear.className += ' twd-sk-ed__small';
+		ui.aiSec = el('p', { className: 'twd-sk-ed__aisec', hidden: '' }, [ui.aiSecText, aiSecClear]);
+		var head = oneWindow ? 'Tell us what you would like' : '1. Say what you want changed';
+		var label = oneWindow
+			? 'What would you like changed on this page? Name a section by its number if it helps, for example: In section 2, make the heading shorter.'
+			: 'What do you want changed?';
+		panel.appendChild(step(head, [
+			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-request', text: label }),
+			ui.aiSec,
 			chips,
 			ui.request,
 			infoHelp('One line, or a list. For example: "1. Change the first paragraph to ... 2. Add three boxes with glowing borders for garden parties, weddings and festivals. 3. Add these testimonials as a slider at the bottom: ...". Paste any wording you want used: it is kept word for word. You see a checklist first, then a preview. Nothing is saved until you apply it, and Undo always goes back. The AI writes drafts. Check every fact and every claim before you apply.', 'How to say what you want changed'),
@@ -1132,6 +1174,23 @@
 			ui.planMsg,
 			ui.planBox
 		]));
+	}
+
+	// A section pencil (the one window, phase 2): the box starts "In section N (Name): " and the section is named above it.
+	function prefillSection(index, name) {
+		state.secIndex = index;
+		state.secName = name;
+		if (!ui.request || !ui.aiSec) {
+			return;
+		}
+		ui.aiSecText.textContent = 'Section ' + (index + 1) + ': ' + name + ' ';
+		show(ui.aiSec, true);
+		var lead = 'In section ' + (index + 1) + ' (' + name + '): ';
+		if (ui.request.value.indexOf('In section ') !== 0) {
+			ui.request.value = lead + ui.request.value;
+		} else {
+			ui.request.value = ui.request.value.replace(/^In section \d+ \([^)]*\): ?/, lead);
+		}
 	}
 
 	// Kept under its old name: it checks that AI is available and notes the page version.
@@ -1198,8 +1257,24 @@
 			message(ui.planMsg, 'Nothing on that list can be done on this page. See below.', false);
 		}
 		(data.cannot || []).forEach(function (c) {
+			if (oneWindow && c.nearest) {
+				var instead = button('Do this instead', 'secondary', function () {
+					ui.request.value = (state.secIndex !== undefined ? 'In section ' + (state.secIndex + 1) + ' (' + state.secName + '): ' : '') + c.nearest;
+					doPlan();
+				});
+				instead.className += ' twd-sk-ed__small';
+				ui.planBox.appendChild(el('div', { className: 'twd-sk-ed__cannotcard' }, [
+					el('p', { className: 'twd-sk-ed__cannot', text: 'This cannot be done on a page: ' + c.what + '.' }),
+					el('p', { className: 'twd-sk-ed__help', text: 'What can be done instead: ' + c.nearest + '.' }),
+					el('div', { className: 'twd-sk-ed__actions' }, [instead])
+				]));
+				return;
+			}
 			ui.planBox.appendChild(el('p', { className: 'twd-sk-ed__cannot', text: 'Not possible on a page: ' + c.what + (c.nearest ? '. Nearest the kit can do: ' + c.nearest + '.' : '.') }));
 		});
+		if (oneWindow && !state.plan.length && (data.cannot || []).length) {
+			message(ui.planMsg, 'None of that can be done on this page as asked. The notes below say what can.', false);
+		}
 		(data.dropped || []).forEach(function (line) {
 			ui.planBox.appendChild(el('p', { className: 'twd-sk-ed__help', text: line }));
 		});
