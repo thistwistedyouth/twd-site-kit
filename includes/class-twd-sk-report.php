@@ -158,8 +158,8 @@ class TWD_SK_Report {
 	 * @return string[]
 	 */
 	public static function changes( $old, $new ) {
-		$a = TWD_SK_Sections::split( (string) $old );
-		$b = TWD_SK_Sections::split( (string) $new );
+		$a = TWD_SK_Sections::split( str_replace( array( "\r\n", "\r" ), "\n", (string) $old ) );
+		$b = TWD_SK_Sections::split( str_replace( array( "\r\n", "\r" ), "\n", (string) $new ) );
 		$out = array();
 		if ( $a['sections'] === $b['sections'] ) {
 			return $out;

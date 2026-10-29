@@ -626,3 +626,12 @@ twd_sk_test( 'leftovers (0.14.0): half a marker left by a hand edit, a stray clo
 	twd_sk_eq( 1, $f['TO CONFIRM'] );
 	twd_sk_eq( 'must', TWD_SK_Sanitizer::leftover_level( 'TO CONFIRM' ) );
 } );
+
+twd_sk_test( 'sanitiser: carriage returns become line feeds, so a page pasted from Windows is stored like every other (0.15.0)', function () {
+	$in  = "<section class=\"twd-sk-text twd-sk-tone-base\">\r\n<div class=\"twd-sk-inner\">\r<p>One.</p>\r\n</div>\r\n</section>";
+	$out = TWD_SK_Sanitizer::clean( $in );
+	twd_sk_hasnt( "\r", $out );
+	twd_sk_eq( "<section class=\"twd-sk-text twd-sk-tone-base\">\n<div class=\"twd-sk-inner\">\n<p>One.</p>\n</div>\n</section>", $out );
+	// A page stored with carriage returns (from before this) reads as the same page when the preview compares.
+	twd_sk_eq( array(), TWD_SK_Report::changes( $in, $out ) );
+} );

@@ -97,6 +97,11 @@ class TWD_SK_Sanitizer {
 			'h1_used' => false,
 		);
 
+		// Line endings (0.15.0): a page pasted from Windows, or saved from a file, carries carriage returns; every
+		// stored page uses plain line feeds, so a comparison with the page as it is never trips on them.
+		if ( is_string( $html ) ) {
+			$html = str_replace( array( "\r\n", "\r" ), "\n", $html );
+		}
 		if ( ! is_string( $html ) ) {
 			return self::result( '', $ctx['removed'] );
 		}

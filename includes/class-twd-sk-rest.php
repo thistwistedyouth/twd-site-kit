@@ -1436,7 +1436,7 @@ class TWD_SK_REST {
 		$token = TWD_SK_Preview::create( get_current_user_id(), $id, $result['html'] );
 		// What changed (0.15.0), worked out by comparing the cleaned page with the page as it is, so the pop-up
 		// can say so in plain words: the changes, the style names the cleaner dropped, and "nothing changed".
-		$current = (string) TWD_SK_Store::get_current( $id );
+		$current = str_replace( array( "\r\n", "\r" ), "\n", (string) TWD_SK_Store::get_current( $id ) );
 		$dropped = isset( $result['report']['removed']['classes'] ) ? array_values( array_unique( array_map( 'strval', (array) $result['report']['removed']['classes'] ) ) ) : array();
 		return array(
 			'token'          => $token,
