@@ -66,6 +66,9 @@ class TWD_SK_Brief {
 				'layout'  => $c['footer_variant'],
 				'columns' => (int) $c['footer_columns'],
 				'text_style' => $c['footer_text_style'],
+				'contact_bar' => (bool) $c['contact_bar'],
+				'quick_exit' => (bool) $c['quick_exit'],
+				'quick_exit_url' => $c['quick_exit_url'],
 			),
 			'style'  => array(
 				'pack'   => TWD_SK_Packs::active_slug(),
@@ -281,7 +284,7 @@ class TWD_SK_Brief {
 		$map = array(
 			'site'   => array( 'name' => array( 'profile', 'site_name', 'Site name' ), 'person_name' => array( 'profile', 'person_name', TWD_SK_Mode::w( 'person_name_label', $mode ) ), 'person_job' => array( 'profile', 'person_job', TWD_SK_Mode::w( 'person_job_label', $mode ) ), 'phone' => array( 'profile', 'phone', 'Phone' ), 'email' => array( 'profile', 'email', 'Email' ), 'address' => array( 'profile', 'address', 'Address lines' ), 'area_served' => array( 'profile', 'area_served', TWD_SK_Mode::w( 'area_label', $mode ) ), 'registration' => array( 'profile', 'registration', TWD_SK_Mode::w( 'registration_label', $mode ) ), 'same_as' => array( 'profile', 'same_as', 'Profile links' ) ),
 			'header' => array( 'menu' => array( 'profile', 'menu', 'Menu' ), 'cta_label' => array( 'profile', 'cta_label', 'Header button text' ), 'cta_url' => array( 'profile', 'cta_url', 'Header button link' ), 'layout' => array( 'chrome', 'header_variant', 'Header layout' ), 'sticky' => array( 'chrome', 'sticky', 'Fixed header' ), 'shrink' => array( 'chrome', 'shrink', 'Shrink the fixed header on scroll' ), 'front_logo' => array( 'chrome', 'front_logo', 'Bigger logo on the front page' ), 'overlay' => array( 'chrome', 'overlay', 'Transparent header over the picture' ), 'wordmark' => array( 'chrome', 'wordmark', 'Text wordmark header' ), 'wordmark_scrolled_name' => array( 'chrome', 'wordmark_scrolled_name', 'Keep the name when the front page header is scrolled' ), 'wordmark_small_line' => array( 'chrome', 'wordmark_small_line', 'Second line under the name in the smaller header' ), 'menu_marker' => array( 'chrome', 'menu_marker', 'How the page you are on is marked in the menu' ), 'logo_line' => array( 'profile', 'logo_line', 'Second line under the name' ), 'show_button' => array( 'chrome', 'show_button', 'Show the header button' ), 'show_strip' => array( 'chrome', 'show_strip', 'Contact strip' ) ),
-			'footer' => array( 'text' => array( 'profile', 'footer_text', 'Footer text' ), 'legal' => array( 'profile', 'legal', 'Legal links' ), 'layout' => array( 'chrome', 'footer_variant', 'Footer layout' ), 'text_style' => array( 'chrome', 'footer_text_style', 'Footer text style' ), 'columns' => array( 'chrome', 'footer_columns', 'Footer columns' ) ),
+			'footer' => array( 'text' => array( 'profile', 'footer_text', 'Footer text' ), 'legal' => array( 'profile', 'legal', 'Legal links' ), 'layout' => array( 'chrome', 'footer_variant', 'Footer layout' ), 'text_style' => array( 'chrome', 'footer_text_style', 'Footer text style' ), 'contact_bar' => array( 'chrome', 'contact_bar', 'Contact bar on a phone' ), 'quick_exit' => array( 'chrome', 'quick_exit', 'Leave quickly link' ), 'quick_exit_url' => array( 'chrome', 'quick_exit_url', 'Leave quickly address' ), 'columns' => array( 'chrome', 'footer_columns', 'Footer columns' ) ),
 		);
 		foreach ( $map as $group => $fields ) {
 			if ( ! isset( $data[ $group ] ) ) {

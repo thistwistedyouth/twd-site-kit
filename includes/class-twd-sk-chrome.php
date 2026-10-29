@@ -191,6 +191,8 @@ class TWD_SK_Chrome {
 			'twd-sk-footer__tagline', 'twd-sk-footer__contact-group', 'twd-sk-footer__links--two',
 			// 0.15.0: the footer text with its first line larger and the rest quieter.
 			'twd-sk-footer__text--lead', 'twd-sk-footer__tagline--lead',
+			// 0.15.0: the contact bar on a phone and the quick exit link (both off by default), and the footer's room for the bar.
+			'twd-sk-contactbar', 'twd-sk-contactbar__link', 'twd-sk-footer--contactbar', 'twd-sk-exit',
 			// 0.14.0: the text wordmark header (a mark, the name and a second line as live text, centred on every page).
 			'twd-sk-header--wordmark', 'twd-sk-header--wm-front', 'twd-sk-header--wm-name', 'twd-sk-header__mark', 'twd-sk-header__name', 'twd-sk-header__line',
 			'twd-sk-chrome--wordmark', 'twd-sk-chrome--wm-front', 'twd-sk-chrome--noline',
@@ -228,6 +230,9 @@ class TWD_SK_Chrome {
 			'show_strip'     => false,
 			'footer_columns' => 3,
 			'footer_text_style' => 'plain', // 0.15.0: the footer text as before, or its first line larger and the rest quieter
+			'contact_bar'    => false,   // 0.15.0: a slim Email and Call bar fixed to the bottom of a phone screen (nothing on a computer)
+			'quick_exit'     => false,   // 0.15.0: a small "Leave quickly" link in the corner of every page
+			'quick_exit_url' => '',      // 0.15.0: where it goes (a full https address chosen by the site; empty means no link)
 			'placement'      => 'kit',
 		);
 	}
@@ -277,6 +282,8 @@ class TWD_SK_Chrome {
 				case 'wordmark_small_line':
 				case 'show_button':
 				case 'show_strip':
+				case 'contact_bar':
+				case 'quick_exit':
 					if ( is_bool( $value ) || 0 === $value || 1 === $value || '0' === $value || '1' === $value ) {
 						$out['valid'][ $key ] = (bool) $value;
 					} else {
@@ -302,6 +309,15 @@ class TWD_SK_Chrome {
 						$out['valid'][ $key ] = (int) $value;
 					} else {
 						$out['errors'][] = 'The footer can have one, two or three columns.';
+					}
+					break;
+				case 'quick_exit_url':
+					if ( is_string( $value ) && '' === trim( $value ) ) {
+						$out['valid'][ $key ] = '';
+					} elseif ( is_string( $value ) && false !== ( $u = TWD_SK_Sanitizer::safe_url( trim( $value ), array( 'https' ) ) ) && 0 === strpos( $u, 'https://' ) ) {
+						$out['valid'][ $key ] = $u;
+					} else {
+						$out['errors'][] = 'The Leave quickly address must be a full https address (or empty).';
 					}
 					break;
 				case 'footer_text_style':
@@ -354,6 +370,9 @@ class TWD_SK_Chrome {
 			'strip'       => (bool) $s['show_strip'],
 			'columns'     => (int) $s['footer_columns'],
 			'text_style'  => $s['footer_text_style'],
+			'contact_bar' => (bool) $s['contact_bar'],
+			'exit'        => (bool) $s['quick_exit'] && '' !== $s['quick_exit_url'],
+			'exit_url'    => $s['quick_exit_url'],
 			'sticky_note' => (bool) $s['sticky'] && ! $wm && 'centered' === $h,
 		);
 	}
@@ -653,6 +672,39 @@ class TWD_SK_Chrome {
 		if ( TWD_SK_Safe::on() || TWD_SK_Profile::is_empty() ) {
 			return self::render_minimal_footer();
 		}
+		return self::with_extras( self::render_footer_layout( $profile ), $profile );
+	}
+
+	/**
+	 * The extras that ride with the footer (0.15.0): the contact bar on a phone (idea 7) and the quick exit
+	 * link (idea 10). Both off by default, so the footers print the same bytes as before until one is on.
+	 */
+	private static function with_extras( $html, $profile ) {
+		$eff   = self::effective();
+		$extra = '';
+		if ( $eff['contact_bar'] ) {
+			$links = '';
+			if ( '' !== $profile['email'] && false === strpos( $profile['email'], '[' ) ) {
+				$links .= '<a class="twd-sk-contactbar__link" href="mailto:' . esc_attr( $profile['email'] ) . '">Email</a>';
+			}
+			if ( '' !== $profile['phone'] && 'PHONE_NUMBER' !== $profile['phone'] && false === strpos( $profile['phone'], '[' ) ) {
+				$links .= '<a class="twd-sk-contactbar__link" href="tel:' . esc_attr( preg_replace( '/[^0-9+]/', '', $profile['phone'] ) ) . '">Call</a>';
+			}
+			if ( '' !== $links ) {
+				$extra .= '<nav class="twd-sk-contactbar" aria-label="Contact">' . $links . '</nav>';
+				$html   = preg_replace( '/<footer class="twd-sk-footer /', '<footer class="twd-sk-footer twd-sk-footer--contactbar ', $html, 1 );
+			}
+		}
+		if ( $eff['exit'] ) {
+			$extra .= '<a class="twd-sk-exit" href="' . esc_url( $eff['exit_url'] ) . '" rel="noopener">Leave quickly</a>';
+		}
+		if ( '' === $extra || '</footer></div>' !== substr( $html, -15 ) ) {
+			return $html;
+		}
+		return substr( $html, 0, -15 ) . $extra . '</footer></div>';
+	}
+
+	private static function render_footer_layout( $profile ) {
 		$eff     = self::effective();
 		$variant = $eff['footer'];
 		if ( 'compact' === $variant ) {

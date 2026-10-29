@@ -274,8 +274,9 @@ twd_sk_test( 'css: the helpline modal is pure CSS, shown with :target and fixed 
 			}
 		}
 	}
-	// The helpline modal, and the optional fixed header (a sticky header option, with a spacer that holds its place).
-	twd_sk_eq( array( '.twd-sk-page .twd-sk-modal.twd-sk-modal', '.twd-sk-page .twd-sk-header--sticky.twd-sk-header--sticky' ), $fixed );
+	// The helpline modal, the optional fixed header (a sticky header option, with a spacer that holds its place), and from
+	// 0.15.0 the optional Leave quickly link and the phone contact bar (both off by default).
+	twd_sk_eq( array( '.twd-sk-page .twd-sk-modal.twd-sk-modal', '.twd-sk-page .twd-sk-header--sticky.twd-sk-header--sticky', '.twd-sk-page .twd-sk-exit.twd-sk-exit', '.twd-sk-page .twd-sk-contactbar.twd-sk-contactbar' ), $fixed );
 } );
 
 twd_sk_test( 'css: images use the object-position token and object-fit cover, and image rows use grid with stretch, never flex', function () {

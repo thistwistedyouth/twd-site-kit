@@ -164,6 +164,8 @@ class TWD_SK_Sanitizer {
 			'Heading here'                      => null,
 			'Paragraph text here'               => null,
 			'A short passage from this page, set large' => null,
+			'Fact label here'                   => null,
+			'Fact here'                         => null,
 			'Describe the image'                => null,
 			'Quote text here'                   => null,
 			'Another quote here'                => null,

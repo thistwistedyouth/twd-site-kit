@@ -37,7 +37,7 @@
 /* section spacing */
 .twd-sk-hero--split, .twd-sk-hero--compact, .twd-sk-text, .twd-sk-image-text, .twd-sk-quote,
 .twd-sk-faq, .twd-sk-services, .twd-sk-steps, .twd-sk-contact, .twd-sk-notice,
-.twd-sk-resources, .twd-sk-pictures, .twd-sk-pricing, .twd-sk-hours, .twd-sk-areas {
+.twd-sk-resources, .twd-sk-pictures, .twd-sk-pricing, .twd-sk-hours, .twd-sk-areas, .twd-sk-facts {
   padding-top: $section-y; padding-bottom: $section-y;
 }
 .twd-sk-hero--compact { padding-bottom: $gap-sm; }
@@ -1090,6 +1090,28 @@
   .twd-sk-faq__group + .twd-sk-faq__group { margin-top: 0; }
   /* The articles strip: introduction beside the cards (0.14.0). */
   .twd-sk-resources__row { grid-template-columns: 1fr 2fr; }
+}
+
+/* ---- at a glance (0.15.0, idea 9): three or four short facts in a row, two across on a phone ---- */
+.twd-sk-facts__list { display: grid; grid-template-columns: repeat(4, 1fr); gap: $gap-md; margin: 32px 0 0; }
+.twd-sk-facts__item { margin: 0; padding: 0 0 0 16px; border-left: 2px solid $color-accent; }
+.twd-sk-facts__label { margin: 0 0 6px; font-size: $eyebrow-size; font-weight: $eyebrow-weight; letter-spacing: $eyebrow-spacing; text-transform: uppercase; color: $color-eyebrow; }
+.twd-sk-facts__value { margin: 0; font-family: $font-heading; font-size: $size-title; font-weight: $title-weight; font-style: $title-style; line-height: $line-heading; color: $color-title; }
+@media (max-width: 768px) {
+  .twd-sk-facts__list { grid-template-columns: repeat(2, 1fr); gap: $gap-sm; }
+}
+/* ---- the contact bar on a phone (0.15.0, idea 7): nothing on a computer; fixed to the bottom on a phone, the footer keeps room for it ---- */
+.twd-sk-contactbar { display: none; }
+.twd-sk-exit {
+  position: fixed; top: var(--twd-sk-exit-top, 12px); right: 12px; z-index: 99990; display: inline-block; padding: 8px 14px; border-radius: $radius-pill;
+  background-color: $color-band; color: $color-on-band; font-family: $font-body; font-size: $size-small; font-weight: $btn-weight; text-decoration: none; box-shadow: $shadow-card;
+}
+.twd-sk-exit:hover, .twd-sk-exit:focus-visible { background-color: $color-primary; color: $color-on-primary; text-decoration: none; }
+@media (max-width: 768px) {
+  .twd-sk-contactbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 99990; display: flex; background-color: $color-band; box-shadow: $shadow-card; }
+  .twd-sk-contactbar__link { flex: 1 1 0; display: block; min-height: 52px; padding: 14px 12px; text-align: center; font-family: $font-body; font-size: $size-body; font-weight: $btn-weight; color: $color-on-band; text-decoration: none; }
+  .twd-sk-contactbar__link + .twd-sk-contactbar__link { border-left: 1px solid $color-accent-on-dark; }
+  .twd-sk-footer--contactbar { padding-bottom: 64px; }
 }
 
 /* ---- box, border and padding round a section's content (0.15.0): Look panel choices, no class = as before ---- */

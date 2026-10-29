@@ -587,6 +587,13 @@
 .twd-sk-ed[data-twd-sk-tools="off"] .twd-sk-ed__mini.twd-sk-ed__mini {
   display: none;
 }
+/* With the phone contact bar on the page (0.15.0), the floating Your Edits button and the pencil sit above it. */
+@media (max-width: 782px) {
+  .twd-sk-ed.twd-sk-ed--contactbar.twd-sk-ed--contactbar .twd-sk-ed__menu.twd-sk-ed__menu,
+  .twd-sk-ed.twd-sk-ed--contactbar.twd-sk-ed--contactbar .twd-sk-ed__mini.twd-sk-ed__mini {
+    bottom: 68px;
+  }
+}
 @keyframes twd-sk-ed-glow {
   0% { box-shadow: 0 0 0 0 var(--twd-site-color-primary); }
   50% { box-shadow: 0 0 0 10px transparent; }

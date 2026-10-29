@@ -1,9 +1,9 @@
 <?php
 // Registry tests: the components as data, keyed on IDs, with variants.
 
-twd_sk_test( 'registry: exactly the eighteen expected component IDs, in page order', function () {
+twd_sk_test( 'registry: exactly the nineteen expected component IDs, in page order', function () {
 	twd_sk_eq(
-		array( 'hero', 'text', 'image_text', 'pictures', 'quote', 'logos', 'faq', 'services', 'pricing', 'steps', 'cta', 'contact', 'hours', 'areas', 'enquiry', 'notice', 'resources', 'embed' ),
+		array( 'hero', 'text', 'image_text', 'pictures', 'quote', 'logos', 'faq', 'services', 'pricing', 'steps', 'cta', 'contact', 'hours', 'facts', 'areas', 'enquiry', 'notice', 'resources', 'embed' ),
 		TWD_SK_Registry::ids()
 	);
 } );
@@ -295,4 +295,17 @@ twd_sk_test( 'registry: the articles strip is a few articles from one category b
 	// Offered as a layout in the pop-up's Add a section menu and accepted as a page part.
 	$parts = TWD_SK_Recipes::clean_parts( array( array( 'hero', '' ), array( 'resources', 'twd-sk-resources--strip' ) ) );
 	twd_sk_eq( 'twd-sk-resources--strip', $parts[1][1] );
+} );
+
+twd_sk_test( 'Tier C idea 9 (0.15.0): the At a glance facts row is a registry component whose every sample value is a must-fix marker, styled from tokens', function () {
+	$c = TWD_SK_Registry::get( 'facts' );
+	twd_sk_true( is_array( $c ) );
+	twd_sk_eq( $c['skeleton'], TWD_SK_Sanitizer::clean( $c['skeleton'] ) );
+	$left = TWD_SK_Sanitizer::find_leftovers_by_level( $c['skeleton'] );
+	twd_sk_true( isset( $left['must']['Fact here'] ) && 4 === $left['must']['Fact here'], 'every value blocks publishing: ' . json_encode( $left ) );
+	twd_sk_true( isset( $left['must']['Fact label here'] ) );
+	twd_sk_has( 'twd-sk-facts__value', file_get_contents( ABSPATH . 'assets/twd-site-kit.css' ) );
+	twd_sk_true( in_array( 'facts', array_keys( TWD_SK_Recipes::parts_menu() ), true ) || isset( TWD_SK_Recipes::parts_menu()['facts'] ), 'offered to Add section' );
+	twd_sk_has( 'At a glance', TWD_SK_Prompt::style_guide() );
+	twd_sk_has( 'Fact here', file_get_contents( ABSPATH . 'starters/_gallery.html' ) );
 } );

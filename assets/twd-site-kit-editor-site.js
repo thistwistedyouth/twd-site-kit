@@ -899,6 +899,9 @@
 		cui.cols.value = String(c.settings.footer_columns);
 		cui.textStyle.value = c.settings.footer_text_style || 'plain';
 		previewTextStyle();
+		cui.contactBar.checked = !!c.settings.contact_bar;
+		cui.exit.checked = !!c.settings.quick_exit;
+		cui.exitUrl.value = c.settings.quick_exit_url || '';
 		cui.sticky.checked = !!c.settings.sticky;
 		cui.shrink.checked = !!c.settings.shrink;
 		cui.front.checked = !!c.settings.front_logo;
@@ -957,6 +960,9 @@
 				footer_variant: cui.footer.value,
 				footer_columns: parseInt(cui.cols.value, 10),
 				footer_text_style: cui.textStyle.value,
+				contact_bar: cui.contactBar.checked,
+				quick_exit: cui.exit.checked,
+				quick_exit_url: cui.exitUrl.value.trim(),
 				sticky: cui.sticky.checked,
 				shrink: cui.shrink.checked,
 				front_logo: cui.front.checked,
@@ -1008,6 +1014,11 @@
 		var sticky = checkbox('twd-sk-ch-sticky', 'Keep the header fixed at the top of the screen');
 		var btn = checkbox('twd-sk-ch-button', 'Show the header button');
 		var strip = checkbox('twd-sk-ch-strip', 'Show a thin strip with the phone number and email above the header');
+		var cbar = checkbox('twd-sk-ch-contactbar', 'On a phone, a slim Email and Call bar fixed to the bottom of the screen (from the email and phone in Site details; nothing on a computer)');
+		var exit = checkbox('twd-sk-ch-exit', 'A small "Leave quickly" link in the top corner of every page, for visitors who may need to hide the page fast');
+		cui.contactBar = cbar.input;
+		cui.exit = exit.input;
+		cui.exitUrl = textInput('twd-sk-ch-exiturl', 300);
 		var shrink = checkbox('twd-sk-ch-shrink', 'Make the fixed header smaller when scrolling (only works with the fixed header above)');
 		var front = checkbox('twd-sk-ch-front', 'Bigger logo on the front page: the full logo, larger and centred above the menu, on the front page only. Other pages show the small logo mark (if one is set in Site details) with the site name. Sizes are in the Style section.');
 		var over = checkbox('twd-sk-ch-over', 'Transparent over the picture: on a page that opens with a full-width picture hero, the header sits over the picture with no background and light words. Every other page keeps the normal header. With the fixed header, it turns solid again once the page is scrolled.');
@@ -1062,6 +1073,9 @@
 			over.label,
 			btn.label,
 			strip.label,
+			cbar.label,
+			exit.label,
+			field('Where Leave quickly goes', cui.exitUrl, 'A full https address of a neutral site, such as a weather or news page. Empty means no link.'),
 			el('div', { className: 'twd-sk-ed__actions' }, [cui.saveBtn, cui.exportBtn, cui.reloadBtn]),
 			cui.msg
 		])));
@@ -1199,7 +1213,7 @@
 	}
 
 	function chromeSnap() {
-		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.textStyle.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.over.checked, cui.wordmark.checked, cui.wmname.checked, cui.wmline.checked, cui.marker.value, cui.button.checked, cui.strip.checked, cui.placement.value]);
+		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.textStyle.value, cui.contactBar.checked, cui.exit.checked, cui.exitUrl.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.over.checked, cui.wordmark.checked, cui.wmname.checked, cui.wmline.checked, cui.marker.value, cui.button.checked, cui.strip.checked, cui.placement.value]);
 	}
 
 	ED.addDirtyCheck(function () {

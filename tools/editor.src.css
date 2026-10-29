@@ -147,6 +147,10 @@
 .twd-sk-ed__mini:hover .twd-sk-ed__mini-plus, .twd-sk-ed__mini:focus-visible .twd-sk-ed__mini-plus { color: $color-on-primary; }
 .twd-sk-ed__mini:focus-visible { outline: 2px solid $color-accent-text; outline-offset: 3px; }
 &[data-twd-sk-tools="off"] .twd-sk-ed__mini { display: none; }
+/* With the phone contact bar on the page (0.15.0), the floating Your Edits button and the pencil sit above it. */
+@media (max-width: 782px) {
+  &.twd-sk-ed--contactbar .twd-sk-ed__menu, &.twd-sk-ed--contactbar .twd-sk-ed__mini { bottom: 68px; }
+}
 @keyframes twd-sk-ed-glow {
   0% { box-shadow: 0 0 0 0 $color-primary; }
   50% { box-shadow: 0 0 0 10px transparent; }

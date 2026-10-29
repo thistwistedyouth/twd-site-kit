@@ -96,4 +96,8 @@
 	var headers = document.querySelectorAll('.twd-sk-header');
 	Array.prototype.forEach.call(headers, setup);
 	Array.prototype.forEach.call(headers, spacer);
+	// The Leave quickly link (0.15.0) sits in the top corner; for a signed-in person the admin bar is there, so it moves under it.
+	if (document.getElementById('wpadminbar') && document.querySelector('.twd-sk-exit')) {
+		document.documentElement.style.setProperty('--twd-sk-exit-top', (document.getElementById('wpadminbar').offsetHeight + 12) + 'px');
+	}
 })();

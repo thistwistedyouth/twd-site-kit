@@ -27,6 +27,8 @@ class TWD_SK_Report {
 			'Another quote here'  => 'a sample testimonial (never use an invented one)',
 			'A short statement in your own words' => 'a sample pull-out statement',
 			'A short passage from this page, set large' => 'a sample pull line (use a passage from this page)',
+			'Fact label here'     => 'a sample fact label',
+			'Fact here'           => 'a sample fact (never invent one)',
 			'Question here'       => 'a sample question',
 			'Answer here'         => 'a sample answer',
 			'Topic one'           => 'a sample topic',

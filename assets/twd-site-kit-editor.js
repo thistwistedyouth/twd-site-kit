@@ -2124,6 +2124,10 @@
 	 * kept for the signed-in user on the server (no browser storage), so it follows them between pages and devices.
 	 * A session already open (the pop-up, the editing card) is never closed by it. */
 	var tools = { off: !!cfg.toolsOff, listeners: [], bar: null, floating: null };
+	// The phone contact bar (0.15.0) sits at the bottom: the floating button and the pencil move up out of its way.
+	if (document.querySelector('.twd-sk-contactbar')) {
+		root.classList.add('twd-sk-ed--contactbar');
+	}
 
 	function toolsLabel() {
 		return 'Editing tools: ' + (tools.off ? 'off' : 'on');

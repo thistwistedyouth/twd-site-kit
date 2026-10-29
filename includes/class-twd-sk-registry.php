@@ -821,6 +821,28 @@ class TWD_SK_Registry {
 		) );
 	}
 
+	/** At a glance (0.15.0, idea 9): a row of three or four short facts. Every value is a marker until the client supplies it. */
+	private static function facts() {
+		$items = array();
+		for ( $i = 0; $i < 4; $i++ ) {
+			$items[] = '<div class="twd-sk-facts__item"><dt class="twd-sk-facts__label">Fact label here</dt><dd class="twd-sk-facts__value">Fact here</dd></div>';
+		}
+		return self::lines( array_merge(
+			array(
+				'<section class="twd-sk-facts twd-sk-tone-surface">',
+				'<div class="twd-sk-inner">',
+				'<h2 class="twd-sk-title">Heading here</h2>',
+				'<dl class="twd-sk-facts__list">',
+			),
+			$items,
+			array(
+				'</dl>',
+				'</div>',
+				'</section>',
+			)
+		) );
+	}
+
 	/** Areas covered, with a link to a map (no embedded map: no iframes) (0.8.0). */
 	private static function areas( $variant = '' ) {
 		$items = array();
@@ -1368,6 +1390,22 @@ class TWD_SK_Registry {
 					'twd-sk-hours__day',
 					'twd-sk-hours__time',
 					'twd-sk-hours__note',
+				),
+				'shortcodes'  => array(),
+			),
+
+			'facts'      => array(
+				'id'          => 'facts',
+				'label'       => 'At a glance',
+				'description' => 'A row of three or four short facts (for example where, session length, how to book, registration). Every value must come from the client: leave the placeholder marker or TO CONFIRM rather than invent one.',
+				'skeleton'    => self::facts(),
+				'variants'    => array(),
+				'classes'     => array(
+					'twd-sk-facts',
+					'twd-sk-facts__list',
+					'twd-sk-facts__item',
+					'twd-sk-facts__label',
+					'twd-sk-facts__value',
 				),
 				'shortcodes'  => array(),
 			),

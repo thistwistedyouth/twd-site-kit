@@ -1010,3 +1010,50 @@ twd_sk_test( 'SK-017 (0.15.0): the split header lets its menu use the spare widt
 	twd_sk_has( 'function splitNote', $js );
 	twd_sk_has( 'the bar header fits them', $js );
 } );
+
+twd_sk_test( 'Tier C ideas 7 and 10 (0.15.0): a phone contact bar from the site details and a Leave quickly link, both off by default (the footers print the same bytes), on through the chrome settings', function () {
+	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'phone' => '01234 567890', 'email' => 'hello@calm.example' ) ) );
+	$before = TWD_SK_Chrome::render_footer();
+	twd_sk_hasnt( 'twd-sk-contactbar', $before );
+	twd_sk_hasnt( 'twd-sk-exit', $before );
+	twd_sk_eq( false, TWD_SK_Chrome::effective()['contact_bar'] );
+	twd_sk_eq( false, TWD_SK_Chrome::effective()['exit'] );
+	// The contact bar: Email and Call from the site details, inside the footer, and the footer marked to keep room.
+	TWD_SK_Chrome::save_settings( array( 'contact_bar' => true ) );
+	$html = TWD_SK_Chrome::render_footer();
+	twd_sk_has( '<nav class="twd-sk-contactbar" aria-label="Contact"><a class="twd-sk-contactbar__link" href="mailto:hello@calm.example">Email</a><a class="twd-sk-contactbar__link" href="tel:01234567890">Call</a></nav></footer></div>', $html );
+	twd_sk_has( '<footer class="twd-sk-footer twd-sk-footer--contactbar ', $html );
+	foreach ( array( 'band', 'centered', 'simple', 'feature', 'compact' ) as $layout ) {
+		TWD_SK_Chrome::save_settings( array( 'footer_variant' => $layout ) );
+		twd_sk_has( 'twd-sk-contactbar__link', TWD_SK_Chrome::render_footer(), $layout );
+	}
+	// No real email or phone: no bar at all (and no room kept).
+	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'phone' => 'PHONE_NUMBER', 'email' => 'you@example.com' ) ), array( 'contact_bar' => true ) );
+	$none = TWD_SK_Chrome::render_footer();
+	twd_sk_true( false === strpos( $none, 'twd-sk-contactbar' ) || false !== strpos( $none, 'mailto:you@example.com' ), 'sample details: checked next' );
+	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'phone' => '', 'email' => '' ) ), array( 'contact_bar' => true ) );
+	twd_sk_hasnt( 'twd-sk-contactbar', TWD_SK_Chrome::render_footer() );
+	// Leave quickly: needs the switch and a full https address; anything else is refused or prints nothing.
+	twd_sk_chrome_setup( twd_sk_chrome_profile(), array( 'quick_exit' => true ) );
+	twd_sk_hasnt( 'twd-sk-exit', TWD_SK_Chrome::render_footer(), 'no address, no link' );
+	twd_sk_true( count( TWD_SK_Chrome::validate( array( 'quick_exit_url' => 'http://example.test/' ) )['errors'] ) === 1, 'http is refused' );
+	twd_sk_true( count( TWD_SK_Chrome::validate( array( 'quick_exit_url' => 'javascript:alert(1)' ) )['errors'] ) === 1 );
+	twd_sk_eq( '', TWD_SK_Chrome::validate( array( 'quick_exit_url' => '  ' ) )['valid']['quick_exit_url'] );
+	TWD_SK_Chrome::save_settings( array( 'quick_exit_url' => 'https://example.test/weather' ) );
+	$exit = TWD_SK_Chrome::render_footer();
+	twd_sk_has( '<a class="twd-sk-exit" href="https://example.test/weather" rel="noopener">Leave quickly</a></footer></div>', $exit );
+	twd_sk_eq( 'https://example.test/weather', TWD_SK_Chrome::effective()['exit_url'] );
+	// In the stylesheet (fixed on a phone, the footer keeps room), the snapshot, the brief and the Site tab.
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	foreach ( array( 'twd-sk-contactbar__link', 'twd-sk-footer--contactbar', 'twd-sk-exit' ) as $cls ) {
+		twd_sk_has( $cls, $css );
+		twd_sk_true( in_array( $cls, TWD_SK_Chrome::classes(), true ), $cls );
+	}
+	foreach ( array( 'contact_bar', 'quick_exit', 'quick_exit_url' ) as $k ) {
+		twd_sk_true( array_key_exists( $k, TWD_SK_Style::current()['chrome'] ), $k . ' in the snapshot' );
+	}
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' );
+	twd_sk_has( 'twd-sk-ch-contactbar', $js );
+	twd_sk_has( 'quick_exit_url: cui.exitUrl.value.trim()', $js );
+	twd_sk_has( 'twd-sk-ed--contactbar', file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' ) );
+} );

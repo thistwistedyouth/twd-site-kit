@@ -127,7 +127,8 @@
 .twd-sk-page .twd-sk-pictures.twd-sk-pictures,
 .twd-sk-page .twd-sk-pricing.twd-sk-pricing,
 .twd-sk-page .twd-sk-hours.twd-sk-hours,
-.twd-sk-page .twd-sk-areas.twd-sk-areas {
+.twd-sk-page .twd-sk-areas.twd-sk-areas,
+.twd-sk-page .twd-sk-facts.twd-sk-facts {
   padding-top: var(--twd-site-section-y) !important;
   padding-bottom: var(--twd-site-section-y) !important;
 }
@@ -3538,6 +3539,97 @@
   /* The articles strip: introduction beside the cards (0.14.0). */
   .twd-sk-page .twd-sk-resources__row.twd-sk-resources__row {
     grid-template-columns: 1fr 2fr;
+  }
+}
+/* ---- at a glance (0.15.0, idea 9): three or four short facts in a row, two across on a phone ---- */
+.twd-sk-page .twd-sk-facts__list.twd-sk-facts__list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--twd-site-gap-md);
+  margin: 32px 0 0 !important;
+}
+.twd-sk-page .twd-sk-facts__item.twd-sk-facts__item {
+  margin: 0 !important;
+  padding: 0 0 0 16px !important;
+  border-left: 2px solid var(--twd-site-color-accent) !important;
+}
+.twd-sk-page .twd-sk-facts__label.twd-sk-facts__label {
+  margin: 0 0 6px !important;
+  font-size: var(--twd-site-eyebrow-size) !important;
+  font-weight: var(--twd-site-eyebrow-weight) !important;
+  letter-spacing: var(--twd-site-eyebrow-spacing) !important;
+  text-transform: uppercase !important;
+  color: var(--twd-site-color-eyebrow) !important;
+}
+.twd-sk-page .twd-sk-facts__value.twd-sk-facts__value {
+  margin: 0 !important;
+  font-family: var(--twd-site-font-heading) !important;
+  font-size: var(--twd-site-size-title) !important;
+  font-weight: var(--twd-site-title-weight) !important;
+  font-style: var(--twd-site-title-style) !important;
+  line-height: var(--twd-site-line-heading) !important;
+  color: var(--twd-site-color-title) !important;
+}
+@media (max-width: 768px) {
+  .twd-sk-page .twd-sk-facts__list.twd-sk-facts__list {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--twd-site-gap-sm);
+  }
+}
+/* ---- the contact bar on a phone (0.15.0, idea 7): nothing on a computer; fixed to the bottom on a phone, the footer keeps room for it ---- */
+.twd-sk-page .twd-sk-contactbar.twd-sk-contactbar {
+  display: none;
+}
+.twd-sk-page .twd-sk-exit.twd-sk-exit {
+  position: fixed;
+  top: var(--twd-sk-exit-top, 12px);
+  right: 12px;
+  z-index: 99990;
+  display: inline-block;
+  padding: 8px 14px !important;
+  border-radius: var(--twd-site-radius-pill) !important;
+  background-color: var(--twd-site-color-band) !important;
+  color: var(--twd-site-color-on-band) !important;
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  font-weight: var(--twd-site-btn-weight) !important;
+  text-decoration: none !important;
+  box-shadow: var(--twd-site-shadow-card) !important;
+}
+.twd-sk-page .twd-sk-exit.twd-sk-exit:hover,
+.twd-sk-page .twd-sk-exit.twd-sk-exit:focus-visible {
+  background-color: var(--twd-site-color-primary) !important;
+  color: var(--twd-site-color-on-primary) !important;
+  text-decoration: none !important;
+}
+@media (max-width: 768px) {
+  .twd-sk-page .twd-sk-contactbar.twd-sk-contactbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99990;
+    display: flex;
+    background-color: var(--twd-site-color-band) !important;
+    box-shadow: var(--twd-site-shadow-card) !important;
+  }
+  .twd-sk-page .twd-sk-contactbar__link.twd-sk-contactbar__link {
+    flex: 1 1 0;
+    display: block;
+    min-height: 52px;
+    padding: 14px 12px !important;
+    text-align: center !important;
+    font-family: var(--twd-site-font-body) !important;
+    font-size: var(--twd-site-size-body) !important;
+    font-weight: var(--twd-site-btn-weight) !important;
+    color: var(--twd-site-color-on-band) !important;
+    text-decoration: none !important;
+  }
+  .twd-sk-page .twd-sk-contactbar__link.twd-sk-contactbar__link + .twd-sk-contactbar__link.twd-sk-contactbar__link {
+    border-left: 1px solid var(--twd-site-color-accent-on-dark) !important;
+  }
+  .twd-sk-page .twd-sk-footer--contactbar.twd-sk-footer--contactbar {
+    padding-bottom: 64px !important;
   }
 }
 /* ---- box, border and padding round a section's content (0.15.0): Look panel choices, no class = as before ---- */
