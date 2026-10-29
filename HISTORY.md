@@ -2,6 +2,10 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 29 Oct 2026: light text in the footer, a tiny allowed set rather than HTML (section 14 of the owner's plan)
+
+Every site detail went through `TWD_SK_Profile::text()`, which strips every tag and joins lines, so a footer could not hold a heading line and a quieter line under it. The footer text now goes through `rich()`: up to three lines, with strong, em and a link (its address through `safe_url`), everything else removed with its contents (scripts included), b and i mapped to strong and em, marks balanced per line, so the printer needs no parser. Plain one-line text comes back byte for byte as before, and a test holds every footer layout to the same output for it. The AI's footer proposals stay plain (it suggests words, not marks). The first-line style is a chrome setting with its own class, so the old footers print the same bytes, and its rules sit after each layout's own tagline rule because they share a specificity. The Site tab shows the marks in the box (a small toolbar wraps the selection; no raw HTML box) rather than a rich box, which keeps the client's surface small and the stored form visible; a nicer box can come later.
+
 ## 29 Oct 2026: a window that docks, floats and minimises, instead of a pop-out (sections 13 and 13b of the owner's plan)
 
 The owner wanted the Edit with AI window movable, resizable, dockable and draggable to a second monitor. A page overlay cannot leave its browser window, so a true pop-out (a second window talking to the first) was left out; docking the window to the left or right of the page, with the page still usable beside it, is the answer the plan settled on. The modal behaviour (a dimmed page, Tab trapped inside, Escape closes, a click outside closes) is kept only for the centred mode, which is still the default, so nothing changes for anyone who never touches the Window menu. Docked or floating, the overlay stops dimming and lets clicks through, and Escape pressed on the page belongs to the page.

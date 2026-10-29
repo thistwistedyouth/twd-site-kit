@@ -2907,6 +2907,46 @@
   line-height: 1.3 !important;
   color: var(--twd-site-color-title) !important;
 }
+/* After every layout's own tagline rule, so the lead style wins on the same specificity. */
+/* Footer text with its first line larger and the rest quieter (0.15.0, a Header and footer choice; off by default). */
+.twd-sk-page .twd-sk-footer__text--lead.twd-sk-footer__text--lead {
+  color: var(--twd-site-color-muted) !important;
+}
+.twd-sk-page .twd-sk-footer__text--lead.twd-sk-footer__text--lead::first-line {
+  font-family: var(--twd-site-font-heading) !important;
+  font-size: var(--twd-site-size-h3) !important;
+  font-weight: var(--twd-site-heading-weight) !important;
+  font-style: var(--twd-site-heading-style) !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__tagline--lead.twd-sk-footer__tagline--lead,
+.twd-sk-page .twd-sk-footer--compact.twd-sk-footer--compact .twd-sk-footer__tagline--lead.twd-sk-footer__tagline--lead {
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-body) !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+  line-height: var(--twd-site-line-body) !important;
+  color: var(--twd-site-color-muted) !important;
+}
+.twd-sk-page .twd-sk-footer--feature.twd-sk-footer--feature .twd-sk-footer__tagline--lead.twd-sk-footer__tagline--lead::first-line {
+  font-family: var(--twd-site-font-heading) !important;
+  font-size: var(--twd-site-size-h2) !important;
+  font-weight: var(--twd-site-heading-weight) !important;
+  font-style: var(--twd-site-heading-style) !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-sk-footer--compact.twd-sk-footer--compact .twd-sk-footer__tagline--lead.twd-sk-footer__tagline--lead::first-line {
+  font-family: var(--twd-site-font-heading) !important;
+  font-size: var(--twd-site-size-h3) !important;
+  font-weight: var(--twd-site-heading-weight) !important;
+  font-style: var(--twd-site-heading-style) !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-sk-footer__text.twd-sk-footer__text a,
+.twd-sk-page .twd-sk-footer__tagline.twd-sk-footer__tagline a {
+  color: inherit !important;
+  text-decoration: underline !important;
+}
 .twd-sk-page .twd-sk-footer__row.twd-sk-footer__row {
   display: flex;
   flex-wrap: wrap;

@@ -70,6 +70,124 @@ class TWD_SK_Profile {
 	 * Clean text: tags gone, whitespace collapsed, long dashes replaced, cut to a length.
 	 * Returns '' for anything that is not a string.
 	 */
+	/**
+	 * Light text (0.15.0): plain words with line breaks (at most $lines) and a tiny allowed set of marks:
+	 * strong, em, and a link with a safe address. Every other tag, attribute and script goes; b and i become
+	 * strong and em; br becomes a line break. The result is canonical (tags balanced, each line closed), so
+	 * rich_html() can print it without a parser. Plain text with no marks and no line breaks comes back
+	 * exactly as text() would give it, so an older value prints the same bytes as before.
+	 */
+	public static function rich( $value, $max, $lines = 3 ) {
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+		$value = str_replace( array( "\r\n", "\r" ), "\n", $value );
+		// Anything that runs or hides content goes with its contents, as wp_strip_all_tags does.
+		$value = preg_replace( '#<(script|style|iframe|object|embed|noscript|textarea|template)\b[^>]*>.*?</\1\s*>#is', '', $value );
+		$value = preg_replace( '#<br\s*/?>#i', "\n", $value );
+		$value = preg_replace( '#</?(p|div)\b[^>]*>#i', "\n", $value );
+		// Tokens for the marks that may stay; everything else is text (any other tag is removed).
+		$parts = preg_split( '/(<[^>]*>)/', $value, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY );
+		$lines_out = array();
+		$line      = '';
+		$open      = array();
+		$flush = function () use ( &$line, &$open, &$lines_out ) {
+			while ( $open ) {
+				$line .= '</' . array_pop( $open ) . '>';
+			}
+			$t = trim( preg_replace( '/[ \t]+/u', ' ', $line ) );
+			$t = preg_replace( '/^(<(?:strong|em|a)\b[^>]*>) /', '$1', $t );
+			$t = preg_replace( '/ (<\/(?:strong|em|a)>)$/', '$1', $t );
+			if ( '' !== $t && 1 === preg_match( '/[^\s<>\/a-z="]/i', strip_tags( $t ) ) ) {
+				$lines_out[] = $t;
+			} elseif ( '' !== strip_tags( $t ) ) {
+				$lines_out[] = $t;
+			}
+			$line = '';
+		};
+		foreach ( $parts as $part ) {
+			if ( '<' === $part[0] ) {
+				if ( preg_match( '#^<(/?)(strong|b|em|i|a)\b([^>]*)>$#i', $part, $m ) ) {
+					$tag = strtolower( $m[2] );
+					$tag = 'b' === $tag ? 'strong' : ( 'i' === $tag ? 'em' : $tag );
+					if ( '/' === $m[1] ) {
+						if ( in_array( $tag, $open, true ) ) {
+							// Close down to it, so the marks stay nested.
+							while ( $open ) {
+								$top   = array_pop( $open );
+								$line .= '</' . $top . '>';
+								if ( $top === $tag ) {
+									break;
+								}
+							}
+						}
+					} elseif ( ! in_array( $tag, $open, true ) ) {
+						if ( 'a' === $tag ) {
+							$href = '';
+							if ( preg_match( '/\bhref\s*=\s*("([^"]*)"|\'([^\']*)\')/i', $m[3], $h ) ) {
+								$href = isset( $h[3] ) && '' !== $h[3] ? $h[3] : $h[2];
+							}
+							$href = TWD_SK_Sanitizer::safe_url( html_entity_decode( trim( $href ), ENT_QUOTES, 'UTF-8' ), array( 'http', 'https', 'mailto', 'tel' ) );
+							if ( false === $href || '' === $href ) {
+								continue;
+							}
+							$line .= '<a href="' . esc_attr( $href ) . '">';
+						} else {
+							$line .= '<' . $tag . '>';
+						}
+						$open[] = $tag;
+					}
+				}
+				continue;
+			}
+			$text = html_entity_decode( $part, ENT_QUOTES, 'UTF-8' );
+			$text = TWD_SK_Sanitizer::strip_dashes( $text );
+			$text = preg_replace( '/[\x00-\x09\x0B-\x1F\x7F]/', '', $text );
+			$bits = explode( "\n", $text );
+			foreach ( $bits as $n => $bit ) {
+				if ( $n > 0 ) {
+					$flush();
+				}
+				$line .= str_replace( array( '&', '<', '>' ), array( '&amp;', '&lt;', '&gt;' ), $bit );
+			}
+		}
+		$flush();
+		$lines_out = array_slice( $lines_out, 0, max( 1, (int) $lines ) );
+		$out = implode( "\n", $lines_out );
+		if ( function_exists( 'mb_substr' ) && mb_strlen( $out ) > $max ) {
+			$out = self::rich( mb_substr( $out, 0, $max ), $max, $lines );
+		} elseif ( strlen( $out ) > $max ) {
+			$out = self::rich( substr( $out, 0, $max ), $max, $lines );
+		}
+		// Plain words come back as text() gives them (no entities), so older values are unchanged.
+		if ( false === strpos( $out, '<' ) && false === strpos( $out, "\n" ) ) {
+			return html_entity_decode( $out, ENT_QUOTES, 'UTF-8' );
+		}
+		return $out;
+	}
+
+	/** Light text as HTML for the page: text runs escaped, the marks kept, line breaks as br. */
+	public static function rich_html( $value ) {
+		$value = self::rich( $value, 1000, 20 );
+		if ( false === strpos( $value, '<' ) && false === strpos( $value, "\n" ) ) {
+			return esc_html( $value );
+		}
+		$out = '';
+		foreach ( preg_split( '/(<[^>]*>)/', $value, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY ) as $part ) {
+			if ( '<' === $part[0] ) {
+				$out .= $part;
+			} else {
+				$out .= str_replace( "\n", '<br>', esc_html( html_entity_decode( $part, ENT_QUOTES, 'UTF-8' ) ) );
+			}
+		}
+		return $out;
+	}
+
+	/** Light text as plain words (for a check, the site report or the AI): marks gone, line breaks as spaces. */
+	public static function rich_plain( $value ) {
+		return trim( preg_replace( '/\s+/u', ' ', html_entity_decode( strip_tags( str_replace( "\n", ' ', (string) $value ) ), ENT_QUOTES, 'UTF-8' ) ) );
+	}
+
 	public static function text( $value, $max ) {
 		if ( ! is_string( $value ) ) {
 			return '';
@@ -130,7 +248,8 @@ class TWD_SK_Profile {
 			case 'site_name':
 				return is_string( $value ) ? array( self::text( $value, 80 ) ) : 'The site name must be text.';
 			case 'footer_text':
-				return is_string( $value ) ? array( self::text( $value, 300 ) ) : 'The footer text must be text.';
+				// 0.15.0: up to three lines, with bold, italic and a link allowed.
+				return is_string( $value ) ? array( self::rich( $value, 300, 3 ) ) : 'The footer text must be text.';
 			case 'logo_line':
 				return is_string( $value ) ? array( self::text( $value, 40 ) ) : 'The second line under the name must be text.';
 			case 'phone':

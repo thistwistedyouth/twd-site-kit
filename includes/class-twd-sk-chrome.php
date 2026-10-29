@@ -189,6 +189,8 @@ class TWD_SK_Chrome {
 			'twd-sk-footer__copy', 'twd-sk-footer__legal', 'twd-sk-footer__legal-link', 'twd-sk-skip',
 			// 0.14.0: the feature footer's own pieces (the footer text as a heading, the contact and registration groups, the two-column list).
 			'twd-sk-footer__tagline', 'twd-sk-footer__contact-group', 'twd-sk-footer__links--two',
+			// 0.15.0: the footer text with its first line larger and the rest quieter.
+			'twd-sk-footer__text--lead', 'twd-sk-footer__tagline--lead',
 			// 0.14.0: the text wordmark header (a mark, the name and a second line as live text, centred on every page).
 			'twd-sk-header--wordmark', 'twd-sk-header--wm-front', 'twd-sk-header--wm-name', 'twd-sk-header__mark', 'twd-sk-header__name', 'twd-sk-header__line',
 			'twd-sk-chrome--wordmark', 'twd-sk-chrome--wm-front', 'twd-sk-chrome--noline',
@@ -225,6 +227,7 @@ class TWD_SK_Chrome {
 			'show_button'    => true,
 			'show_strip'     => false,
 			'footer_columns' => 3,
+			'footer_text_style' => 'plain', // 0.15.0: the footer text as before, or its first line larger and the rest quieter
 			'placement'      => 'kit',
 		);
 	}
@@ -301,6 +304,13 @@ class TWD_SK_Chrome {
 						$out['errors'][] = 'The footer can have one, two or three columns.';
 					}
 					break;
+				case 'footer_text_style':
+					if ( is_string( $value ) && isset( self::text_styles()[ $value ] ) ) {
+						$out['valid'][ $key ] = $value;
+					} else {
+						$out['errors'][] = 'Choose how the footer text is set: ' . implode( ', ', array_keys( self::text_styles() ) ) . '.';
+					}
+					break;
 				default:
 					$out['errors'][] = 'Unknown setting: ' . ( is_string( $key ) ? $key : '?' ) . '.';
 			}
@@ -343,6 +353,7 @@ class TWD_SK_Chrome {
 			'button'      => (bool) $s['show_button'],
 			'strip'       => (bool) $s['show_strip'],
 			'columns'     => (int) $s['footer_columns'],
+			'text_style'  => $s['footer_text_style'],
 			'sticky_note' => (bool) $s['sticky'] && ! $wm && 'centered' === $h,
 		);
 	}
@@ -369,6 +380,17 @@ class TWD_SK_Chrome {
 
 	private static function esc( $text ) {
 		return esc_html( (string) $text );
+	}
+
+	/** The footer text's style choices (0.15.0): as before, or the first line larger with the rest quieter. */
+	public static function text_styles() {
+		return array( 'plain' => 'As before', 'lead' => 'First line larger, the rest quieter' );
+	}
+
+	/** The extra class the footer text gets for its style, '' for plain (so the old footers print the same bytes). */
+	private static function text_style_class( $piece ) {
+		$s = self::settings();
+		return 'lead' === $s['footer_text_style'] ? ' twd-sk-footer' . $piece . '--lead' : '';
 	}
 
 	private static function url( $url ) {
@@ -656,7 +678,7 @@ class TWD_SK_Chrome {
 
 			$brand = ( $profile['logo_id'] ? '<div>' . self::logo_html( $profile, 'twd-sk-footer__logo-img', 'twd-sk-footer__name', true ) . '</div>' : '<p class="twd-sk-footer__name">' . self::esc( self::site_name( $profile ) ) . '</p>' );
 			if ( '' !== $profile['footer_text'] ) {
-				$brand .= '<p class="twd-sk-footer__text">' . self::esc( $profile['footer_text'] ) . '</p>';
+				$brand .= '<p class="twd-sk-footer__text' . self::text_style_class( '__text' ) . '">' . TWD_SK_Profile::rich_html( $profile['footer_text'] ) . '</p>';
 			}
 
 			$links = '';
@@ -721,7 +743,7 @@ class TWD_SK_Chrome {
 			? '<div>' . self::logo_html( $profile, 'twd-sk-footer__logo-img', 'twd-sk-footer__name', true, 'large' ) . '</div>'
 			: '<p class="twd-sk-footer__name">' . self::esc( self::site_name( $profile ) ) . '</p>';
 		if ( '' !== $profile['footer_text'] ) {
-			$brand .= '<p class="twd-sk-footer__tagline">' . self::esc( $profile['footer_text'] ) . '</p>';
+			$brand .= '<p class="twd-sk-footer__tagline' . self::text_style_class( '__tagline' ) . '">' . TWD_SK_Profile::rich_html( $profile['footer_text'] ) . '</p>';
 		}
 
 		$lines = array();
@@ -769,7 +791,7 @@ class TWD_SK_Chrome {
 	private static function render_compact_footer( $profile ) {
 		$out = '<div class="twd-sk-page twd-sk-chrome"><footer class="twd-sk-footer twd-sk-footer--compact twd-sk-footer--cols-1">';
 		if ( '' !== $profile['footer_text'] ) {
-			$out .= '<div class="twd-sk-inner twd-sk-footer__top"><p class="twd-sk-footer__tagline">' . self::esc( $profile['footer_text'] ) . '</p></div>';
+			$out .= '<div class="twd-sk-inner twd-sk-footer__top"><p class="twd-sk-footer__tagline' . self::text_style_class( '__tagline' ) . '">' . TWD_SK_Profile::rich_html( $profile['footer_text'] ) . '</p></div>';
 		}
 		$out .= '<div class="twd-sk-inner twd-sk-footer__row"><div class="twd-sk-footer__brand">'
 			. self::logo_html( $profile, 'twd-sk-footer__logo-img', 'twd-sk-footer__name', true ) . '</div>';

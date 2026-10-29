@@ -481,6 +481,154 @@
 		return el('textarea', { id: id, className: 'twd-sk-ed__textarea', rows: String(rows), spellcheck: 'false' });
 	}
 
+	/* ---- footer text (0.15.0): up to three lines with bold, italic and a link ----
+	 * A small toolbar wraps the selection in the box with the tiny allowed set (strong, em, a) or puts in a new line;
+	 * the server keeps only that set (TWD_SK_Profile::rich) and prints line breaks. The footer on the page shows the
+	 * words as typed: the preview builds nodes from the same marks (DOM calls only) and the saved words come back
+	 * on Save or when the change is thrown away. */
+	var FT = { orig: null, node: null };
+
+	function footerTextNode() {
+		return document.querySelector('.twd-sk-chrome .twd-sk-footer__text, .twd-sk-chrome .twd-sk-footer__tagline');
+	}
+
+	function decodeEntities(text) {
+		return String(text).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'");
+	}
+
+	// Nodes for light text: strong, em, a (with its address) and line breaks; anything else is plain words.
+	function richNodes(text) {
+		var frag = document.createDocumentFragment();
+		var stack = [frag];
+		var parts = String(text || '').replace(/\r\n?/g, '\n').replace(/<br\s*\/?>/gi, '\n').split(/(<\/?(?:strong|em|a|b|i)\b[^>]*>|\n)/i);
+		parts.forEach(function (part) {
+			if (!part) {
+				return;
+			}
+			var top = stack[stack.length - 1];
+			if (part === '\n') {
+				top.appendChild(el('br'));
+				return;
+			}
+			var m = /^<(\/?)(strong|em|a|b|i)\b([^>]*)>$/i.exec(part);
+			if (!m) {
+				top.appendChild(document.createTextNode(decodeEntities(part)));
+				return;
+			}
+			var tag = m[2].toLowerCase();
+			tag = tag === 'b' ? 'strong' : (tag === 'i' ? 'em' : tag);
+			if (m[1]) {
+				if (stack.length > 1) {
+					stack.pop();
+				}
+				return;
+			}
+			var node = el(tag);
+			if (tag === 'a') {
+				var h = /href\s*=\s*"([^"]*)"/i.exec(m[3]) || /href\s*=\s*'([^']*)'/i.exec(m[3]);
+				if (h && /^(https?:|mailto:|tel:|\/|#)/i.test(h[1].trim())) {
+					node.setAttribute('href', h[1].trim());
+				}
+			}
+			top.appendChild(node);
+			stack.push(node);
+		});
+		return frag;
+	}
+
+	function previewFooterText() {
+		var node = footerTextNode();
+		if (!node) {
+			return;
+		}
+		if (FT.orig === null || FT.node !== node) {
+			FT.node = node;
+			FT.orig = [];
+			Array.prototype.forEach.call(node.childNodes, function (n) {
+				FT.orig.push(n.cloneNode(true));
+			});
+		}
+		clear(node);
+		node.appendChild(richNodes(pui.footerText.value));
+	}
+
+	function previewTextStyle() {
+		var node = footerTextNode();
+		if (!node || !cui.textStyle) {
+			return;
+		}
+		var piece = node.classList.contains('twd-sk-footer__tagline') ? 'twd-sk-footer__tagline--lead' : 'twd-sk-footer__text--lead';
+		node.classList.toggle(piece, cui.textStyle.value === 'lead');
+	}
+
+	// Put the saved words back in the footer (the change was thrown away, or saved and the page will be reloaded).
+	function restoreFooterText() {
+		if (FT.node && FT.orig) {
+			clear(FT.node);
+			FT.orig.forEach(function (n) {
+				FT.node.appendChild(n);
+			});
+		}
+		FT.orig = null;
+		FT.node = null;
+	}
+
+	function wrapSelection(box, before, after) {
+		var start = box.selectionStart;
+		var end = box.selectionEnd;
+		var v = box.value;
+		var picked = v.slice(start, end);
+		box.value = v.slice(0, start) + before + picked + after + v.slice(end);
+		box.focus();
+		box.setSelectionRange(start + before.length, start + before.length + picked.length);
+		box.dispatchEvent(new Event('input', { bubbles: true }));
+	}
+
+	function footerTextField() {
+		var box = pui.footerText;
+		box.setAttribute('maxlength', '400');
+		var linkRow = el('div', { className: 'twd-sk-ed__inline', hidden: '' });
+		var linkInput = el('input', { type: 'text', id: 'twd-sk-pf-footerlink', className: 'twd-sk-ed__input', placeholder: '/contact, or a full web address', autocomplete: 'off', 'aria-label': 'Link address' });
+		var linkSet = button('Set the link', 'secondary', function () {
+			var href = linkInput.value.trim();
+			if (!href) {
+				linkInput.focus();
+				return;
+			}
+			wrapSelection(box, '<a href="' + href.replace(/"/g, '') + '">', '</a>');
+			show(linkRow, false);
+		});
+		linkRow.appendChild(linkInput);
+		linkRow.appendChild(linkSet);
+		var tool = function (label, title, run) {
+			var b = el('button', { type: 'button', className: 'twd-sk-ed__tool', text: label, title: title, 'aria-label': title });
+			b.addEventListener('click', run);
+			return b;
+		};
+		var bar = el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__texttools', role: 'group', 'aria-label': 'Footer text formatting' }, [
+			tool('B', 'Bold: select some words first', function () {
+				wrapSelection(box, '<strong>', '</strong>');
+			}),
+			tool('I', 'Italic: select some words first', function () {
+				wrapSelection(box, '<em>', '</em>');
+			}),
+			tool('Link', 'Link the selected words to an address', function () {
+				show(linkRow, linkRow.hasAttribute('hidden'));
+				if (!linkRow.hasAttribute('hidden')) {
+					linkInput.focus();
+				}
+			}),
+			tool('New line', 'Start a new line here (up to three lines)', function () {
+				wrapSelection(box, '\n', '');
+			})
+		]);
+		box.addEventListener('input', previewFooterText);
+		var node = field('Footer text', box, 'Up to three lines. Select words, then press B, I or Link. The footer below shows it as you type; nothing is saved until you press Save.');
+		node.insertBefore(bar, box);
+		node.appendChild(linkRow);
+		return node;
+	}
+
 	// One line per link: "Label | /link". In the menu a line that starts with a dash is a sub-menu link under the line above.
 	function linksToText(list, withChildren) {
 		var lines = [];
@@ -719,7 +867,7 @@
 				pui.personJobField
 			]),
 			field('Address lines', pui.address, W('address_help', 'Up to three lines. Leave empty for an online practice.')),
-			field('Footer text', pui.footerText, 'One or two sentences.'),
+			footerTextField(),
 			field(W('registration_label', 'Registration lines'), pui.registration, W('registration_help', 'Only exactly what the therapist has supplied. One line each, up to four.')),
 			field('Menu', pui.menu, 'One link per line: Label | /link. A line starting with a dash is a sub-menu link under the line above. Up to 8 menu items.'),
 			field('Legal links', pui.legal, 'One per line: Label | /link. Shown in the footer.'),
@@ -742,6 +890,8 @@
 		cui.header.value = c.settings.header_variant;
 		cui.footer.value = c.settings.footer_variant;
 		cui.cols.value = String(c.settings.footer_columns);
+		cui.textStyle.value = c.settings.footer_text_style || 'plain';
+		previewTextStyle();
 		cui.sticky.checked = !!c.settings.sticky;
 		cui.shrink.checked = !!c.settings.shrink;
 		cui.front.checked = !!c.settings.front_logo;
@@ -799,6 +949,7 @@
 				header_variant: cui.header.value,
 				footer_variant: cui.footer.value,
 				footer_columns: parseInt(cui.cols.value, 10),
+				footer_text_style: cui.textStyle.value,
 				sticky: cui.sticky.checked,
 				shrink: cui.shrink.checked,
 				front_logo: cui.front.checked,
@@ -845,6 +996,8 @@
 		cui.header = selectWith('twd-sk-ch-header', {}, 'Use the style\'s own layout');
 		cui.footer = selectWith('twd-sk-ch-footer', {}, 'Use the style\'s own layout');
 		cui.cols = selectWith('twd-sk-ch-cols', { '1': 'One column', '2': 'Two columns', '3': 'Three columns' }, '');
+		cui.textStyle = selectWith('twd-sk-ch-textstyle', { plain: 'As before', lead: 'First line larger, the rest quieter' }, '');
+		cui.textStyle.addEventListener('change', previewTextStyle);
 		var sticky = checkbox('twd-sk-ch-sticky', 'Keep the header fixed at the top of the screen');
 		var btn = checkbox('twd-sk-ch-button', 'Show the header button');
 		var strip = checkbox('twd-sk-ch-strip', 'Show a thin strip with the phone number and email above the header');
@@ -889,7 +1042,8 @@
 			el('div', { className: 'twd-sk-ed__grid' }, [
 				field('Header layout', cui.header),
 				field('Footer layout', cui.footer),
-				field('Footer columns', cui.cols, 'Used by the column footers.')
+				field('Footer columns', cui.cols, 'Used by the column footers.'),
+				field('Footer text style', cui.textStyle, 'With two or three lines of footer text, the first line can stand out.')
 			]),
 			sticky.label,
 			shrink.label,
@@ -1038,7 +1192,7 @@
 	}
 
 	function chromeSnap() {
-		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.over.checked, cui.wordmark.checked, cui.wmname.checked, cui.wmline.checked, cui.marker.value, cui.button.checked, cui.strip.checked, cui.placement.value]);
+		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.textStyle.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.over.checked, cui.wordmark.checked, cui.wmname.checked, cui.wmline.checked, cui.marker.value, cui.button.checked, cui.strip.checked, cui.placement.value]);
 	}
 
 	ED.addDirtyCheck(function () {
@@ -1053,6 +1207,7 @@
 	ED.addDirtyCheck(function () {
 		return (P.data && pui.snap !== undefined && profileSnap() !== pui.snap) ? 'site details (menu, contact lines, footer text and so on)' : '';
 	}, function () {
+		restoreFooterText();
 		if (P.data) {
 			fillProfile();
 		}
@@ -1256,6 +1411,10 @@
 		}
 		if ('footer_variant' in v) {
 			cui.footer.value = v.footer_variant;
+		}
+		if ('footer_text_style' in v) {
+			cui.textStyle.value = v.footer_text_style;
+			previewTextStyle();
 		}
 		if ('footer_columns' in v) {
 			cui.cols.value = String(v.footer_columns);

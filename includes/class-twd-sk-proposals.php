@@ -221,6 +221,10 @@ class TWD_SK_Proposals {
 			}
 		}
 		foreach ( $profile_in as $field => $value ) {
+			// The AI suggests words, never marks or line breaks: the footer text it offers is plain (0.15.0).
+			if ( 'footer_text' === $field && is_string( $value ) ) {
+				$value = TWD_SK_Profile::text( $value, 300 );
+			}
 			$one = TWD_SK_Profile::validate( array( $field => $value ), false );
 			if ( $one['errors'] ) {
 				$errors[] = self::label( $field ) . ': ' . implode( ' ', $one['errors'] ) . ' That change was dropped.';

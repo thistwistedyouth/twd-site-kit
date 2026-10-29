@@ -136,6 +136,7 @@ class TWD_SK_Style {
 				'header_variant' => $c['header_variant'],
 				'footer_variant' => $c['footer_variant'],
 				'footer_columns' => $c['footer_columns'],
+				'footer_text_style' => $c['footer_text_style'],
 				'sticky'         => $c['sticky'],
 				'shrink'         => $c['shrink'],
 				'front_logo'     => $c['front_logo'],

@@ -794,7 +794,7 @@ twd_sk_test( 'chrome footer feature: selectable in settings, in a pack file, in 
 
 twd_sk_test( 'chrome footer feature css: only existing colour tokens, the band colour on the strip, the large logo from its own tokens, two link columns, stacked on small screens', function () {
 	$raw     = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
-	$allowed = array( 'var(--twd-site-color-title)', 'var(--twd-site-color-accent-text)', 'var(--twd-site-color-band)', 'var(--twd-site-color-on-band)', 'var(--twd-site-color-accent-on-dark)' );
+	$allowed = array( 'var(--twd-site-color-title)', 'var(--twd-site-color-accent-text)', 'var(--twd-site-color-band)', 'var(--twd-site-color-on-band)', 'var(--twd-site-color-accent-on-dark)', 'var(--twd-site-color-muted)' );
 	$found   = 0;
 	foreach ( twd_sk_css_rules() as $rule ) {
 		if ( false === strpos( $rule['selectors'][0], 'twd-sk-footer--feature' ) ) {
@@ -952,4 +952,52 @@ twd_sk_test( 'chrome: the contact strip thickness is a token (default 8px, so no
 	twd_sk_has( "header.classList.contains('twd-sk-header--shrunk')", $js );
 	twd_sk_has( "document.fonts.ready", $js );
 	twd_sk_true( strlen( $js ) < 4000, 'still small' );
+} );
+
+twd_sk_test( 'footer text (0.15.0): up to three lines with bold, italic and a safe link; everything else goes; an old one-line footer prints the same bytes; the first-line style is a choice', function () {
+	// rich(): marks kept, scripts and attributes gone, b and i become strong and em, br is a line break, at most three lines.
+	twd_sk_eq( 'Gentle, practical therapy.', TWD_SK_Profile::rich( 'Gentle, practical therapy.', 300 ), 'plain words unchanged' );
+	twd_sk_eq( "Depth psychotherapy in London.\n<em>Explore</em> new ways forward.", TWD_SK_Profile::rich( "Depth psychotherapy in London.\r\n<i>Explore</i> new ways forward.", 300 ) );
+	twd_sk_eq( "One\nTwo\nThree", TWD_SK_Profile::rich( "One<br>Two<br/>Three<br>Four\nFive", 300 ), 'three lines at most' );
+	twd_sk_eq( '<strong>Bold</strong> and <a href="https://example.test/x">a link</a>', TWD_SK_Profile::rich( '<b onclick="x()">Bold</b> and <a href="https://example.test/x" target="_blank" style="color:red">a link</a><script>bad()</script>', 300 ) );
+	twd_sk_eq( 'Click here', TWD_SK_Profile::rich( '<a href="javascript:alert(1)">Click here</a>', 300 ), 'an unsafe link loses its link' );
+	twd_sk_eq( '<strong>Open and <em>nested</em></strong> then closed', TWD_SK_Profile::rich( '<strong>Open and <em>nested</strong> then closed', 300 ), 'marks are balanced' );
+	twd_sk_eq( 'Tom &amp; Jerry &gt; co', TWD_SK_Profile::rich_html( 'Tom & Jerry > co' ), 'plain words escape like esc_html' );
+	twd_sk_eq( 'Tom &amp;', TWD_SK_Profile::rich_html( 'Tom & <Co>' ), 'an unknown tag goes, as text() always did' );
+	twd_sk_eq( 'A line<br><strong>B</strong> &amp; C', TWD_SK_Profile::rich_html( "A line\n<strong>B</strong> &amp; C" ) );
+	twd_sk_eq( 'A line B and C', TWD_SK_Profile::rich_plain( "A line\n<strong>B</strong> and C" ) );
+	twd_sk_true( mb_strlen( TWD_SK_Profile::rich( str_repeat( 'word ', 100 ), 300 ) ) <= 300, 'cut to the limit' );
+	$check = TWD_SK_Profile::validate( array( 'footer_text' => "Line one\n<b>Line two</b>" ) );
+	twd_sk_eq( "Line one\n<strong>Line two</strong>", $check['valid']['footer_text'] );
+	// Every footer layout prints the lines with br and the marks, and nothing that can run.
+	foreach ( array( 'columns', 'band', 'centered', 'feature', 'compact' ) as $layout ) {
+		twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'footer_text' => "Depth psychotherapy in London.\n<strong>Explore</strong> <a href=\"/about\">new ways</a><script>x()</script>" ) ), array( 'footer_variant' => $layout ) );
+		$html = TWD_SK_Chrome::render_footer();
+		twd_sk_has( 'Depth psychotherapy in London.<br><strong>Explore</strong> <a href="/about">new ways</a>', $html, $layout );
+		twd_sk_hasnt( '<script', $html, $layout );
+		twd_sk_hasnt( '--lead', $html, $layout . ' plain by default' );
+	}
+	// The old one-line footer prints the same bytes as before (no class, no br).
+	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'footer_text' => 'Gentle, practical therapy.' ) ), array( 'footer_variant' => 'columns' ) );
+	$before = TWD_SK_Chrome::render_footer();
+	twd_sk_has( '<p class="twd-sk-footer__text">Gentle, practical therapy.</p>', $before );
+	// The style choice: a setting, a class on the text, in the snapshot and the brief, styled from tokens.
+	twd_sk_eq( 'plain', TWD_SK_Chrome::defaults()['footer_text_style'] );
+	twd_sk_eq( array( 'footer_text_style' => 'lead' ), TWD_SK_Chrome::validate( array( 'footer_text_style' => 'lead' ) )['valid'] );
+	twd_sk_true( count( TWD_SK_Chrome::validate( array( 'footer_text_style' => 'huge' ) )['errors'] ) === 1 );
+	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'footer_text' => "Depth psychotherapy in London.\nExplore new ways forward." ) ), array( 'footer_text_style' => 'lead' ) );
+	twd_sk_has( '<p class="twd-sk-footer__text twd-sk-footer__text--lead">Depth psychotherapy in London.<br>Explore new ways forward.</p>', TWD_SK_Chrome::render_footer() );
+	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'footer_text' => "A\nB" ) ), array( 'footer_variant' => 'feature', 'footer_text_style' => 'lead' ) );
+	twd_sk_has( 'twd-sk-footer__tagline twd-sk-footer__tagline--lead', TWD_SK_Chrome::render_footer() );
+	twd_sk_eq( 'lead', TWD_SK_Chrome::effective()['text_style'] );
+	twd_sk_true( isset( TWD_SK_Style::current()['chrome']['footer_text_style'] ) );
+	twd_sk_true( in_array( 'twd-sk-footer__text--lead', TWD_SK_Chrome::classes(), true ) );
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	twd_sk_has( 'twd-sk-footer__text--lead::first-line', $css );
+	twd_sk_has( 'twd-sk-footer__tagline--lead::first-line', $css );
+	// The Site tab: a small toolbar above the box, the style choice, and a live preview that builds nodes (never innerHTML).
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' );
+	foreach ( array( "'New line'", 'footer_text_style', 'function richNodes', 'function previewFooterText', 'cui.textStyle' ) as $needle ) {
+		twd_sk_has( $needle, $js );
+	}
 } );
