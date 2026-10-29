@@ -446,3 +446,61 @@ twd_sk_test( 'box, border and padding (0.15.0): shared classes on any section, s
 	twd_sk_has( "'/site/looks'", $site );
 	twd_sk_has( 'Box, Border and Padding', $site );
 } );
+
+twd_sk_test( 'chunk 3 (0.15.0): question groups open in place with the chosen tab marked (a tiny script, loaded only where there are groups), the picture band has height tokens and a Tall choice, a free focal point, and an empty Resources section can hide', function () {
+	// SK-020: the script, its classes, its loading.
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-faq.js' );
+	twd_sk_true( strlen( $js ) < 4096, 'tiny: ' . strlen( $js ) . ' bytes' );
+	twd_sk_true( 1 !== preg_match( '/[^\x00-\x7F]/', $js ), 'ASCII only' );
+	twd_sk_hasnt( 'http', $js );
+	twd_sk_hasnt( 'innerHTML', $js );
+	foreach ( array( 'twd-sk-faq__tab--on', 'scrollTo(x, y)', 'location.hash', 'preventDefault', 'aria-current', 'hashchange', 'twd-sk-inline-on' ) as $needle ) {
+		twd_sk_has( $needle, $js );
+	}
+	twd_sk_hasnt( 'replaceState', $js, 'the address really changes, so the :target rules show the group and a direct link still works' );
+	twd_sk_true( in_array( 'twd-sk-faq__tab--on', TWD_SK_Registry::get( 'faq' )['classes'], true ) );
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	twd_sk_has( 'twd-sk-faq__tab--on', $css );
+	$page = file_get_contents( ABSPATH . 'includes/class-twd-sk-page.php' );
+	twd_sk_has( "'twd-sk-faq--groups'", $page );
+	twd_sk_has( 'twd-site-kit-faq.js', $page );
+	// SK-022: band tokens in every pack and the defaults, editable, the Tall choice on the band layout only.
+	foreach ( TWD_SK_Packs::packs() as $slug => $pack ) {
+		twd_sk_eq( '260px', $pack['tokens']['band-height'], $slug );
+		twd_sk_eq( '180px', $pack['tokens']['band-height-sm'], $slug );
+		twd_sk_eq( '400px', $pack['tokens']['band-height-tall'], $slug );
+	}
+	twd_sk_eq( '260px', TWD_SK_Packs::defaults()['band-height'] );
+	twd_sk_true( in_array( 'band-height', TWD_SK_Site::editable_names(), true ) );
+	twd_sk_has( 'var(--twd-site-band-height)', $css );
+	twd_sk_has( 'var(--twd-site-band-height-tall-sm)', $css );
+	$o = TWD_SK_Looks::options( 'image_text' );
+	twd_sk_eq( 'twd-sk-image-text--band', $o['band_height']['requires'] );
+	$band = array( 'twd-sk-image-text', 'twd-sk-image-text--band' );
+	twd_sk_eq( array( 'twd-sk-image-text', 'twd-sk-image-text--band', 'twd-sk-image-text--band-tall' ), TWD_SK_Looks::classes_for( 'image_text', $band, null, array( 'band_height' => 'twd-sk-image-text--band-tall' ) ) );
+	twd_sk_eq( array( 'twd-sk-image-text', 'twd-sk-tone-base' ), TWD_SK_Looks::classes_for( 'image_text', array( 'twd-sk-image-text', 'twd-sk-tone-base' ), null, array( 'band_height' => 'twd-sk-image-text--band-tall' ) ), 'not on the other layouts' );
+	// A free focal point: stored and read as two percentages; nonsense falls back to the centre.
+	twd_stub_reset();
+	$GLOBALS['twd_stub']['attachments'][93] = array( 'is_image' => true, 'url' => 'https://example.test/wp-content/uploads/p.jpg', 'w' => 1200, 'h' => 800 );
+	twd_sk_true( TWD_SK_Images::is_free_point( '37% 62%' ) );
+	twd_sk_true( ! TWD_SK_Images::is_free_point( '137% 62%' ) && ! TWD_SK_Images::is_free_point( '37%,62%' ) && ! TWD_SK_Images::is_free_point( 'top' ) );
+	twd_sk_true( true === TWD_SK_Images::set_focal( 93, '37% 62%' ) );
+	twd_sk_eq( '37% 62%', TWD_SK_Images::get_focal( 93 ) );
+	twd_sk_eq( '37% 62%', TWD_SK_Images::focal_position( '37% 62%' ) );
+	twd_sk_eq( '50% 15%', TWD_SK_Images::focal_position( 'top' ) );
+	twd_sk_eq( '', TWD_SK_Images::focal_position( 'center' ) );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Images::set_focal( 93, '137% 62%' ) );
+	$GLOBALS['twd_stub']['caps'] = array( 'edit_post' );
+	TWD_SK_Images::save_focal_field( array( 'ID' => 93 ), array( 'twd_sk_focal' => 'free', 'twd_sk_focal_x' => '120', 'twd_sk_focal_y' => '-4' ) );
+	twd_sk_eq( '100% 0%', TWD_SK_Images::get_focal( 93 ), 'the field clamps the percentages' );
+	$fields = TWD_SK_Images::focal_field( array(), (object) array( 'ID' => 93 ) );
+	twd_sk_has( 'value="free" selected', $fields['twd_sk_focal']['html'] );
+	twd_sk_has( 'twd_sk_focal_x', $fields['twd_sk_focal']['html'] );
+	// SK-023: the toggle on Resources, the rule, and the Visual editor showing the section anyway.
+	twd_sk_eq( 'twd-sk-resources--hide-empty', TWD_SK_Looks::options( 'resources' )['hide_empty']['class'] );
+	twd_sk_true( in_array( 'twd-sk-resources--hide-empty', TWD_SK_Registry::get( 'resources' )['classes'], true ) );
+	twd_sk_has( 'twd-sk-resources--hide-empty', $css );
+	twd_sk_has( 'twd-sk-resources--hide-empty { display: block !important; }', file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.css' ) );
+	$res = array( 'twd-sk-resources', 'twd-sk-tone-base' );
+	twd_sk_eq( array( 'twd-sk-resources', 'twd-sk-tone-base', 'twd-sk-resources--hide-empty' ), TWD_SK_Looks::classes_for( 'resources', $res, null, array( 'hide_empty' => true ) ) );
+} );

@@ -253,7 +253,8 @@
 .twd-sk-image-text__body { align-self: center; }
 .twd-sk-image-text__body > * + * { margin-top: 1em; }
 .twd-sk-image-text__body .twd-sk-btn { margin-top: 20px; }
-.twd-sk-image-text--band { height: 260px; }
+.twd-sk-image-text--band { height: $band-height; }
+.twd-sk-image-text--band-tall { height: $band-height-tall; }
 /* min-height 0: the base image rule's min-height (260px) must not win over the band's own height (180px on phones),
    or the picture spills under the next section's words (seen on a phone, 29 Oct 2026). */
 .twd-sk-image-text--band .twd-sk-image-text__img { height: 100%; min-height: 0; border-radius: 0; object-fit: cover; }
@@ -331,6 +332,8 @@
 }
 .twd-sk-faq__tablink:hover, .twd-sk-faq__tablink:focus-visible { border-color: $color-primary; color: $color-primary; }
 .twd-sk-faq__group { scroll-margin-top: 120px; }
+/* The chosen tab (0.15.0, set by the tiny groups script): filled with the button colour. */
+.twd-sk-faq__tab--on .twd-sk-faq__tablink, .twd-sk-faq__tab--on .twd-sk-faq__tablink:hover { border-color: $color-primary; background-color: $color-primary; color: $color-on-primary; }
 .twd-sk-faq__group + .twd-sk-faq__group { margin-top: 40px; }
 .twd-sk-faq__groupname {
   margin: 0 0 16px; font-family: $font-heading; font-size: $size-h3; font-weight: $title-weight;
@@ -485,6 +488,8 @@
 .twd-sk-resources__none { display: none; margin: $gap-sm 0 0; font-family: $font-body; font-size: $size-small; line-height: $line-body; color: $color-muted; text-align: center; }
 .twd-sk-resources:has(.twd-ap-articles-none:not([hidden])) .twd-sk-resources__none { display: block; }
 .twd-sk-resources:has(.twd-sk-resources__none) .twd-ap-articles-none { display: none; }
+/* Hide the whole section while its category is empty (0.15.0, a Look choice; the Visual editor shows it anyway). */
+.twd-sk-resources--hide-empty:has(.twd-ap-articles-none:not([hidden])) { display: none; }
 .twd-sk-resources__grid .twd-sk-resources__none { text-align: left; }
 
 /* ---- contact ---- */
@@ -946,7 +951,8 @@
   .twd-sk-areas--split .twd-sk-inner { grid-template-columns: 1fr; }
   .twd-sk-areas--split .twd-sk-areas__list, .twd-sk-areas--split .twd-sk-areas__actions { grid-column: 1; grid-row: auto; }
   .twd-sk-hero--parallax .twd-sk-hero__bg { top: 0; bottom: 0; transform: none; }
-  .twd-sk-image-text--band { padding-top: 0; padding-bottom: 0; height: 180px; }
+  .twd-sk-image-text--band { padding-top: 0; padding-bottom: 0; height: $band-height-sm; }
+  .twd-sk-image-text--band-tall { height: $band-height-tall-sm; }
   .twd-sk-cta--band { padding-top: calc(#{$section-y-sm} * 1.4); padding-bottom: calc(#{$section-y-sm} * 1.4); }
   .twd-sk-hero__title { font-size: $size-h1-sm; }
   .twd-sk-hero--compact .twd-sk-hero__title { font-size: $size-page-title-sm; }

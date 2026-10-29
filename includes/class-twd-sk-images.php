@@ -44,15 +44,28 @@ class TWD_SK_Images {
 		add_filter( 'attachment_fields_to_save', array( __CLASS__, 'save_focal_field' ), 10, 2 );
 	}
 
+	/** A free point (0.15.0): "X% Y%" with whole numbers from 0 to 100, as well as the named places. */
+	public static function is_free_point( $v ) {
+		return is_string( $v ) && 1 === preg_match( '/^(100|[1-9]?\d)% (100|[1-9]?\d)%$/', $v );
+	}
+
+	/** The object-position a stored choice gives ('' for the centre). */
+	public static function focal_position( $key ) {
+		if ( self::is_free_point( $key ) ) {
+			return $key;
+		}
+		return isset( self::focal_points()[ $key ] ) ? self::focal_points()[ $key ][1] : '';
+	}
+
 	public static function get_focal( $id ) {
 		$v = get_post_meta( (int) $id, self::META_FOCAL, true );
-		return is_string( $v ) && isset( self::focal_points()[ $v ] ) ? $v : 'center';
+		return is_string( $v ) && ( isset( self::focal_points()[ $v ] ) || self::is_free_point( $v ) ) ? $v : 'center';
 	}
 
 	/** @return bool|WP_Error */
 	public static function set_focal( $id, $key ) {
-		if ( ! is_string( $key ) || ! isset( self::focal_points()[ $key ] ) ) {
-			return new WP_Error( 'twd_sk_bad_input', 'Choose one of the places to keep in view.' );
+		if ( ! is_string( $key ) || ( ! isset( self::focal_points()[ $key ] ) && ! self::is_free_point( $key ) ) ) {
+			return new WP_Error( 'twd_sk_bad_input', 'Choose one of the places to keep in view, or an exact point as two percentages.' );
 		}
 		update_post_meta( (int) $id, self::META_FOCAL, $key );
 		// Pages read the choice through a cache; a new version number makes them read it again.
@@ -65,24 +78,36 @@ class TWD_SK_Images {
 			return $fields;
 		}
 		$current = self::get_focal( $post->ID );
+		$free    = self::is_free_point( $current );
 		$name    = 'attachments[' . (int) $post->ID . '][twd_sk_focal]';
 		$html    = '<select name="' . esc_attr( $name ) . '" id="' . esc_attr( 'attachments-' . (int) $post->ID . '-twd_sk_focal' ) . '">';
 		foreach ( self::focal_points() as $key => $p ) {
 			$html .= '<option value="' . esc_attr( $key ) . '"' . ( $key === $current ? ' selected' : '' ) . '>' . esc_html( $p[0] ) . '</option>';
 		}
+		$html .= '<option value="free"' . ( $free ? ' selected' : '' ) . '>Exact point (percentages below)</option>';
 		$html .= '</select>';
+		// 0.15.0: an exact point, as two percentages from the left and from the top.
+		$xy = $free ? explode( ' ', str_replace( '%', '', $current ) ) : array( '50', '50' );
+		$html .= ' <label>From the left <input type="number" min="0" max="100" step="1" size="3" name="' . esc_attr( 'attachments[' . (int) $post->ID . '][twd_sk_focal_x]' ) . '" value="' . esc_attr( $xy[0] ) . '">%</label>';
+		$html .= ' <label>From the top <input type="number" min="0" max="100" step="1" size="3" name="' . esc_attr( 'attachments[' . (int) $post->ID . '][twd_sk_focal_y]' ) . '" value="' . esc_attr( $xy[1] ) . '">%</label>';
 		$fields['twd_sk_focal'] = array(
 			'label' => 'Keep in view',
 			'input' => 'html',
 			'html'  => $html,
-			'helps' => 'When a kit page crops this picture, this part stays in view (for example Top for a face).',
+			'helps' => 'When a kit page crops this picture, this part stays in view (for example Top for a face). Choose Exact point to give the place as percentages.',
 		);
 		return $fields;
 	}
 
 	public static function save_focal_field( $post, $attachment ) {
 		if ( isset( $attachment['twd_sk_focal'] ) && isset( $post['ID'] ) && current_user_can( 'edit_post', (int) $post['ID'] ) ) {
-			self::set_focal( (int) $post['ID'], (string) $attachment['twd_sk_focal'] );
+			$key = (string) $attachment['twd_sk_focal'];
+			if ( 'free' === $key ) {
+				$x   = isset( $attachment['twd_sk_focal_x'] ) ? (int) $attachment['twd_sk_focal_x'] : 50;
+				$y   = isset( $attachment['twd_sk_focal_y'] ) ? (int) $attachment['twd_sk_focal_y'] : 50;
+				$key = max( 0, min( 100, $x ) ) . '% ' . max( 0, min( 100, $y ) ) . '%';
+			}
+			self::set_focal( (int) $post['ID'], $key );
 		}
 		return $post;
 	}
@@ -185,7 +210,7 @@ class TWD_SK_Images {
 				}
 			}
 		}
-		$focal = $id > 0 ? self::focal_points()[ self::get_focal( $id ) ][1] : '';
+		$focal = $id > 0 ? self::focal_position( self::get_focal( $id ) ) : '';
 		$info  = array( 'id' => $id, 'dim' => $found ? $found : null, 'focal' => $focal );
 		set_transient( $key, $info, $id ? self::DIM_TTL : 3600 );
 		return $id ? $info : null;

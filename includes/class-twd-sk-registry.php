@@ -1033,6 +1033,8 @@ class TWD_SK_Registry {
 					'twd-sk-image-text--narrow',
 					'twd-sk-image-text--badge',
 					'twd-sk-image-text--band',
+					// 0.15.0: the band at the tall height (a Look choice beside the band layout).
+					'twd-sk-image-text--band-tall',
 					'twd-sk-image-text__grid',
 					'twd-sk-image-text__media',
 					'twd-sk-image-text__img',
@@ -1156,6 +1158,8 @@ class TWD_SK_Registry {
 					'twd-sk-faq__group',
 					'twd-sk-faq__group--default',
 					'twd-sk-faq__groupname',
+					// 0.15.0: set by the tiny groups script only (never stored): the chosen tab.
+					'twd-sk-faq__tab--on',
 				),
 				'shortcodes'  => array(),
 			),
@@ -1422,6 +1426,8 @@ class TWD_SK_Registry {
 					'twd-sk-resources__grid',
 					// The site's own line for a grid with no articles yet (0.15.0).
 					'twd-sk-resources__none',
+					// 0.15.0: the whole section (heading included) hides while its category has no articles.
+					'twd-sk-resources--hide-empty',
 				),
 				'shortcodes'  => array(
 					'twd_articles' => self::articles_shortcode_attrs(),

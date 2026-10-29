@@ -41,6 +41,11 @@ class TWD_SK_Site {
 			array( 'pictures', 'image-tint', 'Tint over pictures beside text', 'choice' ),
 			// 0.15.0: the frame behind words over a picture (the Picture text layout and the call to action band).
 			array( 'pictures', 'color-frame', 'Frame behind words over a picture', 'choice' ),
+			// 0.15.0: the picture band's height (and the Tall choice in the Look panel), in pixels.
+			array( 'pictures', 'band-height', 'Picture band height', 'size' ),
+			array( 'pictures', 'band-height-sm', 'Picture band height on phones', 'size' ),
+			array( 'pictures', 'band-height-tall', 'Tall picture band height', 'size' ),
+			array( 'pictures', 'band-height-tall-sm', 'Tall picture band height on phones', 'size' ),
 			// 0.14.0: logo sizes, in pixels.
 			array( 'logo', 'logo-height', 'Header logo height', 'size' ),
 			array( 'logo', 'logo-height-sm', 'Header logo height on phones', 'size' ),

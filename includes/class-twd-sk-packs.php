@@ -195,6 +195,8 @@ class TWD_SK_Packs {
 			'strip-padding',
 			// 0.15.0: the padding inside the frame behind words over a picture (Medium, Small, Large in the Look panel).
 			'frame-padding', 'frame-padding-sm', 'frame-padding-lg',
+			// 0.15.0: the picture band's height (normal, and the Tall choice), on a computer and on a phone.
+			'band-height', 'band-height-sm', 'band-height-tall', 'band-height-tall-sm',
 		) as $name ) {
 			$s[ $name ] = 'length';
 		}
@@ -249,6 +251,10 @@ class TWD_SK_Packs {
 			'frame-padding'                 => '24px',
 			'frame-padding-sm'              => '10px',
 			'frame-padding-lg'              => '40px',
+			'band-height'                   => '260px',
+			'band-height-sm'                => '180px',
+			'band-height-tall'              => '400px',
+			'band-height-tall-sm'           => '260px',
 		);
 	}
 

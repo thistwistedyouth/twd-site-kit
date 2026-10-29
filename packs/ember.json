@@ -108,6 +108,10 @@
   "frame-padding": "24px",
   "frame-padding-sm": "10px",
   "frame-padding-lg": "40px",
+  "band-height": "260px",
+  "band-height-sm": "180px",
+  "band-height-tall": "400px",
+  "band-height-tall-sm": "260px",
   "image-filter": "saturate(0.9)",
   "image-tint": "rgba(154,74,50,0.1)"
  }

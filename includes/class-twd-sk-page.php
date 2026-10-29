@@ -144,6 +144,11 @@ class TWD_SK_Page {
 		if ( false !== strpos( (string) $html, 'twd-sk-quote--slider' ) ) {
 			wp_enqueue_script( 'twd-site-kit-slider', TWD_SK_URL . 'assets/twd-site-kit-slider.js', array(), defined( 'TWD_SK_VERSION' ) ? TWD_SK_VERSION : false, true );
 		}
+		// Question groups (0.15.0): without the script a tab is a link to its group (the page scrolls there); the script
+		// opens the group where it is, marks the tab, and sets the address without the jump.
+		if ( false !== strpos( (string) $html, 'twd-sk-faq--groups' ) ) {
+			wp_enqueue_script( 'twd-site-kit-faq', TWD_SK_URL . 'assets/twd-site-kit-faq.js', array(), defined( 'TWD_SK_VERSION' ) ? TWD_SK_VERSION : false, true );
+		}
 		// The parallax hero still shows its picture without the script; the script moves it a little (0.14.0).
 		if ( false !== strpos( (string) $html, 'twd-sk-hero--parallax' ) ) {
 			wp_enqueue_script( 'twd-site-kit-hero', TWD_SK_URL . 'assets/twd-site-kit-hero.js', array(), defined( 'TWD_SK_VERSION' ) ? TWD_SK_VERSION : false, true );

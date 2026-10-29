@@ -69,3 +69,4 @@ body.twd-sk-inline-on section[data-twd-sk-looked] { outline: 2px solid #00a32a !
 /* Question groups (0.15.0): on a wide screen only one group shows at a time, so while editing every group is
    shown, stacked, and all their headings and questions can be reached. Visitors are not affected. */
 body.twd-sk-inline-on .twd-sk-faq__groups .twd-sk-faq__group { display: block !important; }
+body.twd-sk-inline-on .twd-sk-resources--hide-empty { display: block !important; }

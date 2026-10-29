@@ -57,6 +57,23 @@ class TWD_SK_Looks {
 		$all = array(
 			'text' => self::picture_options( 'twd-sk-text--picture' ),
 			'cta'  => self::picture_options( 'twd-sk-cta--band' ),
+			'image_text' => array(
+				'band_height' => array(
+					'label'    => 'Band height',
+					'kind'     => 'choice',
+					'choices'  => array( '' => 'Normal', 'twd-sk-image-text--band-tall' => 'Tall' ),
+					'requires' => 'twd-sk-image-text--band',
+					'help'     => 'The heights themselves are set in the Site tab under Style, Pictures.',
+				),
+			),
+			'resources' => array(
+				'hide_empty' => array(
+					'label' => 'Hide this section while there are no articles',
+					'kind'  => 'toggle',
+					'class' => 'twd-sk-resources--hide-empty',
+					'help'  => 'Heading included. It shows again as soon as an article is published in its category.',
+				),
+			),
 			'hero' => array(
 				'overlay'  => array(
 					'label'    => 'Picture overlay',

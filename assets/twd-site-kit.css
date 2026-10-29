@@ -755,7 +755,10 @@
   margin-top: 20px !important;
 }
 .twd-sk-page .twd-sk-image-text--band.twd-sk-image-text--band {
-  height: 260px;
+  height: var(--twd-site-band-height);
+}
+.twd-sk-page .twd-sk-image-text--band-tall.twd-sk-image-text--band-tall {
+  height: var(--twd-site-band-height-tall);
 }
 /* min-height 0: the base image rule's min-height (260px) must not win over the band's own height (180px on phones),
    or the picture spills under the next section's words (seen on a phone, 29 Oct 2026). */
@@ -979,6 +982,13 @@
 }
 .twd-sk-page .twd-sk-faq__group.twd-sk-faq__group {
   scroll-margin-top: 120px;
+}
+/* The chosen tab (0.15.0, set by the tiny groups script): filled with the button colour. */
+.twd-sk-page .twd-sk-faq__tab--on.twd-sk-faq__tab--on .twd-sk-faq__tablink.twd-sk-faq__tablink,
+.twd-sk-page .twd-sk-faq__tab--on.twd-sk-faq__tab--on .twd-sk-faq__tablink.twd-sk-faq__tablink:hover {
+  border-color: var(--twd-site-color-primary) !important;
+  background-color: var(--twd-site-color-primary) !important;
+  color: var(--twd-site-color-on-primary) !important;
 }
 .twd-sk-page .twd-sk-faq__group.twd-sk-faq__group + .twd-sk-faq__group.twd-sk-faq__group {
   margin-top: 40px !important;
@@ -1402,6 +1412,10 @@
   display: block;
 }
 .twd-sk-page .twd-sk-resources.twd-sk-resources:has(.twd-sk-resources__none.twd-sk-resources__none) .twd-ap-articles-none.twd-ap-articles-none {
+  display: none;
+}
+/* Hide the whole section while its category is empty (0.15.0, a Look choice; the Visual editor shows it anyway). */
+.twd-sk-page .twd-sk-resources--hide-empty.twd-sk-resources--hide-empty:has(.twd-ap-articles-none.twd-ap-articles-none:not([hidden])) {
   display: none;
 }
 .twd-sk-page .twd-sk-resources__grid.twd-sk-resources__grid .twd-sk-resources__none.twd-sk-resources__none {
@@ -3074,7 +3088,10 @@
   .twd-sk-page .twd-sk-image-text--band.twd-sk-image-text--band {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
-    height: 180px;
+    height: var(--twd-site-band-height-sm);
+  }
+  .twd-sk-page .twd-sk-image-text--band-tall.twd-sk-image-text--band-tall {
+    height: var(--twd-site-band-height-tall-sm);
   }
   .twd-sk-page .twd-sk-cta--band.twd-sk-cta--band {
     padding-top: calc(var(--twd-site-section-y-sm) * 1.4) !important;

@@ -131,7 +131,7 @@ class TWD_SK_Pictures {
 	/** A "keep in view" choice from input, or centre. */
 	private static function focal( $pic ) {
 		$f = isset( $pic['focal'] ) && is_string( $pic['focal'] ) ? $pic['focal'] : 'center';
-		return isset( TWD_SK_Images::focal_points()[ $f ] ) ? $f : 'center';
+		return ( isset( TWD_SK_Images::focal_points()[ $f ] ) || TWD_SK_Images::is_free_point( $f ) ) ? $f : 'center';
 	}
 
 	/** Save each picture's "keep in view" choice to the media library (only when it is not the centre). */
