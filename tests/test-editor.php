@@ -426,3 +426,16 @@ twd_sk_test( 'your edits menu (0.15.0): one admin bar drop-down and one floating
 	twd_sk_has( '.twd-sk-ed .twd-sk-ed__menu.twd-sk-ed__menu {', $css );
 	twd_sk_has( ".twd-sk-ed[data-twd-sk-ab] .twd-sk-ed__menu.twd-sk-ed__menu,\n.twd-sk-ed[data-twd-sk-ab] .twd-sk-ed__menupop.twd-sk-ed__menupop {\n  display: none;", $css );
 } );
+
+twd_sk_test( 'pencil circles and info circles (0.15.0): built by the editor script from the section numbers, never printed by PHP; one section through the sections remix into the normal preview', function () {
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' );
+	foreach ( array( "document.querySelectorAll('section[data-twd-sk-sec]')", "className: 'twd-sk-ed__pencil'", "className: 'twd-sk-ed__pencil-icon'", "mode: 'sections', indexes: [state.secIndex], instruction: what", "proposeHtml(data.html, 'AI change to the ' + state.secName + ' section')", 'function infoHelp(', "className: 'twd-sk-ed__info'", "'aria-expanded'", 'function pickSection(', "window.TWD_SK_ED.startInline();" ) as $needle ) {
+		twd_sk_has( $needle, $js );
+	}
+	twd_sk_hasnt( 'twd-sk-ed__pencil', file_get_contents( ABSPATH . 'includes/class-twd-sk-editor.php' ), 'nothing printed by PHP' );
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.css' );
+	twd_sk_has( '.twd-sk-ed .twd-sk-ed__pencil.twd-sk-ed__pencil {', $css );
+	twd_sk_has( '@media (hover: none)', $css );
+	twd_sk_has( '.twd-sk-ed .twd-sk-ed__info.twd-sk-ed__info {', $css );
+	twd_sk_true( 1 === preg_match( '/twd-sk-ed__pencil\.twd-sk-ed__pencil \{[^}]*width: 36px;[^}]*height: 36px;/', $css ), 'a round 36px button' );
+} );

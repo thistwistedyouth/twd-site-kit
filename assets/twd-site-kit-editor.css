@@ -307,6 +307,121 @@
   outline: 2px solid var(--twd-site-color-accent-text);
   outline-offset: 2px;
 }
+/* ---- pencil circles (0.15.0): one round pencil on the top corner of every section, for editors only ---- */
+.twd-sk-ed .twd-sk-ed__pencil.twd-sk-ed__pencil {
+  position: fixed;
+  z-index: 99980;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0 !important;
+  border: 1.5px solid var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-pill) !important;
+  background-color: var(--twd-site-color-surface) !important;
+  color: var(--twd-site-color-title) !important;
+  box-shadow: var(--twd-site-shadow-card) !important;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+.twd-sk-ed .twd-sk-ed__pencil.twd-sk-ed__pencil.twd-sk-ed__pencil--near.twd-sk-ed__pencil--near,
+.twd-sk-ed .twd-sk-ed__pencil.twd-sk-ed__pencil:hover,
+.twd-sk-ed .twd-sk-ed__pencil.twd-sk-ed__pencil:focus-visible {
+  opacity: 1;
+}
+.twd-sk-ed .twd-sk-ed__pencil-icon.twd-sk-ed__pencil-icon {
+  position: relative;
+  display: block;
+  width: 4px;
+  height: 15px;
+  border-radius: 1px 1px 0 0 !important;
+  background-color: var(--twd-site-color-title) !important;
+  transform: rotate(45deg) translateY(-1px);
+}
+.twd-sk-ed .twd-sk-ed__pencil-icon.twd-sk-ed__pencil-icon::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  bottom: -5px;
+  width: 0;
+  height: 0;
+  border-left: 3px solid transparent !important;
+  border-right: 3px solid transparent !important;
+  border-top: 5px solid var(--twd-site-color-title) !important;
+}
+.twd-sk-ed .twd-sk-ed__pencil.twd-sk-ed__pencil:hover .twd-sk-ed__pencil-icon.twd-sk-ed__pencil-icon,
+.twd-sk-ed .twd-sk-ed__pencil.twd-sk-ed__pencil:focus-visible .twd-sk-ed__pencil-icon.twd-sk-ed__pencil-icon {
+  background-color: var(--twd-site-color-on-primary) !important;
+}
+.twd-sk-ed .twd-sk-ed__pencil.twd-sk-ed__pencil:hover .twd-sk-ed__pencil-icon.twd-sk-ed__pencil-icon::after,
+.twd-sk-ed .twd-sk-ed__pencil.twd-sk-ed__pencil:focus-visible .twd-sk-ed__pencil-icon.twd-sk-ed__pencil-icon::after {
+  border-top-color: var(--twd-site-color-on-primary) !important;
+}
+.twd-sk-ed .twd-sk-ed__pencil.twd-sk-ed__pencil:hover,
+.twd-sk-ed .twd-sk-ed__pencil.twd-sk-ed__pencil:focus-visible {
+  background-color: var(--twd-site-color-primary) !important;
+  border-color: var(--twd-site-color-primary) !important;
+  color: var(--twd-site-color-on-primary) !important;
+}
+.twd-sk-ed .twd-sk-ed__pencil.twd-sk-ed__pencil:focus-visible {
+  outline: 2px solid var(--twd-site-color-accent-text);
+  outline-offset: 2px;
+}
+@media (hover: none) {
+  .twd-sk-ed .twd-sk-ed__pencil.twd-sk-ed__pencil {
+    opacity: 1;
+    width: 44px;
+    height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .twd-sk-ed .twd-sk-ed__pencil.twd-sk-ed__pencil {
+    transition: none;
+  }
+}
+/* ---- info circles (0.15.0): a small (i) that shows a line of help on click ---- */
+.twd-sk-ed .twd-sk-ed__inforow.twd-sk-ed__inforow {
+  margin: 0 0 12px !important;
+}
+.twd-sk-ed .twd-sk-ed__info.twd-sk-ed__info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0 !important;
+  margin: 0 0 4px !important;
+  border: 1.5px solid var(--twd-site-color-border) !important;
+  border-radius: var(--twd-site-radius-pill) !important;
+  background-color: var(--twd-site-color-surface) !important;
+  color: var(--twd-site-color-accent-text) !important;
+  font-family: var(--twd-site-font-body) !important;
+  font-size: var(--twd-site-size-small) !important;
+  font-weight: var(--twd-site-btn-weight) !important;
+  font-style: italic !important;
+  line-height: 1 !important;
+  cursor: pointer;
+}
+.twd-sk-ed .twd-sk-ed__info.twd-sk-ed__info:hover,
+.twd-sk-ed .twd-sk-ed__info.twd-sk-ed__info:focus-visible,
+.twd-sk-ed .twd-sk-ed__info.twd-sk-ed__info[aria-expanded="true"] {
+  background-color: var(--twd-site-color-tint) !important;
+  border-color: var(--twd-site-color-accent-text) !important;
+  color: var(--twd-site-color-accent-text) !important;
+}
+.twd-sk-ed .twd-sk-ed__info.twd-sk-ed__info:focus-visible {
+  outline: 2px solid var(--twd-site-color-accent-text);
+  outline-offset: 2px;
+}
+.twd-sk-ed .twd-sk-ed__infotext.twd-sk-ed__infotext {
+  margin: 6px 0 0 !important;
+  padding: 10px 12px !important;
+  border-radius: var(--twd-site-radius-field) !important;
+  background-color: var(--twd-site-color-tint) !important;
+  color: var(--twd-site-color-body) !important;
+}
 /* ---- preview bar (inside the preview frame) ---- */
 .twd-sk-ed .twd-sk-ed__bar.twd-sk-ed__bar {
   position: fixed;

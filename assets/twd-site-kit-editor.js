@@ -372,6 +372,7 @@
 
 		buildInlineEntry(panel);
 		if (ai) {
+			buildSectionStep(panel);
 			buildPlanStep(panel);
 			// The discard button lives with the preview, not inside the tucked-away external section.
 			pasteKids[2] = el('div', { className: 'twd-sk-ed__actions' }, [ui.previewBtn]);
@@ -472,6 +473,169 @@
 		['Update from my ' + FACTS, 'Update the page so it matches my ' + FACTS + '. Keep the layout.']
 	];
 
+	/* An info circle (0.15.0): a small round (i) button that shows a line of help on click, so a panel stays clean. */
+	var infoCount = 0;
+
+	function infoHelp(text, label) {
+		var id = 'twd-sk-ed-info-' + (++infoCount);
+		var help = el('p', { id: id, className: 'twd-sk-ed__help twd-sk-ed__infotext', text: text, hidden: '' });
+		var btn = el('button', { type: 'button', className: 'twd-sk-ed__info', 'aria-label': label || 'More about this', 'aria-expanded': 'false', 'aria-controls': id, text: 'i' });
+		btn.addEventListener('click', function () {
+			var open = help.hasAttribute('hidden');
+			show(help, open);
+			btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+		});
+		return el('div', { className: 'twd-sk-ed__inforow' }, [btn, help]);
+	}
+
+	/* Change one section (0.15.0): opened by a pencil circle on the page. One box, one section, through the
+	 * sections-mode remix; the result goes into the normal preview, then Apply, with Undo. */
+	function buildSectionStep(panel) {
+		ui.secHead = el('p', { className: 'twd-sk-ed__label', text: '' });
+		ui.secBox = el('textarea', { id: 'twd-sk-ed-section', className: 'twd-sk-ed__textarea', maxlength: '1500', spellcheck: 'true' });
+		ui.secBtn = button('Preview the change', 'primary', doSection);
+		ui.secMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		ui.secStep = step('Change one section', [
+			ui.secHead,
+			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-section', text: 'What should change in this section?' }),
+			ui.secBox,
+			infoHelp('Only this section is rewritten; the rest of the page is left as it is. Wording you paste is kept word for word. You see a preview first, and nothing is saved until you apply it.', 'How changing one section works'),
+			el('div', { className: 'twd-sk-ed__actions' }, [ui.secBtn]),
+			ui.secMsg
+		]);
+		show(ui.secStep, false);
+		panel.appendChild(ui.secStep);
+	}
+
+	function doSection() {
+		var what = ui.secBox.value.trim();
+		if (!what) {
+			message(ui.secMsg, 'Say what should change first.', false);
+			ui.secBox.focus();
+			return;
+		}
+		if (state.secBusy) {
+			return;
+		}
+		state.secBusy = true;
+		ui.secBtn.disabled = true;
+		message(ui.secMsg, 'Asking the AI about this section...', true);
+		api('POST', pagePath('/remix'), { base_version: state.version, mode: 'sections', indexes: [state.secIndex], instruction: what }).then(function (data) {
+			state.secBusy = false;
+			ui.secBtn.disabled = false;
+			message(ui.secMsg, 'Here is the preview. Apply it below if it reads well.', true);
+			proposeHtml(data.html, 'AI change to the ' + state.secName + ' section');
+		}, function (err) {
+			state.secBusy = false;
+			ui.secBtn.disabled = false;
+			message(ui.secMsg, err.message, false);
+		});
+	}
+
+	function pickSection(index, name) {
+		state.secIndex = index;
+		state.secName = name;
+		open();
+		if (ui.tabs.edit) {
+			selectTab('edit');
+		}
+		if (!ui.secStep) {
+			return;
+		}
+		ui.secHead.textContent = 'Section ' + (index + 1) + ': ' + name;
+		show(ui.secStep, true);
+		revealFold(ui.secStep);
+		ui.secStep.scrollIntoView({ block: 'start' });
+		ui.secBox.focus();
+	}
+
+	/* ---- pencil circles (0.15.0): one small round pencil on the top corner of every section ----
+	 * Built from the editor's own section numbers (data-twd-sk-sec, printed for editors only), laid over the page
+	 * in the editor wrapper, never inside a section and never stored. Quiet: they show when the pointer is over
+	 * the section or the pencil has focus, and always on a touch screen. With AI a pencil opens "Change one
+	 * section"; without it, the Visual editor opens at that section. */
+	var pencils = [];
+	var pencilQueued = false;
+
+	// The pencil is drawn with CSS (a tilted bar with a tip), so the script holds no icon file and no address.
+	function pencilIcon() {
+		return el('span', { className: 'twd-sk-ed__pencil-icon', 'aria-hidden': 'true' });
+	}
+
+	function sectionName(sec) {
+		var h = sec.querySelector('h1, h2, h3');
+		if (h && h.textContent.trim()) {
+			return h.textContent.trim().replace(/\s+/g, ' ').slice(0, 60);
+		}
+		var cls = (sec.className.match(/\btwd-sk-([a-z-]+?)(?:--|\s|$)/) || [])[1] || '';
+		var comp = cfg.look && cfg.look.components && cfg.look.components[cls.replace(/-/g, '_')];
+		return comp ? comp.label : (cls || 'section');
+	}
+
+	function placePencils() {
+		pencilQueued = false;
+		var hidden = tools.off || document.body.classList.contains('twd-sk-inline-on') || (ui.overlay && !ui.overlay.hasAttribute('hidden'));
+		pencils.forEach(function (p) {
+			var r = p.host.getBoundingClientRect();
+			var visible = !hidden && r.height > 0 && r.bottom > 40 && r.top < window.innerHeight - 40;
+			show(p.node, visible);
+			if (visible) {
+				p.node.style.top = Math.max(r.top + 8, 8) + 'px';
+				p.node.style.left = Math.max(r.right - 44, 8) + 'px';
+			}
+		});
+	}
+
+	function queuePencils() {
+		if (!pencilQueued) {
+			pencilQueued = true;
+			window.requestAnimationFrame(placePencils);
+		}
+	}
+
+	function buildPencils() {
+		pencils.forEach(function (p) {
+			if (p.node.parentNode) {
+				p.node.parentNode.removeChild(p.node);
+			}
+		});
+		pencils = [];
+		Array.prototype.forEach.call(document.querySelectorAll('section[data-twd-sk-sec]'), function (sec) {
+			var index = parseInt(sec.getAttribute('data-twd-sk-sec'), 10);
+			var name = sectionName(sec);
+			var node = el('button', { type: 'button', className: 'twd-sk-ed__pencil', 'aria-label': 'Change this section: ' + name, title: 'Change this section', hidden: '' }, [pencilIcon()]);
+			node.addEventListener('click', function () {
+				if (cfg.ai) {
+					pickSection(index, name);
+				} else if (window.TWD_SK_ED && window.TWD_SK_ED.startInline) {
+					sec.scrollIntoView({ block: 'center' });
+					window.TWD_SK_ED.startInline();
+					var first = sec.querySelector('[data-twd-sk-t]');
+					if (first) {
+						first.focus({ preventScroll: true });
+					}
+				}
+			});
+			sec.addEventListener('mouseenter', function () {
+				node.classList.add('twd-sk-ed__pencil--near');
+			});
+			sec.addEventListener('mouseleave', function () {
+				node.classList.remove('twd-sk-ed__pencil--near');
+			});
+			root.appendChild(node);
+			pencils.push({ host: sec, node: node });
+		});
+		if (pencils.length && !buildPencils.bound) {
+			buildPencils.bound = true;
+			window.addEventListener('scroll', queuePencils, { passive: true });
+			window.addEventListener('resize', queuePencils);
+			tools.listeners.push(queuePencils);
+			redrawHooks.push(buildPencils);
+			new MutationObserver(queuePencils).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+		}
+		queuePencils();
+	}
+
 	function buildPlanStep(panel) {
 		ui.request = el('textarea', { id: 'twd-sk-ed-request', className: 'twd-sk-ed__textarea', maxlength: '6000', spellcheck: 'true' });
 		var chips = el('div', { className: 'twd-sk-ed__chips' });
@@ -488,11 +652,10 @@
 		ui.planMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
 		ui.planBox = el('div', { className: 'twd-sk-ed__planbox', hidden: '' });
 		panel.appendChild(step('1. Say what you want changed', [
-			el('p', { className: 'twd-sk-ed__help', text: 'One line, or a list. For example: "1. Change the first paragraph to ... 2. Add three boxes with glowing borders for garden parties, weddings and festivals. 3. Add these testimonials as a slider at the bottom: ...". Paste any wording you want used: it is kept word for word.' }),
 			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-ed-request', text: 'What do you want changed?' }),
 			chips,
 			ui.request,
-			el('p', { className: 'twd-sk-ed__help', text: 'You see a checklist first, then a preview. Nothing is saved until you apply it, and Undo always goes back. The AI writes drafts. Check every fact and every claim before you apply.' }),
+			infoHelp('One line, or a list. For example: "1. Change the first paragraph to ... 2. Add three boxes with glowing borders for garden parties, weddings and festivals. 3. Add these testimonials as a slider at the bottom: ...". Paste any wording you want used: it is kept word for word. You see a checklist first, then a preview. Nothing is saved until you apply it, and Undo always goes back. The AI writes drafts. Check every fact and every claim before you apply.', 'How to say what you want changed'),
 			el('div', { className: 'twd-sk-ed__actions' }, [ui.planBtn]),
 			ui.planMsg,
 			ui.planBox
@@ -1426,6 +1589,7 @@
 			document.addEventListener('keydown', onDocKeys);
 		}
 		show(ui.overlay, true);
+		queuePencils();
 		openBtn.setAttribute('aria-expanded', 'true');
 		ui.title.focus();
 		if (ui.tabs.edit) {
@@ -1557,6 +1721,7 @@
 
 	function close() {
 		show(ui.overlay, false);
+		queuePencils();
 		openBtn.setAttribute('aria-expanded', 'false');
 		openBtn.focus();
 	}
@@ -1801,4 +1966,5 @@
 	openBtn.addEventListener('click', open);
 	show(openBtn, true);
 	buildMenu();
+	buildPencils();
 })();

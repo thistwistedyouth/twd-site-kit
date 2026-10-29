@@ -85,6 +85,36 @@
 .twd-sk-ed__pill:hover, .twd-sk-ed__pill:focus-visible { background-color: $color-primary; border-color: $color-primary; color: $color-on-primary; }
 .twd-sk-ed__pill:focus-visible { outline: 2px solid $color-accent-text; outline-offset: 2px; }
 
+/* ---- pencil circles (0.15.0): one round pencil on the top corner of every section, for editors only ---- */
+.twd-sk-ed__pencil {
+  position: fixed; z-index: 99980; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0;
+  border: 1.5px solid $color-border; border-radius: $radius-pill; background-color: $color-surface; color: $color-title; box-shadow: $shadow-card;
+  cursor: pointer; opacity: 0; transition: opacity .15s ease;
+}
+.twd-sk-ed__pencil.twd-sk-ed__pencil--near, .twd-sk-ed__pencil:hover, .twd-sk-ed__pencil:focus-visible { opacity: 1; }
+.twd-sk-ed__pencil-icon { position: relative; display: block; width: 4px; height: 15px; border-radius: 1px 1px 0 0; background-color: $color-title; transform: rotate(45deg) translateY(-1px); }
+.twd-sk-ed__pencil-icon::after { content: ""; position: absolute; left: -1px; bottom: -5px; width: 0; height: 0; border-left: 3px solid transparent; border-right: 3px solid transparent; border-top: 5px solid $color-title; }
+.twd-sk-ed__pencil:hover .twd-sk-ed__pencil-icon, .twd-sk-ed__pencil:focus-visible .twd-sk-ed__pencil-icon { background-color: $color-on-primary; }
+.twd-sk-ed__pencil:hover .twd-sk-ed__pencil-icon::after, .twd-sk-ed__pencil:focus-visible .twd-sk-ed__pencil-icon::after { border-top-color: $color-on-primary; }
+.twd-sk-ed__pencil:hover, .twd-sk-ed__pencil:focus-visible { background-color: $color-primary; border-color: $color-primary; color: $color-on-primary; }
+.twd-sk-ed__pencil:focus-visible { outline: 2px solid $color-accent-text; outline-offset: 2px; }
+@media (hover: none) {
+  .twd-sk-ed__pencil { opacity: 1; width: 44px; height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .twd-sk-ed__pencil { transition: none; }
+}
+/* ---- info circles (0.15.0): a small (i) that shows a line of help on click ---- */
+.twd-sk-ed__inforow { margin: 0 0 12px; }
+.twd-sk-ed__info {
+  display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; margin: 0 0 4px;
+  border: 1.5px solid $color-border; border-radius: $radius-pill; background-color: $color-surface; color: $color-accent-text;
+  font-family: $font-body; font-size: $size-small; font-weight: $btn-weight; font-style: italic; line-height: 1; cursor: pointer;
+}
+.twd-sk-ed__info:hover, .twd-sk-ed__info:focus-visible, .twd-sk-ed__info[aria-expanded="true"] { background-color: $color-tint; border-color: $color-accent-text; color: $color-accent-text; }
+.twd-sk-ed__info:focus-visible { outline: 2px solid $color-accent-text; outline-offset: 2px; }
+.twd-sk-ed__infotext { margin: 6px 0 0; padding: 10px 12px; border-radius: $radius-field; background-color: $color-tint; color: $color-body; }
+
 /* ---- preview bar (inside the preview frame) ---- */
 .twd-sk-ed__bar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 99990; padding: 8px 16px; text-align: center;

@@ -2,6 +2,10 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 29 Oct 2026: pencils on the page, not in the pop-up (chunk 2g)
+
+The plan asked for pencils "when Edit with AI is open", but the pop-up is a full-screen modal, so nothing under it can be clicked. The pencils therefore live on the page for a signed-in editor and open the pop-up at a one-section step; while the pop-up is open they hide. A movable or docked pop-up (the plan's chunk 2, not in Tier A) would let them stay. The pencil icon is drawn with CSS because the editor scripts may hold no web address, and an SVG namespace is one.
+
 ## 29 Oct 2026: one Your Edits menu instead of a stack of floating buttons (chunk 2d)
 
 Three floating buttons plus a switch covered the bottom left of every page for an editor, over the words on a phone. The admin bar is where WordPress puts a signed-in person's tools, so the launchers moved there as one drop-down, with one floating button only where the admin bar hides its items. The menu is a small registry (each editor script adds its own item with an order number), so a new tool is one call, not a new button and a new CSS position. The old buttons remain in the markup, hidden, because the scripts use them as their open and focus-return targets; removing them would have meant touching every script for no visible gain.
