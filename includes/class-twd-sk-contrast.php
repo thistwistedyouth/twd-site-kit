@@ -37,6 +37,44 @@ class TWD_SK_Contrast {
 		return null;
 	}
 
+	/**
+	 * A colour with transparency laid over an opaque one (0.15.0): rgba( r, g, b, a ) or an 8-digit hex becomes
+	 * the plain colour a visitor sees. An opaque colour comes back as it is; anything else is null.
+	 */
+	public static function flatten( $top, $under ) {
+		$u = self::parse( $under );
+		if ( null === $u ) {
+			return null;
+		}
+		$t = self::parse( $top );
+		if ( null !== $t ) {
+			return sprintf( 'rgb(%d,%d,%d)', $t[0], $t[1], $t[2] );
+		}
+		$top = trim( (string) $top );
+		$a   = null;
+		if ( preg_match( '/^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(0|1|0?\.\d{1,3}|1\.0+)\s*\)$/', $top, $m ) ) {
+			$t = array( min( 255, (int) $m[1] ), min( 255, (int) $m[2] ), min( 255, (int) $m[3] ) );
+			$a = (float) $m[4];
+		} elseif ( preg_match( '/^#([0-9a-fA-F]{8})$/', $top, $m ) ) {
+			$t = array( hexdec( substr( $m[1], 0, 2 ) ), hexdec( substr( $m[1], 2, 2 ) ), hexdec( substr( $m[1], 4, 2 ) ) );
+			$a = hexdec( substr( $m[1], 6, 2 ) ) / 255;
+		} elseif ( 'transparent' === $top ) {
+			$t = array( 0, 0, 0 );
+			$a = 0;
+		}
+		if ( null === $a ) {
+			return null;
+		}
+		$out = array();
+		foreach ( array( 0, 1, 2 ) as $i ) {
+			$out[] = (int) round( $t[ $i ] * $a + $u[ $i ] * ( 1 - $a ) );
+		}
+		return sprintf( 'rgb(%d,%d,%d)', $out[0], $out[1], $out[2] );
+	}
+
+	/** A reference mid grey standing in for a photograph behind an overlay (0.15.0). */
+	const PHOTO = '#808080';
+
 	public static function luminance( $rgb ) {
 		$c = array();
 		foreach ( $rgb as $v ) {
@@ -84,7 +122,23 @@ class TWD_SK_Contrast {
 			array( 'accent_text_bg', 'warn', 'Link and accent text on the page background', 'color-accent-text', 'color-bg' ),
 			array( 'title_tint', 'warn', 'Titles on tinted sections', 'color-title', 'color-tint' ),
 			array( 'primary_bg', 'warn', 'Button colour against the page background', 'color-primary', 'color-bg' ),
+			// 0.15.0: words in the frame over a picture. The frame tint lies over the overlay over a mid grey (a photograph
+			// cannot be known), so the pair carries the layers under its background, from the bottom up.
+			array( 'frame_text', 'warn', 'Words in the frame over a picture', 'color-on-image', 'color-frame', array( self::PHOTO, 'color-overlay-mid' ) ),
 		);
+	}
+
+	/** Layers from the bottom up (a literal colour or a token name each) flattened to one opaque colour, or null. */
+	public static function stack( $layers, $tokens ) {
+		$base = null;
+		foreach ( (array) $layers as $layer ) {
+			$value = isset( $tokens[ $layer ] ) ? $tokens[ $layer ] : $layer;
+			$base  = null === $base ? self::flatten( $value, '#000000' ) : self::flatten( $value, $base );
+			if ( null === $base ) {
+				return null;
+			}
+		}
+		return $base;
 	}
 
 	/**
@@ -99,8 +153,10 @@ class TWD_SK_Contrast {
 			if ( ! isset( $tokens[ $fg ], $tokens[ $bg ] ) ) {
 				continue;
 			}
-			$ratio = self::ratio( $tokens[ $fg ], $tokens[ $bg ] );
-			$item  = array( 'id' => $id, 'label' => $label, 'fg' => $tokens[ $fg ], 'bg' => $tokens[ $bg ], 'ratio' => null === $ratio ? null : round( $ratio, 2 ) );
+			$under = isset( $p[5] ) ? self::stack( $p[5], $tokens ) : null;
+			$back  = null === $under ? $tokens[ $bg ] : self::flatten( $tokens[ $bg ], $under );
+			$ratio = null === $back ? null : self::ratio( $tokens[ $fg ], $back );
+			$item  = array( 'id' => $id, 'label' => $label, 'fg' => $tokens[ $fg ], 'bg' => null === $back ? $tokens[ $bg ] : $back, 'ratio' => null === $ratio ? null : round( $ratio, 2 ) );
 			if ( null === $ratio ) {
 				$out['unchecked'][] = $item;
 			} elseif ( $ratio < self::MIN ) {

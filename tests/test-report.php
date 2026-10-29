@@ -64,3 +64,16 @@ twd_sk_test( 'report: leftovers carry their level, and the totals are split by l
 	twd_sk_eq( array( 'must' => 0, 'check' => 0 ), TWD_SK_Report::leftover_levels( array() ) );
 	twd_sk_eq( array( 'must' => 0, 'check' => 0 ), TWD_SK_Report::leftover_levels( 'nope' ) );
 } );
+
+twd_sk_test( 'report: what changed between two pages is worked out by comparing them, in plain words (0.15.0)', function () {
+	$a = '<section class="twd-sk-text twd-sk-tone-base"><div class="twd-sk-inner"><h2 class="twd-sk-title">Title</h2><div class="twd-sk-text__body"><p>One.</p><p>Two.</p></div></div></section>';
+	twd_sk_eq( array(), TWD_SK_Report::changes( $a, $a ) );
+	$b = str_replace( '<p>Two.</p>', '<h3 class="twd-sk-text__subheading">Sub</h3><p>Two, longer.</p><p>Three.</p>', $a );
+	twd_sk_eq( array( 'Section 1 (Text): added 1 heading, added 1 paragraph, reworded 1 paragraph.' ), TWD_SK_Report::changes( $a, $b ) );
+	$c = str_replace( '<h2 class="twd-sk-title">Title</h2>', '<h2 class="twd-sk-title">New title</h2>', $a );
+	twd_sk_eq( array( 'Section 1 (Text): reworded 1 heading.' ), TWD_SK_Report::changes( $a, $c ) );
+	$d = str_replace( 'twd-sk-tone-base', 'twd-sk-tone-tint twd-sk-space-top-lg', $a );
+	twd_sk_eq( array( 'Section 1 (Text): changed the look to "Tinted" background and twd-sk-space-top-lg.' ), TWD_SK_Report::changes( $a, $d ) );
+	$e = str_replace( '<div class="twd-sk-inner">', '<div class="twd-sk-inner twd-sk-inner--narrow">', $a );
+	twd_sk_eq( array( 'Section 1 (Text): changed the markup (the words read the same).' ), TWD_SK_Report::changes( $a, $e ) );
+} );

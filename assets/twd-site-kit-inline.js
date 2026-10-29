@@ -212,9 +212,68 @@
 		status(now ? 'Quote line added. Press Quote line again to take it off.' : 'Quote line taken off.');
 	}
 
+	/* Heading above (0.15.0): a subheading put in before the paragraph the cursor is in, an h2 or an h3 by position
+	   (an h3 when the section already has an h2 title), with the class twd-sk-text__subheading. It lives only on
+	   screen until Save sends its words with the paragraph; Cancel takes it away; pressing again in it removes it. */
+	var SUBHEADING = 'twd-sk-text__subheading';
+
+	function newHeadingAt(node) {
+		var n = node && node.nodeType === 1 ? node : (node ? node.parentNode : null);
+		return n && n.closest ? n.closest('[data-twd-sk-new]') : null;
+	}
+
+	function headingAbove() {
+		var sel = window.getSelection();
+		var fresh = sel && sel.rangeCount ? newHeadingAt(sel.anchorNode) : null;
+		if (fresh) {
+			var k = fresh.getAttribute('data-twd-sk-new');
+			var para = S.headings[k] ? S.headings[k].para : null;
+			fresh.parentNode.removeChild(fresh);
+			delete S.headings[k];
+			if (para) {
+				markChanged(para);
+				para.focus();
+			}
+			status('Heading taken away.');
+			return;
+		}
+		var t = inEditable();
+		if (!t || t.tagName !== 'P') {
+			status('Put the cursor in a paragraph first: the heading goes above it.');
+			return;
+		}
+		var i = t.getAttribute('data-twd-sk-t');
+		if (S.headings[i]) {
+			S.headings[i].el.focus();
+			status('This paragraph already has a new heading above it. Press Heading above inside it to take it away.');
+			return;
+		}
+		var sec = t.closest('section');
+		var level = sec && sec.querySelector('h2') ? 'h3' : 'h2';
+		var h = el(level, { className: SUBHEADING, contenteditable: 'true', spellcheck: 'true', 'data-twd-sk-new': i, text: 'Heading' });
+		h.addEventListener('keydown', function (e) {
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				t.focus();
+			}
+		});
+		h.addEventListener('input', function () {
+			markChanged(t);
+		});
+		t.parentNode.insertBefore(h, t);
+		S.headings[i] = { el: h, para: t };
+		markChanged(t);
+		var range = document.createRange();
+		range.selectNodeContents(h);
+		sel.removeAllRanges();
+		sel.addRange(range);
+		h.focus();
+		status('Type the heading. It goes above this paragraph as an ' + level + '. Press Heading above again inside it to take it away.');
+	}
+
 	function markChanged(t) {
 		var i = t.getAttribute('data-twd-sk-t');
-		if (serialize(t) !== S.origText[i] || S.hrefs[i] !== undefined || S.quote[i] !== undefined) {
+		if (serialize(t) !== S.origText[i] || S.hrefs[i] !== undefined || S.quote[i] !== undefined || S.headings[i] !== undefined) {
 			t.setAttribute('data-twd-sk-changed', '1');
 		} else {
 			t.removeAttribute('data-twd-sk-changed');
@@ -302,6 +361,15 @@
 			if (layout !== std) {
 				next.splice(1, 0, layout);
 			}
+			info.layouts.forEach(function (l) {
+				if (l[0] === layout && l[2]) {
+					l[2].forEach(function (c) {
+						if (next.indexOf(c) < 0) {
+							next.push(c);
+						}
+					});
+				}
+			});
 		}
 		info.options.forEach(function (o) {
 			if (!Object.prototype.hasOwnProperty.call(values, o.key)) {
@@ -508,6 +576,7 @@
 		});
 		ui.link = toolButton('Link', 'Add or change a link', openLink);
 		ui.quote = toolButton('Quote line', 'A line on the left of this paragraph, like a quote', toggleQuote);
+		ui.heading = toolButton('Heading above', 'Put a heading above this paragraph', headingAbove);
 		ui.remove = toolButton('Remove', 'Remove this list entry, card, button or section', removeThis);
 		ui.putBack = toolButton('Put back', 'Put back the last thing removed', putBack);
 		ui.putBack.disabled = true;
@@ -579,7 +648,7 @@
 		]);
 		ui.confirm = el('div', { className: 'twd-sk-ed__inlinepanel', hidden: '' });
 		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar', role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '' }, [
-			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.bold, ui.italic, ui.link, ui.quote, ui.look, ui.remove, ui.putBack]),
+			el('div', { className: 'twd-sk-ed__inlinetools' }, [ui.bold, ui.italic, ui.link, ui.quote, ui.heading, ui.look, ui.remove, ui.putBack]),
 			el('div', { className: 'twd-sk-ed__inlinetools', role: 'group', 'aria-label': 'Sections' }, kinds.length ? [ui.addSec, ui.moveUp, ui.moveDown, ui.undo] : [ui.moveUp, ui.moveDown, ui.undo]),
 			el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.save, ui.cancel]),
 			ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel, ui.confirm
@@ -1258,6 +1327,7 @@
 		S.hrefs = {};
 		S.quote = {};
 		S.origQuote = {};
+		S.headings = {};
 		S.picks = {};
 		S.spotPicks = {};
 		S.removes = {};
@@ -1326,6 +1396,13 @@
 	}
 
 	function throwAway() {
+		Object.keys(S.headings || {}).forEach(function (k) {
+			var h = S.headings[k].el;
+			if (h.parentNode) {
+				h.parentNode.removeChild(h);
+			}
+		});
+		S.headings = {};
 		S.texts.forEach(function (t) {
 			var i = t.getAttribute('data-twd-sk-t');
 			if (serialize(t) !== S.origText[i]) {
@@ -1421,6 +1498,9 @@
 				if (S.quote[i] !== undefined) {
 					item.quote = S.quote[i];
 				}
+				if (S.headings[i] !== undefined) {
+					item.heading = S.headings[i].el.textContent;
+				}
 				body.texts.push(item);
 			}
 		});
@@ -1445,6 +1525,12 @@
 		adminBar();
 		status('Saving...');
 		ED.api('POST', '/pages/' + cfg.pageId + '/inline', body).then(function (data) {
+			if (data.resume_at !== undefined && data.resume_at !== null) {
+				// The section moved to a layout with a picture behind it: come back editing, at the picture box.
+				status('Saved as version ' + data.version + '. Reloading at the section: click its "Add a picture" box to choose the picture.');
+				reloadEditing(data.resume_at);
+				return;
+			}
 			status('Saved as version ' + data.version + '. Reloading so you see the page as visitors will.');
 			window.setTimeout(function () {
 				window.location.reload();

@@ -152,6 +152,8 @@ class TWD_SK_Packs {
 			'color-eyebrow', 'color-accent-text', 'color-accent-on-dark',
 			'color-overlay-top', 'color-overlay-mid', 'color-overlay-bottom',
 			'color-modal-overlay',
+			// 0.15.0: the tint of the frame behind words over a picture (about 30 percent dark).
+			'color-frame',
 		) as $name ) {
 			$s[ $name ] = 'color';
 		}
@@ -191,6 +193,8 @@ class TWD_SK_Packs {
 			'menu-size', 'menu-spacing', 'menu-gap',
 			// 0.15.0: the contact strip's space above and below its text (the strip is about 20px taller than twice this).
 			'strip-padding',
+			// 0.15.0: the padding inside the frame behind words over a picture (Medium, Small, Large in the Look panel).
+			'frame-padding', 'frame-padding-sm', 'frame-padding-lg',
 		) as $name ) {
 			$s[ $name ] = 'length';
 		}
@@ -241,6 +245,10 @@ class TWD_SK_Packs {
 			'menu-transform'                => 'uppercase',
 			'image-filter'                  => 'none',
 			'image-tint'                    => 'transparent',
+			'color-frame'                   => 'rgba(0,0,0,0.3)',
+			'frame-padding'                 => '24px',
+			'frame-padding-sm'              => '10px',
+			'frame-padding-lg'              => '40px',
 		);
 	}
 

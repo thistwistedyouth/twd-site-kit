@@ -185,6 +185,37 @@ twd_sk_test( 'rest: preview cleans through the sanitiser, writes nothing to the 
 	twd_sk_hasnt( 'onclick', $draft['html'] );
 } );
 
+twd_sk_test( 'rest: a preview says what changed (worked out by comparing pages), which style names were dropped, and when nothing changed (0.15.0)', function () {
+	twd_sk_rest_setup();
+	$page = TWD_SK_Sanitizer::clean( TWD_SK_Starters::build( array( array( 'hero', 'twd-sk-hero--compact' ), array( 'text', '' ), array( 'cta', 'twd-sk-cta--strip' ) ) ) );
+	TWD_SK_Store::save( 12, $page );
+	// The same page back, dressed in style names the site does not have: nothing changed, and the names are listed.
+	$dressed = str_replace( '<section class="twd-sk-text twd-sk-tone-surface">', '<section class="twd-sk-text twd-sk-tone-surface bg-sofa overlay-grey" style="background: url(x.jpg)">', $page );
+	$out = TWD_SK_REST::post_preview( twd_sk_rest_req( array( 'html' => $dressed ) ) );
+	twd_sk_true( is_array( $out ), 'ok' );
+	twd_sk_true( $out['same'], 'same page' );
+	twd_sk_eq( array( 'bg-sofa', 'overlay-grey' ), $out['dropped'] );
+	twd_sk_eq( array(), $out['changes'] );
+	// Headings added inside the text section, a paragraph reworded, and a layout change: named, in plain words.
+	$changed = str_replace( '<div class="twd-sk-text__body">', '<div class="twd-sk-text__body"><h3 class="twd-sk-text__subheading">[PLACEHOLDER: First]</h3>', $page );
+	$changed = str_replace( '[PLACEHOLDER: Another paragraph here.]', '[PLACEHOLDER: A reworded paragraph.]', $changed );
+	$changed = str_replace( 'twd-sk-cta--strip', 'twd-sk-cta--band', $changed );
+	$out = TWD_SK_REST::post_preview( twd_sk_rest_req( array( 'html' => $changed ) ) );
+	twd_sk_true( ! $out['same'] );
+	twd_sk_eq( array(), $out['dropped'] );
+	twd_sk_eq( 'Section 2 (Text): added 1 heading, reworded 1 paragraph.', $out['changes'][0] );
+	twd_sk_has( 'Section 3 (Call to action): changed the look to "Band"', $out['changes'][1] );
+	// A section added and one removed.
+	$parts = TWD_SK_Sections::split( $page );
+	$fewer = $parts['sections'][0] . "\n" . $parts['sections'][1];
+	$out   = TWD_SK_REST::post_preview( twd_sk_rest_req( array( 'html' => $fewer ) ) );
+	twd_sk_eq( array( 'Removed section 3 (Call to action).' ), $out['changes'] );
+	$more = $page . "\n" . TWD_SK_Registry::get( 'faq' )['skeleton'];
+	$out  = TWD_SK_REST::post_preview( twd_sk_rest_req( array( 'html' => $more ) ) );
+	twd_sk_eq( array( 'Added section 4 (FAQ).' ), $out['changes'] );
+	twd_sk_eq( '', TWD_SK_Store::get_current( 13 ), 'nothing written elsewhere' );
+} );
+
 twd_sk_test( 'rest: preview refuses empty, non-string and oversize input, and input that cleans to nothing', function () {
 	twd_sk_rest_setup();
 	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_REST::post_preview( twd_sk_rest_req( array( 'html' => '   ' ) ) ) );

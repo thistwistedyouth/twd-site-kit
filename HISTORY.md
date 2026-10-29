@@ -2,6 +2,18 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 29 Oct 2026: words in a frame over a picture, and an AI editor that says when it cannot (sections 12 and 12b of the owner's plan)
+
+The owner asked the AI editor for text over the desert picture with a graduated overlay and a dark frame, and the preview showed the old page with no reason: the reply used style attributes and made-up class names, the sanitiser took them out (by design), and nothing said so. Three decisions follow.
+
+- **The look is data, not per-site CSS.** A new text layout (`twd-sk-text--picture`) with a picture behind the whole section, and shared classes for the frame, its tint and padding, the overlay and larger text, all drawn from four new tokens (`color-frame`, `frame-padding` and its small and large sizes) plus the overlay tokens the hero already has. A person reaches it from the Look panel in three or four clicks; the AI is told about it in the style guide. Per-site CSS (the plan's later design layer) stays a later decision.
+- **A layer, not a piece.** The Looks engine only ever changed class names, and a layout could be entered only when its pieces matched. The picture and overlay behind a text section are declared a layer: entering the layout puts in a picture spot (the Visual editor's "Add a picture" box) and the overlay; leaving takes them out (Undo brings them back). This is the one change the engine makes beyond classes, and it is confined to one table (`layers()`), so the rule "every word keeps its place" still holds.
+- **The preview says what changed, worked out, never written by the AI.** `TWD_SK_Report::changes()` compares the cleaned reply with the page section by section (headings, paragraphs, pictures, buttons, the classes on the section) and the preview route says `same`, the `changes` and the style names `dropped`. The pop-up then says "Nothing changed" with the reason and the nearest Look choices (a word list in `TWD_SK_Looks::hints()`, shared with the browser). The one-section step also shows the remix's own notes, which it never did: on the owner's site a reply that made no change was shown as a preview with no note.
+
+Why "add h2 headings to each paragraph" changed nothing on the pilot site's Home page: the section is a prose text section with no title, and the style guide showed no heading inside a text body while rule 5 says to use only the classes shown, so the AI (most likely) returned the section as it was; the editor then showed the unchanged page with no note. The exact reply was not kept, so this is the best reading of the code, not a certainty. Fixed on every side: the registry has `twd-sk-text__subheading` (an h2, or an h3 when the section has an h2 title, styled from the heading tokens), a prompt rule explains it, the Visual editor has "Heading above", and the note now says when a reply made no change.
+
+Contrast on a photograph cannot be known, so the frame pair flattens the frame tint over the overlay over a mid grey and checks white words on that, as a warning. The frame tint is a Site tab choice (a short list) rather than a colour picker, because a see-through colour cannot go in one.
+
 ## 29 Oct 2026: pencils on the page, not in the pop-up (chunk 2g)
 
 The plan asked for pencils "when Edit with AI is open", but the pop-up is a full-screen modal, so nothing under it can be clicked. The pencils therefore live on the page for a signed-in editor and open the pop-up at a one-section step; while the pop-up is open they hide. A movable or docked pop-up (the plan's chunk 2, not in Tier A) would let them stay. The pencil icon is drawn with CSS because the editor scripts may hold no web address, and an SVG namespace is one.

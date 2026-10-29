@@ -141,12 +141,60 @@
 
 	/* ---- contrast feedback ---- */
 
+	// A see-through colour (rgba, 8-digit hex, transparent) laid over an opaque one: the colour a visitor sees (0.15.0).
+	function flattenColor(top, under) {
+		var u = parseColor(under);
+		if (!u) {
+			return null;
+		}
+		var t = parseColor(top);
+		if (t) {
+			return 'rgb(' + t.join(',') + ')';
+		}
+		var a = null;
+		var m = /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(0|1|0?\.\d{1,3}|1\.0+)\s*\)$/.exec(String(top || '').trim());
+		if (m) {
+			t = [Math.min(255, +m[1]), Math.min(255, +m[2]), Math.min(255, +m[3])];
+			a = parseFloat(m[4]);
+		} else if ((m = /^#([0-9a-fA-F]{8})$/.exec(String(top || '').trim()))) {
+			t = [parseInt(m[1].slice(0, 2), 16), parseInt(m[1].slice(2, 4), 16), parseInt(m[1].slice(4, 6), 16)];
+			a = parseInt(m[1].slice(6, 8), 16) / 255;
+		} else if (String(top || '').trim() === 'transparent') {
+			t = [0, 0, 0];
+			a = 0;
+		}
+		if (a === null) {
+			return null;
+		}
+		return 'rgb(' + t.map(function (c, i) {
+			return Math.round(c * a + u[i] * (1 - a));
+		}).join(',') + ')';
+	}
+
+	// Layers from the bottom up (a literal colour or a token name each) as one opaque colour, or null.
+	function stackColors(layers, tokens) {
+		var base = null;
+		for (var i = 0; i < layers.length; i++) {
+			var v = tokens[layers[i]] !== undefined ? tokens[layers[i]] : layers[i];
+			base = base === null ? flattenColor(v, '#000000') : flattenColor(v, base);
+			if (base === null) {
+				return null;
+			}
+		}
+		return base;
+	}
+
 	function evaluate() {
 		var tokens = effective();
 		var blocking = [];
 		var warnings = [];
 		S.data.pairs.forEach(function (p) {
-			var r = contrastRatio(tokens[p.fg], tokens[p.bg]);
+			var bg = tokens[p.bg];
+			if (p.under) {
+				var under = stackColors(p.under, tokens);
+				bg = under === null ? null : flattenColor(bg, under);
+			}
+			var r = contrastRatio(tokens[p.fg], bg);
 			if (r === null || r >= 4.5) {
 				return;
 			}

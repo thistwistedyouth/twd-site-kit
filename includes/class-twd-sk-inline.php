@@ -261,7 +261,7 @@ class TWD_SK_Inline {
 				continue;
 			}
 			$text = self::is_text( $child );
-			if ( ( self::is_button( $child ) || ( 'img' !== $tag && 'section' !== $tag && self::has_like_sibling( $child ) ) ) && ! self::holds_shortcode( $child ) ) {
+			if ( ( self::is_button( $child ) || self::has_class( $child, 'twd-sk-text__subheading' ) || ( 'img' !== $tag && 'section' !== $tag && self::has_like_sibling( $child ) ) ) && ! self::holds_shortcode( $child ) ) {
 				$list[] = $child;
 			}
 			// Inside a piece of text (a paragraph, a button, a list entry) nothing smaller is removed on its own.
@@ -269,6 +269,16 @@ class TWD_SK_Inline {
 				self::walk_removables( $child, $list );
 			}
 		}
+	}
+
+	/** The level a new subheading takes before this paragraph: h3 when its section already has an h2, else h2 (0.15.0). */
+	public static function subheading_level( DOMElement $p ) {
+		for ( $n = $p->parentNode; $n instanceof DOMElement; $n = $n->parentNode ) {
+			if ( 'section' === strtolower( $n->nodeName ) ) {
+				return $n->getElementsByTagName( 'h2' )->length ? 'h3' : 'h2';
+			}
+		}
+		return 'h2';
 	}
 
 	private static function holds_shortcode( DOMElement $el ) {
@@ -468,6 +478,21 @@ class TWD_SK_Inline {
 				return new WP_Error( 'twd_sk_bad_input', 'One piece of text is too long. Keep each one under ' . self::MAX_TEXT . ' characters.' );
 			}
 			$el = $found['text'][ $i ];
+			// Heading above (0.15.0): a subheading put in before this paragraph, an h2 or an h3 by position
+			// (an h3 when the section already has an h2 title), with the class twd-sk-text__subheading.
+			if ( isset( $edit['heading'] ) && is_string( $edit['heading'] ) ) {
+				$words = trim( preg_replace( '/\s+/u', ' ', html_entity_decode( strip_tags( $edit['heading'] ), ENT_QUOTES, 'UTF-8' ) ) );
+				if ( 'p' !== strtolower( $el->tagName ) ) {
+					return new WP_Error( 'twd_sk_bad_input', 'A heading goes above a paragraph.' );
+				}
+				if ( '' !== $words ) {
+					$h = $doc->createElement( self::subheading_level( $el ) );
+					$h->setAttribute( 'class', 'twd-sk-text__subheading' );
+					$h->appendChild( $doc->createTextNode( self::tidy( TWD_SK_Profile::text( $words, self::MAX_TEXT ) ) ) );
+					$el->parentNode->insertBefore( $h, $el );
+					$changed++;
+				}
+			}
 			// Quote line (0.15.0): a shared class on the paragraph itself (true adds it, false takes it off).
 			if ( array_key_exists( 'quote', $edit ) ) {
 				if ( 'p' !== strtolower( $el->tagName ) ) {
@@ -629,6 +654,11 @@ class TWD_SK_Inline {
 			'twd-sk-image-text'        => 'twd-sk-image-text__img',
 			'twd-sk-logos'             => 'twd-sk-logos__img',
 		);
+		// 0.15.0: a spot straight under a text section on the Picture layout is the picture behind it.
+		$up = $node->parentNode;
+		if ( $up instanceof DOMElement && 'section' === strtolower( $up->nodeName ) && self::has_class( $up, 'twd-sk-text--picture' ) ) {
+			return 'twd-sk-text__bg';
+		}
 		$section = null;
 		for ( $n = $node instanceof DOMElement ? $node : $node->parentNode; $n instanceof DOMElement; $n = $n->parentNode ) {
 			foreach ( preg_split( '/\s+/', trim( $n->getAttribute( 'class' ) ) ) as $c ) {

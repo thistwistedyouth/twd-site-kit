@@ -424,3 +424,30 @@ twd_sk_test( 'quote line (0.15.0): a shared class on a paragraph, set or cleared
 		twd_sk_has( $needle, $js );
 	}
 } );
+
+twd_sk_test( 'heading above (0.15.0): a subheading goes in before a paragraph as an h3 under a titled section or an h2 in one without, with the registry class; it can be removed; the layer spot of a Picture section is its picture', function () {
+	twd_sk_true( in_array( 'twd-sk-text__subheading', TWD_SK_Registry::get( 'text' )['classes'], true ) );
+	$html = twd_sk_inline_page( '<section class="twd-sk-text twd-sk-tone-base"><div class="twd-sk-inner"><h2 class="twd-sk-title">Title</h2><div class="twd-sk-text__body"><p>One.</p><p>Two.</p></div></div></section>'
+		. "\n" . '<section class="twd-sk-text twd-sk-text--prose twd-sk-tone-base"><div class="twd-sk-inner"><div class="twd-sk-text__body"><p>Three.</p><p>Four.</p></div></div></section>' );
+	$out = TWD_SK_Inline::apply( $html, array( array( 'i' => 2, 'html' => 'Two.', 'heading' => ' About <b>this</b> ' ), array( 'i' => 3, 'html' => 'Three.', 'heading' => 'Start here' ) ), array() );
+	twd_sk_true( ! is_wp_error( $out ), 'applied' );
+	twd_sk_has( '<p>One.</p><h3 class="twd-sk-text__subheading">About this</h3><p>Two.</p>', $out['html'] );
+	twd_sk_has( '<div class="twd-sk-text__body"><h2 class="twd-sk-text__subheading">Start here</h2><p>Three.</p>', $out['html'] );
+	twd_sk_eq( 4, $out['changed'] );
+	twd_sk_eq( $out['html'], TWD_SK_Sanitizer::clean( $out['html'] ), 'kept by the sanitiser' );
+	// An empty heading adds nothing; a heading on something that is not a paragraph is refused.
+	$none = TWD_SK_Inline::apply( $html, array( array( 'i' => 2, 'html' => 'Two.', 'heading' => '  ' ) ), array() );
+	twd_sk_hasnt( 'subheading', $none['html'] );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Inline::apply( $html, array( array( 'i' => 0, 'html' => 'Title', 'heading' => 'No' ) ), array() ) );
+	// Saved, it is a normal piece of text and can be removed on its own.
+	$marked = TWD_SK_Inline::mark( $out['html'] );
+	twd_sk_true( 1 === preg_match( '/<h3 class="twd-sk-text__subheading" data-twd-sk-t="2" data-twd-sk-r="(\d+)">About this<\/h3>/', $marked, $m ), 'numbered and removable: ' . substr( $marked, 0, 400 ) );
+	$gone = TWD_SK_Inline::apply( $out['html'], array(), array(), array(), array( (int) $m[1] ) );
+	twd_sk_hasnt( 'About this', $gone['html'] );
+	twd_sk_has( '<p>One.</p><p>Two.</p>', $gone['html'] );
+	// The Visual editor has the button and reverts a new heading.
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
+	twd_sk_has( "toolButton('Heading above'", $js );
+	twd_sk_has( 'item.heading = S.headings[i].el.textContent', $js );
+	twd_sk_has( 'S.headings = {};', $js );
+} );

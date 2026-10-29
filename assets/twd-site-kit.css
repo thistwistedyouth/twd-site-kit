@@ -550,6 +550,22 @@
   border-left: 3px solid var(--twd-site-color-accent) !important;
   color: var(--twd-site-color-muted) !important;
 }
+/* Subheading (0.15.0): an h2 or h3 inside the body of any text layout, from the Visual editor's Heading above button or the AI. */
+.twd-sk-page .twd-sk-text__subheading.twd-sk-text__subheading {
+  margin-top: 1.6em !important;
+  font-family: var(--twd-site-font-heading) !important;
+  font-size: var(--twd-site-size-h3) !important;
+  font-weight: var(--twd-site-title-weight) !important;
+  font-style: var(--twd-site-title-style) !important;
+  line-height: var(--twd-site-line-heading) !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-page .twd-sk-text__subheading.twd-sk-text__subheading:first-child {
+  margin-top: 0 !important;
+}
+.twd-sk-page .twd-sk-text--picture.twd-sk-text--picture .twd-sk-text__subheading.twd-sk-text__subheading {
+  color: var(--twd-site-color-on-image) !important;
+}
 /* Quote line (0.15.0): the same rule on any paragraph, from the Visual editor's Quote line button. The words keep their colour. */
 .twd-sk-page .twd-sk-quoteline.twd-sk-quoteline {
   padding-left: 1.2em !important;
@@ -573,6 +589,115 @@
 .twd-sk-page .twd-sk-contact--split.twd-sk-contact--split .twd-sk-contact__intro.twd-sk-contact__intro .twd-sk-title.twd-sk-title,
 .twd-sk-page .twd-sk-contact--split.twd-sk-contact--split .twd-sk-contact__intro.twd-sk-contact__intro .twd-sk-lead.twd-sk-lead {
   text-align: left !important;
+}
+/* Picture behind a text section (0.15.0): the picture covers the whole section (never repeating) under the
+   same graduated overlay as the picture hero, and the words sit centred over it. With twd-sk-frame (shared, also
+   on the call to action band) the inner column becomes a frame: a dark tint from a token (its depth is a choice:
+   Lighter is the tint faded, Stronger is the tint twice) and a padding choice. The overlay choices (shared) work
+   on this layout and on the call to action band: Lighter, Stronger, or a fade from clear at the top. */
+.twd-sk-page .twd-sk-text--picture.twd-sk-text--picture {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--twd-site-hero-min-height);
+  overflow: clip;
+}
+.twd-sk-page .twd-sk-text__bg.twd-sk-text__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--twd-site-image-position);
+  filter: var(--twd-site-image-filter);
+}
+.twd-sk-page .twd-sk-text__overlay.twd-sk-text__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--twd-site-color-overlay-top) 0%, var(--twd-site-color-overlay-mid) 50%, var(--twd-site-color-overlay-bottom) 100%) !important;
+}
+.twd-sk-page .twd-sk-text--picture.twd-sk-text--picture .twd-sk-inner.twd-sk-inner {
+  position: relative;
+  z-index: 2;
+  color: var(--twd-site-color-on-image) !important;
+}
+.twd-sk-page .twd-sk-text--picture.twd-sk-text--picture .twd-sk-eyebrow.twd-sk-eyebrow,
+.twd-sk-page .twd-sk-text--picture.twd-sk-text--picture .twd-sk-title.twd-sk-title,
+.twd-sk-page .twd-sk-text--picture.twd-sk-text--picture .twd-sk-text__body.twd-sk-text__body,
+.twd-sk-page .twd-sk-text--picture.twd-sk-text--picture .twd-sk-text__body.twd-sk-text__body a {
+  color: var(--twd-site-color-on-image) !important;
+}
+.twd-sk-page .twd-sk-text--picture.twd-sk-text--picture .twd-sk-accent.twd-sk-accent {
+  color: var(--twd-site-color-accent-on-dark) !important;
+}
+.twd-sk-page .twd-sk-frame.twd-sk-frame > .twd-sk-inner.twd-sk-inner {
+  position: relative;
+  z-index: 2;
+  padding: var(--twd-site-frame-padding) !important;
+  border-radius: var(--twd-site-radius-card) !important;
+}
+.twd-sk-page .twd-sk-frame.twd-sk-frame > .twd-sk-inner.twd-sk-inner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: var(--twd-site-radius-card) !important;
+  background-color: var(--twd-site-color-frame) !important;
+}
+.twd-sk-page .twd-sk-frame--light.twd-sk-frame--light > .twd-sk-inner.twd-sk-inner::before {
+  opacity: 0.6;
+}
+.twd-sk-page .twd-sk-frame--strong.twd-sk-frame--strong > .twd-sk-inner.twd-sk-inner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: var(--twd-site-radius-card) !important;
+  background-color: var(--twd-site-color-frame) !important;
+}
+.twd-sk-page .twd-sk-frame--pad-sm.twd-sk-frame--pad-sm > .twd-sk-inner.twd-sk-inner {
+  padding: var(--twd-site-frame-padding-sm) !important;
+}
+.twd-sk-page .twd-sk-frame--pad-lg.twd-sk-frame--pad-lg > .twd-sk-inner.twd-sk-inner {
+  padding: var(--twd-site-frame-padding-lg) !important;
+}
+.twd-sk-page .twd-sk-frame.twd-sk-frame > .twd-sk-inner.twd-sk-inner {
+  max-width: calc(var(--twd-site-container-narrow) + 2 * var(--twd-site-frame-padding));
+}
+.twd-sk-page .twd-sk-frame--pad-sm.twd-sk-frame--pad-sm > .twd-sk-inner.twd-sk-inner {
+  max-width: calc(var(--twd-site-container-narrow) + 2 * var(--twd-site-frame-padding-sm));
+}
+.twd-sk-page .twd-sk-frame--pad-lg.twd-sk-frame--pad-lg > .twd-sk-inner.twd-sk-inner {
+  max-width: calc(var(--twd-site-container-narrow) + 2 * var(--twd-site-frame-padding-lg));
+}
+.twd-sk-page .twd-sk-overlay-light.twd-sk-overlay-light .twd-sk-text__overlay.twd-sk-text__overlay,
+.twd-sk-page .twd-sk-overlay-light.twd-sk-overlay-light .twd-sk-cta__overlay.twd-sk-cta__overlay {
+  opacity: 0.55;
+}
+.twd-sk-page .twd-sk-overlay-strong.twd-sk-overlay-strong .twd-sk-text__overlay.twd-sk-text__overlay::after,
+.twd-sk-page .twd-sk-overlay-strong.twd-sk-overlay-strong .twd-sk-cta__overlay.twd-sk-cta__overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: var(--twd-site-color-overlay-mid) !important;
+}
+.twd-sk-page .twd-sk-overlay-fade.twd-sk-overlay-fade .twd-sk-text__overlay.twd-sk-text__overlay,
+.twd-sk-page .twd-sk-overlay-fade.twd-sk-overlay-fade .twd-sk-cta__overlay.twd-sk-cta__overlay {
+  background: linear-gradient(180deg, transparent 0%, var(--twd-site-color-overlay-mid) 55%, var(--twd-site-color-overlay-bottom) 100%) !important;
+}
+/* Larger text (0.15.0, a Look choice on text and call to action sections): the body copy at the lead size. */
+.twd-sk-page .twd-sk-text-lg.twd-sk-text-lg .twd-sk-text__body.twd-sk-text__body,
+.twd-sk-page .twd-sk-text-lg.twd-sk-text-lg .twd-sk-cta__text.twd-sk-cta__text {
+  font-size: var(--twd-site-size-lead) !important;
+}
+@media (max-width: 768px) {
+  .twd-sk-page .twd-sk-text--picture.twd-sk-text--picture {
+    min-height: var(--twd-site-hero-min-height-sm);
+  }
+  .twd-sk-page .twd-sk-frame.twd-sk-frame > .twd-sk-inner.twd-sk-inner {
+    width: calc(100% - 2 * var(--twd-site-gutter-sm));
+  }
 }
 /* ---- image and text ---- */
 .twd-sk-page .twd-sk-image-text__grid.twd-sk-image-text__grid {

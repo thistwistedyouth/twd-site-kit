@@ -148,4 +148,145 @@ class TWD_SK_Report {
 	public static function leftover_total( $leftovers ) {
 		return is_array( $leftovers ) ? (int) array_sum( array_map( 'intval', $leftovers ) ) : 0;
 	}
+
+	/**
+	 * What changed between two pages, in plain words (0.15.0), worked out by comparing them section by
+	 * section, so it is true by construction (the AI never writes it). One line per section that changed,
+	 * naming added or removed headings, paragraphs reworded, pictures and buttons changed, and a layout or
+	 * look change. Empty when the pages are the same.
+	 *
+	 * @return string[]
+	 */
+	public static function changes( $old, $new ) {
+		$a = TWD_SK_Sections::split( (string) $old );
+		$b = TWD_SK_Sections::split( (string) $new );
+		$out = array();
+		if ( $a['sections'] === $b['sections'] ) {
+			return $out;
+		}
+		$old_s = $a['sections'];
+		$new_s = $b['sections'];
+		// Sections that moved in or out: those not found byte for byte on the other side, when the counts differ.
+		if ( count( $old_s ) !== count( $new_s ) ) {
+			$gone  = array_diff( $old_s, $new_s );
+			$fresh = array_diff( $new_s, $old_s );
+			foreach ( $fresh as $i => $sec ) {
+				$out[] = 'Added section ' . ( $i + 1 ) . ' (' . self::name_of( $sec ) . ').';
+			}
+			foreach ( $gone as $i => $sec ) {
+				$out[] = 'Removed section ' . ( $i + 1 ) . ' (' . self::name_of( $sec ) . ').';
+			}
+			if ( ! $gone && ! $fresh ) {
+				$out[] = 'The sections were put in a different order.';
+			}
+			// Sections kept in both are compared by position among those kept.
+			$old_s = array_values( array_intersect( $old_s, $new_s ) );
+			$new_s = array_values( array_intersect( $new_s, $old_s ) );
+		}
+		foreach ( $new_s as $i => $sec ) {
+			if ( ! isset( $old_s[ $i ] ) || $old_s[ $i ] === $sec ) {
+				continue;
+			}
+			$bits = self::compare_section( $old_s[ $i ], $sec );
+			if ( $bits ) {
+				$out[] = 'Section ' . ( $i + 1 ) . ' (' . self::name_of( $sec ) . '): ' . implode( ', ', $bits ) . '.';
+			}
+		}
+		return $out;
+	}
+
+	private static function name_of( $sec ) {
+		$type = TWD_SK_Sections::type_of( $sec );
+		$c    = TWD_SK_Registry::get( str_replace( '-', '_', $type ) );
+		return $c ? $c['label'] : ( '' !== $type ? $type : 'section' );
+	}
+
+	/** The pieces of one section: headings, paragraphs, pictures, buttons and the classes on its element. */
+	private static function pieces( $sec ) {
+		$p = array( 'h' => array(), 'p' => array(), 'img' => array(), 'btn' => array(), 'classes' => array() );
+		if ( preg_match_all( '/<h([2-6])\b[^>]*>(.*?)<\/h\1>/is', $sec, $m ) ) {
+			$p['h'] = array_map( array( __CLASS__, 'words' ), $m[2] );
+		}
+		if ( preg_match_all( '/<(?:p|li)\b[^>]*>(.*?)<\/(?:p|li)>/is', $sec, $m ) ) {
+			$p['p'] = array_map( array( __CLASS__, 'words' ), $m[1] );
+		}
+		if ( preg_match_all( '/<img\b[^>]*\bsrc="([^"]*)"/i', $sec, $m ) ) {
+			$p['img'] = $m[1];
+		}
+		if ( preg_match_all( '/<a\b[^>]*\bclass="[^"]*\btwd-sk-btn\b[^"]*"[^>]*>(.*?)<\/a>/is', $sec, $m ) ) {
+			$p['btn'] = array_map( array( __CLASS__, 'words' ), $m[1] );
+		}
+		if ( preg_match( '/^<section\b[^>]*\bclass="([^"]*)"/i', $sec, $m ) ) {
+			$p['classes'] = preg_split( '/\s+/', trim( $m[1] ), -1, PREG_SPLIT_NO_EMPTY );
+		}
+		return $p;
+	}
+
+	private static function words( $html ) {
+		return trim( preg_replace( '/\s+/u', ' ', html_entity_decode( strip_tags( (string) $html ), ENT_QUOTES, 'UTF-8' ) ) );
+	}
+
+	private static function plural( $n, $one, $many ) {
+		return $n . ' ' . ( 1 === $n ? $one : $many );
+	}
+
+	private static function compare_section( $old, $new ) {
+		$a    = self::pieces( $old );
+		$b    = self::pieces( $new );
+		$bits = array();
+		$dh   = count( $b['h'] ) - count( $a['h'] );
+		if ( $dh > 0 ) {
+			$bits[] = 'added ' . self::plural( $dh, 'heading', 'headings' );
+		} elseif ( $dh < 0 ) {
+			$bits[] = 'removed ' . self::plural( -$dh, 'heading', 'headings' );
+		}
+		$reworded_h = count( array_diff( array_intersect_key( $b['h'], $a['h'] ), $a['h'] ) );
+		if ( $reworded_h > 0 && 0 === $dh ) {
+			$bits[] = 'reworded ' . self::plural( $reworded_h, 'heading', 'headings' );
+		}
+		$dp = count( $b['p'] ) - count( $a['p'] );
+		if ( $dp > 0 ) {
+			$bits[] = 'added ' . self::plural( $dp, 'paragraph', 'paragraphs' );
+		} elseif ( $dp < 0 ) {
+			$bits[] = 'removed ' . self::plural( -$dp, 'paragraph', 'paragraphs' );
+		}
+		$reworded = count( array_diff( $b['p'], $a['p'] ) ) - max( 0, $dp );
+		if ( $reworded > 0 ) {
+			$bits[] = 'reworded ' . self::plural( $reworded, 'paragraph', 'paragraphs' );
+		}
+		if ( $a['img'] !== $b['img'] ) {
+			$bits[] = count( $b['img'] ) > count( $a['img'] ) ? 'added a picture' : ( count( $b['img'] ) < count( $a['img'] ) ? 'removed a picture' : 'changed a picture' );
+		}
+		if ( $a['btn'] !== $b['btn'] ) {
+			$bits[] = count( $b['btn'] ) === count( $a['btn'] ) ? 'changed a button' : 'changed the buttons';
+		}
+		$added   = array_diff( $b['classes'], $a['classes'] );
+		$dropped = array_diff( $a['classes'], $b['classes'] );
+		if ( $added || $dropped ) {
+			$names = array();
+			foreach ( $added as $cls ) {
+				$names[] = self::class_name( $cls );
+			}
+			$bits[] = $names ? 'changed the look to ' . implode( ' and ', $names ) : 'changed the look';
+		}
+		if ( ! $bits ) {
+			$bits[] = 'changed the markup (the words read the same)';
+		}
+		return $bits;
+	}
+
+	/** A plain name for a layout or option class: the registry's label, or the class as it is. */
+	private static function class_name( $cls ) {
+		foreach ( TWD_SK_Registry::all() as $c ) {
+			if ( isset( $c['variants'][ $cls ] ) ) {
+				return '"' . trim( strtok( $c['variants'][ $cls ]['label'], ':' ) ) . '"';
+			}
+		}
+		foreach ( TWD_SK_Looks::tones() as $tone => $label ) {
+			if ( $tone === $cls ) {
+				return '"' . $label . '" background';
+			}
+		}
+		return $cls;
+	}
 }

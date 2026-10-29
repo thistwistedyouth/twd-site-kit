@@ -1157,7 +1157,12 @@ class TWD_SK_REST {
 		}
 		$note = 'Changed on the page (' . implode( ', ', $parts ) . ')';
 		$saved = TWD_SK_Store::save( $id, $out['html'], array( 'base_version' => $base, 'note' => $note ) );
-		return self::after_write( $id, $saved );
+		$done  = self::after_write( $id, $saved );
+		// A section that moved to a layout with a picture behind it now holds a picture spot: say where (0.15.0).
+		if ( ! is_wp_error( $done ) && ! empty( $looks['spots'] ) ) {
+			$done['resume_at'] = (int) $looks['spots'][0];
+		}
+		return $done;
 	}
 
 	/**
@@ -1429,6 +1434,10 @@ class TWD_SK_REST {
 		}
 
 		$token = TWD_SK_Preview::create( get_current_user_id(), $id, $result['html'] );
+		// What changed (0.15.0), worked out by comparing the cleaned page with the page as it is, so the pop-up
+		// can say so in plain words: the changes, the style names the cleaner dropped, and "nothing changed".
+		$current = (string) TWD_SK_Store::get_current( $id );
+		$dropped = isset( $result['report']['removed']['classes'] ) ? array_values( array_unique( array_map( 'strval', (array) $result['report']['removed']['classes'] ) ) ) : array();
 		return array(
 			'token'          => $token,
 			'preview_url'    => TWD_SK_Preview::url( $id, $token ),
@@ -1436,6 +1445,9 @@ class TWD_SK_REST {
 			'bytes'          => strlen( $result['html'] ),
 			'report'         => TWD_SK_Report::describe( $result['report'] ),
 			'removed_total'  => (int) $result['report']['total'],
+			'same'           => trim( $result['html'] ) === trim( $current ),
+			'changes'        => TWD_SK_Report::changes( $current, $result['html'] ),
+			'dropped'        => array_slice( $dropped, 0, 12 ),
 		) + self::leftover_fields( $result['report']['leftovers'] );
 	}
 

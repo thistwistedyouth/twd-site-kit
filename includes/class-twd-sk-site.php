@@ -39,6 +39,8 @@ class TWD_SK_Site {
 			// 0.15.0: how pictures are treated, as a short list of ready-made choices.
 			array( 'pictures', 'image-filter', 'Colour of the pictures', 'choice' ),
 			array( 'pictures', 'image-tint', 'Tint over pictures beside text', 'choice' ),
+			// 0.15.0: the frame behind words over a picture (the Picture text layout and the call to action band).
+			array( 'pictures', 'color-frame', 'Frame behind words over a picture', 'choice' ),
 			// 0.14.0: logo sizes, in pixels.
 			array( 'logo', 'logo-height', 'Header logo height', 'size' ),
 			array( 'logo', 'logo-height-sm', 'Header logo height on phones', 'size' ),
@@ -74,6 +76,12 @@ class TWD_SK_Site {
 				array( 'rgba(40,70,90,0.12)', 'Cool' ),
 				array( 'rgba(0,0,0,0.12)', 'A soft shade' ),
 				array( 'rgba(255,255,255,0.14)', 'A soft fade' ),
+			),
+			'color-frame'  => array(
+				array( 'rgba(0,0,0,0.3)', 'Dark, as before' ),
+				array( 'rgba(0,0,0,0.18)', 'Dark, lighter' ),
+				array( 'rgba(0,0,0,0.45)', 'Dark, deeper' ),
+				array( 'rgba(0,0,0,0.6)', 'Dark, deepest' ),
 			),
 		);
 	}
@@ -120,7 +128,7 @@ class TWD_SK_Site {
 			'fonts'     => array_keys( TWD_SK_Packs::fonts() ),
 			'font_css'  => self::font_css_map(),
 			'pairs'     => array_map( function ( $p ) {
-				return array( 'id' => $p[0], 'level' => $p[1], 'label' => $p[2], 'fg' => $p[3], 'bg' => $p[4] );
+				return array( 'id' => $p[0], 'level' => $p[1], 'label' => $p[2], 'fg' => $p[3], 'bg' => $p[4], 'under' => isset( $p[5] ) ? $p[5] : null );
 			}, TWD_SK_Contrast::pairs() ),
 			'contrast'  => TWD_SK_Contrast::check( $effective ),
 		);

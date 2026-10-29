@@ -104,6 +104,10 @@
   "strip-padding": "8px",
   "menu-font": "Nunito",
   "menu-transform": "uppercase",
+  "color-frame": "rgba(0,0,0,0.3)",
+  "frame-padding": "24px",
+  "frame-padding-sm": "10px",
+  "frame-padding-lg": "40px",
   "image-filter": "none",
   "image-tint": "transparent"
  }

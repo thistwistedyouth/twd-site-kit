@@ -182,6 +182,12 @@
 .twd-sk-text--prose .twd-sk-text__body ol { list-style: decimal; }
 .twd-sk-text--prose .twd-sk-text__body li + li { margin-top: 0.4em; }
 .twd-sk-text--prose .twd-sk-text__body blockquote { padding: 0 0 0 1.2em; border-left: 3px solid $color-accent; color: $color-muted; }
+/* Subheading (0.15.0): an h2 or h3 inside the body of any text layout, from the Visual editor's Heading above button or the AI. */
+.twd-sk-text__subheading {
+  margin-top: 1.6em; font-family: $font-heading; font-size: $size-h3; font-weight: $title-weight; font-style: $title-style; line-height: $line-heading; color: $color-title;
+}
+.twd-sk-text__subheading:first-child { margin-top: 0; }
+.twd-sk-text--picture .twd-sk-text__subheading { color: $color-on-image; }
 /* Quote line (0.15.0): the same rule on any paragraph, from the Visual editor's Quote line button. The words keep their colour. */
 .twd-sk-quoteline { padding-left: 1.2em; border-left: 3px solid $color-accent; }
 .twd-sk-text--prose .twd-sk-text__body .twd-sk-btn { margin-top: 8px; text-decoration: none; }
@@ -192,6 +198,42 @@
 .twd-sk-text--aside .twd-sk-title, .twd-sk-image-text__body .twd-sk-eyebrow, .twd-sk-image-text__body .twd-sk-title,
 .twd-sk-contact--split .twd-sk-contact__intro .twd-sk-eyebrow, .twd-sk-contact--split .twd-sk-contact__intro .twd-sk-title,
 .twd-sk-contact--split .twd-sk-contact__intro .twd-sk-lead { text-align: left; }
+
+/* Picture behind a text section (0.15.0): the picture covers the whole section (never repeating) under the
+   same graduated overlay as the picture hero, and the words sit centred over it. With twd-sk-frame (shared, also
+   on the call to action band) the inner column becomes a frame: a dark tint from a token (its depth is a choice:
+   Lighter is the tint faded, Stronger is the tint twice) and a padding choice. The overlay choices (shared) work
+   on this layout and on the call to action band: Lighter, Stronger, or a fade from clear at the top. */
+.twd-sk-text--picture { position: relative; display: flex; align-items: center; justify-content: center; min-height: $hero-min-height; overflow: clip; }
+.twd-sk-text__bg {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: $image-position; filter: $image-filter;
+}
+.twd-sk-text__overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, $color-overlay-top 0%, $color-overlay-mid 50%, $color-overlay-bottom 100%);
+}
+.twd-sk-text--picture .twd-sk-inner { position: relative; z-index: 2; color: $color-on-image; }
+.twd-sk-text--picture .twd-sk-eyebrow, .twd-sk-text--picture .twd-sk-title, .twd-sk-text--picture .twd-sk-text__body, .twd-sk-text--picture .twd-sk-text__body a { color: $color-on-image; }
+.twd-sk-text--picture .twd-sk-accent { color: $color-accent-on-dark; }
+.twd-sk-frame > .twd-sk-inner { position: relative; z-index: 2; padding: $frame-padding; border-radius: $radius-card; }
+.twd-sk-frame > .twd-sk-inner::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: $radius-card; background-color: $color-frame; }
+.twd-sk-frame--light > .twd-sk-inner::before { opacity: 0.6; }
+.twd-sk-frame--strong > .twd-sk-inner::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: $radius-card; background-color: $color-frame; }
+.twd-sk-frame--pad-sm > .twd-sk-inner { padding: $frame-padding-sm; }
+.twd-sk-frame--pad-lg > .twd-sk-inner { padding: $frame-padding-lg; }
+.twd-sk-frame > .twd-sk-inner { max-width: calc(#{$container-narrow} + 2 * #{$frame-padding}); }
+.twd-sk-frame--pad-sm > .twd-sk-inner { max-width: calc(#{$container-narrow} + 2 * #{$frame-padding-sm}); }
+.twd-sk-frame--pad-lg > .twd-sk-inner { max-width: calc(#{$container-narrow} + 2 * #{$frame-padding-lg}); }
+.twd-sk-overlay-light .twd-sk-text__overlay, .twd-sk-overlay-light .twd-sk-cta__overlay { opacity: 0.55; }
+.twd-sk-overlay-strong .twd-sk-text__overlay::after, .twd-sk-overlay-strong .twd-sk-cta__overlay::after { content: ""; position: absolute; inset: 0; background-color: $color-overlay-mid; }
+.twd-sk-overlay-fade .twd-sk-text__overlay, .twd-sk-overlay-fade .twd-sk-cta__overlay { background: linear-gradient(180deg, transparent 0%, $color-overlay-mid 55%, $color-overlay-bottom 100%); }
+/* Larger text (0.15.0, a Look choice on text and call to action sections): the body copy at the lead size. */
+.twd-sk-text-lg .twd-sk-text__body, .twd-sk-text-lg .twd-sk-cta__text { font-size: $size-lead; }
+@media (max-width: 768px) {
+  .twd-sk-text--picture { min-height: $hero-min-height-sm; }
+  .twd-sk-frame > .twd-sk-inner { width: calc(100% - 2 * #{$gutter-sm}); }
+}
 
 /* ---- image and text ---- */
 .twd-sk-image-text__grid {

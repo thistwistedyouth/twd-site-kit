@@ -19,6 +19,12 @@
  * apply() works on the stored HTML as text, changes only the class attribute of top-level <section>
  * elements, and checks every class against what the registry allows, so nothing outside the registry can
  * be added. Saving goes through TWD_SK_Store (sanitiser, version, Undo), like every other change.
+ *
+ *  - Layers (0.15.0). A layout may draw a picture behind the whole section (the text layout "Picture"). Its
+ *    picture and overlay are a layer, not pieces, so a plain text section may move to it: on entering, a
+ *    picture spot (a marker the Visual editor shows as "Add a picture") and the overlay are put in; on
+ *    leaving, the picture and overlay are taken out (Undo brings them back). That is the one change
+ *    apply() makes beyond class names.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -49,6 +55,8 @@ class TWD_SK_Looks {
 	 */
 	public static function options( $component ) {
 		$all = array(
+			'text' => self::picture_options( 'twd-sk-text--picture' ),
+			'cta'  => self::picture_options( 'twd-sk-cta--band' ),
 			'hero' => array(
 				'overlay'  => array(
 					'label'    => 'Picture overlay',
@@ -77,6 +85,147 @@ class TWD_SK_Looks {
 			),
 		);
 		return isset( $all[ $component ] ) ? $all[ $component ] : array();
+	}
+
+	/**
+	 * Words over a picture (0.15.0): the options of the text layout "Picture" and of the call to action band.
+	 * The overlay over the picture, a frame behind the words (its tint and its padding), and larger text.
+	 * All shared registry classes on the section, styled from tokens.
+	 *
+	 * @param string $layout The class that puts a picture behind the section (what the options need).
+	 */
+	private static function picture_options( $layout ) {
+		return array(
+			'overlay'    => array(
+				'label'    => 'Picture overlay',
+				'kind'     => 'choice',
+				'choices'  => array(
+					''                      => 'Normal',
+					'twd-sk-overlay-light'  => 'Lighter',
+					'twd-sk-overlay-strong' => 'Stronger',
+					'twd-sk-overlay-fade'   => 'Fades in from the top',
+				),
+				'requires' => $layout,
+				'help'     => 'How the picture is darkened behind the words.',
+			),
+			'frame'      => array(
+				'label'    => 'Frame behind the words',
+				'kind'     => 'toggle',
+				'class'    => 'twd-sk-frame',
+				'requires' => $layout,
+				'help'     => 'A centred panel with a dark tint, so the words read over any picture.',
+			),
+			'frame_tint' => array(
+				'label'    => 'Frame tint',
+				'kind'     => 'choice',
+				'choices'  => array(
+					''                     => 'Normal',
+					'twd-sk-frame--light'  => 'Lighter',
+					'twd-sk-frame--strong' => 'Stronger',
+				),
+				'requires' => 'twd-sk-frame',
+			),
+			'frame_pad'  => array(
+				'label'    => 'Frame padding',
+				'kind'     => 'choice',
+				'choices'  => array(
+					''                     => 'Medium',
+					'twd-sk-frame--pad-sm' => 'Small',
+					'twd-sk-frame--pad-lg' => 'Large',
+				),
+				'requires' => 'twd-sk-frame',
+			),
+			'text_size'  => array(
+				'label' => 'Larger text',
+				'kind'  => 'toggle',
+				'class' => 'twd-sk-text-lg',
+				'help'  => 'The paragraphs a size up, like an introduction.',
+			),
+		);
+	}
+
+	/**
+	 * Layers (0.15.0): what a layout draws behind the whole section, which is not a piece of the words.
+	 * component => layout class => array( pieces (the element classes), insert (what a section gets on entering) ).
+	 */
+	private static function layers( $component ) {
+		$all = array(
+			'text' => array(
+				'twd-sk-text--picture' => array(
+					'pieces' => array( 'twd-sk-text__bg', 'twd-sk-text__overlay' ),
+					'insert' => "<p>[PLACEHOLDER: image needed]</p>\n<div class=\"twd-sk-text__overlay\"></div>\n",
+				),
+			),
+		);
+		return isset( $all[ $component ] ) ? $all[ $component ] : array();
+	}
+
+	/** Classes a section gets when it enters a layout (its natural look), unless already there. */
+	private static function layout_adds( $component, $layout ) {
+		$all = array( 'text' => array( 'twd-sk-text--picture' => array( 'twd-sk-frame' ) ) );
+		return isset( $all[ $component ][ $layout ] ) ? $all[ $component ][ $layout ] : array();
+	}
+
+	/**
+	 * The nearest Look choices for a request the AI cannot do (0.15.0). Each: words that may appear in a
+	 * request, and the plain sentence to show. The browser gets the list too (cfg.look.hints).
+	 */
+	public static function hints() {
+		return array(
+			array(
+				'words' => array( 'picture behind', 'image behind', 'photo behind', 'background picture', 'background image', 'background photo', 'over a picture', 'over the picture', 'over an image', 'over the image', 'over a photo', 'over the photo', 'on top of the picture', 'on top of the image' ),
+				'say'   => 'Words over a picture: in the Visual editor click inside the text section, press Look and set Layout to Picture, then click the picture box to choose the picture. A Call to action section on its Band layout has a picture behind it too.',
+			),
+			array(
+				'words' => array( 'overlay', 'darken', 'gradient', 'graduated', 'fade', 'dim the picture', 'dim the image' ),
+				'say'   => 'The darkening over a picture is the Look choice "Picture overlay" (Normal, Lighter, Stronger, Fades in from the top) on a Picture text section or a Band call to action.',
+			),
+			array(
+				'words' => array( 'frame', 'panel', 'box behind', 'opacity', 'transparent', 'translucent', 'tint' ),
+				'say'   => 'A panel behind the words is the Look choice "Frame behind the words", with "Frame tint" (Normal, Lighter, Stronger) and "Frame padding" (Small, Medium, Large).',
+			),
+			array(
+				'words' => array( 'padding', 'space around', 'more space', 'less space', 'spacing', 'margin', 'gap above', 'gap below' ),
+				'say'   => 'Space around the words is "Frame padding" on a frame, and "Space above" and "Space below" in the Look panel of any section.',
+			),
+			array(
+				'words' => array( 'larger text', 'bigger text', 'text larger', 'text bigger', 'text a little larger', 'font size', 'text size', 'smaller text', 'font bigger', 'font larger' ),
+				'say'   => 'Text size is the Look choice "Larger text" on a text or call to action section. The sizes themselves are set in the Site tab under Style.',
+			),
+			array(
+				'words' => array( 'background colour', 'background color', 'coloured background', 'colored background', 'tinted background', 'shaded background', 'grey background', 'gray background' ),
+				'say'   => 'The background of a section is the Look choice "Background" (Plain, Soft, Tinted).',
+			),
+			array(
+				'words' => array( 'no repeat', 'not repeat', 'without repeating', 'cover the section', 'covering the section', 'stretch', 'fill the section', 'full width' ),
+				'say'   => 'A picture behind a section always covers it without repeating; there is nothing to set.',
+			),
+			array(
+				'words' => array( 'heading', 'headings', 'subheading', 'sub-heading', 'title above', 'titles above' ),
+				'say'   => 'A heading inside a text section is an h2 or h3 with the class twd-sk-text__subheading before the paragraph it introduces; the Visual editor adds one with "Heading above".',
+			),
+		);
+	}
+
+	/** The hint sentences that match a request, in order, at most three. */
+	public static function hints_for( $text ) {
+		$text = strtolower( (string) $text );
+		$out  = array();
+		if ( '' === trim( $text ) ) {
+			return $out;
+		}
+		foreach ( self::hints() as $h ) {
+			foreach ( $h['words'] as $w ) {
+				if ( false !== strpos( $text, $w ) ) {
+					$out[] = $h['say'];
+					break;
+				}
+			}
+			if ( count( $out ) >= 3 ) {
+				break;
+			}
+		}
+		return $out;
 	}
 
 	/** The background option every section built on a light background has. */
@@ -139,10 +288,14 @@ class TWD_SK_Looks {
 	private static function elements_of( $html, $component ) {
 		$root = self::root( $component ) . '__';
 		preg_match_all( '/class="([^"]*)"/', (string) $html, $m );
+		$layer = array();
+		foreach ( self::layers( $component ) as $l ) {
+			$layer = array_merge( $layer, $l['pieces'] );
+		}
 		$out = array();
 		foreach ( $m[1] as $list ) {
 			foreach ( preg_split( '/\s+/', trim( $list ) ) as $c ) {
-				if ( 0 === strpos( $c, $root ) ) {
+				if ( 0 === strpos( $c, $root ) && ! in_array( $c, $layer, true ) ) {
 					$out[ $c ] = true;
 				}
 			}
@@ -248,7 +401,12 @@ class TWD_SK_Looks {
 			}
 			$layouts = array();
 			foreach ( self::layouts( $id ) as $class => $l ) {
-				$layouts[] = array( '' === $class ? self::STANDARD : $class, $l['label'] );
+				$item = array( '' === $class ? self::STANDARD : $class, $l['label'] );
+				$adds = self::layout_adds( $id, $class );
+				if ( $adds ) {
+					$item[] = $adds;
+				}
+				$layouts[] = $item;
 			}
 			$options = array();
 			foreach ( self::options( $id ) as $key => $o ) {
@@ -262,6 +420,7 @@ class TWD_SK_Looks {
 			$out['shared'][] = self::option_item( $key, $o );
 		}
 		$out['standard'] = self::STANDARD;
+		$out['hints']    = self::hints();
 		return $out;
 	}
 
@@ -349,6 +508,11 @@ class TWD_SK_Looks {
 				if ( '' !== $want ) {
 					array_splice( $new, 1, 0, array( $want ) );
 				}
+				foreach ( self::layout_adds( $component, $want ) as $cls ) {
+					if ( ! in_array( $cls, $new, true ) ) {
+						$new[] = $cls;
+					}
+				}
 			}
 		}
 		$options = self::all_options( $component );
@@ -406,6 +570,7 @@ class TWD_SK_Looks {
 		}
 		$parts   = TWD_SK_Sections::split( (string) $html );
 		$changed = 0;
+		$spots   = array();
 		foreach ( array_values( $looks ) as $look ) {
 			if ( ! is_array( $look ) || ! isset( $look['i'] ) || ! is_numeric( $look['i'] ) ) {
 				return new WP_Error( 'twd_sk_bad_input', 'A change to a section could not be read. Reload the page and try again.' );
@@ -436,9 +601,40 @@ class TWD_SK_Looks {
 					return new WP_Error( 'twd_sk_bad_input', 'Section ' . ( $i + 1 ) . ': that look is not one the kit has.' );
 				}
 			}
-			$parts['sections'][ $i ] = preg_replace( '/^(<section\b[^>]*\sclass=")[^"]*(")/i', '${1}' . implode( ' ', $new ) . '${2}', $piece, 1 );
+			$piece = preg_replace( '/^(<section\b[^>]*\sclass=")[^"]*(")/i', '${1}' . implode( ' ', $new ) . '${2}', $piece, 1 );
+			// A layer (a picture behind the section) comes in with its layout and goes out with it.
+			$layers = self::layers( $component );
+			$was    = self::current_layout( $component, $classes );
+			$now    = self::current_layout( $component, $new );
+			if ( isset( $layers[ $now ] ) && ! isset( $layers[ $was ] ) && ! self::has_layer( $piece, $layers[ $now ] ) ) {
+				$piece   = preg_replace( '/^(<section\b[^>]*>\s*)/i', '${1}' . $layers[ $now ]['insert'], $piece, 1 );
+				$spots[] = $i;
+			} elseif ( isset( $layers[ $was ] ) && ! isset( $layers[ $now ] ) ) {
+				$piece = self::strip_layer( $piece, $layers[ $was ] );
+			}
+			$parts['sections'][ $i ] = $piece;
 			$changed++;
 		}
-		return array( 'html' => TWD_SK_Sections::join( $parts['gaps'], $parts['sections'] ), 'changed' => $changed );
+		return array( 'html' => TWD_SK_Sections::join( $parts['gaps'], $parts['sections'] ), 'changed' => $changed, 'spots' => $spots );
+	}
+
+	/** True when the section already holds a layer piece or the picture spot the layer puts in. */
+	private static function has_layer( $piece, $layer ) {
+		foreach ( $layer['pieces'] as $cls ) {
+			if ( false !== strpos( $piece, $cls ) ) {
+				return true;
+			}
+		}
+		return false !== strpos( $piece, '[PLACEHOLDER: image needed]' );
+	}
+
+	/** Take a layer's elements (the picture or its spot, the overlay) out of a section. */
+	private static function strip_layer( $piece, $layer ) {
+		foreach ( $layer['pieces'] as $cls ) {
+			$q     = preg_quote( $cls, '/' );
+			$piece = preg_replace( '/<img\b[^>]*\bclass="[^"]*\b' . $q . '\b[^"]*"[^>]*>\s*/i', '', $piece );
+			$piece = preg_replace( '/<(div|figure)\b[^>]*\bclass="[^"]*\b' . $q . '\b[^"]*"[^>]*>\s*<\/\1>\s*/i', '', $piece );
+		}
+		return preg_replace( '/<(p|span|div|figure)>\s*\[PLACEHOLDER: image needed\]\s*<\/\1>\s*/i', '', $piece );
 	}
 }

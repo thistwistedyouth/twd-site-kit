@@ -70,6 +70,17 @@ class TWD_SK_Registry {
 			'twd-sk-space-bottom-lg',
 			// 0.15.0: a quote line (accent rule on the left) on any paragraph, toggled in the Visual editor.
 			'twd-sk-quoteline',
+			// 0.15.0: words in a frame over a picture (the picture text layout and the call to action band):
+			// the frame and its tint, its padding, the overlay over the picture, and larger body text.
+			'twd-sk-frame',
+			'twd-sk-frame--light',
+			'twd-sk-frame--strong',
+			'twd-sk-frame--pad-sm',
+			'twd-sk-frame--pad-lg',
+			'twd-sk-overlay-light',
+			'twd-sk-overlay-strong',
+			'twd-sk-overlay-fade',
+			'twd-sk-text-lg',
 			'twd-sk-eyebrow',
 			'twd-sk-title',
 			'twd-sk-lead',
@@ -140,6 +151,24 @@ class TWD_SK_Registry {
 	}
 
 	private static function text( $variant ) {
+		if ( 'picture' === $variant ) {
+			// 0.15.0: a picture behind the whole section (covering it, never repeating) under a graduated
+			// overlay, with the words in a centred frame (twd-sk-frame: a dark tint, a padding choice).
+			return self::lines( array(
+				'<section class="twd-sk-text twd-sk-text--picture twd-sk-frame">',
+				'<img class="twd-sk-text__bg" src="/wp-content/uploads/your-image.jpg" alt="">',
+				'<div class="twd-sk-text__overlay"></div>',
+				'<div class="twd-sk-inner twd-sk-inner--narrow">',
+				'<span class="twd-sk-eyebrow">Short label here</span>',
+				'<h2 class="twd-sk-title">Section heading here <span class="twd-sk-accent">with an accent</span></h2>',
+				'<div class="twd-sk-text__body">',
+				'<p>Paragraph text here.</p>',
+				'<p>Another paragraph here.</p>',
+				'</div>',
+				'</div>',
+				'</section>',
+			) );
+		}
 		if ( 'prose' === $variant ) {
 			// 0.14.0: a reading column: narrow, left aligned, room between paragraphs, for pages where the writing leads.
 			return self::lines( array(
@@ -935,7 +964,7 @@ class TWD_SK_Registry {
 			'text'       => array(
 				'id'          => 'text',
 				'label'       => 'Text',
-				'description' => 'A heading and paragraphs. The aside variant adds cards in a side column; the prose variant is a left-aligned reading column for longer writing.',
+				'description' => 'A heading and paragraphs. The aside variant adds cards in a side column; the prose variant is a left-aligned reading column for longer writing; the picture variant puts a picture behind the whole section with the words in a frame (the extra classes twd-sk-overlay-light, twd-sk-overlay-strong and twd-sk-overlay-fade change the overlay, twd-sk-frame--light, twd-sk-frame--strong, twd-sk-frame--pad-sm and twd-sk-frame--pad-lg the frame). A long run of paragraphs may be broken up with subheadings inside twd-sk-text__body: an h2 (or an h3 when the section has an h2 title) with the class twd-sk-text__subheading, before the paragraph it introduces.',
 				'skeleton'    => self::text( '' ),
 				'variants'    => array(
 					'twd-sk-text--aside' => array(
@@ -946,14 +975,24 @@ class TWD_SK_Registry {
 						'label'    => 'Prose: a narrow, left-aligned reading column for longer writing',
 						'skeleton' => self::text( 'prose' ),
 					),
+					'twd-sk-text--picture' => array(
+						'label'    => 'Picture: the words in a frame over a picture behind the whole section',
+						'skeleton' => self::text( 'picture' ),
+					),
 				),
 				'classes'     => array(
 					'twd-sk-text',
 					'twd-sk-text--aside',
 					'twd-sk-text--prose',
+					// 0.15.0: a picture behind the section (twd-sk-text__bg, covering it) under an overlay.
+					'twd-sk-text--picture',
 					'twd-sk-text__grid',
 					'twd-sk-text__body',
 					'twd-sk-text__aside',
+					'twd-sk-text__bg',
+					'twd-sk-text__overlay',
+					// 0.15.0: a subheading inside the body (an h2, or an h3 when the section has an h2 title).
+					'twd-sk-text__subheading',
 				),
 				'shortcodes'  => array(),
 			),

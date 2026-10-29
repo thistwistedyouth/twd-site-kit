@@ -185,9 +185,60 @@
 
 	function resultReport(box, data) {
 		clear(box);
+		// What changed (0.15.0): worked out on the server by comparing the cleaned page with the page as it is.
+		if (data.same) {
+			box.appendChild(el('strong', { text: 'Nothing changed' }));
+			listInto(box, nothingChangedWhy(data));
+		} else if (data.changes && data.changes.length) {
+			box.appendChild(el('strong', { text: 'What changed' }));
+			listInto(box, data.changes);
+		}
+		if (data.dropped && data.dropped.length) {
+			box.appendChild(el('strong', { text: 'Not possible on this site' }));
+			listInto(box, ['The reply used ' + data.dropped.length + ' style name' + (data.dropped.length === 1 ? '' : 's') + ' this site has no layout or option for, so the cleaner took ' + (data.dropped.length === 1 ? 'it' : 'them') + ' out: ' + data.dropped.join(', ') + '.'].concat(hintsFor(state.lastRequest)));
+		}
 		box.appendChild(el('strong', { text: 'What the cleaner did' }));
 		listInto(box, data.report || []);
 		show(box, true);
+	}
+
+	// Why a preview is the same page, in plain words, with the nearest Look choices for what was asked.
+	function nothingChangedWhy(data) {
+		var lines = [];
+		if (data.dropped && data.dropped.length) {
+			lines.push('The reply only used style names this site has no layout or option for, so once they were taken out it was the same page.');
+		} else {
+			lines.push('The reply came back as the same page. I can only use the layouts and options this site has.');
+		}
+		var hints = hintsFor(state.lastRequest);
+		if (hints.length) {
+			lines.push('Nearest choices:');
+			lines = lines.concat(hints);
+		} else {
+			lines.push('Try wording it differently, or use the Visual editor: click inside a section and press Look to see its layouts and options.');
+		}
+		return lines;
+	}
+
+	// The same word lists as TWD_SK_Looks::hints_for() (cfg.look.hints), at most three sentences.
+	function hintsFor(text) {
+		var out = [];
+		var hints = (cfg.look && cfg.look.hints) || [];
+		var low = String(text || '').toLowerCase();
+		if (!low.trim()) {
+			return out;
+		}
+		hints.forEach(function (h) {
+			if (out.length >= 3) {
+				return;
+			}
+			if ((h.words || []).some(function (w) {
+				return low.indexOf(w) > -1;
+			})) {
+				out.push(h.say);
+			}
+		});
+		return out;
 	}
 
 	function setBusy(on) {
@@ -518,12 +569,14 @@
 			return;
 		}
 		state.secBusy = true;
+		state.lastRequest = what;
 		ui.secBtn.disabled = true;
 		message(ui.secMsg, 'Asking the AI about this section...', true);
 		api('POST', pagePath('/remix'), { base_version: state.version, mode: 'sections', indexes: [state.secIndex], instruction: what }).then(function (data) {
 			state.secBusy = false;
 			ui.secBtn.disabled = false;
-			message(ui.secMsg, 'Here is the preview. Apply it below if it reads well.', true);
+			var notes = (data.report || []).join(' ');
+			message(ui.secMsg, (notes ? notes + ' ' : '') + 'Here is the preview. Apply it below if it reads well.', !notes);
 			proposeHtml(data.html, 'AI change to the ' + state.secName + ' section');
 		}, function (err) {
 			state.secBusy = false;
@@ -689,6 +742,7 @@
 		clear(ui.planBox);
 		show(ui.planBox, false);
 		message(ui.planMsg, 'Planning the changes. This takes a few seconds. Nothing is changed yet.', true);
+		state.lastRequest = request;
 		api('POST', pagePath('/plan'), { base_version: state.version, request: request }).then(function (data) {
 			ui.planBtn.disabled = false;
 			state.planRequest = request;
@@ -886,7 +940,11 @@
 		api('POST', pagePath('/preview'), { html: text }).then(function (data) {
 			state.token = data.token;
 			state.previewedText = text;
-			message(ui.previewMsg, 'Preview ready. Nothing has been saved yet.', true);
+			if (data.same) {
+				message(ui.previewMsg, 'Nothing changed: this is the same page you already have. The notes below say why and what to try.', false);
+			} else {
+				message(ui.previewMsg, 'Preview ready. Nothing has been saved yet.', true);
+			}
 			resultReport(ui.report, data);
 			leftoverBanner(ui.banner, data);
 			ui.frame.setAttribute('src', data.preview_url);

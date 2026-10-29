@@ -24,7 +24,8 @@ twd_sk_test( 'looks: a section moves only between layouts that use exactly the s
 	// Same pieces: cards and glow; the standard text and its prose layout; the standard faq and its two-column layout.
 	twd_sk_eq( array( 'twd-sk-services--cards', 'twd-sk-services--glow' ), TWD_SK_Looks::compatible( 'services', 'twd-sk-services--cards' ) );
 	twd_sk_eq( array( '', 'twd-sk-faq--two' ), TWD_SK_Looks::compatible( 'faq', '' ) );
-	twd_sk_eq( array( '', 'twd-sk-text--prose' ), TWD_SK_Looks::compatible( 'text', '' ) );
+	// The Picture text layout (0.15.0) draws its picture and overlay as a layer, not pieces, so the plain text section can move to it.
+	twd_sk_eq( array( '', 'twd-sk-text--prose', 'twd-sk-text--picture' ), TWD_SK_Looks::compatible( 'text', '' ) );
 	// Different structure: pills and links have their own pieces; the hero with the picture beside or behind; a slider needs its track.
 	twd_sk_eq( array(), TWD_SK_Looks::compatible( 'services', 'twd-sk-services--pills' ), 'pills hold other pieces' );
 	twd_sk_eq( array(), TWD_SK_Looks::compatible( 'hero', 'twd-sk-hero--image' ), 'the full-width picture hero has no twin' );
@@ -44,7 +45,7 @@ twd_sk_test( 'looks: the browser gets small, static data: labels and class names
 	twd_sk_true( ! isset( $c['components']['notice'] ), 'the safety notice is left out' );
 	twd_sk_true( isset( $c['components']['hero']['options'][0]['choices'] ) );
 	twd_sk_eq( array( 'space_top', 'space_bottom', 'background' ), array_map( function ( $o ) { return $o['key']; }, $c['shared'] ), 'the shared options go once' );
-	twd_sk_eq( array(), $c['components']['text']['options'], 'a component with no options of its own sends none' );
+	twd_sk_eq( array(), $c['components']['faq']['options'], 'a component with no options of its own sends none' );
 	$json = json_encode( $c );
 	twd_sk_true( strlen( $json ) < 8000, 'light: ' . strlen( $json ) . ' bytes' );
 	twd_sk_hasnt( 'PLACEHOLDER', $json );
@@ -227,6 +228,13 @@ twd_sk_test( 'looks: the JavaScript copy of the rules gives the same classes as 
 		array( 'faq', array( 'twd-sk-faq', 'twd-sk-faq--two', 'twd-sk-tone-surface' ), '_', array() ),
 		array( 'faq', array( 'twd-sk-faq', 'twd-sk-tone-base' ), 'twd-sk-faq--two', array( 'background' => 'twd-sk-tone-tint' ) ),
 		array( 'cta', array( 'twd-sk-cta', 'twd-sk-tone-band' ), null, array( 'background' => 'twd-sk-tone-base' ) ),
+		// Words over a picture (0.15.0): entering the Picture layout adds the frame; the frame's tint and padding need the frame; the overlay needs the layout.
+		array( 'text', array( 'twd-sk-text', 'twd-sk-tone-surface' ), 'twd-sk-text--picture', array() ),
+		array( 'text', array( 'twd-sk-text', 'twd-sk-text--picture', 'twd-sk-frame' ), null, array( 'frame_tint' => 'twd-sk-frame--strong', 'frame_pad' => 'twd-sk-frame--pad-lg', 'overlay' => 'twd-sk-overlay-fade', 'text_size' => true ) ),
+		array( 'text', array( 'twd-sk-text', 'twd-sk-text--picture', 'twd-sk-frame', 'twd-sk-frame--light', 'twd-sk-frame--pad-sm' ), null, array( 'frame' => false ) ),
+		array( 'text', array( 'twd-sk-text', 'twd-sk-text--picture', 'twd-sk-frame', 'twd-sk-overlay-strong', 'twd-sk-text-lg' ), '_', array() ),
+		array( 'cta', array( 'twd-sk-cta', 'twd-sk-cta--band' ), null, array( 'frame' => true, 'frame_pad' => 'twd-sk-frame--pad-sm', 'overlay' => 'twd-sk-overlay-light' ) ),
+		array( 'cta', array( 'twd-sk-cta', 'twd-sk-cta--strip', 'twd-sk-tone-band' ), null, array( 'frame' => true, 'text_size' => true ) ),
 	);
 	$script = 'var cfg = { look: ' . json_encode( $cfg ) . ' };' . "\n" . $m[0] . "\n"
 		. 'var cases = ' . json_encode( $cases ) . ';' . "\n"
@@ -266,4 +274,128 @@ twd_sk_test( 'looks: every section offers Space above and Space below (none, sma
 	twd_sk_has( '.twd-sk-page .twd-sk-space-top-0.twd-sk-space-top-0 {', $css );
 	twd_sk_has( '.twd-sk-page .twd-sk-image-text--band.twd-sk-image-text--band .twd-sk-image-text__img.twd-sk-image-text__img {', $css );
 	twd_sk_true( false !== strpos( $css, "min-height: 0;\n  border-radius: 0 !important;" ), 'the band picture never grows past the band (the phone overlap fix)' );
+} );
+
+twd_sk_test( 'words over a picture (0.15.0): the Picture text layout, its layer, the frame, overlay and larger text options, from the registry and tokens', function () {
+	// The registry: the layout, its pieces, the shared classes, every pack has the frame tokens, the stylesheet styles them.
+	$text = TWD_SK_Registry::get( 'text' );
+	twd_sk_true( isset( $text['variants']['twd-sk-text--picture'] ), 'the layout exists' );
+	$sk = $text['variants']['twd-sk-text--picture']['skeleton'];
+	twd_sk_has( 'twd-sk-text__bg', $sk );
+	twd_sk_has( 'twd-sk-text__overlay', $sk );
+	twd_sk_has( 'twd-sk-text--picture twd-sk-frame', $sk );
+	twd_sk_eq( $sk, TWD_SK_Sanitizer::clean( $sk ), 'the skeleton survives the sanitiser' );
+	foreach ( array( 'twd-sk-frame', 'twd-sk-frame--light', 'twd-sk-frame--strong', 'twd-sk-frame--pad-sm', 'twd-sk-frame--pad-lg', 'twd-sk-overlay-light', 'twd-sk-overlay-strong', 'twd-sk-overlay-fade', 'twd-sk-text-lg' ) as $cls ) {
+		twd_sk_true( in_array( $cls, TWD_SK_Registry::shared_classes(), true ), $cls . ' is shared' );
+	}
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	foreach ( array( 'twd-sk-text--picture', 'twd-sk-text__bg', 'twd-sk-text__overlay', 'twd-sk-frame--pad-lg', 'twd-sk-overlay-fade', 'twd-sk-text-lg', 'twd-sk-text__subheading' ) as $cls ) {
+		twd_sk_has( $cls, $css );
+	}
+	twd_sk_has( 'var(--twd-site-color-frame)', $css );
+	twd_sk_has( 'var(--twd-site-frame-padding-sm)', $css );
+	foreach ( TWD_SK_Packs::packs() as $slug => $pack ) {
+		foreach ( array( 'color-frame', 'frame-padding', 'frame-padding-sm', 'frame-padding-lg' ) as $t ) {
+			twd_sk_true( isset( $pack['tokens'][ $t ] ), $slug . ' has ' . $t );
+		}
+		twd_sk_eq( '24px', $pack['tokens']['frame-padding'], $slug );
+		twd_sk_eq( '10px', $pack['tokens']['frame-padding-sm'], $slug );
+		twd_sk_eq( '40px', $pack['tokens']['frame-padding-lg'], $slug );
+	}
+	$d = TWD_SK_Packs::defaults();
+	twd_sk_eq( 'rgba(0,0,0,0.3)', $d['color-frame'], 'an older pack gets the 30 percent frame' );
+
+	// The options: on a text section they need the Picture layout; the tint and padding need the frame; larger text is always there.
+	$opts = TWD_SK_Looks::options( 'text' );
+	twd_sk_eq( array( 'overlay', 'frame', 'frame_tint', 'frame_pad', 'text_size' ), array_keys( $opts ) );
+	twd_sk_eq( 'twd-sk-text--picture', $opts['overlay']['requires'] );
+	twd_sk_eq( 'twd-sk-text--picture', $opts['frame']['requires'] );
+	twd_sk_eq( 'twd-sk-frame', $opts['frame_tint']['requires'] );
+	twd_sk_eq( 'twd-sk-frame', $opts['frame_pad']['requires'] );
+	twd_sk_eq( 'twd-sk-cta--band', TWD_SK_Looks::options( 'cta' )['frame']['requires'] );
+	twd_sk_eq( array(), TWD_SK_Looks::options( 'faq' ) );
+	// Entering the Picture layout adds the frame; leaving it drops the frame, its tint, its padding and the overlay choice.
+	$in = TWD_SK_Looks::classes_for( 'text', array( 'twd-sk-text', 'twd-sk-tone-surface' ), 'twd-sk-text--picture', array() );
+	twd_sk_eq( array( 'twd-sk-text', 'twd-sk-text--picture', 'twd-sk-tone-surface', 'twd-sk-frame' ), $in );
+	$set = TWD_SK_Looks::classes_for( 'text', $in, null, array( 'frame_tint' => 'twd-sk-frame--strong', 'frame_pad' => 'twd-sk-frame--pad-sm', 'overlay' => 'twd-sk-overlay-fade', 'text_size' => true ) );
+	twd_sk_eq( array( 'twd-sk-text', 'twd-sk-text--picture', 'twd-sk-tone-surface', 'twd-sk-frame', 'twd-sk-frame--strong', 'twd-sk-frame--pad-sm', 'twd-sk-overlay-fade', 'twd-sk-text-lg' ), $set );
+	$off = TWD_SK_Looks::classes_for( 'text', $set, null, array( 'frame' => false ) );
+	twd_sk_eq( array( 'twd-sk-text', 'twd-sk-text--picture', 'twd-sk-tone-surface', 'twd-sk-overlay-fade', 'twd-sk-text-lg' ), $off, 'tint and padding go with the frame' );
+	$back = TWD_SK_Looks::classes_for( 'text', $set, '_', array() );
+	twd_sk_eq( array( 'twd-sk-text', 'twd-sk-tone-surface', 'twd-sk-text-lg' ), $back, 'only larger text stays on the plain layout' );
+	// On a plain text section the frame is ignored (its requirement is not met); a choice not on the list is refused.
+	twd_sk_eq( array( 'twd-sk-text', 'twd-sk-tone-base' ), TWD_SK_Looks::classes_for( 'text', array( 'twd-sk-text', 'twd-sk-tone-base' ), null, array( 'frame' => true ) ) );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Looks::classes_for( 'text', $in, null, array( 'frame_pad' => 'twd-sk-frame--pad-xl' ) ) );
+
+	// apply(): moving a plain text section to Picture puts in a picture spot and the overlay (and says which section wants a picture);
+	// moving back takes the picture and the overlay out; everything else is byte for byte the same.
+	$page = TWD_SK_Sanitizer::clean( TWD_SK_Starters::build( array( array( 'hero', 'twd-sk-hero--compact' ), array( 'text', '' ) ) ) );
+	$out  = TWD_SK_Looks::apply( $page, array( array( 'i' => 1, 'layout' => 'twd-sk-text--picture' ) ) );
+	twd_sk_true( ! is_wp_error( $out ), 'applied' );
+	twd_sk_eq( 1, $out['changed'] );
+	twd_sk_eq( array( 1 ), $out['spots'] );
+	$sec = TWD_SK_Sections::split( $out['html'] )['sections'][1];
+	twd_sk_has( '<section class="twd-sk-text twd-sk-text--picture twd-sk-tone-surface twd-sk-frame">', $sec );
+	twd_sk_true( 0 === strpos( $sec, '<section class="twd-sk-text twd-sk-text--picture twd-sk-tone-surface twd-sk-frame">' . "\n" . '<p>[PLACEHOLDER: image needed]</p>' . "\n" . '<div class="twd-sk-text__overlay"></div>' ), 'the layer goes first: ' . substr( $sec, 0, 200 ) );
+	twd_sk_eq( $out['html'], TWD_SK_Sanitizer::clean( $out['html'] ), 'the result passes the sanitiser unchanged' );
+	twd_sk_true( TWD_SK_Store::must_fix_count( $out['html'] ) > 0, 'a section waiting for its picture cannot be published' );
+	// The spot is numbered for the Visual editor and, filled, becomes the picture behind the section.
+	$marked = TWD_SK_Inline::mark( $out['html'] );
+	twd_sk_has( 'data-twd-sk-s="0"', $marked );
+	twd_sk_has( 'data-twd-sk-lay="_ twd-sk-text--prose twd-sk-text--picture"', $marked );
+	$GLOBALS['twd_stub']['attachments'][77] = array( 'is_image' => true, 'url' => 'https://example.test/wp-content/uploads/sofa-large.jpg', 'w' => 1200, 'h' => 800 );
+	$filled = TWD_SK_Inline::apply( $out['html'], array(), array(), array( array( 'i' => 0, 'id' => 77, 'alt' => 'A sofa in the desert' ) ) );
+	twd_sk_true( ! is_wp_error( $filled ), 'spot filled: ' . ( is_wp_error( $filled ) ? $filled->get_error_message() : '' ) );
+	twd_sk_has( '<img class="twd-sk-text__bg" src="https://example.test/wp-content/uploads/sofa-large.jpg" alt="A sofa in the desert">', $filled['html'] );
+	twd_sk_hasnt( 'PLACEHOLDER: image needed', $filled['html'] );
+	// Back to the plain layout: the picture and the overlay go, the words stay.
+	$plain = TWD_SK_Looks::apply( $filled['html'], array( array( 'i' => 1, 'layout' => '_' ) ) );
+	twd_sk_true( ! is_wp_error( $plain ), 'back' );
+	twd_sk_eq( array(), $plain['spots'] );
+	twd_sk_hasnt( 'twd-sk-text__bg', $plain['html'] );
+	twd_sk_hasnt( 'twd-sk-text__overlay', $plain['html'] );
+	twd_sk_has( '<section class="twd-sk-text twd-sk-tone-surface">', $plain['html'] );
+	twd_sk_eq( TWD_SK_Sections::text_of( $page ), TWD_SK_Sections::text_of( $plain['html'] ), 'the words are as they were' );
+	// A section already on Picture with its own picture keeps it when only an option changes.
+	$opt = TWD_SK_Looks::apply( $filled['html'], array( array( 'i' => 1, 'options' => array( 'frame_pad' => 'twd-sk-frame--pad-lg' ) ) ) );
+	twd_sk_has( 'sofa-large.jpg', $opt['html'] );
+	twd_sk_eq( array(), $opt['spots'] );
+	twd_sk_has( 'twd-sk-frame--pad-lg', $opt['html'] );
+	// The browser gets the layout's natural classes and the hint list, still small.
+	$cfg = TWD_SK_Looks::config();
+	$pic = null;
+	foreach ( $cfg['components']['text']['layouts'] as $l ) {
+		if ( 'twd-sk-text--picture' === $l[0] ) {
+			$pic = $l;
+		}
+	}
+	twd_sk_eq( array( 'twd-sk-frame' ), $pic[2] );
+	twd_sk_true( count( $cfg['hints'] ) >= 6 );
+	twd_sk_true( strlen( json_encode( $cfg ) ) < 12000, 'config size ' . strlen( json_encode( $cfg ) ) );
+	// The frame tint is a Site tab choice, and the contrast check reads the words on the frame over the overlay over a photograph.
+	twd_sk_true( in_array( 'color-frame', TWD_SK_Site::editable_names(), true ) );
+	twd_sk_eq( 'rgba(0,0,0,0.3)', TWD_SK_Site::picture_presets()['color-frame'][0][0] );
+} );
+
+twd_sk_test( 'words over a picture (0.15.0): the AI editor names the nearest Look choice for a request it cannot do', function () {
+	$h = TWD_SK_Looks::hints_for( 'Put the text over a background picture with a graduated grey overlay, in a centred dark frame at 30 percent opacity with 24px of padding, text a little larger' );
+	twd_sk_true( count( $h ) === 3, 'at most three: ' . count( $h ) );
+	twd_sk_has( 'Layout to Picture', $h[0] );
+	twd_sk_has( 'Picture overlay', $h[1] );
+	twd_sk_has( 'Frame behind the words', $h[2] );
+	twd_sk_eq( array(), TWD_SK_Looks::hints_for( 'Make the second paragraph warmer in tone' ) );
+	twd_sk_eq( array(), TWD_SK_Looks::hints_for( '' ) );
+	$one = TWD_SK_Looks::hints_for( 'add appropriate h2 headings to each paragraph' );
+	twd_sk_eq( 1, count( $one ) );
+	twd_sk_has( 'twd-sk-text__subheading', $one[0] );
+	// The browser's copy reads the same lists.
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' );
+	twd_sk_has( 'cfg.look.hints', $js );
+	twd_sk_has( 'Nothing changed', $js );
+	foreach ( TWD_SK_Looks::hints() as $hint ) {
+		twd_sk_true( is_array( $hint['words'] ) && count( $hint['words'] ) > 0 && is_string( $hint['say'] ) );
+		foreach ( $hint['words'] as $w ) {
+			twd_sk_eq( strtolower( $w ), $w, 'lower case word: ' . $w );
+		}
+	}
 } );

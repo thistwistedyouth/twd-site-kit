@@ -40,6 +40,8 @@ body.twd-sk-inline-on [data-twd-sk-s]::before {
 body.twd-sk-inline-on [data-twd-sk-s]:hover,
 body.twd-sk-inline-on [data-twd-sk-s]:focus { border-style: solid !important; }
 body.twd-sk-inline-on [data-twd-sk-s][data-twd-sk-filled] { display: none !important; }
+/* The picture spot of a Picture text section (0.15.0) sits in the section's top corner, over the overlay, not beside the frame. */
+body.twd-sk-inline-on .twd-sk-text--picture > [data-twd-sk-s] { position: absolute; top: 16px; left: 16px; z-index: 3; max-width: 240px; margin: 0 !important; }
 body.twd-sk-inline-on img[data-twd-sk-p]:focus { outline-style: solid !important; }
 body.twd-sk-inline-on img[data-twd-sk-for] {
   display: block; max-width: 100%; height: auto;
