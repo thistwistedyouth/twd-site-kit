@@ -29,7 +29,10 @@ twd_sk_test( 'safe mode: the wp-config constant switches it on, and wins over th
 	$code = 'define("ABSPATH","/x/"); require ' . var_export( ABSPATH . 'includes/class-twd-sk-safe.php', true ) . ';'
 		. 'function get_option($n,$d=false){return "0";} define("TWD_SK_SAFE_MODE", true);'
 		. 'echo json_encode(array(TWD_SK_Safe::on(), TWD_SK_Safe::source()));';
-	$out = shell_exec( 'php -r ' . escapeshellarg( $code ) . ' 2>&1' );
+	$tmp = tempnam( sys_get_temp_dir(), 'twdsk' );
+	file_put_contents( $tmp, '<?php ' . $code );
+	$out = shell_exec( 'php ' . escapeshellarg( $tmp ) . ' 2>&1' );
+	unlink( $tmp );
 	twd_sk_eq( '[true,"constant"]', trim( (string) $out ) );
 } );
 

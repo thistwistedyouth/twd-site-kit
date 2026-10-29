@@ -18,7 +18,7 @@ function twd_sk_privacy_files() {
 	$iter  = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $root, FilesystemIterator::SKIP_DOTS ) );
 	foreach ( $iter as $file ) {
 		$path = $file->getPathname();
-		$rel  = substr( $path, strlen( $root ) + 1 );
+		$rel  = str_replace( DIRECTORY_SEPARATOR, '/', substr( $path, strlen( $root ) + 1 ) );
 		if ( 0 === strpos( $rel, '.git/' ) || 0 === strpos( $rel, 'dist/' ) || 0 === strpos( $rel, 'assets/fonts/' ) ) {
 			continue;
 		}
