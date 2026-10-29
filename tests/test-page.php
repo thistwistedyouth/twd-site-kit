@@ -154,18 +154,31 @@ twd_sk_test( 'page: html with no shortcodes comes back untouched', function () {
 } );
 
 twd_sk_test( 'Tier C ideas 6 and 8 (0.15.0): an On this page list built from the h2 headings when the page is drawn (never stored), and reading controls as a tiny script loaded only where asked', function () {
-	// The list: ids on every h2, the list inside the section that asks for it, two headings at least, nothing stored.
+	// The list: ids on every h2, the list inside the section that asks for it, three links at least, nothing stored.
+	// A section titled with the page's own title ("Essay" again, in any case) is left out of the list (29 Oct 2026).
 	$page = '<section class="twd-sk-hero twd-sk-hero--compact twd-sk-toc twd-sk-tone-base"><div class="twd-sk-inner"><h1 class="twd-sk-hero__title">Essay</h1></div></section>'
 		. "\n" . '<section class="twd-sk-text twd-sk-tone-base"><div class="twd-sk-inner"><h2 class="twd-sk-title">First &amp; foremost</h2><div class="twd-sk-text__body"><p>A.</p><h2 class="twd-sk-text__subheading">Second</h2><p>B.</p></div></div></section>'
+		. "\n" . '<section class="twd-sk-faq twd-sk-tone-base"><div class="twd-sk-inner"><h2 class="twd-sk-title"> ESSAY </h2><p>Q.</p></div></section>'
+		. "\n" . '<section class="twd-sk-text twd-sk-tone-surface"><div class="twd-sk-inner"><h2 class="twd-sk-title">Third</h2><p>C.</p></div></section>'
 		. "\n" . '<section class="twd-sk-cta twd-sk-cta--strip twd-sk-tone-band"><div class="twd-sk-inner"><p class="twd-sk-cta__text">Go.</p></div></section>';
 	$out = TWD_SK_Page::add_toc( $page );
 	twd_sk_has( '<h2 class="twd-sk-title twd-sk-toc-target" id="twd-sk-h-1">First &amp; foremost</h2>', $out );
 	twd_sk_has( '<h2 class="twd-sk-text__subheading twd-sk-toc-target" id="twd-sk-h-2">Second</h2>', $out );
-	twd_sk_has( '<nav class="twd-sk-toc__box" aria-label="On this page"><p class="twd-sk-toc__title">On this page</p><ul class="twd-sk-toc__list"><li><a class="twd-sk-toc__link" href="#twd-sk-h-1">First &amp; foremost</a></li><li><a class="twd-sk-toc__link" href="#twd-sk-h-2">Second</a></li></ul></nav></div></section>', $out );
+	twd_sk_has( '<h2 class="twd-sk-title"> ESSAY </h2>', $out, 'the page title repeated as a section title gets no id and no link' );
+	twd_sk_has( '<h2 class="twd-sk-title twd-sk-toc-target" id="twd-sk-h-4">Third</h2>', $out );
+	twd_sk_has( '<nav class="twd-sk-toc__box" aria-label="On this page"><p class="twd-sk-toc__title">On this page</p><ul class="twd-sk-toc__list"><li><a class="twd-sk-toc__link" href="#twd-sk-h-1">First &amp; foremost</a></li><li><a class="twd-sk-toc__link" href="#twd-sk-h-2">Second</a></li><li><a class="twd-sk-toc__link" href="#twd-sk-h-4">Third</a></li></ul></nav></div></section>', $out );
 	twd_sk_true( 0 === strpos( $out, '<section class="twd-sk-hero twd-sk-hero--compact twd-sk-toc twd-sk-tone-base"><div class="twd-sk-inner"><h1 class="twd-sk-hero__title">Essay</h1><nav class="twd-sk-toc__box"' ), 'the list sits inside the section that asked for it' );
 	twd_sk_eq( 1, substr_count( $out, 'twd-sk-toc__list' ) );
-	// One heading only: no list (nothing to jump to); no section asks: nothing changes.
+	twd_sk_hasnt( '>Essay</a>', $out );
+	// Fewer than three links: no list (the Questions page showed "Explore Further" and its own title). No section asks: nothing changes.
+	$two = str_replace( '<section class="twd-sk-text twd-sk-tone-surface"><div class="twd-sk-inner"><h2 class="twd-sk-title">Third</h2><p>C.</p></div></section>', '', $page );
+	twd_sk_hasnt( 'twd-sk-toc__list', TWD_SK_Page::add_toc( $two ), 'two links (and the title again) are not enough' );
+	twd_sk_eq( 3, TWD_SK_Page::TOC_MIN );
 	twd_sk_hasnt( 'twd-sk-toc__list', TWD_SK_Page::add_toc( '<section class="twd-sk-text twd-sk-toc twd-sk-tone-base"><div class="twd-sk-inner"><h2 class="twd-sk-title">Only</h2></div></section>' ) );
+	// The title section cannot be deleted; the Visual editor says so plainly and points at the Look setting for the list.
+	$inline = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
+	twd_sk_has( "'The page title cannot be deleted: every page keeps its main heading.'", $inline );
+	twd_sk_has( "sec.classList.contains('twd-sk-toc') ? ' The On this page list here is a Look setting: press Look and switch off \"On this page list here\" to remove it.' : ''", $inline );
 	$plain = str_replace( ' twd-sk-toc', '', $page );
 	twd_sk_eq( $plain, TWD_SK_Page::add_toc( $plain ) );
 	// The sanitiser would not keep the drawn ids and list from a paste either way, but they are never offered to it.

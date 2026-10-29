@@ -140,21 +140,30 @@ class TWD_SK_Page {
 		return '<div class="' . self::WRAPPER_CLASS . '">' . self::render_html( $html ) . '</div>';
 	}
 
+	/** How many links the On this page list needs before it shows (29 Oct 2026, the owner: fewer is not worth a list). */
+	const TOC_MIN = 3;
+
 	/**
 	 * Give every h2 an id (twd-sk-h-N, unless it has one) and put a list of links to them into the first section that
 	 * carries twd-sk-toc, just inside the end of its column. Nothing is stored: the stored page has no ids and no list.
+	 * A heading with the same words as the page's own title (the h1) is never listed (29 Oct 2026: the Questions page
+	 * repeats "Questions" as a section title), and the list shows only with TOC_MIN links or more.
 	 */
 	public static function add_toc( $html ) {
 		if ( 1 !== preg_match( '/<section\b[^>]*\sclass="[^"]*\btwd-sk-toc\b/', $html ) ) {
 			return $html;
 		}
+		$title = '';
+		if ( preg_match( '/<h1\b[^>]*>(.*?)<\/h1>/is', $html, $h1 ) ) {
+			$title = self::heading_words( $h1[1] );
+		}
 		$n     = 0;
 		$items = array();
-		$html  = preg_replace_callback( '/<h2\b([^>]*)>(.*?)<\/h2>/is', function ( $m ) use ( &$n, &$items ) {
+		$html  = preg_replace_callback( '/<h2\b([^>]*)>(.*?)<\/h2>/is', function ( $m ) use ( &$n, &$items, $title ) {
 			$n++;
 			$attrs = $m[1];
-			$text  = trim( preg_replace( '/\s+/', ' ', html_entity_decode( strip_tags( $m[2] ), ENT_QUOTES, 'UTF-8' ) ) );
-			if ( '' === $text ) {
+			$text  = self::heading_words( $m[2] );
+			if ( '' === $text || ( '' !== $title && self::same_words( $text, $title ) ) ) {
 				return $m[0];
 			}
 			if ( preg_match( '/\sid="([^"]+)"/', $attrs, $id ) ) {
@@ -171,7 +180,7 @@ class TWD_SK_Page {
 			$items[] = '<li><a class="twd-sk-toc__link" href="#' . esc_attr( $anchor ) . '">' . esc_html( $text ) . '</a></li>';
 			return '<h2' . $attrs . '>' . $m[2] . '</h2>';
 		}, $html );
-		if ( count( $items ) < 2 ) {
+		if ( count( $items ) < self::TOC_MIN ) {
 			return $html;
 		}
 		$nav   = '<nav class="twd-sk-toc__box" aria-label="On this page"><p class="twd-sk-toc__title">On this page</p><ul class="twd-sk-toc__list">' . implode( '', $items ) . '</ul></nav>';
@@ -184,6 +193,16 @@ class TWD_SK_Page {
 			}
 		}
 		return $html;
+	}
+
+	/** A heading's words as plain text, one space between words. */
+	private static function heading_words( $inner ) {
+		return trim( preg_replace( '/\s+/', ' ', html_entity_decode( strip_tags( $inner ), ENT_QUOTES, 'UTF-8' ) ) );
+	}
+
+	/** The same words, whatever the case (so a section titled "Questions" is the page title "Questions" again). */
+	private static function same_words( $a, $b ) {
+		return function_exists( 'mb_strtolower' ) ? mb_strtolower( $a, 'UTF-8' ) === mb_strtolower( $b, 'UTF-8' ) : strtolower( $a ) === strtolower( $b );
 	}
 
 	/** Small scripts only some sections need, loaded only on a page that has them. */

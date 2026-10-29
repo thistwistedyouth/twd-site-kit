@@ -2,6 +2,10 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 29 Oct 2026: the On this page list leaves out the page's own title and needs three links
+
+On the Questions page the list read "Explore Further" and "Questions": the FAQ section's title repeats the page's h1 (kept that way since 27 Oct for a heading-level reason), and two links are not worth a list. The list now skips any h2 with the same words as the h1 (case ignored; the heading keeps no id either, so nothing points at a duplicate) and shows only with `TWD_SK_Page::TOC_MIN` (3) links or more. The title section's Delete message says plainly that the page title cannot be deleted and, when that section carries the list, that the list is a Look setting to switch off there: the owner had pressed Delete on it to get rid of the list.
+
 ## 29 Oct 2026: the Simple editor for clients is a role check on the one editor, not a second editor (section 19 of the owner's plan)
 
 The owner found the editing tools clunky for a client: click and type, swap a photo, nothing else; every layout or formatting change goes through support. The cheapest safe answer was a role check in `TWD_SK_Editor::simple_on()` (everyone who is not an administrator, and an administrator who chose View as: Client) that the existing scripts read: the server leaves out the AI, the Look choices, the section menu, the embeds, the Site tab and Search tab scripts, and the two scripts build fewer things (no window, no pencils, one pen button and a small panel with the Visual editor's own words, pictures, Bold and Link). Nothing in the saving path changed: the same inline route, sanitiser, versions and base_version conflict check, with the person's real capabilities. A second editor would have doubled the saving code the owner asked never to rewrite.

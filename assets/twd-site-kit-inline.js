@@ -173,7 +173,10 @@
 			return;
 		}
 		if (!sec.hasAttribute('data-twd-sk-r')) {
-			status(sec.querySelector('h1') ? 'This section holds the page\'s main heading, so it cannot be deleted.' : 'This section cannot be deleted here.');
+			// The title section stays (a page has one main heading). Its On this page list is a Look setting, not a section.
+			status(sec.querySelector('h1')
+				? 'The page title cannot be deleted: every page keeps its main heading.' + (sec.classList.contains('twd-sk-toc') ? ' The On this page list here is a Look setting: press Look and switch off "On this page list here" to remove it.' : '')
+				: 'This section cannot be deleted here.');
 			return;
 		}
 		var index = parseInt(sec.getAttribute('data-twd-sk-sec'), 10);
