@@ -32,8 +32,16 @@ twd_sk_test( 'add section: a bad place, kind or layout is refused; an empty page
 	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_AI::add_section( 40, array( 'after' => 'x', 'component' => 'faq' ) ) );
 	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_AI::add_section( 40, array( 'after' => 0, 'component' => 'carousel' ) ) );
 	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_AI::add_section( 40, array( 'after' => 0, 'component' => 'faq', 'variant' => 'twd-sk-made-up' ) ) );
+	// Section 23i: an empty page (a new page with only its title) takes its first section, whatever "after" says;
+	// the AI is still refused there (it needs a page to write into).
 	twd_stub_add_post( 41, 'page', '[twd_page]' );
-	twd_sk_is_error( 'twd_sk_empty_page', TWD_SK_AI::add_section( 41, array( 'after' => 0, 'component' => 'faq' ) ) );
+	$first = TWD_SK_AI::add_section( 41, array( 'after' => 0, 'component' => 'faq' ) );
+	twd_sk_true( ! is_wp_error( $first ), is_wp_error( $first ) ? $first->get_error_message() : '' );
+	twd_sk_eq( array( 0 ), $first['changed'] );
+	twd_sk_eq( 1, count( TWD_SK_Sections::split( $first['html'] )['sections'] ) );
+	twd_sk_has( 'class="twd-sk-faq', $first['html'] );
+	twd_sk_eq( array( 0 ), TWD_SK_AI::add_section( 41, array( 'after' => -1, 'component' => 'text' ) )['changed'] );
+	twd_sk_is_error( 'twd_sk_empty_page', TWD_SK_AI::add_section( 41, array( 'after' => 0, 'component' => 'faq', 'use_ai' => true ) ) );
 } );
 
 twd_sk_test( 'add section: with AI only the new section is written, from the facts, and must come back as the same kind', function () {

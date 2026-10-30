@@ -345,9 +345,18 @@ class TWD_SK_REST {
 		// The site's own stylesheet (0.15.0, Base, Adapt, Replace): size, budget, versions, the rules no page uses;
 		// and a way back to an earlier version. Administrators only.
 		register_rest_route( self::ROUTE_NS, '/site/css', array(
-			'methods'             => 'GET',
-			'callback'            => array( __CLASS__, 'get_site_css' ),
-			'permission_callback' => array( __CLASS__, 'can_read_site' ),
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'get_site_css' ),
+				'permission_callback' => array( __CLASS__, 'can_read_site' ),
+			),
+			// Section 23h: the Site stylesheet panel saves a whole stylesheet (source) or takes one unused rule out
+			// (remove), through the same checks as Replace. Nothing applies when a check fails.
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_site_css' ),
+				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+			),
 		) );
 		register_rest_route( self::ROUTE_NS, '/site/css/revert', array(
 			'methods'             => 'POST',
@@ -897,10 +906,47 @@ class TWD_SK_REST {
 
 	/** The site's own stylesheet: size against its budget, versions, and the rules no page uses. Read only. */
 	public static function get_site_css( $request ) {
+		return self::site_css_report();
+	}
+
+	/** The stylesheet's state for the panel (23h): size, versions, source, unused rules, class groups, bytes per page. */
+	private static function site_css_report() {
+		$pages            = TWD_SK_Css::pages_html();
 		$status           = TWD_SK_Css::status();
-		$status['unused'] = TWD_SK_Css::unused_rules( TWD_SK_Css::pages_html() );
+		$status['unused'] = TWD_SK_Css::unused_rules( $pages );
 		$status['source'] = TWD_SK_Css::current()['source'];
+		$status['groups'] = TWD_SK_Css::class_groups( $pages );
+		$status['pages']  = TWD_SK_Css::page_report( $pages );
 		return $status;
+	}
+
+	/**
+	 * Save the stylesheet from the Site tab (section 23h): 'source' is the whole stylesheet as typed or uploaded;
+	 * 'remove' names one rule as the unused list prints it. A check that fails returns 422 with every message and
+	 * applies nothing. The text is taken as it is: no shortcode cleaning touches it.
+	 */
+	public static function post_site_css( $request ) {
+		$remove = $request->get_param( 'remove' );
+		$source = $request->get_param( 'source' );
+		if ( is_string( $remove ) && '' !== trim( $remove ) ) {
+			$less = TWD_SK_Css::remove_rule( TWD_SK_Css::current()['source'], $remove );
+			if ( null === $less ) {
+				return self::error( 'twd_sk_not_found', 'That rule is not in the stylesheet any more. Reload the list.', 404 );
+			}
+			$out = TWD_SK_Css::save( $less, 'Removed the unused rule ' . substr( trim( $remove ), 0, 80 ) . ' in the Site tab' );
+		} elseif ( is_string( $source ) ) {
+			if ( strlen( $source ) > TWD_SK_Css::MAX_SOURCE ) {
+				return self::error( 'twd_sk_too_large', 'That stylesheet is too large (over ' . round( TWD_SK_Css::MAX_SOURCE / 1024 ) . ' KB).', 413 );
+			}
+			$note = $request->get_param( 'note' );
+			$out  = TWD_SK_Css::save( $source, is_string( $note ) && '' !== trim( $note ) ? $note : 'Changed in the Site tab' );
+		} else {
+			return self::error( 'twd_sk_bad_input', 'Send the stylesheet as source, or the rule to remove.', 400 );
+		}
+		if ( is_wp_error( $out ) ) {
+			return self::error( $out->get_error_code(), $out->get_error_message(), 422, (array) $out->get_error_data() );
+		}
+		return $out + array( 'status' => self::site_css_report() );
 	}
 
 	/** Back to an earlier stylesheet version (0 is none). Pages are not touched: a page's own Undo does that. */
@@ -913,7 +959,7 @@ class TWD_SK_REST {
 		if ( is_wp_error( $out ) ) {
 			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_version_not_found' === $out->get_error_code() ? 404 : 422, (array) $out->get_error_data() );
 		}
-		return $out + array( 'status' => TWD_SK_Css::status() );
+		return $out + array( 'status' => self::site_css_report() );
 	}
 
 	/**

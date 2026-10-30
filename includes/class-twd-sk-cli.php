@@ -24,7 +24,7 @@
  *   wp twd-sk embeds [--code]            list the embeds (code kept apart from the pages)
  *   wp twd-sk embed-set --label= --kind= --code= [--id=]   save an embed
  *   wp twd-sk embed-delete <id>          delete an embed
- *   wp twd-sk css [--source] [--unused]  the site's own stylesheet: size against its budget, versions, the rules no page uses (0.15.0)
+ *   wp twd-sk css [--source] [--unused] [--pages]  the site's own stylesheet: size against its budget, versions, the rules no page uses, what each page prints (0.15.0)
  *   wp twd-sk css-revert <version>       bring back an earlier stylesheet version (0 is none); pages are not touched
  *   wp twd-sk export <page_id> [--section=<n>] [--format=html|brief] [--out=<file>]  a standalone file (html) or a remix brief (brief) for the page or one section; printed, or written to --out (session 7)
  *   wp twd-sk import <file> --page=<id> [--section=<n>] | --new=<title> [--dry-run]  an AI's whole reply (html block, css block, What changed) into a section, a page, or a new draft page (section 23a)
@@ -966,6 +966,9 @@ class TWD_SK_CLI {
 	 *
 	 * [--unused]
 	 * : List the rules no kit page uses.
+	 *
+	 * [--pages]
+	 * : What each kit page prints inline (only the rules it uses, section 23g) and any rule printed on every page.
 	 */
 	public function css( $args, $assoc_args ) {
 		$status = TWD_SK_Css::status();
@@ -982,6 +985,14 @@ class TWD_SK_CLI {
 		}
 		if ( isset( $assoc_args['source'] ) ) {
 			WP_CLI::line( TWD_SK_Css::current()['source'] );
+		}
+		// Section 23g: what each page prints inline (only the rules it uses), and the rules printed everywhere.
+		if ( isset( $assoc_args['pages'] ) ) {
+			$report = TWD_SK_Css::page_report();
+			foreach ( $report['pages'] as $p ) {
+				WP_CLI::line( sprintf( '  page %d  %s  prints %d bytes (%d of %d rules)%s', $p['id'], $p['title'], $p['bytes'], $p['printed'], $p['printed'] + $p['skipped'], $p['over'] ? '  OVER ' . $report['warn_at'] . ' bytes' : '' ) );
+			}
+			WP_CLI::line( $report['always'] ? 'Printed on every page (their classes sit only inside :not()): ' . implode( '; ', $report['always'] ) : 'No rule needs to print on every page.' );
 		}
 	}
 

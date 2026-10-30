@@ -56,6 +56,10 @@ class TWD_SK_Preview {
 		if ( is_array( $extra ) && isset( $extra['css'] ) && is_string( $extra['css'] ) ) {
 			$data['css'] = $extra['css'];
 		}
+		// Its source too (section 23g), so the page prints only the candidate's rules it uses.
+		if ( is_array( $extra ) && isset( $extra['css_source'] ) && is_string( $extra['css_source'] ) ) {
+			$data['css_source'] = $extra['css_source'];
+		}
 		set_transient( self::key( $token ), $data, self::TTL );
 
 		$index = get_transient( self::index_key( $user_id ) );
@@ -163,6 +167,9 @@ class TWD_SK_Preview {
 		if ( isset( $data['css'] ) && class_exists( 'TWD_SK_Css' ) ) {
 			add_filter( TWD_SK_Css::FILTER_BUILT, array( __CLASS__, 'filter_css' ) );
 		}
+		if ( isset( $data['css_source'] ) && class_exists( 'TWD_SK_Css' ) ) {
+			add_filter( TWD_SK_Css::FILTER_SOURCE, array( __CLASS__, 'filter_css_source' ) );
+		}
 		add_filter( 'wp_robots', array( __CLASS__, 'filter_robots' ) );
 		add_action( 'wp_body_open', array( __CLASS__, 'print_bar' ) );
 	}
@@ -185,6 +192,14 @@ class TWD_SK_Preview {
 			return (string) self::$active['css'];
 		}
 		return $css;
+	}
+
+	/** The candidate stylesheet's source, for the page to choose its rules from (section 23g). */
+	public static function filter_css_source( $source ) {
+		if ( null !== self::$active && isset( self::$active['css_source'] ) ) {
+			return (string) self::$active['css_source'];
+		}
+		return $source;
 	}
 
 	public static function filter_robots( $robots ) {

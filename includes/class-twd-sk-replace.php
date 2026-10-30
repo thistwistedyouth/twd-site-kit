@@ -564,7 +564,7 @@ class TWD_SK_Replace {
 		if ( is_wp_error( $out ) ) {
 			return $out;
 		}
-		$token = TWD_SK_Preview::create( $user_id, $page_id, $out['html'], array( 'css' => $out['check']['built'] ) );
+		$token = TWD_SK_Preview::create( $user_id, $page_id, $out['html'], array( 'css' => $out['check']['built'], 'css_source' => $out['css'] ) );
 		return array(
 			'token'       => $token,
 			'preview_url' => TWD_SK_Preview::url( $page_id, $token ),

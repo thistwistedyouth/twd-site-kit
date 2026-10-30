@@ -2326,6 +2326,284 @@
 		});
 	}
 
+	/* ---- Site stylesheet (section 23h, 29 Oct 2026): view, edit, versions, unused rules, where each class is used ----
+	 * The per-site stylesheet (TWD_SK_Css) had no screen: it could only be added to from Replace this section. This
+	 * panel shows it in one box, saves it through the same checks (a refused rule is named and nothing applies),
+	 * lists the rules no page uses with a Remove button each, the versions with Restore, what each page prints
+	 * (section 23g: only the rules it uses), and lets the file be downloaded or uploaded. The text goes to the server
+	 * as it is: no shortcode cleaning touches it. */
+	var CS = { data: null, snap: '', busy: false };
+	var csui = {};
+
+	function kb(bytes) {
+		return bytes >= 1024 ? (Math.round(bytes / 102.4) / 10) + ' KB' : bytes + ' bytes';
+	}
+
+	function cssStatusText() {
+		var d = CS.data;
+		if (!d) {
+			return '';
+		}
+		if (!d.bytes) {
+			return 'This site has no stylesheet of its own yet. One starts when a section is replaced with custom HTML and CSS, or when you paste rules here.';
+		}
+		var line = 'The stylesheet is ' + kb(d.bytes) + ' of its ' + kb(d.budget) + ' budget (' + d.rules + ' rules, ' + (d.classes || []).length + ' classes, version ' + d.version + ').';
+		if (d.bytes >= d.budget) {
+			line += ' It is at the limit: take out rules no page uses.';
+		} else if (d.bytes >= d.warn_at) {
+			line += ' That is past the ' + kb(d.warn_at) + ' warning line: reuse classes where you can.';
+		}
+		return line;
+	}
+
+	function drawCss() {
+		var d = CS.data || {};
+		csui.status.textContent = cssStatusText();
+		if (csui.box.value !== (d.source || '') && csui.box.value === CS.snap) {
+			csui.box.value = d.source || '';
+		}
+		CS.snap = d.source || '';
+		// Unused rules, each with Remove.
+		clear(csui.unused);
+		var unused = d.unused || [];
+		if (!d.bytes) {
+			show(csui.unusedWrap, false);
+		} else {
+			show(csui.unusedWrap, true);
+			if (!unused.length) {
+				csui.unused.appendChild(el('li', { className: 'twd-sk-ed__help', text: 'Every rule is used by at least one page.' }));
+			}
+			unused.forEach(function (name) {
+				var row = el('li', { className: 'twd-sk-ed__version' }, [
+					el('span', { className: 'twd-sk-ed__version-text' }, [el('code', { text: name })])
+				]);
+				row.appendChild(button('Remove', 'secondary', function () {
+					cssPost({ remove: name }, 'Removed the rule ' + name + '.');
+				}));
+				csui.unused.appendChild(row);
+			});
+		}
+		// Which pages use each class group (names of pages only).
+		clear(csui.groups);
+		var groups = d.groups || [];
+		show(csui.groupsWrap, groups.length > 0);
+		groups.forEach(function (g) {
+			var pages = (g.pages || []).map(function (p) {
+				return p.title || ('page ' + p.id);
+			});
+			csui.groups.appendChild(el('li', {}, [
+				el('code', { text: g.name }),
+				el('span', { text: ' (' + g.classes.length + (g.classes.length === 1 ? ' class' : ' classes') + '): ' + (pages.length ? 'used on ' + pages.join(', ') : 'used on no page') })
+			]));
+		});
+		// What each page prints (23g).
+		clear(csui.pages);
+		var rep = d.pages || {};
+		var list = rep.pages || [];
+		show(csui.pagesWrap, !!d.bytes);
+		if (d.bytes) {
+			if (!list.length) {
+				csui.pages.appendChild(el('li', { className: 'twd-sk-ed__help', text: 'No kit pages yet.' }));
+			}
+			list.forEach(function (p) {
+				csui.pages.appendChild(el('li', { text: (p.over ? 'Warning: ' : '') + (p.title || ('Page ' + p.id)) + ': ' + (p.bytes ? kb(p.bytes) + ' (' + p.printed + ' of ' + (p.printed + p.skipped) + ' rules)' : 'nothing') + (p.over ? '. More than ' + kb(rep.warn_at || 6000) + ': worth slimming' : '') }));
+			});
+			csui.always.textContent = (rep.always || []).length
+				? 'Printed on every page, because their classes sit only inside :not(): ' + rep.always.join('; ') + '.'
+				: '';
+			show(csui.always, (rep.always || []).length > 0);
+		}
+		// Versions with Restore; the newest is the current one.
+		clear(csui.versions);
+		var versions = d.versions || [];
+		show(csui.versionsWrap, versions.length > 0);
+		csui.undoBtn.disabled = CS.busy || !versions.length;
+		versions.forEach(function (v, i) {
+			var when = v.at ? new Date(String(v.at).replace(' ', 'T') + 'Z') : null;
+			var row = el('li', { className: 'twd-sk-ed__version' }, [
+				el('span', { className: 'twd-sk-ed__version-text' }, [
+					el('span', { className: i === 0 ? 'twd-sk-ed__current' : '', text: 'Version ' + v.v + (i === 0 ? ' (now)' : '') + ': ' + (v.note || 'no note') }),
+					el('span', { className: 'twd-sk-ed__version-note', text: kb(v.bytes) + (when && !isNaN(when.getTime()) ? ', ' + when.toLocaleString() : '') })
+				])
+			]);
+			if (i > 0) {
+				row.appendChild(button('Restore', 'secondary', function () {
+					cssRevert(v.v, 'Back to stylesheet version ' + v.v + ' (saved as a new version).');
+				}));
+			}
+			csui.versions.appendChild(row);
+		});
+	}
+
+	function loadCss() {
+		if (!csui.box) {
+			return Promise.resolve();
+		}
+		return api('GET', '/site/css').then(function (data) {
+			CS.data = data;
+			drawCss();
+		}, function (err) {
+			message(csui.msg, err.message, false);
+		});
+	}
+
+	function cssDone(data, note) {
+		CS.busy = false;
+		if (data && data.status) {
+			CS.data = data.status;
+			csui.box.value = data.status.source || '';
+			drawCss();
+		}
+		var warn = (data && data.warnings) || [];
+		message(csui.msg, note + (data && data.unchanged ? ' Nothing had changed.' : '') + (warn.length ? ' ' + warn.join(' ') : ''), true);
+		// The page behind shows the saved rules at once (the redraw brings its stylesheet block along, 23g).
+		if (ED.cfg && ED.cfg.isKitPage && typeof ED.redraw === 'function') {
+			ED.redraw();
+		}
+	}
+
+	function cssFail(err) {
+		CS.busy = false;
+		csui.saveBtn.disabled = false;
+		csui.undoBtn.disabled = false;
+		var errors = (err && err.data && err.data.errors) || [];
+		message(csui.msg, 'Not saved. ' + (errors.length ? errors.join(' ') : err.message), false);
+	}
+
+	function cssPost(body, note) {
+		if (CS.busy) {
+			return;
+		}
+		CS.busy = true;
+		csui.saveBtn.disabled = true;
+		message(csui.msg, 'Checking...', true);
+		api('POST', '/site/css', body).then(function (data) {
+			csui.saveBtn.disabled = false;
+			cssDone(data, note);
+		}, cssFail);
+	}
+
+	function cssRevert(v, note) {
+		if (CS.busy) {
+			return;
+		}
+		CS.busy = true;
+		csui.undoBtn.disabled = true;
+		message(csui.msg, 'Going back...', true);
+		api('POST', '/site/css/revert', { version: v }).then(function (data) {
+			cssDone(data, note);
+		}, cssFail);
+	}
+
+	function cssSave() {
+		cssPost({ source: csui.box.value }, 'Saved as a new stylesheet version.');
+	}
+
+	function cssUndo() {
+		var versions = (CS.data && CS.data.versions) || [];
+		if (!versions.length) {
+			return;
+		}
+		var prev = versions.length > 1 ? versions[1].v : 0;
+		cssRevert(prev, prev ? 'Undid the last stylesheet change (back to the rules of version ' + prev + ').' : 'Undid the last stylesheet change: the stylesheet is empty again.');
+	}
+
+	function cssDownload() {
+		var blob = new Blob([csui.box.value], { type: 'text/css;charset=utf-8' });
+		var url = window.URL.createObjectURL(blob);
+		var a = el('a', { href: url, download: 'site-stylesheet.css' });
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		window.setTimeout(function () {
+			window.URL.revokeObjectURL(url);
+		}, 1000);
+		message(csui.msg, 'Downloaded site-stylesheet.css (what is in the box, which may differ from what is saved).', true);
+	}
+
+	function cssUpload() {
+		var f = csui.file.files && csui.file.files[0];
+		csui.file.value = '';
+		if (!f) {
+			return;
+		}
+		if (f.size > ((ED.cfg && ED.cfg.cssMax) || 24000) * 3) {
+			message(csui.msg, 'That file is too large for a site stylesheet.', false);
+			return;
+		}
+		var reader = new FileReader();
+		reader.onload = function () {
+			csui.box.value = String(reader.result || '');
+			cssPost({ source: csui.box.value, note: 'Uploaded ' + f.name.replace(/[^A-Za-z0-9._ -]/g, '') + ' in the Site tab' }, 'Replaced the stylesheet with ' + f.name + '.');
+		};
+		reader.onerror = function () {
+			message(csui.msg, 'That file could not be read.', false);
+		};
+		reader.readAsText(f);
+	}
+
+	function buildCssSection(panel) {
+		csui.status = el('p', { className: 'twd-sk-ed__help' });
+		csui.box = textArea('twd-sk-site-css', 16);
+		csui.box.setAttribute('aria-label', 'The site stylesheet');
+		csui.msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		csui.saveBtn = button('Check and save', 'primary', cssSave);
+		csui.undoBtn = button('Undo the last stylesheet change', 'secondary', cssUndo);
+		csui.file = el('input', { type: 'file', id: 'twd-sk-site-css-file', accept: '.css,text/css', hidden: '', 'aria-label': 'Upload a stylesheet file' });
+		csui.file.addEventListener('change', cssUpload);
+		csui.unused = el('ol', { className: 'twd-sk-ed__versions' });
+		csui.unusedWrap = el('div', { hidden: '' }, [
+			el('h4', { className: 'twd-sk-ed__sub-title', text: 'Rules no page uses' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'Each Remove saves a new version, so Undo brings a rule back.' }),
+			csui.unused
+		]);
+		csui.groups = el('ul', { className: 'twd-sk-ed__list' });
+		csui.groupsWrap = el('div', { hidden: '' }, [
+			el('h4', { className: 'twd-sk-ed__sub-title', text: 'Where each class group is used' }),
+			csui.groups
+		]);
+		csui.pages = el('ul', { className: 'twd-sk-ed__list' });
+		csui.always = el('p', { className: 'twd-sk-ed__help', hidden: '' });
+		csui.pagesWrap = el('div', { hidden: '' }, [
+			el('h4', { className: 'twd-sk-ed__sub-title', text: 'What each page prints' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'A page prints only the rules its own classes need, so a page with no custom section carries none of this.' }),
+			csui.pages,
+			csui.always
+		]);
+		csui.versions = el('ol', { className: 'twd-sk-ed__versions' });
+		csui.versionsWrap = el('div', { hidden: '' }, [
+			el('h4', { className: 'twd-sk-ed__sub-title', text: 'Versions (20 kept)' }),
+			csui.versions
+		]);
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Site stylesheet' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'The rules behind custom sections (the ones replaced with their own HTML and CSS). Only the site\'s own colours, fonts and sizes (var(--twd-site-...)) and c- classes are allowed; a rule that breaks that is named and nothing is saved. Every page prints only the rules it uses.' }),
+			csui.status,
+			csui.box,
+			el('div', { className: 'twd-sk-ed__actions' }, [
+				csui.saveBtn,
+				csui.undoBtn,
+				button('Download', 'secondary', cssDownload),
+				button('Upload a file', 'secondary', function () {
+					csui.file.click();
+				}),
+				csui.file
+			]),
+			csui.msg,
+			csui.unusedWrap,
+			csui.groupsWrap,
+			csui.pagesWrap,
+			csui.versionsWrap
+		]));
+		loadCss();
+		ED.addDirtyCheck(function () {
+			return csui.box.value !== CS.snap ? 'Site stylesheet' : '';
+		}, function () {
+			csui.box.value = CS.snap;
+		});
+	}
+	ED.siteCssReload = loadCss;
+
 	function buildUpgradesSection(panel) {
 		upui.msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
 		upui.list = el('div', { className: 'twd-sk-ed__upgrades' });
@@ -2478,6 +2756,7 @@
 		buildHistorySection(panel);
 		buildFactsSection(panel);
 		buildEmbedsSection(panel);
+		buildCssSection(panel);
 		buildUpgradesSection(panel);
 		buildChromeSection(panel);
 		buildSetupSection(panel);
@@ -2491,6 +2770,7 @@
 			'Site details': 'Name, menu, contact lines, footer text',
 			'Site changes': 'Undo a saved style, site details or header and footer change',
 			'Embeds': 'Show a booking calendar, map or other outside code on a page',
+			'Site stylesheet': 'The rules behind custom sections: edit, remove unused ones, go back a version',
 			'Bring pages up to date': 'Add what newer versions added to pages built earlier',
 			'Header and footer': 'Who places them, layout, fixed header',
 			'Set up a new site': 'Create the starter pages',

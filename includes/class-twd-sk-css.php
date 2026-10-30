@@ -12,7 +12,10 @@
  *    class (that would change every page). The sanitiser allows a c- class on a page only while this
  *    stylesheet defines it (plus the registry's own classes), so a pasted class name cannot leak styles.
  *  - Every rule is scoped under .twd-sk-page when it is built, like the kit stylesheet, and printed inline
- *    after the kit stylesheet (one request, no file).
+ *    after the kit stylesheet (one request, no file). Since section 23g a page prints only the rules whose
+ *    c- classes its HTML carries (for_page()), derived from the one stylesheet at draw time and never stored
+ *    with the page; a page with no custom class prints nothing. A rule whose classes sit only inside :not()
+ *    prints everywhere and is named in the report (page_report()).
  *  - A size budget: the built stylesheet may not pass BUDGET bytes; a warning starts at WARN. unused_rules()
  *    says which rules no page uses.
  *  - Versions: save() appends a version (page, note, who, when). A page version records the stylesheet
@@ -36,6 +39,8 @@ class TWD_SK_Css {
 	const CLASS_PREFIX    = 'c-';
 	const CUSTOM_CLASS    = 'twd-sk-custom';
 	const FILTER_BUILT    = 'twd_sk_site_css_built';
+	const FILTER_SOURCE   = 'twd_sk_site_css_source';
+	const PAGE_WARN       = 6000;  // section 23g: a page that prints more than this inline is named in the report.
 	const SCOPE           = '.twd-sk-page';
 
 	/** Classes allowed while a candidate stylesheet is being checked (a preview), on top of the saved ones. */
@@ -942,16 +947,239 @@ class TWD_SK_Css {
 		return $done['unchanged'] ? '' : 'The site stylesheet went back with it (now version ' . $done['v'] . ', the rules of version ' . $target_v . ').';
 	}
 
+	// -- Only the rules a page uses (section 23g) ----------------------------------------------
+
+	/**
+	 * The stylesheet cut into printable pieces: one entry per rule, with the c- classes it needs. A rule is
+	 * printed on a page when any of its classes is on that page. A rule whose only c- classes sit inside :not()
+	 * (so it reaches elements that do NOT carry the class) cannot be chosen by the page's classes: it is marked
+	 * "always" and printed on every page, and the report says so.
+	 *
+	 * @return array of { media, selectors, classes[], always (bool), css (this rule built and scoped) }
+	 */
+	public static function pieces( $source = null ) {
+		static $memo = array();
+		$source = null === $source ? self::current()['source'] : (string) $source;
+		$key    = md5( $source );
+		if ( isset( $memo[ $key ] ) ) {
+			return $memo[ $key ];
+		}
+		$out = array();
+		foreach ( self::rules_of( $source ) as $rule ) {
+			$classes = array();
+			foreach ( $rule['selectors'] as $sel ) {
+				$plain = preg_replace( self::attribute_pattern(), '', $sel );
+				$plain = preg_replace( '/:not\(\s*\.c-[a-z0-9_-]+\s*\)/', ' ', $plain );
+				if ( preg_match_all( '/\.(c-[a-z0-9_-]+)/', $plain, $m ) ) {
+					foreach ( $m[1] as $c ) {
+						$classes[ $c ] = true;
+					}
+				}
+			}
+			$out[] = array(
+				'media'     => $rule['media'],
+				'selectors' => $rule['selectors'],
+				'classes'   => array_keys( $classes ),
+				'always'    => ! $classes,
+				'css'       => self::build( array( $rule ) ),
+			);
+		}
+		if ( count( $memo ) > 20 ) {
+			$memo = array();
+		}
+		$memo[ $key ] = $out;
+		return $out;
+	}
+
+	/** The class names some HTML carries, as class => true. */
+	public static function classes_in( $html ) {
+		$used = array();
+		if ( preg_match_all( '/class="([^"]*)"/', (string) $html, $m ) ) {
+			foreach ( $m[1] as $list ) {
+				foreach ( preg_split( '/\s+/', trim( $list ) ) as $class ) {
+					if ( '' !== $class ) {
+						$used[ $class ] = true;
+					}
+				}
+			}
+		}
+		return $used;
+	}
+
+	/**
+	 * The built stylesheet for one page: only the rules whose c- classes appear in its HTML, plus the "always"
+	 * rules. A page with no c- class prints nothing. The whole stylesheet stays the one source of truth: this is
+	 * derived from it every time and never stored with the page.
+	 *
+	 * @return array { css, bytes, printed (rules), skipped (rules), always (selector lists printed on every page) }
+	 */
+	public static function for_page( $html, $source = null ) {
+		$used   = self::classes_in( $html );
+		$keep   = array();
+		$always = array();
+		$n      = 0;
+		foreach ( self::pieces( $source ) as $piece ) {
+			$hit = $piece['always'];
+			if ( $hit ) {
+				$always[] = ( '' !== $piece['media'] ? '@media ' . $piece['media'] . ' ' : '' ) . implode( ', ', $piece['selectors'] );
+			}
+			foreach ( $piece['classes'] as $c ) {
+				if ( isset( $used[ $c ] ) ) {
+					$hit = true;
+					break;
+				}
+			}
+			$n++;
+			if ( $hit ) {
+				$keep[] = $piece;
+			}
+		}
+		$css   = '';
+		$media = null;
+		foreach ( $keep as $piece ) {
+			// Each piece is built on its own, so gather the @media blocks back together here.
+			$one = $piece['css'];
+			if ( '' !== $piece['media'] ) {
+				$one = substr( $one, strlen( '@media ' . $piece['media'] . '{' ), -1 );
+			}
+			if ( $piece['media'] !== $media ) {
+				if ( null !== $media && '' !== $media ) {
+					$css .= '}';
+				}
+				$media = $piece['media'];
+				if ( '' !== $media ) {
+					$css .= '@media ' . $media . '{';
+				}
+			}
+			$css .= $one;
+		}
+		if ( null !== $media && '' !== $media ) {
+			$css .= '}';
+		}
+		return array(
+			'css'     => $css,
+			'bytes'   => strlen( $css ),
+			'printed' => count( $keep ),
+			'skipped' => $n - count( $keep ),
+			'always'  => $always,
+		);
+	}
+
+	/**
+	 * What each kit page prints (section 23g.3): id, title, bytes, printed, skipped; and the rules printed on every
+	 * page because their classes cannot choose them. Read only.
+	 */
+	public static function page_report( $pages_html = null ) {
+		$pages_html = null === $pages_html ? self::pages_html() : (array) $pages_html;
+		$pages      = array();
+		$always     = array();
+		foreach ( $pages_html as $pid => $html ) {
+			$sub      = self::for_page( $html );
+			$always   = $sub['always'];
+			$pages[]  = array(
+				'id'      => (int) $pid,
+				'title'   => function_exists( 'get_the_title' ) ? (string) get_the_title( (int) $pid ) : '',
+				'bytes'   => $sub['bytes'],
+				'printed' => $sub['printed'],
+				'skipped' => $sub['skipped'],
+				'over'    => $sub['bytes'] > self::PAGE_WARN,
+			);
+		}
+		return array( 'pages' => $pages, 'always' => $always, 'warn_at' => self::PAGE_WARN );
+	}
+
+	/**
+	 * Section 23h.4: the classes grouped by their first word (c-intro, c-intro__title and c-intro--wide are one
+	 * group) with the pages that use any of them. Page ids and titles only, never a page's words.
+	 */
+	public static function class_groups( $pages_html = null ) {
+		$pages_html = null === $pages_html ? self::pages_html() : (array) $pages_html;
+		$groups     = array();
+		foreach ( self::current()['classes'] as $class ) {
+			$name = preg_replace( '/(__|--|_).*$/', '', $class );
+			$groups[ $name ]['name']      = $name;
+			$groups[ $name ]['classes'][] = $class;
+		}
+		$by_page = array();
+		foreach ( $pages_html as $pid => $html ) {
+			$by_page[ (int) $pid ] = self::classes_in( $html );
+		}
+		$out = array();
+		foreach ( $groups as $name => $g ) {
+			$pages = array();
+			foreach ( $by_page as $pid => $used ) {
+				foreach ( $g['classes'] as $c ) {
+					if ( isset( $used[ $c ] ) ) {
+						$pages[] = array( 'id' => $pid, 'title' => function_exists( 'get_the_title' ) ? (string) get_the_title( $pid ) : '' );
+						break;
+					}
+				}
+			}
+			$out[] = array( 'name' => $name, 'classes' => $g['classes'], 'pages' => $pages );
+		}
+		return $out;
+	}
+
+	/**
+	 * Section 23h.1: the source with one rule taken out, named as unused_rules() lists it ("@media ... " then the
+	 * selectors joined by ", "). Returns the new source, or null when no rule has that name.
+	 */
+	public static function remove_rule( $source, $label ) {
+		$label = trim( (string) $label );
+		$rules = self::rules_of( $source );
+		$kept  = array();
+		$found = false;
+		foreach ( $rules as $rule ) {
+			$name = ( '' !== $rule['media'] ? '@media ' . $rule['media'] . ' ' : '' ) . implode( ', ', $rule['selectors'] );
+			if ( ! $found && $name === $label ) {
+				$found = true;
+				continue;
+			}
+			$kept[] = $rule;
+		}
+		return $found ? self::serialise( $kept ) : null;
+	}
+
 	// -- Printing -------------------------------------------------------------------------
 
-	/** What visitors get: the built stylesheet, or a preview's candidate through the filter. */
+	/** The whole stylesheet as built: the saved one, or a preview's candidate through the filter. */
 	public static function built_for_output() {
 		$built = self::current()['built'];
 		return (string) ( function_exists( 'apply_filters' ) ? apply_filters( self::FILTER_BUILT, $built ) : $built );
 	}
 
+	/** The stylesheet's source for this request: the saved one, or a preview's candidate through the filter. */
+	public static function source_for_output() {
+		$source = self::current()['source'];
+		return (string) ( function_exists( 'apply_filters' ) ? apply_filters( self::FILTER_SOURCE, $source ) : $source );
+	}
+
+	/**
+	 * What this request prints (section 23g): on a kit page, only the rules its HTML uses (a preview's candidate
+	 * HTML and stylesheet count, through their filters); nowhere else, nothing. A preview made before 23g carries a
+	 * built candidate but no source: then the whole candidate prints, to be safe.
+	 */
+	public static function css_for_request() {
+		$page_id = class_exists( 'TWD_SK_Page' ) ? (int) TWD_SK_Page::viewed_page_id() : 0;
+		if ( $page_id <= 0 ) {
+			return '';
+		}
+		$html = TWD_SK_Page::current_html( $page_id );
+		if ( '' === $html ) {
+			return '';
+		}
+		$built = self::built_for_output();
+		if ( '' === $built ) {
+			return '';
+		}
+		if ( $built !== self::current()['built'] && self::source_for_output() === self::current()['source'] ) {
+			return $built;
+		}
+		return self::for_page( $html, self::source_for_output() )['css'];
+	}
+
 	public static function print_styles() {
-		$css = self::built_for_output();
+		$css = self::css_for_request();
 		if ( '' !== $css && class_exists( 'TWD_SK_Assets' ) ) {
 			wp_add_inline_style( TWD_SK_Assets::HANDLE, $css );
 		}

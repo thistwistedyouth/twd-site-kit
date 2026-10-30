@@ -200,6 +200,17 @@
 /* Only the tools for what was clicked: words show for words, the section tools for anything in a section. */
 .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--words, .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--section,
 .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="picture"] .twd-sk-ed__inlinetools--words, .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="section"] .twd-sk-ed__inlinetools--words { display: none; }
+/* Section 23i: the Page row (Add a section at the end, Import a page, Export this page) shows whatever was clicked. */
+.twd-sk-ed__inlinetools--page { align-items: center; }
+.twd-sk-ed__pagelabel { margin: 0; }
+/* Section 23i: the one button on an empty page (no section, so no pencil): fixed under the header, centred. */
+.twd-sk-ed__emptybtn {
+  position: fixed; left: 50%; top: 40%; transform: translateX(-50%); z-index: 99980; min-height: 48px;
+  padding: 12px 22px; border: 1.5px solid $color-primary; border-radius: $radius-pill;
+  background-color: $color-primary; color: $color-on-primary; box-shadow: $shadow-card;
+  font-family: $font-body; font-size: $size-small; font-weight: $btn-weight; line-height: 1.2; cursor: pointer;
+}
+&[data-twd-sk-tools="off"] .twd-sk-ed__emptybtn { display: none; }
 /* 18d: the compact row by default; More opens the rest. The More button itself shows once something was clicked. */
 .twd-sk-ed__inlinebar--inwin:not([data-twd-sk-more="on"]) .twd-sk-ed__inlinetools--more, .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--morebtn { display: none; }
 .twd-sk-ed__inlinetools--morebtn { margin-left: auto; }

@@ -316,11 +316,14 @@ class TWD_SK_AI {
 	public static function add_section( $page_id, $in ) {
 		$parts = TWD_SK_Sections::split( isset( $in['html'] ) && is_string( $in['html'] ) ? $in['html'] : TWD_SK_Store::get_current( (int) $page_id ) );
 		$count = count( $parts['sections'] );
+		// Section 23i: an empty page (a new page with only its title) takes its first section; after is -1 then.
+		$after = isset( $in['after'] ) && ( is_int( $in['after'] ) || ( is_string( $in['after'] ) && preg_match( '/^-?\d+$/', $in['after'] ) ) ) ? (int) $in['after'] : -1;
 		if ( 0 === $count ) {
-			return self::err( 'twd_sk_empty_page', 'This page has no sections yet. Add a page outline first.' );
-		}
-		$after = isset( $in['after'] ) && ( is_int( $in['after'] ) || ( is_string( $in['after'] ) && ctype_digit( $in['after'] ) ) ) ? (int) $in['after'] : -1;
-		if ( $after < 0 || $after >= $count ) {
+			if ( ! empty( $in['use_ai'] ) || ! empty( $in['plan'] ) ) {
+				return self::err( 'twd_sk_empty_page', 'This page has no sections yet. Add a section without the AI first, or import a page.' );
+			}
+			$after = -1;
+		} elseif ( $after < 0 || $after >= $count ) {
 			return self::err( 'twd_sk_bad_input', 'Choose where the new section goes.' );
 		}
 		$component = isset( $in['component'] ) && is_string( $in['component'] ) ? $in['component'] : '';

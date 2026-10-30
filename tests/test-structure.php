@@ -64,8 +64,14 @@ twd_sk_test( 'structure add: a banner, an unknown section or layout, a place tha
 	foreach ( array( 9, -1, 'x', null ) as $after ) {
 		twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Structure::add( 41, array( 'after' => $after, 'component' => 'text' ) ), 'after ' . var_export( $after, true ) );
 	}
+	// Section 23i: a page with no sections takes its first one (after -1 as the editor sends it); a hero is still refused.
 	twd_stub_add_post( 42, 'page', '[twd_page]' );
-	twd_sk_is_error( 'twd_sk_empty_page', TWD_SK_Structure::add( 42, array( 'after' => 0, 'component' => 'text' ) ), 'a page with no sections' );
+	$first = TWD_SK_Structure::add( 42, array( 'after' => -1, 'component' => 'text' ) );
+	twd_sk_true( ! is_wp_error( $first ), is_wp_error( $first ) ? $first->get_error_message() : 'a page with no sections takes its first' );
+	twd_sk_eq( 0, $first['at'] );
+	twd_sk_eq( 'Added a text section', $first['note'] );
+	twd_sk_has( '<section class="twd-sk-text', trim( $first['html'] ) );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Structure::add( 42, array( 'after' => -1, 'component' => 'hero' ) ) );
 	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Structure::add( 41, 'not an array' ) );
 	// Sixty sections is the ceiling.
 	$many = str_repeat( TWD_SK_Registry::get( 'text' )['skeleton'], TWD_SK_Sections::MAX_SECTIONS );

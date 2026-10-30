@@ -1233,6 +1233,21 @@
 			root.appendChild(node);
 			pencils.push({ host: sec, node: node });
 		});
+		// Section 23i: a page with only its title has no section and so no pencil. For an administrator one plain
+		// button sits where the sections would start: it opens the window on On page edits, whose Page row has
+		// Add a section and Import a page.
+		var emptyBtn = document.getElementById('twd-sk-ed-empty');
+		if (emptyBtn) {
+			emptyBtn.parentNode.removeChild(emptyBtn);
+		}
+		if (!pencils.length && oneWindow && cfg.custom && cfg.inline) {
+			emptyBtn = el('button', { type: 'button', id: 'twd-sk-ed-empty', className: 'twd-sk-ed__emptybtn', text: 'Add a section or import a page', title: 'This page has no sections yet' });
+			emptyBtn.addEventListener('click', function () {
+				open();
+				selectTab('page');
+			});
+			root.appendChild(emptyBtn);
+		}
 		if (pencils.length && !buildPencils.bound) {
 			buildPencils.bound = true;
 			window.addEventListener('scroll', queuePencils, { passive: true });
@@ -1738,6 +1753,13 @@
 					});
 					oldWrap.parentNode.replaceChild(newWrap, oldWrap);
 				});
+				// Section 23g: the page prints only the site-stylesheet rules it uses, so bring that block along too
+				// (after an Undo that took the stylesheet back, or a change in the Site tab).
+				var oldStyle = document.getElementById('twd-site-kit-inline-css');
+				var newStyle = fresh.getElementById('twd-site-kit-inline-css');
+				if (oldStyle && newStyle && oldStyle.textContent !== newStyle.textContent) {
+					oldStyle.textContent = newStyle.textContent;
+				}
 				document.body.classList.add('twd-sk-ed-redraw');
 				flash.forEach(function (n) {
 					n.classList.add('twd-sk-ed__flash');

@@ -26,6 +26,18 @@
 	 * an administrator, and an administrator viewing as the client). The same editor with fewer tools: words and
 	 * pictures, Bold, Link, Save, Undo, Redo, History and Done, in one small panel where the pen was. */
 	var SIMPLE = !!cfg.simple;
+	// Section 23i: a page with only its title has no section to click.
+	var EMPTY_SIMPLE = 'This page has no words yet. Tell us what you would like here.';
+	function pageEmpty() {
+		return !document.querySelector('section[data-twd-sk-sec], [data-twd-sk-t]');
+	}
+	// The line for an empty page, by who is looking; '' when the page has sections.
+	function emptyLine() {
+		if (!pageEmpty()) {
+			return '';
+		}
+		return SIMPLE ? EMPTY_SIMPLE : (cfg.custom ? 'This page has no sections yet. Add a section, or import a page.' : 'This page has no sections yet. Add a section to start.');
+	}
 	/* Its Undo and Redo: one list of steps for everything done in this session. An in-page step is typing in one piece
 	 * (grouped until the cursor leaves it or another step happens), a Bold, a link, a picture swap or a new
 	 * description, kept as the piece's number with its words before and after. A save (or History's Go back) is a
@@ -232,7 +244,7 @@
 	function counter() {
 		var n = changedCount();
 		if (SIMPLE) {
-			status((H.hold ? H.hold + ' ' : '') + (n ? n + ' change' + (n === 1 ? '' : 's') + ' not saved yet.' : (H.hold ? '' : 'Click on any words or a picture to change them.')));
+			status((H.hold ? H.hold + ' ' : '') + (n ? n + ' change' + (n === 1 ? '' : 's') + ' not saved yet.' : (H.hold ? '' : (pageEmpty() ? EMPTY_SIMPLE : 'Click on any words or a picture to change them.'))));
 			ui.save.disabled = S.saving || S.uploading;
 			engaged();
 			return;
@@ -1211,8 +1223,8 @@
 	   server finds the parts, runs the same checks as Replace and shows the preview; Apply replaces this section,
 	   the whole page, or makes a new draft page with a title (never published). Edit the HTML first moves the parts
 	   into Replace this section. */
-	function openImport(prefill) {
-		var sec = currentSection();
+	function openImport(prefill, pageOnly) {
+		var sec = pageOnly ? null : currentSection();
 		if (notNow()) {
 			return;
 		}
@@ -1223,7 +1235,7 @@
 		if (S.imp.sec < 0 && ui.impSection.checked) {
 			ui.impPage.checked = true;
 		}
-		ui.impHead.textContent = S.imp.sec >= 0 ? 'Import a page or a section (you are in section ' + (S.imp.sec + 1) + ', ' + sectionName(sec) + ')' : 'Import a page (click inside a section first to replace just that one)';
+		ui.impHead.textContent = S.imp.sec >= 0 ? 'Import a page or a section (you are in section ' + (S.imp.sec + 1) + ', ' + sectionName(sec) + ')' : (pageEmpty() ? 'Import a page: the reply becomes this page' : 'Import a page (click inside a section first to replace just that one)');
 		if (typeof prefill === 'string' && prefill) {
 			ui.impText.value = prefill;
 		}
@@ -1409,8 +1421,8 @@
 	/* ---- Export (session 7, 29 Oct 2026, section 21c): a standalone file or a remix brief ----
 	   Behind Advanced, administrators only. The server builds the file (GET /pages/{id}/export); the browser saves it.
 	   The file holds the client's words: it belongs in the private clients repository, never in the plugin's. */
-	function openExport() {
-		var sec = currentSection();
+	function openExport(pageOnly) {
+		var sec = pageOnly === true ? null : currentSection();
 		closePanels();
 		show(ui.confirm, false);
 		S.ex = { sec: sec && sec.tagName === 'SECTION' ? sectionIndex(sec) : -1 };
@@ -1492,12 +1504,16 @@
 
 	function buildBar() {
 		ui.status = el('span', { className: 'twd-sk-ed__inlinestatus', role: 'status', 'aria-live': 'polite' });
-		ui.ctxText = el('span', { text: 'Click what you want to change on the page.' });
+		ui.ctxText = el('span', { text: emptyLine() || 'Click what you want to change on the page.' });
 		ui.allSections = el('button', { type: 'button', className: 'twd-sk-ed__allsections', text: 'All sections', title: 'Leave this section and see the list of sections', hidden: '' });
 		ui.allSections.addEventListener('click', function () {
 			ED.sectionView(false);
 		});
 		ui.ctxHead = el('p', { className: 'twd-sk-ed__inlinehead twd-sk-ed__ctxhead' }, [ui.ctxText, ui.allSections]);
+		// Section 23i: a small Page row that never depends on clicking a section first, so an empty page (only its
+		// title, nothing to click) can take its first section or a whole imported page. The row is built below,
+		// once the buttons it holds exist.
+		ui.pageRow = null;
 		ui.viewHint = el('p', { className: 'twd-sk-ed__inlinehead twd-sk-ed__viewhint', text: 'Click any words in this section to edit them.', hidden: '' });
 		ui.save = ED.button(SIMPLE ? 'Save' : 'Save changes', 'primary', save);
 		ui.save.className += ' twd-sk-ed__inlinesave';
@@ -1662,9 +1678,27 @@
 				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section twd-sk-ed__inlinetools--advanced', role: 'group', 'aria-label': 'Design tools for this section' }, sectionTools.concat([ui.exportBtn]))
 			]
 			: [el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section', role: 'group', 'aria-label': 'This section' }, sectionTools)];
+		if (oneWindow) {
+			var pageTools = [el('span', { className: 'twd-sk-ed__inlinehead twd-sk-ed__pagelabel', text: 'Page:' })];
+			if (kinds.length) {
+				ui.addEnd = toolButton(pageEmpty() ? 'Add a section' : 'Add a section at the end', pageEmpty() ? 'Add the first section to this page (its words are placeholders for you to replace)' : 'Add a new section at the end of the page', openAddAtEnd);
+				pageTools.push(ui.addEnd);
+			}
+			if (CUSTOM) {
+				ui.importPage = toolButton('Import a page', 'Paste a whole reply from an AI and make it this page, or a new draft page', function () {
+					openImport('', true);
+				});
+				ui.exportPage = toolButton('Export this page', 'Save the page as a standalone file, or as a remix brief for an AI', function () {
+					openExport(true);
+				});
+				pageTools.push(ui.importPage, ui.exportPage);
+			}
+			ui.pageRow = el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--page', role: 'group', 'aria-label': 'This page' }, pageTools);
+		}
 		var kids = SIMPLE ? simpleKids() : oneWindow
 			? [
 				ui.ctxHead,
+				ui.pageRow,
 				ui.viewHint,
 				words
 			].concat(sectionGroups, [
@@ -1713,7 +1747,7 @@
 			kind = kind === 'words' || kind === 'picture' ? kind : 'none';
 			ui.bar.setAttribute('data-twd-sk-ctx', kind);
 			ui.ctxText.textContent = kind === 'words' ? 'Type to change these words. Select some of them for Bold or Link.'
-				: (kind === 'picture' ? 'Choose a picture, or change its description.' : 'Click on any words or a picture to change them.');
+				: (kind === 'picture' ? 'Choose a picture, or change its description.' : (pageEmpty() ? EMPTY_SIMPLE : 'Click on any words or a picture to change them.'));
 			engaged();
 			return;
 		}
@@ -1722,7 +1756,7 @@
 			where = 'Section ' + (index + 1) + ': ' + sectionName(sec);
 		}
 		ui.bar.setAttribute('data-twd-sk-ctx', kind);
-		ui.ctxText.textContent = kind === 'none' ? (S.view ? 'Click inside the section you want to change.' : 'Click what you want to change on the page.')
+		ui.ctxText.textContent = kind === 'none' ? (S.view ? 'Click inside the section you want to change.' : (emptyLine() || 'Click what you want to change on the page.'))
 			: (kind === 'words' ? 'Words in ' : (kind === 'picture' ? 'Picture in ' : '')) + where;
 		// 18c: a pencil opens one section. The section is marked on the page, the hint says what to do, and All sections
 		// leads back to the list; clicking inside another section moves the view to it.
@@ -2385,6 +2419,20 @@
 		ui.addKind.focus();
 	}
 
+	// Section 23i: from the Page row. On an empty page the new section is the first (after -1, as the server reads it).
+	function openAddAtEnd() {
+		if (notNow()) {
+			return;
+		}
+		var all = document.querySelectorAll('[data-twd-sk-sec]');
+		S.addAfter = all.length - 1;
+		ui.addWhere.textContent = all.length ? 'The new section goes at the end of the page.' : 'This will be the first section of the page. Its words are placeholders for you to replace.';
+		closePanels();
+		show(ui.confirm, false);
+		show(ui.addPanel, true);
+		ui.addKind.focus();
+	}
+
 	function doAdd() {
 		structure({ op: 'add', after: S.addAfter, component: ui.addKind.value, variant: ui.addLayout.value }, 'Adding the section...', 'Added.');
 	}
@@ -2455,7 +2503,8 @@
 		S.pics = pictures();
 		S.spots = spots();
 		if (!S.texts.length && !S.pics.length && !S.spots.length) {
-			status('There is nothing to change on this page yet.');
+			// Section 23i: the words say what to do next (the Page row above has Add a section and Import a page).
+			status(emptyLine() || 'There is nothing to change on this page yet.');
 			return;
 		}
 		S.on = true;

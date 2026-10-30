@@ -20,6 +20,10 @@ function twd_sk_custom_css() {
 	return ".c-intro { padding: var(--twd-site-section-y) 0; background: var(--twd-site-color-surface); }\n.c-intro__title { font-family: var(--twd-site-font-heading); color: var(--twd-site-color-heading); font-size: var(--twd-site-size-h2); }\n.c-intro__row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--twd-site-gap-md); }\n.c-intro__card { padding: var(--twd-site-card-pad); border-radius: var(--twd-site-radius-card); background: var(--twd-site-color-tint); }\n.c-intro__pic { border-radius: var(--twd-site-radius-image); }\n@media (max-width: 767px) { .c-intro__row { grid-template-columns: 1fr; } }\n";
 }
 
+function twd_sk_inline_printed() {
+	return isset( $GLOBALS['twd_stub']['styles']['twd-site-kit']['inline'] ) ? (string) $GLOBALS['twd_stub']['styles']['twd-site-kit']['inline'] : '';
+}
+
 twd_sk_test( 'site css: a stylesheet of tokens and c- classes passes, is scoped under .twd-sk-page, lists its classes and keeps its @media block', function () {
 	$check = TWD_SK_Css::check( twd_sk_custom_css() );
 	twd_sk_true( $check['ok'], implode( ' | ', $check['errors'] ) );
@@ -343,9 +347,91 @@ twd_sk_test( 'replace preview: the candidate stylesheet travels with the preview
 	} );
 	twd_sk_has( '.twd-sk-page .c-intro{', TWD_SK_Css::built_for_output() );
 	unset( $GLOBALS['twd_stub']['hooks'][ TWD_SK_Css::FILTER_BUILT ] );
-	// The stylesheet prints inline after the kit stylesheet.
+	// Section 23g: the page prints only the rules it uses. With no page in view, nothing; on page 51 (no c- class)
+	// nothing either; with the preview's candidate HTML and stylesheet in place, the candidate's rules that the
+	// candidate page uses (c-intro), and not c-old, which no element carries.
+	$GLOBALS['twd_stub']['singular'] = false;
+	$GLOBALS['twd_stub']['queried']  = 0;
 	TWD_SK_Css::print_styles();
-	twd_sk_has( '.twd-sk-page .c-old{', (string) $GLOBALS['twd_stub']['styles']['twd-site-kit']['inline'], 'printed inline after the kit stylesheet' );
+	twd_sk_eq( '', twd_sk_inline_printed(), 'nothing printed off a page' );
+	$GLOBALS['twd_stub']['singular'] = true;
+	$GLOBALS['twd_stub']['queried']  = 51;
+	TWD_SK_Css::print_styles();
+	twd_sk_eq( '', twd_sk_inline_printed(), 'a page with no custom class prints nothing' );
+	$GLOBALS['twd_stub']['hooks']['twd_sk_page_html'] = array( function ( $html ) use ( $data ) {
+		return $data['html'];
+	} );
+	$GLOBALS['twd_stub']['hooks'][ TWD_SK_Css::FILTER_BUILT ] = array( function ( $css ) use ( $data ) {
+		return $data['css'];
+	} );
+	$GLOBALS['twd_stub']['hooks'][ TWD_SK_Css::FILTER_SOURCE ] = array( function ( $css ) use ( $data ) {
+		return $data['css_source'];
+	} );
+	TWD_SK_Css::print_styles();
+	$printed = twd_sk_inline_printed();
+	twd_sk_has( '.twd-sk-page .c-intro{', $printed, 'the candidate rules the candidate page uses print inline after the kit stylesheet' );
+	twd_sk_has( '@media (max-width: 767px){.twd-sk-page .c-intro__row{grid-template-columns:1fr}}', $printed );
+	twd_sk_hasnt( '.c-old', $printed, 'a rule no element on the page uses is left out' );
+	// A preview made before 23g (a built candidate, no source) prints the whole candidate, to be safe.
+	unset( $GLOBALS['twd_stub']['hooks'][ TWD_SK_Css::FILTER_SOURCE ] );
+	$GLOBALS['twd_stub']['styles']['twd-site-kit']['inline'] = '';
+	TWD_SK_Css::print_styles();
+	twd_sk_has( '.twd-sk-page .c-old{', twd_sk_inline_printed() );
+	unset( $GLOBALS['twd_stub']['hooks'][ TWD_SK_Css::FILTER_BUILT ], $GLOBALS['twd_stub']['hooks']['twd_sk_page_html'] );
+	$GLOBALS['twd_stub']['singular'] = false;
+	$GLOBALS['twd_stub']['queried']  = 0;
+} );
+
+twd_sk_test( 'site css (23g): for_page() keeps only the rules whose c- classes the page carries, gathers @media blocks, prints a rule whose classes sit only in :not() everywhere and names it; page_report() gives bytes per page and warns over 6 KB; remove_rule() and class_groups() for the panel', function () {
+	twd_sk_custom_page();
+	$css = twd_sk_custom_css() . ".c-aside { margin: 0; }\n.c-aside__note { color: var(--twd-site-color-muted); }\np:not(.c-plain) { line-height: 1.6; }\n@media (min-width: 768px) { .c-aside { padding: var(--twd-site-gap-md); } }\n";
+	$saved = TWD_SK_Css::save( $css, 'two sections', 51 );
+	twd_sk_true( ! is_wp_error( $saved ), is_wp_error( $saved ) ? $saved->get_error_message() : '' );
+	$pieces = TWD_SK_Css::pieces();
+	twd_sk_eq( 10, count( $pieces ) );
+	twd_sk_eq( array( 'c-intro' ), $pieces[0]['classes'] );
+	twd_sk_true( $pieces[8]['always'], 'p:not(.c-plain) cannot be chosen by a page class' );
+	twd_sk_eq( '.twd-sk-page p:not(.c-plain){line-height:1.6}', $pieces[8]['css'] );
+	// A page with the intro section only.
+	$page = '<section class="twd-sk-custom c-intro"><div class="c-intro__row"><p class="c-intro__card">Words</p></div></section>';
+	$sub  = TWD_SK_Css::for_page( $page );
+	twd_sk_has( '.twd-sk-page .c-intro{', $sub['css'] );
+	twd_sk_hasnt( '.twd-sk-page .c-intro__title{', $sub['css'], 'a rule for a class the page does not carry is left out, even from the same section' );
+	twd_sk_hasnt( '.c-aside', $sub['css'] );
+	twd_sk_has( '.twd-sk-page p:not(.c-plain){', $sub['css'], 'the :not() rule prints everywhere' );
+	twd_sk_eq( array( 'p:not(.c-plain)' ), $sub['always'] );
+	twd_sk_has( '@media (max-width: 767px){.twd-sk-page .c-intro__row{grid-template-columns:1fr}}.twd-sk-page p:not(.c-plain){', $sub['css'], 'one @media block, closed, no empty block for the aside, the rules in their order' );
+	twd_sk_eq( 1, substr_count( $sub['css'], '@media' ) );
+	twd_sk_eq( 10, $sub['printed'] + $sub['skipped'] );
+	twd_sk_eq( 5, $sub['printed'] );
+	// A page with no custom class prints nothing but the always rule; with a stylesheet of plain rules, nothing.
+	twd_sk_eq( '.twd-sk-page p:not(.c-plain){line-height:1.6}', TWD_SK_Css::for_page( '<section class="twd-sk-text"><p>Hello</p></section>' )['css'] );
+	twd_sk_eq( '', TWD_SK_Css::for_page( '', '.c-a { margin: 0; }' )['css'], 'nothing for a page with no class' );
+	// The report per page.
+	$report = TWD_SK_Css::page_report( array( 51 => TWD_SK_Store::get_current( 51 ), 52 => $page ) );
+	twd_sk_eq( 2, count( $report['pages'] ) );
+	twd_sk_eq( 52, $report['pages'][1]['id'] );
+	twd_sk_eq( $sub['bytes'], $report['pages'][1]['bytes'] );
+	twd_sk_true( ! $report['pages'][1]['over'] );
+	twd_sk_eq( 6000, $report['warn_at'] );
+	twd_sk_eq( array( 'p:not(.c-plain)' ), $report['always'] );
+	// Groups: c-intro and its pieces are one group, c-aside another, c-plain a third with no page.
+	$groups = TWD_SK_Css::class_groups( array( 51 => TWD_SK_Store::get_current( 51 ), 52 => $page ) );
+	$names  = array();
+	foreach ( $groups as $g ) {
+		$names[ $g['name'] ] = $g;
+	}
+	twd_sk_eq( array( 'c-intro', 'c-aside', 'c-plain' ), array_keys( $names ) );
+	twd_sk_eq( array( 'c-intro', 'c-intro__title', 'c-intro__row', 'c-intro__card', 'c-intro__pic' ), $names['c-intro']['classes'] );
+	twd_sk_eq( array( 52 ), array_map( function ( $p ) { return $p['id']; }, $names['c-intro']['pages'] ) );
+	twd_sk_eq( array(), $names['c-aside']['pages'] );
+	// Remove one rule by its listed name; an unknown name changes nothing.
+	$less = TWD_SK_Css::remove_rule( TWD_SK_Css::current()['source'], '@media (min-width: 768px) .c-aside' );
+	twd_sk_true( is_string( $less ) );
+	twd_sk_hasnt( '@media (min-width: 768px)', $less );
+	twd_sk_has( '.c-aside {', $less );
+	twd_sk_eq( null, TWD_SK_Css::remove_rule( TWD_SK_Css::current()['source'], '.c-nowhere' ) );
+	twd_sk_eq( 9, count( TWD_SK_Css::pieces( $less ) ) );
 } );
 
 twd_sk_test( 'adapt: the AI gets the section, the site stylesheet, the kit classes and the token names, must answer one JSON object, and its reply goes through the same checks; a bad colour is refused with the reply kept for fixing by hand', function () {
@@ -424,10 +510,36 @@ twd_sk_test( 'rest: /replace previews and applies for an administrator (422 with
 	$status = TWD_SK_REST::get_site_css( twd_sk_rest_req() );
 	twd_sk_eq( 1, $status['version'] );
 	twd_sk_true( isset( $status['unused'], $status['source'], $status['summary'] ) );
+	twd_sk_true( isset( $status['groups'], $status['pages']['pages'], $status['pages']['always'] ), 'the panel gets class groups and bytes per page (23g, 23h)' );
 	$back = TWD_SK_REST::post_site_css_revert( twd_sk_rest_req( array( 'version' => 0 ) ) );
 	twd_sk_eq( 2, $back['v'] );
 	twd_sk_eq( '', TWD_SK_Css::current()['source'] );
 	twd_sk_eq( 404, twd_sk_status( TWD_SK_REST::post_site_css_revert( twd_sk_rest_req( array( 'version' => 77 ) ) ) ) );
+	// Section 23h: the panel saves a whole stylesheet through the same checks (422 with every message, nothing
+	// applied), takes one unused rule out by its listed name, and the text is taken as it is ([open] is CSS).
+	$bad = TWD_SK_REST::post_site_css( twd_sk_rest_req( array( 'source' => ".c-a { color: #333; }\n.c-b { position: fixed; }" ) ) );
+	twd_sk_eq( 422, twd_sk_status( $bad ) );
+	twd_sk_eq( 2, count( $bad->get_error_data()['errors'] ) );
+	twd_sk_eq( 2, TWD_SK_Css::version(), 'nothing applied' );
+	$ok = TWD_SK_REST::post_site_css( twd_sk_rest_req( array( 'source' => ".c-a { color: var(--twd-site-color-body); }\n.c-item[open] .c-q { font-weight: 600; }\n.c-gone { margin: 0; }" ) ) );
+	twd_sk_true( ! is_wp_error( $ok ), is_wp_error( $ok ) ? $ok->get_error_message() : '' );
+	twd_sk_eq( 3, $ok['v'] );
+	twd_sk_has( '.c-item[open] .c-q {', TWD_SK_Css::current()['source'] );
+	twd_sk_has( 'Changed in the Site tab', TWD_SK_Css::versions()[0]['note'] );
+	twd_sk_eq( 0, TWD_SK_Css::versions()[0]['page'], 'a Site tab change belongs to no page' );
+	twd_sk_true( in_array( '.c-gone', $ok['status']['unused'], true ) );
+	$less = TWD_SK_REST::post_site_css( twd_sk_rest_req( array( 'remove' => '.c-gone' ) ) );
+	twd_sk_true( ! is_wp_error( $less ), is_wp_error( $less ) ? $less->get_error_message() : '' );
+	twd_sk_eq( 4, $less['v'] );
+	twd_sk_hasnt( 'c-gone', TWD_SK_Css::current()['source'] );
+	twd_sk_has( 'Removed the unused rule .c-gone', TWD_SK_Css::versions()[0]['note'] );
+	twd_sk_eq( 404, twd_sk_status( TWD_SK_REST::post_site_css( twd_sk_rest_req( array( 'remove' => '.c-gone' ) ) ) ) );
+	twd_sk_eq( 400, twd_sk_status( TWD_SK_REST::post_site_css( twd_sk_rest_req( array() ) ) ) );
+	twd_sk_eq( 413, twd_sk_status( TWD_SK_REST::post_site_css( twd_sk_rest_req( array( 'source' => str_repeat( '.c-a { margin: 0; }', 4000 ) ) ) ) ) );
+	$same = TWD_SK_REST::post_site_css( twd_sk_rest_req( array( 'source' => TWD_SK_Css::current()['source'] ) ) );
+	twd_sk_true( $same['unchanged'], 'the same text saves no version' );
+	TWD_SK_REST::post_site_css_revert( twd_sk_rest_req( array( 'version' => 2 ) ) );
+	twd_sk_eq( '', TWD_SK_Css::current()['source'] );
 	// Adapt: the AI bucket, and its limit says how long.
 	$GLOBALS['twd_stub']['hooks']['twd_ai_is_configured'] = array( function () {
 		return true;
@@ -472,4 +584,24 @@ twd_sk_test( 'editor: the page data says custom only for an administrator on a k
 	twd_sk_has( "'custom'         => (bool) \$context['is_kit_page'] && ! TWD_SK_Safe::on() && ! \$simple && \$can_manage,", $php );
 	$ed = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' );
 	twd_sk_has( "err.data = data && data.data && typeof data.data === 'object' ? data.data : null;", $ed );
+} );
+
+twd_sk_test( 'site tab js (23h) and inline js (23i): the Site stylesheet panel saves through /site/css, removes a rule, restores a version, downloads from a Blob and uploads through FileReader; the Page row and the empty-page words are in the Visual editor, the Simple editor gets only its own line; the redraw carries the stylesheet block', function () {
+	$site = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' );
+	foreach ( array( "text: 'Site stylesheet'", "api('GET', '/site/css')", "api('POST', '/site/css', body)", "api('POST', '/site/css/revert', { version: v })", "cssPost({ remove: name }", "'Check and save'", "'Undo the last stylesheet change'", "download: 'site-stylesheet.css'", 'new FileReader()', "accept: '.css,text/css'", "'Rules no page uses'", "'Where each class group is used'", "'What each page prints'", "'Versions (20 kept)'", 'buildCssSection(panel);', "'Site stylesheet': 'The rules behind custom sections" ) as $needle ) {
+		twd_sk_has( $needle, $site, $needle );
+	}
+	$inline = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
+	foreach ( array( "'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--page'", "'Add a section at the end'", "'Export this page'", 'function openAddAtEnd()', 'function pageEmpty()', "'This page has no words yet. Tell us what you would like here.'", "'This page has no sections yet. Add a section, or import a page.'", "openImport('', true)", 'openExport(true)' ) as $needle ) {
+		twd_sk_has( $needle, $inline, $needle );
+	}
+	// The Page row is built only for the one window (never the Simple editor's kids).
+	twd_sk_true( false !== strpos( $inline, "if (oneWindow) {\n\t\t\tvar pageTools" ), 'the Page row is built for the one window' );
+	$editor = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' );
+	twd_sk_has( "id: 'twd-sk-ed-empty'", $editor );
+	twd_sk_has( "'Add a section or import a page'", $editor );
+	twd_sk_has( "getElementById('twd-site-kit-inline-css')", $editor, 'the redraw brings the page\'s stylesheet block along (23g)' );
+	$css = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.css' );
+	twd_sk_has( '.twd-sk-ed .twd-sk-ed__emptybtn', $css );
+	twd_sk_has( '.twd-sk-ed[data-twd-sk-tools="off"] .twd-sk-ed__emptybtn', $css, 'the editing tools switch hides it too' );
 } );
