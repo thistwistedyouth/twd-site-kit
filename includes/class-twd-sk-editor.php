@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class TWD_SK_Editor {
 
 	const HANDLE      = 'twd-site-kit-editor';
+	const HANDLE_SNAG   = 'twd-site-kit-editor-snag';
 	const HANDLE_SITE = 'twd-site-kit-editor-site';
 	const HANDLE_SEO  = 'twd-site-kit-editor-seo';
 	const HANDLE_INLINE = 'twd-site-kit-inline';
@@ -302,6 +303,19 @@ class TWD_SK_Editor {
 		if ( ! TWD_SK_Safe::on() && $context['is_kit_page'] && ! $simple ) {
 			wp_register_script( self::HANDLE_SEO, $base . 'assets/twd-site-kit-editor-seo.js', array( self::HANDLE ), $ver, true );
 			wp_enqueue_script( self::HANDLE_SEO );
+		}
+
+		// The Snag button (section 24): administrators only, outside safe mode, in both views (an administrator viewing
+		// as the client can still press it; a real client never gets the script). The lead-up record itself is kept by
+		// the main editor script (ED.log), so the events before the window first opens are there too.
+		if ( ! TWD_SK_Safe::on() && $can_manage ) {
+			wp_register_script( self::HANDLE_SNAG, $base . 'assets/twd-site-kit-editor-snag.js', array( self::HANDLE ), $ver, true );
+			wp_localize_script( self::HANDLE_SNAG, 'TWD_SK_SNAG', array(
+				'pageTitle' => $context['page_id'] ? wp_strip_all_tags( (string) get_the_title( $context['page_id'] ) ) : '',
+				'maxLine'   => TWD_SK_Snagbook::MAX_LINE,
+				'shortcut'  => 'Alt+Shift+S',
+			) );
+			wp_enqueue_script( self::HANDLE_SNAG );
 		}
 
 		// The Site tab: administrators only, not in safe mode and not while viewing as the client. Its own script, so nobody else loads it.

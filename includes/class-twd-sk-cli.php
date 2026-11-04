@@ -18,6 +18,7 @@
  *   wp twd-sk brand [<picture-id>] [--apply]  colours from the logo, checked for contrast; --apply saves them
  *   wp twd-sk launch-check [--publish]  check the whole site before launch; --publish publishes the pages that are ready
  *   wp twd-sk snags [--status=<status>] [--type=<type>] [--format=json|markdown]  print the Tell us notes kept on this site
+ *   wp twd-sk snags list|show <id>|done <id>|wontdo <id>|open <id>|export [--site=<name>] [--format=md|json] [--all] [--mark]|mark <id>...  the administrator's Snag list with its lead-up records (section 24); export prints the client's snags.md lines
  *   wp twd-sk snag-status <id> <status>  set a note to new, seen, done or parked
  *   wp twd-sk snags-setting [on|off]     show, or switch, the Tell us module
  *   wp twd-sk upgrade [--apply] [--page=<id>]  bring pages built earlier up to date (lists first; --apply does it)
@@ -784,26 +785,57 @@ class TWD_SK_CLI {
 	}
 
 	/**
-	 * Print the Tell us notes kept on this site, newest first. Read only. Prints no web addresses.
-	 * Ideas are included (they are yours); use --type=snag for client notes only.
+	 * Print the Tell us notes kept on this site, newest first (read only, no web addresses), or work the
+	 * administrator's Snag list (section 24): list, show, done, wontdo, open, export.
+	 *
+	 * With no first word this is the Tell us command as before. Ideas are included (they are yours); use
+	 * --type=snag for client notes only.
 	 *
 	 * ## OPTIONS
 	 *
+	 * [<action>]
+	 * : The Snag list: list, show <id>, done <id>, wontdo <id>, open <id>, export, or mark <id>... (exported). Leave it out for the Tell us notes.
+	 *
+	 * [<id>...]
+	 * : The snag number for show, done, wontdo and open; one or more for mark.
+	 *
 	 * [--status=<status>]
-	 * : Only notes with this status: new, seen, done or parked.
+	 * : Tell us: new, seen, done or parked. Snag list: open (the default for list and export), done, wontdo or all.
 	 *
 	 * [--type=<type>]
-	 * : Only snag (from a client) or idea (yours).
+	 * : Tell us only: snag (from a client) or idea (yours).
 	 *
 	 * [--format=<format>]
-	 * : json (default) or markdown.
+	 * : Tell us: json (default) or markdown. Snag list and show: json (default) or md. Export: md (default) or json.
+	 *
+	 * [--site=<name>]
+	 * : Export: the client's folder name in the clients repository, for the detail file paths (clients/<name>/snags/ID.md).
+	 *
+	 * [--all]
+	 * : Export: every open snag, exported before or not (the default is only those not yet exported).
+	 *
+	 * [--mark]
+	 * : Export: mark the printed snags exported afterwards.
 	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp twd-sk snags --status=new --format=markdown
-	 *     wp twd-sk snags --format=json > notes.json
+	 *     wp twd-sk snags list
+	 *     wp twd-sk snags show 3 --format=md
+	 *     wp twd-sk snags export --site=client-name --format=md
+	 *     wp twd-sk snags export --site=client-name --mark
+	 *     wp twd-sk snags done 3
 	 */
 	public function snags( $args, $assoc_args ) {
+		$action = isset( $args[0] ) ? strtolower( (string) $args[0] ) : '';
+		if ( in_array( $action, array( 'list', 'show', 'done', 'wontdo', 'open', 'export', 'mark' ), true ) ) {
+			$this->snagbook( $action, $args, $assoc_args );
+			return;
+		}
+		if ( '' !== $action ) {
+			WP_CLI::error( 'The first word must be list, show, done, wontdo, open, export or mark (or nothing, for the Tell us notes).' );
+			return;
+		}
 		$opts = array( 'include_ideas' => true );
 		foreach ( array( 'status', 'type' ) as $key ) {
 			if ( isset( $assoc_args[ $key ] ) ) {
@@ -835,6 +867,91 @@ class TWD_SK_CLI {
 			$rows[]         = $row;
 		}
 		WP_CLI::line( wp_json_encode( $rows ) );
+	}
+
+	/** The Snag list (section 24): the administrator's snags with their lead-up records. Works in safe mode too. */
+	private function snagbook( $action, $args, $assoc_args ) {
+		$format = isset( $assoc_args['format'] ) ? strtolower( (string) $assoc_args['format'] ) : '';
+		$status = isset( $assoc_args['status'] ) ? strtolower( (string) $assoc_args['status'] ) : '';
+		if ( '' !== $status && 'all' !== $status && ! isset( TWD_SK_Snagbook::statuses()[ $status ] ) ) {
+			WP_CLI::error( 'The status must be open, done, wontdo or all.' );
+			return;
+		}
+		if ( in_array( $action, array( 'show', 'done', 'wontdo', 'open' ), true ) ) {
+			$id = isset( $args[1] ) ? (int) $args[1] : 0;
+			if ( $id <= 0 ) {
+				WP_CLI::error( 'Give the snag number: wp twd-sk snags ' . $action . ' 3' );
+				return;
+			}
+			if ( 'show' === $action ) {
+				$s = TWD_SK_Snagbook::get( $id );
+				if ( ! $s ) {
+					WP_CLI::error( 'Snag ' . $id . ' was not found.' );
+					return;
+				}
+				if ( 'md' === $format || 'markdown' === $format ) {
+					WP_CLI::line( '# Snag ' . $id . "\n\n" . TWD_SK_Snagbook::line( $s ) . "\n\n" . rtrim( TWD_SK_Snagbook::detail( $s ) ) );
+				} else {
+					WP_CLI::line( wp_json_encode( TWD_SK_Snagbook::present( $s, true ) ) );
+				}
+				return;
+			}
+			$out = TWD_SK_Snagbook::set_status( $id, $action );
+			if ( is_wp_error( $out ) ) {
+				WP_CLI::error( $out->get_error_message() );
+				return;
+			}
+			WP_CLI::success( 'Snag ' . $id . ' is now ' . TWD_SK_Snagbook::statuses()[ $action ] . '.' );
+			return;
+		}
+		if ( 'mark' === $action ) {
+			$ids = array_map( 'intval', array_slice( $args, 1 ) );
+			if ( ! $ids ) {
+				WP_CLI::error( 'Give the snag numbers to mark exported: wp twd-sk snags mark 3 4' );
+				return;
+			}
+			$n = TWD_SK_Snagbook::mark_exported( $ids );
+			WP_CLI::success( $n . ( 1 === $n ? ' snag marked' : ' snags marked' ) . ' exported.' );
+			return;
+		}
+		if ( 'list' === $action ) {
+			$rows = array();
+			foreach ( TWD_SK_Snagbook::find( array( 'status' => '' !== $status ? $status : 'open' ) ) as $s ) {
+				$rows[] = TWD_SK_Snagbook::present( $s, false );
+			}
+			if ( 'md' === $format || 'markdown' === $format ) {
+				if ( ! $rows ) {
+					WP_CLI::line( 'No snags.' );
+				}
+				foreach ( TWD_SK_Snagbook::find( array( 'status' => '' !== $status ? $status : 'open' ) ) as $s ) {
+					WP_CLI::line( TWD_SK_Snagbook::line( $s ) . ( empty( $s['exported'] ) ? '' : ' [exported]' ) );
+				}
+				return;
+			}
+			WP_CLI::line( wp_json_encode( array( 'snags' => $rows, 'counts' => TWD_SK_Snagbook::counts() ) ) );
+			return;
+		}
+		// export: the open snags not yet exported (or --all), newest first, in the client's snags.md shape.
+		$snags = TWD_SK_Snagbook::find( array(
+			'status'     => '' !== $status ? $status : 'open',
+			'unexported' => empty( $assoc_args['all'] ),
+		) );
+		$site  = isset( $assoc_args['site'] ) ? (string) $assoc_args['site'] : '';
+		if ( 'json' === $format ) {
+			$rows = array();
+			foreach ( $snags as $s ) {
+				$rows[] = TWD_SK_Snagbook::export_entry( $s, $site );
+			}
+			WP_CLI::line( wp_json_encode( array( 'site' => $site, 'snags' => $rows ) ) );
+		} else {
+			WP_CLI::line( $snags ? rtrim( TWD_SK_Snagbook::export_markdown( $snags, $site ) ) : 'Nothing to export.' );
+		}
+		if ( ! empty( $assoc_args['mark'] ) && $snags ) {
+			$n = TWD_SK_Snagbook::mark_exported( array_map( function ( $s ) {
+				return $s['id'];
+			}, $snags ) );
+			WP_CLI::success( $n . ( 1 === $n ? ' snag marked' : ' snags marked' ) . ' exported.' );
+		}
 	}
 
 	/**

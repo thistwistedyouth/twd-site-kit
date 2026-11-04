@@ -1339,6 +1339,27 @@
   height: 22px;
   margin: 2px 0 0 !important;
 }
+.twd-sk-ed .twd-sk-ed__radios.twd-sk-ed__radios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0 0 4px !important;
+  font-size: var(--twd-site-size-small) !important;
+  color: var(--twd-site-color-title) !important;
+}
+.twd-sk-ed .twd-sk-ed__radios.twd-sk-ed__radios label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font-weight: 400 !important;
+  cursor: pointer;
+}
+.twd-sk-ed .twd-sk-ed__radios.twd-sk-ed__radios input {
+  width: 22px;
+  height: 22px;
+  margin: 0 !important;
+}
 .twd-sk-ed .twd-sk-ed__step--fold.twd-sk-ed__step--fold {
   padding: 0 !important;
 }

@@ -48,6 +48,69 @@
 	};
 	var ui = {};
 
+	/* ---- the lead-up record (section 24, 30 Oct 2026) ----
+	 * From the moment this script loads it keeps, in memory only, the last 30 editor events with times: a button
+	 * pressed (its label), a tab opened, a section picked, a route called with its status code, a refusal or error
+	 * shown. The Snag button attaches the record to a snag; nothing is sent anywhere until Snag is pressed.
+	 * Never recorded: typed words (a button's label and a server message only), the HTML and CSS boxes (the
+	 * request size in bytes stands in), passwords, keys, nonces or tokens (the server scrubs anything that looks
+	 * like one as well). The editor's own script errors are kept apart (the last 10). */
+	var rec = { events: [], errors: [], last: { html: '', css: '', note: '' }, max: 30 };
+
+	function logEvent(kind, what) {
+		var text = String(what === undefined || what === null ? '' : what).replace(/\s+/g, ' ').trim();
+		if (text.length > 200) {
+			text = text.slice(0, 197) + '...';
+		}
+		rec.events.push({ t: Date.now() / 1000, k: String(kind).slice(0, 20), w: text });
+		if (rec.events.length > rec.max) {
+			rec.events.splice(0, rec.events.length - rec.max);
+		}
+	}
+
+	window.addEventListener('error', function (e) {
+		var file = e && e.filename ? String(e.filename) : '';
+		if (file.indexOf('twd-site-kit') === -1) {
+			return;
+		}
+		var line = file.split('?')[0].split('/').pop() + ':' + (e.lineno || 0);
+		rec.errors.push(String(e.message || 'error').slice(0, 160) + ' @ ' + line);
+		if (rec.errors.length > 10) {
+			rec.errors.shift();
+		}
+		logEvent('error', e.message + ' @ ' + line);
+	});
+
+	// Every press inside the editor (the window, the editing card, the Your Edits menu, the pencils) by its label.
+	document.addEventListener('click', function (e) {
+		var t = e.target && e.target.closest ? e.target.closest('button, a') : null;
+		if (!t || !t.closest('#twd-sk-ed, [id^="wp-admin-bar-twd-sk"], #twd-sk-tellus')) {
+			return;
+		}
+		var label = (t.textContent || '').replace(/\s+/g, ' ').trim() || (t.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
+		if (label) {
+			logEvent('press', label.slice(0, 60));
+		}
+	}, true);
+
+	var lastShown = '';
+	if (window.MutationObserver) {
+		new MutationObserver(function (list) {
+			list.forEach(function (m) {
+				var node = m.target && m.target.nodeType === 3 ? m.target.parentNode : m.target;
+				var box = node && node.closest ? node.closest('[role="status"], [aria-live]') : null;
+				if (!box) {
+					return;
+				}
+				var text = (box.textContent || '').replace(/\s+/g, ' ').trim();
+				if (text && text !== lastShown) {
+					lastShown = text;
+					logEvent('shown', text);
+				}
+			});
+		}).observe(root, { subtree: true, childList: true, characterData: true });
+	}
+
 	/* ---- small helpers ---- */
 
 	function el(tag, props, kids) {
@@ -104,6 +167,20 @@
 		if (body) {
 			opts.body = JSON.stringify(body);
 		}
+		var sent = opts.body ? opts.body.length : 0;
+		var started = Date.now();
+		// The last Preview (the candidate HTML and CSS) and What changed note, for a snag that asks for them.
+		if (body && typeof body === 'object' && /\/(preview|replace|import|adapt)$/.test(path)) {
+			if (typeof body.html === 'string') {
+				rec.last.html = body.html;
+			}
+			if (typeof body.css === 'string') {
+				rec.last.css = body.css;
+			}
+			if (typeof body.text === 'string' && /\/import$/.test(path)) {
+				rec.last.html = body.text;
+			}
+		}
 		return fetch(cfg.restUrl + path, opts).then(function (res) {
 			return res.text().then(function (text) {
 				var data = null;
@@ -111,6 +188,10 @@
 					data = text ? JSON.parse(text) : null;
 				} catch (e) {
 					data = null;
+				}
+				logEvent('route', method + ' ' + path.split('?')[0] + ' ' + res.status + ' in ' + (Date.now() - started) + ' ms' + (sent ? ', sent ' + sent + ' bytes' : ''));
+				if (data && typeof data.what_changed === 'string' && data.what_changed) {
+					rec.last.note = data.what_changed;
 				}
 				if (!res.ok) {
 					var err = new Error(friendly(res.status, data));
@@ -123,6 +204,7 @@
 				return data;
 			});
 		}, function () {
+			logEvent('route', method + ' ' + path.split('?')[0] + ' no reply');
 			throw new Error('Could not reach the site. Check your connection and try again.');
 		});
 	}
@@ -348,7 +430,14 @@
 				switchView('client');
 			});
 		}
-		var header = el('div', { className: 'twd-sk-ed__header' }, [title, el('div', { className: 'twd-sk-ed__winbtns' }, [viewBtn, winBtn, fullBtn, minBtn, closeBtn])]);
+		var extra = ((window.TWD_SK_ED && window.TWD_SK_ED.winButtons) || []).map(function (make) {
+			try {
+				return make();
+			} catch (err) {
+				return null;
+			}
+		});
+		var header = el('div', { className: 'twd-sk-ed__header' }, [title, el('div', { className: 'twd-sk-ed__winbtns' }, extra.concat([viewBtn, winBtn, fullBtn, minBtn, closeBtn]))]);
 		var resize = el('div', { className: 'twd-sk-ed__resize', 'aria-hidden': 'true', title: 'Drag to resize' });
 		// Section 23f: the bottom edge resizes the height on its own (the corner does both).
 		var resizeB = el('div', { className: 'twd-sk-ed__resize-b', 'aria-hidden': 'true', title: 'Drag to change the height' });
@@ -830,6 +919,7 @@
 			show(e.panel, on);
 		});
 		state.tab = name;
+		logEvent('tab', name);
 		if (oneWindow && state.built) {
 			applyWindow();
 			if (name === 'page') {
@@ -2767,6 +2857,30 @@
 		simple: simple,
 		switchView: switchView,
 		formatDate: formatDate,
+		// The lead-up record (section 24): add an event, read a copy, the editor's own script errors, the last preview.
+		log: logEvent,
+		record: function () {
+			return rec.events.slice();
+		},
+		scriptErrors: function () {
+			return rec.errors.slice();
+		},
+		lastPreview: function () {
+			return { html: rec.last.html, css: rec.last.css, note: rec.last.note };
+		},
+		// Where the window is, in words, for a snag's context.
+		windowState: function () {
+			if (!state.built || ui.overlay.hasAttribute('hidden')) {
+				return win.minimised ? 'minimised' : 'closed';
+			}
+			if (win.minimised) {
+				return 'minimised';
+			}
+			var mode = win.mode === 'left' || win.mode === 'right' ? 'docked ' + win.mode : (win.mode === 'free' ? 'floating' : 'centred');
+			return mode + (win.full ? ', full height' : '') + (state.tab ? ', tab ' + state.tab : '');
+		},
+		// Buttons another editor script puts in the window header (the Snag button): functions that make a button.
+		winButtons: [],
 		// The page version the editor works from, set by a script that saved, undid or restored without a reload.
 		setVersion: function (v) {
 			state.version = parseInt(v, 10) || 0;

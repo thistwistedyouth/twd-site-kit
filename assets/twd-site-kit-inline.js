@@ -3684,6 +3684,20 @@
 		}
 		var sec = index === undefined ? null : document.querySelector('[data-twd-sk-sec="' + parseInt(index, 10) + '"]');
 		if (S.view && sec) {
+			// The lead-up record (section 24): the section picked, and the one a snag is about.
+			var comps = (cfg.look && cfg.look.components) || {};
+			var kinds = Array.prototype.map.call(sec.classList, function (c) {
+				return c.indexOf('twd-sk-') === 0 && c.indexOf('__') === -1 && c.indexOf('--') === -1 ? c.replace('twd-sk-', '') : '';
+			}).filter(function (k) {
+				return k && k !== 'custom' && k.indexOf('tone-') !== 0 && k !== 'inner';
+			});
+			var kindClass = kinds.filter(function (k) {
+				return !!comps[k.replace(/-/g, '_')];
+			})[0] || kinds[0] || (sec.classList.contains('twd-sk-custom') ? 'custom' : '');
+			ED.currentSection = { i: parseInt(index, 10), kind: kindClass };
+			if (typeof ED.log === 'function') {
+				ED.log('section', 'section ' + ED.currentSection.i + (ED.currentSection.kind ? ' (' + ED.currentSection.kind + ')' : ''));
+			}
 			sec.scrollIntoView({ block: 'start' });
 			dropCursor(document.body);
 			S.last = sec;

@@ -391,6 +391,10 @@
 .twd-sk-ed__link { color: $color-accent-text; font-size: $size-small; text-decoration: underline; }
 .twd-sk-ed__check { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; margin: 8px 0 0; color: $color-title; font-size: $size-small; cursor: pointer; }
 .twd-sk-ed__check input { flex: 0 0 auto; width: 22px; height: 22px; margin: 2px 0 0; }
+/* The Snag box's category choice (0.15.0, section 24): three radio buttons in a row. */
+.twd-sk-ed__radios { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0 0 4px; font-size: $size-small; color: $color-title; }
+.twd-sk-ed__radios label { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-weight: 400; cursor: pointer; }
+.twd-sk-ed__radios input { width: 22px; height: 22px; margin: 0; }
 
 /* ---- fold-outs ---- */
 .twd-sk-ed__step--fold { padding: 0; }

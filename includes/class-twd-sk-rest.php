@@ -363,6 +363,24 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_site_css_revert' ),
 			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 		) );
+		// The administrator's Snag button (section 24): the list, a new snag with its lead-up record, a status.
+		register_rest_route( self::ROUTE_NS, '/site/snagbook', array(
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'get_site_snagbook' ),
+				'permission_callback' => array( __CLASS__, 'can_read_site' ),
+			),
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_site_snagbook' ),
+				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+			),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/snagbook/(?P<sid>\d+)/status', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_snagbook_status' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
 		// Site changes (0.15.0): the settings history with Undo and Restore. Administrators only.
 		register_rest_route( self::ROUTE_NS, '/site/history', array(
 			'methods'             => 'GET',
@@ -947,6 +965,52 @@ class TWD_SK_REST {
 			return self::error( $out->get_error_code(), $out->get_error_message(), 422, (array) $out->get_error_data() );
 		}
 		return $out + array( 'status' => self::site_css_report() );
+	}
+
+	/**
+	 * The Snag list (section 24): every snag newest first, with the lead-up record and context; the included
+	 * Preview texts only for the one named by ?id= (they can be large). Administrators only.
+	 */
+	public static function get_site_snagbook( $request ) {
+		$one  = (int) $request->get_param( 'id' );
+		$rows = array();
+		foreach ( TWD_SK_Snagbook::find() as $s ) {
+			$rows[] = TWD_SK_Snagbook::present( $s, true, $one === (int) $s['id'] );
+		}
+		return array(
+			'snags'      => $rows,
+			'counts'     => TWD_SK_Snagbook::counts(),
+			'categories' => TWD_SK_Snagbook::categories(),
+			'statuses'   => TWD_SK_Snagbook::statuses(),
+		);
+	}
+
+	/** A new snag: the line, the category, the lead-up record and the context the script gathered. */
+	public static function post_site_snagbook( $request ) {
+		$in = array();
+		foreach ( array( 'text', 'category', 'events', 'context', 'include', 'preview_html', 'preview_css', 'what_changed' ) as $key ) {
+			$in[ $key ] = $request->get_param( $key );
+		}
+		$out = TWD_SK_Snagbook::create( $in, get_current_user_id() );
+		if ( is_wp_error( $out ) ) {
+			return self::error( $out->get_error_code(), $out->get_error_message(), 400 );
+		}
+		return array(
+			'saved'  => TWD_SK_Snagbook::present( $out, false ),
+			'counts' => TWD_SK_Snagbook::counts(),
+		);
+	}
+
+	public static function post_site_snagbook_status( $request ) {
+		$status = $request->get_param( 'status' );
+		$out    = TWD_SK_Snagbook::set_status( (int) $request->get_param( 'sid' ), is_string( $status ) ? $status : '' );
+		if ( is_wp_error( $out ) ) {
+			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_snag_missing' === $out->get_error_code() ? 404 : 400 );
+		}
+		return array(
+			'saved'  => TWD_SK_Snagbook::present( $out, false ),
+			'counts' => TWD_SK_Snagbook::counts(),
+		);
 	}
 
 	/** Back to an earlier stylesheet version (0 is none). Pages are not touched: a page's own Undo does that. */

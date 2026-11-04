@@ -685,6 +685,7 @@ require_once ABSPATH . 'includes/class-twd-sk-preview.php';
 require_once ABSPATH . 'includes/class-twd-sk-rest.php';
 require_once ABSPATH . 'includes/class-twd-sk-editor.php';
 require_once ABSPATH . 'includes/class-twd-sk-snags.php';
+require_once ABSPATH . 'includes/class-twd-sk-snagbook.php';
 require_once ABSPATH . 'includes/class-twd-sk-guard.php';
 require_once ABSPATH . 'includes/class-twd-sk-style.php';
 require_once ABSPATH . 'includes/class-twd-sk-modules.php';
