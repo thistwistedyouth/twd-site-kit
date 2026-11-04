@@ -117,7 +117,7 @@ class TWD_SK_Snagbook {
 	 */
 	public static function scrub( $value ) {
 		$value = (string) $value;
-		$value = preg_replace( '/\b(pass(?:word|wd|phrase)?|pwd|api[_ -]?key|secret|token|nonce|bearer|authorization|cookie)\b(\s*[:=]\s*|\s+)\S+/i', '$1: (removed)', $value );
+		$value = preg_replace( '/\b(pass(?:word|wd|phrase)?|pwd|api[_ -]?key|secret|token|nonce|bearer|authorization|cookie)\b(\s*[:=]\s*|\s+)(?:(?:bearer|basic)\s+)?\S+/i', '$1: (removed)', $value );
 		$value = preg_replace( '/([?&](?:twd_sk_preview|_wpnonce|nonce|token|key)=)[^&\s"\']+/i', '$1(removed)', $value );
 		$value = preg_replace( '/\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{32,}\b/i', '(removed)', $value );
 		return $value;
