@@ -1153,7 +1153,7 @@
 		ui.replace = toolButton('Replace this section', 'Replace this section (or the page) with your own HTML and CSS', function () {
 			openReplace(null);
 		});
-		ui.advanced = toolButton('Advanced', 'The design tools: Look, Move up, Move down, Add section after, Delete section, Export', toggleAdvanced);
+		ui.advanced = toolButton('Advanced', 'The design tools: Look, Move up, Move down, Add section after, Export', toggleAdvanced);
 		ui.advanced.setAttribute('aria-expanded', 'false');
 		buildExport();
 		// Replace this section with HTML.
@@ -1670,12 +1670,18 @@
 			if (cfg.ai) {
 				sectionRow.push(ui.describe);
 			}
-			sectionRow.push(ui.replace, ui.importBtn, ui.advanced);
+			// 4 Nov 2026: Delete section is one click in this row (it still asks once, and Put back or Undo brings the section
+			// back). It sat behind Advanced; the owner asked for it to be direct. It shows only for a section the server would
+			// let go (updateContext), and it is no longer repeated in Advanced.
+			sectionRow.push(ui.replace, ui.importBtn, ui.remove, ui.advanced);
 		}
+		var advancedTools = CUSTOM ? sectionTools.filter(function (b) {
+			return b !== ui.remove;
+		}) : sectionTools;
 		var sectionGroups = CUSTOM
 			? [
 				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section', role: 'group', 'aria-label': 'This section' }, sectionRow),
-				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section twd-sk-ed__inlinetools--advanced', role: 'group', 'aria-label': 'Design tools for this section' }, sectionTools.concat([ui.exportBtn]))
+				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section twd-sk-ed__inlinetools--advanced', role: 'group', 'aria-label': 'Design tools for this section' }, advancedTools.concat([ui.exportBtn]))
 			]
 			: [el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section', role: 'group', 'aria-label': 'This section' }, sectionTools)];
 		if (oneWindow) {
@@ -1724,6 +1730,9 @@
 		if (oneWindow) {
 			show(ui.putBack, false);
 		}
+		if (CUSTOM) {
+			show(ui.remove, false);
+		}
 	}
 
 	// What was clicked, so the one window shows the right tools: words, a picture, a section, or nothing yet.
@@ -1770,6 +1779,11 @@
 		}
 		show(ui.viewHint, !!(S.view && kind === 'section'));
 		show(ui.allSections, !!S.view);
+		// Delete section in the administrator's section row: offered only for a section the server numbers as removable
+		// (data-twd-sk-r), so never for the section holding the page's main heading and never for the safety notice.
+		if (CUSTOM && ui.remove) {
+			show(ui.remove, !!(sec && sec.hasAttribute('data-twd-sk-r')));
+		}
 		if (kind === 'words') {
 			refreshStyleRow();
 		}

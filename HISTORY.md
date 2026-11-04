@@ -2,6 +2,17 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 4 Nov 2026 (evening): Delete section moves out of Advanced into the administrator's section row
+
+The owner noticed that, editing a page as an administrator, there was no direct way to delete a section. There was one, but section 20 (Replace and Adapt) had made the administrator's section row "Describe a change, Replace this section, Import a page, Advanced" and put the older design tools, Delete section among them, behind Advanced. Decisions:
+
+- **Move the existing button; do not add a second one.** Two buttons with the same label in the same window would be confusing, and they would have to be kept in step. `ui.remove` is the one Delete section button; for an administrator it now sits in the row and is left out of the Advanced group. Nothing about what it does changes, so the ask-first card, Put back, Cancel, Save and Undo are the paths that were already tested.
+- **The browser mirrors the server's rule instead of keeping its own.** "Never for the title section or the safety notice" is already decided on the server: `TWD_SK_Inline::removables()` does not number a section that holds the h1 or a locked section, so those never carry `data-twd-sk-r`. The button shows only while the clicked section carries that mark. A second list of "sections that cannot go" in the script would drift from the server's; the server also refuses an unknown number, so this is a convenience, not the safety.
+- **It is hidden, not disabled, when it does not apply**, like Put back, so the row shows only what can be done on the section clicked.
+- **Clients are unchanged, and the gap is reported rather than filled.** The Simple editor has no delete of any kind (nor does it have section tools). That is how section 19 built it (words, pictures, Save, Undo, History, Tell us). Letting a client delete a section is a different decision from giving an administrator a shortcut, so it was left for the owner.
+- **Found while looking at the staging site as a visitor:** the responsive pictures change (`srcset`) does not fire for a picture stored as a resized address, because `attachment_url_to_postid()` only matches the original file's address. That is the address the Visual editor stores (the large size), so the change would miss exactly the pictures people place themselves. The same lookup is what supplies width, height and the keep-in-view position, which are missing for those pictures too. Not fixed: it belongs with the owner's srcset decision, and a fix (look the original up from the address without its `-WIDTHxHEIGHT` part, and use that size's own dimensions) needs a test first.
+- **Staging login.** The system refused to make logged-in session cookies for the staging users for a browser look, so the signed-in editor was not seen. Do not try to get round that: a person signs in in the browser pane, or follows the test script.
+
 ## 4 Nov 2026 (later): the Snag button comes into the branch as it ran, then is tested and hardened (section 24 of the owner's plan)
 
 The code was written in an earlier session and installed by hand on the pilot staging site as test builds 61 to 65 on 30 Oct, but never committed. On 4 Nov the owner said yes to bringing it in. What was decided, and why:
