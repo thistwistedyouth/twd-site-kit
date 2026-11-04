@@ -569,7 +569,7 @@ twd_sk_test( 'rest: /replace previews and applies for an administrator (422 with
 twd_sk_test( 'editor: the page data says custom only for an administrator on a kit page outside safe mode and the Simple editor; the inline script has the panels and the Advanced fold, and the Simple editor path is untouched', function () {
 	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-inline.js' );
 	twd_sk_has( "var CUSTOM = !!cfg.custom && oneWindow;", $js );
-	foreach ( array( "toolButton('Describe a change'", "toolButton('Replace this section'", "toolButton('Advanced'", "'/pages/' + cfg.pageId + '/replace'", "'/pages/' + cfg.pageId + '/adapt'", "twd-sk-ed__inlinetools--advanced", "data-twd-sk-adv", "openSized(getUrl(), 'Phone', 390, 844)", "openSized(getUrl(), 'Desktop', 1280, 900)" ) as $needle ) {
+	foreach ( array( "toolButton('Describe a change'", "toolButton('Replace this section'", "toolButton('Advanced'", "'/pages/' + cfg.pageId + '/replace'", "'/pages/' + cfg.pageId + '/adapt'", "twd-sk-ed__inlinetools--actions", "data-twd-sk-adv", "openSized(getUrl(), 'Phone', 390, 844)", "openSized(getUrl(), 'Desktop', 1280, 900)" ) as $needle ) {
 		twd_sk_has( $needle, $js );
 	}
 	// The Simple editor's panel is built by simpleKids() and never sees the custom tools.

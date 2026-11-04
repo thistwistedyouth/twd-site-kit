@@ -393,6 +393,9 @@
 		ED.winButtons.push(function () {
 			var b = el('button', { type: 'button', className: 'twd-sk-ed__close twd-sk-ed__winbtn twd-sk-ed__snagbtn', text: 'Snag', 'aria-keyshortcuts': SHORTCUT, title: 'Note what went wrong or what you want, with what led up to it (' + SHORTCUT + ')' });
 			b.addEventListener('click', open);
+			if (ED.iconize) {
+				ED.iconize(b, 'snag');
+			}
 			return b;
 		});
 	}

@@ -148,6 +148,80 @@
 		return b;
 	}
 
+	/* Small line icons for the window's buttons (4 Nov 2026). Drawn with DOM calls only: the namespace for them comes
+	   from the server (cfg.svgNs) and is never typed in this file, and without it a button simply keeps its words.
+	   Each icon is one path on a 24 by 24 grid, drawn as a line in the button's own text colour. */
+	var ICONS = {
+		close: 'M6 6l12 12M18 6L6 18',
+		minimise: 'M5 18h14',
+		snag: 'M6 21V4M6 5h11l-2 4 2 4H6',
+		eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',
+		window: 'M3 5h18v14H3zM15 5v14',
+		expand: 'M8 4H4v4M16 4h4v4M8 20H4v-4M16 20h4v-4',
+		up: 'M12 19V5M6 11l6-6 6 6',
+		down: 'M12 5v14M6 13l6 6 6-6',
+		plus: 'M12 5v14M5 12h14',
+		bin: 'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6',
+		link: 'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1',
+		look: 'M3 4h18v6H3zM3 14h8v6H3zM15 14h6v6h-6z'
+	};
+
+	function icon(name) {
+		var ns = cfg.svgNs;
+		var d = ICONS[name];
+		if (!ns || !d || !document.createElementNS) {
+			return null;
+		}
+		var svg = document.createElementNS(ns, 'svg');
+		svg.setAttribute('viewBox', '0 0 24 24');
+		svg.setAttribute('width', '18');
+		svg.setAttribute('height', '18');
+		svg.setAttribute('fill', 'none');
+		svg.setAttribute('stroke', 'currentColor');
+		svg.setAttribute('stroke-width', '2');
+		svg.setAttribute('stroke-linecap', 'round');
+		svg.setAttribute('stroke-linejoin', 'round');
+		svg.setAttribute('aria-hidden', 'true');
+		svg.setAttribute('focusable', 'false');
+		var path = document.createElementNS(ns, 'path');
+		path.setAttribute('d', d);
+		svg.appendChild(path);
+		return svg;
+	}
+
+	// Turn a text button into an icon button. Its words stay (in a span the stylesheet shows on a phone) and the button
+	// keeps a label and a tooltip, so a screen reader and a hover both still say what it does.
+	function iconize(btn, name) {
+		var svg = icon(name);
+		if (!svg || !btn) {
+			return btn;
+		}
+		var words = btn.textContent;
+		btn.textContent = '';
+		btn.appendChild(svg);
+		btn.appendChild(el('span', { className: 'twd-sk-ed__icotext', text: words }));
+		btn.className += ' twd-sk-ed__icobtn';
+		if (!btn.getAttribute('aria-label')) {
+			btn.setAttribute('aria-label', words);
+		}
+		if (!btn.getAttribute('title')) {
+			btn.setAttribute('title', words);
+		}
+		return btn;
+	}
+
+	// Change a button's words and keep its icon; the label and the tooltip follow.
+	function setWords(btn, words, hint) {
+		var span = btn.querySelector('.twd-sk-ed__icotext');
+		if (!span) {
+			btn.textContent = words;
+			return;
+		}
+		span.textContent = words;
+		btn.setAttribute('aria-label', words);
+		btn.setAttribute('title', hint ? words + '. ' + hint : words);
+	}
+
 	function show(node, yes) {
 		if (yes) {
 			node.removeAttribute('hidden');
@@ -429,7 +503,13 @@
 			viewBtn.addEventListener('click', function () {
 				switchView('client');
 			});
+			iconize(viewBtn, 'eye');
 		}
+		// The window's own header buttons are small icons (the words stay for screen readers, tooltips and phones).
+		iconize(closeBtn, 'close');
+		iconize(minBtn, 'minimise');
+		iconize(winBtn, 'window');
+		iconize(fullBtn, 'expand');
 		var extra = ((window.TWD_SK_ED && window.TWD_SK_ED.winButtons) || []).map(function (make) {
 			try {
 				return make();
@@ -626,10 +706,10 @@
 			d.style.width = clamp(win.w || 480, 320, Math.max(320, window.innerWidth - 40)) + 'px';
 		}
 		if (ui.winBtn) {
-			ui.winBtn.textContent = mode === 'centre' ? 'Window' : (mode === 'free' ? 'Window: floating' : 'Window: ' + mode);
+			setWords(ui.winBtn, mode === 'centre' ? 'Window' : (mode === 'free' ? 'Window: floating' : 'Window: ' + mode), 'Dock the editor to a side, or let it float');
 		}
 		if (ui.fullBtn) {
-			ui.fullBtn.textContent = full ? 'Normal height' : 'Full height';
+			setWords(ui.fullBtn, full ? 'Normal height' : 'Full height', 'Fill the screen from top to bottom at this width; press again to go back');
 			ui.fullBtn.setAttribute('aria-pressed', full ? 'true' : 'false');
 			ui.fullBtn.disabled = mode === 'left' || mode === 'right';
 		}
@@ -2881,6 +2961,9 @@
 		},
 		// Buttons another editor script puts in the window header (the Snag button): functions that make a button.
 		winButtons: [],
+		icon: icon,
+		iconize: iconize,
+		setWords: setWords,
 		// The page version the editor works from, set by a script that saved, undid or restored without a reload.
 		setVersion: function (v) {
 			state.version = parseInt(v, 10) || 0;

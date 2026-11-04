@@ -12,13 +12,14 @@ function twd_sk_ds_fn( $js, $name ) {
 	return substr( $body, 0, strpos( $body, "\n\t}\n" ) );
 }
 
-twd_sk_test( 'delete section: the administrator\'s section row holds it directly, after Import a page and before Advanced, and Advanced no longer repeats it', function () {
+twd_sk_test( 'delete section: the administrator\'s section tools hold it directly, as an icon beside Look and the moves, with no Advanced fold to open first', function () {
 	$js = twd_sk_ds_js();
-	twd_sk_has( 'sectionRow.push(ui.replace, ui.importBtn, ui.remove, ui.advanced);', $js );
-	twd_sk_has( 'var advancedTools = CUSTOM ? sectionTools.filter(function (b) {', $js );
-	twd_sk_has( 'return b !== ui.remove;', $js );
-	twd_sk_has( "'Design tools for this section' }, advancedTools.concat([ui.exportBtn]))", $js );
-	twd_sk_hasnt( 'Add section after, Delete section, Export', $js, 'the Advanced button\'s help no longer lists it' );
+	twd_sk_has( '[ui.look, ui.moveUp, ui.moveDown, ui.addSec, ui.remove]', $js, 'the design tools, Delete section among them' );
+	twd_sk_has( "[el('span', { className: 'twd-sk-ed__grouplabel', text: 'This section' })].concat(sectionTools)", $js, 'in the group labelled This section' );
+	twd_sk_has( 'sectionRow.push(ui.replace, ui.importBtn, ui.exportBtn);', $js, 'the words actions are their own row' );
+	twd_sk_hasnt( 'advancedTools', $js, 'nothing filters it out of a hidden group any more' );
+	twd_sk_hasnt( 'sectionRow.push(ui.replace, ui.importBtn, ui.remove', $js );
+	twd_sk_has( "'Delete section': 'bin'", $js, 'drawn as a bin, with its words kept for a phone and a screen reader' );
 	// It is the same button as before, so the label and the ask-first card are the ones the owner already knows.
 	twd_sk_has( "toolButton('Delete section', 'Delete the section the cursor is in (it asks first; Put back or Undo brings it back)', deleteSection)", $js );
 } );

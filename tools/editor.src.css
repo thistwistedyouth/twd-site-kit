@@ -217,6 +217,28 @@
 /* Section 20 (Base, Adapt, Replace): the section row is Describe a change and Replace this section; Advanced opens
    the design tools (Look, Move up, Move down, Add section after, Delete section) that were the row before. */
 .twd-sk-ed__inlinebar--inwin:not([data-twd-sk-adv="on"]) .twd-sk-ed__inlinetools--advanced { display: none; }
+/* 4 Nov 2026, step 1 of a friendlier window: groups say what they change, the everyday tools are small icons with their
+   words kept for a phone, a screen reader and the tooltip, and a computer gets compact buttons. A phone keeps every tap
+   target large and shows the words beside the icons. */
+.twd-sk-ed__grouplabel { flex: 0 0 auto; align-self: center; margin: 0 4px 0 0; font-size: $size-small; font-weight: 600; color: $color-muted; }
+.twd-sk-ed__icobtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.twd-sk-ed__icobtn svg { flex: 0 0 auto; }
+.twd-sk-ed__header .twd-sk-ed__icobtn .twd-sk-ed__icotext { position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; border: 0; clip-path: inset(50%); white-space: nowrap; }
+@media (min-width: 701px) {
+  .twd-sk-ed__icobtn .twd-sk-ed__icotext { position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; border: 0; clip-path: inset(50%); white-space: nowrap; }
+  .twd-sk-ed__dialog--compact .twd-sk-ed__header { padding: 8px 12px; }
+  .twd-sk-ed__dialog--compact .twd-sk-ed__title { font-size: $size-body; white-space: nowrap; }
+  .twd-sk-ed__dialog--compact .twd-sk-ed__winbtns { flex-wrap: nowrap; gap: 4px; }
+  .twd-sk-ed__dialog--compact .twd-sk-ed__close { position: relative; min-width: 34px; min-height: 34px; padding: 0 8px; }
+  .twd-sk-ed__dialog--compact .twd-sk-ed__tab { min-height: 38px; padding: 6px 12px; }
+  .twd-sk-ed__dialog--compact .twd-sk-ed__inlinetools { align-items: center; gap: 6px; }
+  .twd-sk-ed__dialog--compact .twd-sk-ed__tool { position: relative; min-width: 34px; min-height: 34px; padding: 0 10px; }
+  .twd-sk-ed__dialog--compact .twd-sk-ed__tool--ico { padding: 0 6px; }
+  .twd-sk-ed__dialog--compact .twd-sk-ed__stylerow .twd-sk-ed__styleselect { flex: 1 1 45%; width: auto; min-height: 34px; padding: 4px 8px; font-size: $size-small; }
+  .twd-sk-ed__dialog--compact .twd-sk-ed__viewselect { min-height: 34px; padding: 4px 8px; font-size: $size-small; }
+  .twd-sk-ed__dialog--compact .twd-sk-ed__inlineactions { gap: 6px; padding: 6px 0 2px; }
+  .twd-sk-ed__dialog--compact .twd-sk-ed__inlineactions .twd-sk-ed__btn { min-height: 34px; padding: 4px 14px; }
+}
 /* Section 23f: full height (from the admin bar to the bottom of the screen) and a height the person dragged lift the
    70 percent cap; the body scrolls inside and the Save and Undo row stays in view (it is sticky above). The bottom
    edge is a second resize handle (height only). */

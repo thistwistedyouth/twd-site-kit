@@ -1371,7 +1371,7 @@
 	}
 
 	function buildImport() {
-		ui.importBtn = toolButton('Import a page', 'Paste a whole reply from an AI: the HTML, the CSS and its note are read out and checked, then a preview', function () {
+		ui.importBtn = toolButton('Import into this section', 'Paste a whole reply from an AI: the HTML, the CSS and its note are read out and checked, then a preview. You choose whether it goes into this section, this page or a new draft page', function () {
 			openImport('');
 		});
 		ui.impHead = el('p', { className: 'twd-sk-ed__inlinehead', tabindex: '-1' });
@@ -1463,7 +1463,7 @@
 	}
 
 	function buildExport() {
-		ui.exportBtn = toolButton('Export', 'Save this section or the page as a standalone file, or as a remix brief for an AI', openExport);
+		ui.exportBtn = toolButton('Export section', 'Save this section or the page as a standalone file, or as a remix brief for an AI', openExport);
 		ui.exHead = el('p', { className: 'twd-sk-ed__inlinehead', tabindex: '-1' });
 		ui.exSection = el('input', { type: 'radio', name: 'twd-sk-ex-target', id: 'twd-sk-ex-section', value: 'section', checked: '' });
 		ui.exPage = el('input', { type: 'radio', name: 'twd-sk-ex-target', id: 'twd-sk-ex-page', value: 'page' });
@@ -1488,6 +1488,10 @@
 
 	/* ---- the toolbar ---- */
 
+	// 4 Nov 2026: in the one window the everyday text and section tools are small icons (their words stay for a phone, a
+	// screen reader and the tooltip). Everything else, and the classic bar and the Simple editor, keep their words.
+	var TOOL_ICONS = { 'Look': 'look', 'Move up': 'up', 'Move down': 'down', 'Add section after': 'plus', 'Delete section': 'bin', 'Delete this text': 'bin', 'Link': 'link' };
+
 	function toolButton(label, title, onClick) {
 		var b = el('button', { type: 'button', className: 'twd-sk-ed__tool', text: label, title: title, 'aria-label': title });
 		// Keep the selection in the text when a tool is pressed.
@@ -1495,6 +1499,10 @@
 			e.preventDefault();
 		});
 		b.addEventListener('click', onClick);
+		if (oneWindow && !SIMPLE && TOOL_ICONS[label] && ED.iconize) {
+			ED.iconize(b, TOOL_ICONS[label]);
+			b.className += ' twd-sk-ed__tool--ico';
+		}
 		return b;
 	}
 
@@ -1658,6 +1666,10 @@
 		var words = oneWindow
 			? el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words', role: 'group', 'aria-label': 'Words' }, [ui.bold, ui.italic, ui.link])
 			: el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words', role: 'group', 'aria-label': 'Words' }, [ui.bold, ui.italic, ui.link, ui.quote, ui.note, ui.heading]);
+		if (oneWindow) {
+			// 4 Nov 2026: each group says what it changes.
+			words.insertBefore(el('span', { className: 'twd-sk-ed__grouplabel', text: 'This text' }), words.firstChild);
+		}
 		var wordsMore = el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words twd-sk-ed__inlinetools--more', role: 'group', 'aria-label': 'More for these words' }, [ui.quote, ui.note, ui.heading, ui.deleteText]);
 		var sectionTools = oneWindow
 			? (kinds.length ? [ui.look, ui.moveUp, ui.moveDown, ui.addSec, ui.remove] : [ui.look, ui.moveUp, ui.moveDown, ui.remove])
@@ -1670,22 +1682,21 @@
 			if (cfg.ai) {
 				sectionRow.push(ui.describe);
 			}
-			// 4 Nov 2026: Delete section is one click in this row (it still asks once, and Put back or Undo brings the section
-			// back). It sat behind Advanced; the owner asked for it to be direct. It shows only for a section the server would
-			// let go (updateContext), and it is no longer repeated in Advanced.
-			sectionRow.push(ui.replace, ui.importBtn, ui.remove, ui.advanced);
+			// 4 Nov 2026: the Advanced toggle is gone. The design tools (Look, Move up, Move down, Add section after, Delete
+			// section) are small icons in their own group under "This section", always in view, and this row holds the words
+			// actions: Describe a change, Replace this section, Import into this section, Export. Delete section is one click
+			// (it still asks once; Put back or Undo brings the section back) and shows only for a section the server would let
+			// go (updateContext).
+			sectionRow.push(ui.replace, ui.importBtn, ui.exportBtn);
 		}
-		var advancedTools = CUSTOM ? sectionTools.filter(function (b) {
-			return b !== ui.remove;
-		}) : sectionTools;
 		var sectionGroups = CUSTOM
 			? [
-				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section', role: 'group', 'aria-label': 'This section' }, sectionRow),
-				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section twd-sk-ed__inlinetools--advanced', role: 'group', 'aria-label': 'Design tools for this section' }, advancedTools.concat([ui.exportBtn]))
+				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section', role: 'group', 'aria-label': 'This section' }, [el('span', { className: 'twd-sk-ed__grouplabel', text: 'This section' })].concat(sectionTools)),
+				el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section twd-sk-ed__inlinetools--actions', role: 'group', 'aria-label': 'Ask the AI or replace this section' }, sectionRow)
 			]
 			: [el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--section', role: 'group', 'aria-label': 'This section' }, sectionTools)];
 		if (oneWindow) {
-			var pageTools = [el('span', { className: 'twd-sk-ed__inlinehead twd-sk-ed__pagelabel', text: 'Page:' })];
+			var pageTools = [el('span', { className: 'twd-sk-ed__inlinehead twd-sk-ed__pagelabel', text: 'This page' })];
 			if (kinds.length) {
 				ui.addEnd = toolButton(pageEmpty() ? 'Add a section' : 'Add a section at the end', pageEmpty() ? 'Add the first section to this page (its words are placeholders for you to replace)' : 'Add a new section at the end of the page', openAddAtEnd);
 				pageTools.push(ui.addEnd);

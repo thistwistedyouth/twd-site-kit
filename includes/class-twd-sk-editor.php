@@ -240,6 +240,9 @@ class TWD_SK_Editor {
 		wp_localize_script( self::HANDLE, 'TWD_SK_EDITOR', array(
 			'restUrl'        => esc_url_raw( rest_url( TWD_SK_REST::ROUTE_NS ) ),
 			'nonce'          => wp_create_nonce( 'wp_rest' ),
+			// The name space the window's small icons are drawn in (4 Nov 2026). It is a fixed word, not an address the script
+			// contacts; it lives here so the script holds no web address of its own.
+			'svgNs'          => 'http://www.w3.org/2000/svg',
 			'pageId'         => (int) $context['page_id'],
 			'isKitPage'      => (bool) $context['is_kit_page'],
 			'canPublish'     => (bool) $context['can_publish'],
