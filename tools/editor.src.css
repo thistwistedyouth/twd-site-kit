@@ -200,8 +200,15 @@
 /* Only the tools for what was clicked: words show for words, the section tools for anything in a section. */
 .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--words, .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="none"] .twd-sk-ed__inlinetools--section,
 .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="picture"] .twd-sk-ed__inlinetools--words, .twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="section"] .twd-sk-ed__inlinetools--words { display: none; }
-/* Section 23i: the Page row (Add a section at the end, Import a page, Export this page) shows whatever was clicked. */
+/* Section 23i: the Page row (Add a section at the end, Import a page, Export this page) shows with nothing clicked.
+   Step 2 (4 Nov 2026): once words, a picture or a section are clicked it steps aside (with the long hint and the list of
+   sections, see ED.showOutline) and Page tools brings it back. The script sets data-twd-sk-page to on or off. */
 .twd-sk-ed__inlinetools--page { align-items: center; }
+.twd-sk-ed__inlinebar--inwin[data-twd-sk-page="off"] .twd-sk-ed__inlinetools--page { display: none; }
+/* Step 2: with words clicked the window is about the words (and the section's icons); the wordy section actions (Describe a
+   change, Replace, Import, Export) wait behind More. They show straight away when a picture or a section is the thing clicked. */
+.twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="words"]:not([data-twd-sk-more="on"]) .twd-sk-ed__inlinetools--actions { display: none; }
+.twd-sk-ed__pagetoggle { margin-left: auto; }
 .twd-sk-ed__pagelabel { margin: 0; }
 /* Section 23i: the one button on an empty page (no section, so no pencil): fixed under the header, centred. */
 .twd-sk-ed__emptybtn {

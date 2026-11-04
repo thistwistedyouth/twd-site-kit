@@ -101,3 +101,17 @@ Added on 4 Nov 2026 at the owner's request. Nothing here changes what a tool doe
 7. **A phone.** At a phone width the tool buttons show their words beside the icons and are easy to tap (about 48 pixels tall); the header shows View as Client, Minimise and Close as icons (Snag, Window and Full height are hidden on a phone as before); the window is a sheet at the bottom.
 8. **Clients unchanged.** As an editor-role user (the Simple editor): the pen, Save, Undo, Redo, History, Done and Tell us as before, no icons, no groups.
 9. **Without icons.** If an icon ever does not draw, the button still shows its words (the page can be checked with the browser's developer tools by looking at a header button: it holds an svg and a span with the words).
+
+## 11. The window follows what was clicked (step 2)
+
+Added on 4 Nov 2026. As an administrator, at a computer width, then at a phone width. Nothing here changes what a tool does.
+
+1. **Nothing clicked.** Open Your Edits, Edit this page. You see the short hint line, the list of sections and "This page" (Add a section at the end, Import a page, Export this page). There is no Page tools link.
+2. **Click some words.** The hint, the list and "This page" go; the window reads "Words in Section N: ..." with a "Page tools" link, "This text" (B, I, link), "This section" (Look, up, down, plus, bin) and More. The window is shorter than before.
+3. **Page tools.** Press Page tools: the hint, the list and "This page" come back, and the link now reads "Hide page tools". Press it: they go again. Click different words: they go away on their own.
+4. **More.** With words clicked, Describe a change (if the AI is on), Replace this section, Import into this section and Export section are not shown. Press More: they show, with the rest of More. Press Fewer: they go.
+5. **A section, not words.** Press a pencil on the page (a phone: pick a section from the list): the section's icons and those four actions show straight away, the "This text" icons do not, and an All sections link shows. Press All sections: the hint, the list and "This page" come back. Pick a section from the list: they go again.
+6. **Delete section is still one click.** With words clicked in an ordinary section the bin is in "This section". In the first section (the page's main heading) and the safety notice: no bin.
+7. **A phone.** Same rules; the tool words show beside the icons and the window is a sheet at the bottom. The page behind the sheet is dimmed, so pick what to change from the list of sections.
+8. **Clients unchanged.** As an editor-role user (the Simple editor) there is no Page tools link and nothing else has moved.
+9. **The label.** The small version label under the footer is now hidden unless the editor shows it; the version is still the last line of the Your Edits menu.

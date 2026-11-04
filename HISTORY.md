@@ -2,6 +2,19 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 4 Nov 2026 (late night): the Your Edits window follows what was clicked, step 2
+
+The owner approved going on after step 1 ("Yes, go on"). The aim: the window should be about the thing clicked, not a permanent pile. Decisions:
+
+- **Three things step aside once something is clicked: the long hint, the list of sections and the page row.** They are what you need with nothing chosen (find a section, add one at the end, import or export the page) and noise once you are working on one. The long hint and the list live in the editor script's tab and the page row in the inline script's bar, so one decision in `updateContext()` drives both (`ED.showOutline` for the first two, a `data-twd-sk-page` attribute and a stylesheet rule for the row). Hiding, not removing: nothing is rebuilt, so no state is lost.
+- **A visible way back.** A link in the context line, "Page tools" (and "Hide page tools"), a real button with `aria-expanded`, so the page tools are never out of reach. It is not shown inside a pencil's one-section view, which has its own All sections link; All sections sets the same switch, so leaving a pencil view shows the list as it did.
+- **A new click puts them away again.** The switch is tied to what is clicked (kind and section number): a click somewhere else clears it, so a person who opened Page tools, picked a section from the list and went on working is not left with the list open under them. Pressing the link again on the same thing keeps it as chosen.
+- **The wordy section actions wait behind More while words are clicked.** Describe a change, Replace this section, Import into this section and Export section are four wide buttons and are the main reason the window was tall when a person only meant to bold a word. They show straight away for a pencil or a section click, where they are what the person came for. The section's icons (Look, Move up, Move down, Add section after, Delete section) stay in view beside the text tools because the owner asked for Delete section to be one click, and an icon row is cheap. If this turns out to be wrong, it is one rule to change.
+- **Not in a media query.** A phone has the least room, so it follows the same rules; the compact sizes remain computer-only as in step 1.
+- **The Simple editor and the classic bar are not touched.** The switch is built and applied only when the one window is in use (`oneWindow`), the Simple editor returns from `updateContext()` before any of it, and the stylesheet rules are scoped to `--inwin`.
+- **A note on looking at it.** The preview pane keeps a page's state when the same address is opened again, so an old click showed up as "the window opens with a panel already open". It was not a fault: a fresh tab per look gave the right opening state. Worth remembering when comparing two builds.
+- **Left for step 3 and the owner:** the thin docked bar, colour dots and alignment icons for the three drop-downs, a red Delete, shortening the words actions.
+
 ## 4 Nov 2026 (night): a compact, grouped Your Edits window, step 1 (the owner: "clunky and confusing")
 
 From the owner's screenshot of the administrator window: about 25 outlined buttons of equal weight; a header of six word buttons on two rows; text, section and page tools in one pile under a small "Page:" label; "Import a page" twice; "Advanced" and "Fewer" that did not say what they hide; three full-width drop-downs; a floating window covering a third of the page. The plan was three steps, each a labelled test build the owner can look at: (1) tidy and compact with no change in behaviour, (2) the window follows what was clicked, (3) an optional thin docked bar. Decisions in step 1:

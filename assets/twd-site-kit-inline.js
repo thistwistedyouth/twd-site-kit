@@ -20,7 +20,7 @@
 	var show = ED.show;
 	var BLOCKS_WITH_BREAKS = { P: 1, LI: 1, DD: 1, FIGCAPTION: 1, BLOCKQUOTE: 1 };
 	var PICTURE_TYPES = /^image\/(jpeg|png|gif|webp|avif)$/;
-	var S = { on: false, texts: [], pics: [], spots: [], orig: {}, origText: {}, origPic: {}, hrefs: {}, picks: {}, spotPicks: {}, removes: {}, removeOrder: [], looks: {}, origLook: {}, lookSec: null, last: null, range: null, linkTarget: null, target: null, saving: false, uploading: false, styles: {}, origStyles: {}, levels: {}, origLevel: {} };
+	var S = { on: false, texts: [], pics: [], spots: [], orig: {}, origText: {}, origPic: {}, hrefs: {}, picks: {}, spotPicks: {}, removes: {}, removeOrder: [], looks: {}, origLook: {}, lookSec: null, last: null, range: null, linkTarget: null, target: null, saving: false, uploading: false, styles: {}, origStyles: {}, levels: {}, origLevel: {}, pageTools: false, ctxKey: '' };
 	var ui = {};
 	/* The Simple editor (session 5, 29 Oct 2026): the role check in TWD_SK_Editor says who gets it (everyone who is not
 	 * an administrator, and an administrator viewing as the client). The same editor with fewer tools: words and
@@ -1517,7 +1517,14 @@
 		ui.allSections.addEventListener('click', function () {
 			ED.sectionView(false);
 		});
-		ui.ctxHead = el('p', { className: 'twd-sk-ed__inlinehead twd-sk-ed__ctxhead' }, [ui.ctxText, ui.allSections]);
+		// 4 Nov 2026, step 2 of a friendlier window: once something is clicked, the page row, the long hint and the list of
+		// sections step aside. This link brings them back (and hides them again), so they are never out of reach.
+		ui.pageToggle = el('button', { type: 'button', className: 'twd-sk-ed__allsections twd-sk-ed__pagetoggle', text: 'Page tools', title: 'Show the page tools and the list of sections', 'aria-expanded': 'false', hidden: '' });
+		ui.pageToggle.addEventListener('click', function () {
+			S.pageTools = !S.pageTools;
+			updateContext();
+		});
+		ui.ctxHead = el('p', { className: 'twd-sk-ed__inlinehead twd-sk-ed__ctxhead' }, oneWindow ? [ui.ctxText, ui.pageToggle, ui.allSections] : [ui.ctxText, ui.allSections]);
 		// Section 23i: a small Page row that never depends on clicking a section first, so an empty page (only its
 		// title, nothing to click) can take its first section or a whole imported page. The row is built below,
 		// once the buttons it holds exist.
@@ -1736,7 +1743,7 @@
 				el('div', { className: 'twd-sk-ed__inlineactions' }, [ui.save, ui.cancel]),
 				ui.status, ui.linkPanel, ui.altPanel, ui.picPanel, ui.lookPanel, ui.addPanel, ui.confirm
 			];
-		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar' + (oneWindow ? ' twd-sk-ed__inlinebar--inwin' : '') + (SIMPLE ? ' twd-sk-ed__simple' : ''), role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '', 'data-twd-sk-ctx': 'none', 'data-twd-sk-more': 'off', 'data-twd-sk-adv': 'off', 'data-twd-sk-engaged': 'off' }, kids);
+		ui.bar = el('div', { className: 'twd-sk-ed__inlinebar' + (oneWindow ? ' twd-sk-ed__inlinebar--inwin' : '') + (SIMPLE ? ' twd-sk-ed__simple' : ''), role: 'toolbar', 'aria-label': 'Change words on the page', hidden: '', 'data-twd-sk-ctx': 'none', 'data-twd-sk-page': 'on', 'data-twd-sk-more': 'off', 'data-twd-sk-adv': 'off', 'data-twd-sk-engaged': 'off' }, kids);
 		root.appendChild(ui.bar);
 		if (oneWindow) {
 			show(ui.putBack, false);
@@ -1790,6 +1797,25 @@
 		}
 		show(ui.viewHint, !!(S.view && kind === 'section'));
 		show(ui.allSections, !!S.view);
+		// Step 2 (4 Nov 2026): the window follows what was clicked. With nothing clicked it shows the page row, the hint and
+		// the list of sections; once words, a picture or a section are clicked those step aside for that thing's own tools,
+		// and Page tools brings them back. A new click somewhere else puts them away again. All sections (the pencil's way
+		// back) brings them back too, see ED.sectionView.
+		var ctxKey = kind + ':' + (sec ? sec.getAttribute('data-twd-sk-sec') : '');
+		if (ctxKey !== S.ctxKey) {
+			S.ctxKey = ctxKey;
+			S.pageTools = false;
+		}
+		var pageOn = kind === 'none' || S.pageTools;
+		ui.bar.setAttribute('data-twd-sk-page', pageOn ? 'on' : 'off');
+		if (ui.pageToggle) {
+			show(ui.pageToggle, !!(oneWindow && kind !== 'none' && !S.view));
+			ui.pageToggle.textContent = S.pageTools ? 'Hide page tools' : 'Page tools';
+			ui.pageToggle.setAttribute('aria-expanded', S.pageTools ? 'true' : 'false');
+		}
+		if (oneWindow && ED && typeof ED.showOutline === 'function') {
+			ED.showOutline(!S.view && pageOn);
+		}
 		// Delete section in the administrator's section row: offered only for a section the server numbers as removable
 		// (data-twd-sk-r), so never for the section holding the page's main heading and never for the safety notice.
 		if (CUSTOM && ui.remove) {
@@ -3703,6 +3729,8 @@
 	ED.sectionView = function (on, index) {
 		S.view = !!on;
 		if (!S.view) {
+			// All sections: the way back to the list, so the page tools and the list of sections show again (step 2).
+			S.pageTools = true;
 			Array.prototype.forEach.call(document.querySelectorAll('section.twd-sk-ed__secview'), function (old) {
 				old.classList.remove('twd-sk-ed__secview');
 			});

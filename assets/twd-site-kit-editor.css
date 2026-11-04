@@ -728,6 +728,15 @@
 .twd-sk-ed .twd-sk-ed__inlinetools--page.twd-sk-ed__inlinetools--page {
   align-items: center;
 }
+.twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin[data-twd-sk-page="off"] .twd-sk-ed__inlinetools--page.twd-sk-ed__inlinetools--page {
+  display: none;
+}
+.twd-sk-ed .twd-sk-ed__inlinebar--inwin.twd-sk-ed__inlinebar--inwin[data-twd-sk-ctx="words"]:not([data-twd-sk-more="on"]) .twd-sk-ed__inlinetools--actions.twd-sk-ed__inlinetools--actions {
+  display: none;
+}
+.twd-sk-ed .twd-sk-ed__pagetoggle.twd-sk-ed__pagetoggle {
+  margin-left: auto !important;
+}
 .twd-sk-ed .twd-sk-ed__pagelabel.twd-sk-ed__pagelabel {
   margin: 0 !important;
 }
