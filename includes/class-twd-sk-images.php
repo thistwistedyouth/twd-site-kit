@@ -152,6 +152,21 @@ class TWD_SK_Images {
 		if ( $info && $info['dim'] && ! preg_match( '/\swidth\s*=/i', $tag ) && ! preg_match( '/\sheight\s*=/i', $tag ) ) {
 			$add .= ' width="' . (int) $info['dim'][0] . '" height="' . (int) $info['dim'][1] . '"';
 		}
+		// 0.15.0: a picture from this site's media library gets a list of its other sizes, so a phone is sent a small copy
+		// and a large screen a big one. Added at display time only (stored HTML never holds a srcset). The width and height
+		// above stay those of the address in the page, so the space set aside is right whichever copy the browser picks.
+		if ( $info && $info['id'] > 0 && $info['dim'] && ! preg_match( '/\ssrcset\s*=/i', $tag ) && function_exists( 'wp_calculate_image_srcset' ) && function_exists( 'wp_get_attachment_metadata' ) ) {
+			$meta   = wp_get_attachment_metadata( (int) $info['id'] );
+			$url    = html_entity_decode( $src[1], ENT_QUOTES, 'UTF-8' );
+			$url    = ( '/' === substr( $url, 0, 1 ) && '/' !== substr( $url, 0, 2 ) ) ? rtrim( home_url( '/' ), '/' ) . $url : $url;
+			$srcset = is_array( $meta ) ? wp_calculate_image_srcset( array( (int) $info['dim'][0], (int) $info['dim'][1] ), $url, $meta, (int) $info['id'] ) : false;
+			if ( is_string( $srcset ) && '' !== $srcset ) {
+				$add .= ' srcset="' . esc_attr( $srcset ) . '"';
+				if ( ! preg_match( '/\ssizes\s*=/i', $tag ) ) {
+					$add .= ' sizes="(max-width: 1100px) 100vw, 1100px"';
+				}
+			}
+		}
 		// The "keep in view" choice, added at display time only (stored HTML never holds a style).
 		if ( $info && '' !== $info['focal'] && ! preg_match( '/\sstyle\s*=/i', $tag ) ) {
 			$add .= ' style="object-position: ' . $info['focal'] . '"';
