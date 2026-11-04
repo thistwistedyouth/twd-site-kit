@@ -198,6 +198,8 @@ class TWD_SK_Chrome {
 			'twd-sk-chrome--wordmark', 'twd-sk-chrome--wm-front', 'twd-sk-chrome--noline',
 			// 0.15.0: the second line under the name in the smaller header (the words block, the header and the spacer know about it).
 			'twd-sk-header--wm-line', 'twd-sk-header__words', 'twd-sk-chrome--wm-line',
+			// 0.15.0: the two-row wordmark header (logo and button above, a rule, the menu below).
+			'twd-sk-header--wm-rows', 'twd-sk-chrome--wm-rows',
 			// 0.14.1: the compact footer (tagline on top, logo left, links right, a bar for the small print).
 			'twd-sk-footer__top', 'twd-sk-footer__tagline', 'twd-sk-footer__row', 'twd-sk-footer__brand', 'twd-sk-footer__links--row',
 			'twd-sk-footer__bottom--bar', 'twd-sk-footer__meta',
@@ -224,6 +226,7 @@ class TWD_SK_Chrome {
 			'overlay'        => false,   // 0.14.0: transparent over the picture, on a page that opens with a full-width picture hero
 			'wordmark'       => false,   // 0.14.0: the logo as live text: a stacked lockup on the front page, a symbol and the name in a one-row bar elsewhere, with its own menu look
 			'wordmark_scrolled_name' => false, // 0.14.0: keep the name beside the symbol when the front page header is scrolled (otherwise just the symbol beside the menu)
+			'wordmark_rows'  => false,   // 0.15.0: the text wordmark header as two rows on every page: mark, name and second line at the left with the button at the right, a rule, then the menu
 			'wordmark_small_line' => false, // 0.15.0: the second line under the name in the smaller header too (every page but the large front page, and the scrolled front page)
 			'menu_marker'    => 'dot',   // 0.14.0: how the current page is marked in that header's menu
 			'show_button'    => true,
@@ -286,6 +289,7 @@ class TWD_SK_Chrome {
 				case 'wordmark':
 				case 'wordmark_scrolled_name':
 				case 'wordmark_small_line':
+				case 'wordmark_rows':
 				case 'show_button':
 				case 'show_strip':
 				case 'contact_bar':
@@ -370,8 +374,9 @@ class TWD_SK_Chrome {
 			'overlay'     => (bool) $s['overlay'],
 			'wordmark'    => $wm,
 			// The second line in the smaller header needs the name beside the symbol when the front page is scrolled, so it brings that with it.
-			'wm_name'     => $wm && ( (bool) $s['wordmark_scrolled_name'] || (bool) $s['wordmark_small_line'] ),
-			'wm_line'     => $wm && (bool) $s['wordmark_small_line'],
+			'wm_name'     => $wm && ( (bool) $s['wordmark_scrolled_name'] || (bool) $s['wordmark_small_line'] || (bool) $s['wordmark_rows'] ),
+			'wm_line'     => $wm && ( (bool) $s['wordmark_small_line'] || (bool) $s['wordmark_rows'] ),
+			'wm_rows'     => $wm && (bool) $s['wordmark_rows'],
 			'menu_marker' => $s['menu_marker'],
 			'button'      => (bool) $s['show_button'],
 			'strip'       => (bool) $s['show_strip'],
@@ -588,16 +593,18 @@ class TWD_SK_Chrome {
 		$eff   = self::effective();
 		$strip = $eff['strip'] && ( '' !== $profile['phone'] || '' !== $profile['email'] );
 		$wm       = $eff['wordmark'];
-		$wm_front = $wm && self::is_front();
+		$wm_rows  = $wm && $eff['wm_rows'];
+		// The two-row header looks the same on every page, so it has no front page stack.
+		$wm_front = $wm && ! $wm_rows && self::is_front();
 		// The text wordmark replaces the bigger front page logo (it has its own larger front page size).
 		$front = ! $wm && $eff['front_logo'] && $profile['logo_id'] && self::is_front();
 		$over  = $eff['overlay'] && self::opens_with_picture();
 		// 0.15.0: the second line in the smaller header (only with the wordmark, and only when there is a line to show).
 		$small_line = $wm && $eff['wm_line'] && '' !== $profile['logo_line'];
 		$wrap  = 'twd-sk-page twd-sk-chrome' . ( $eff['sticky'] ? ' twd-sk-chrome--sticky' : '' ) . ( $eff['sticky'] && $strip ? ' twd-sk-chrome--strip' : '' ) . ( $eff['sticky'] && $front ? ' twd-sk-chrome--front' : '' ) . ( $over ? ' twd-sk-chrome--over' : '' )
-			. ( $eff['sticky'] && $wm ? ' twd-sk-chrome--wordmark' . ( $wm_front ? ' twd-sk-chrome--wm-front' . ( '' === $profile['logo_line'] ? ' twd-sk-chrome--noline' : '' ) : '' ) . ( $small_line ? ' twd-sk-chrome--wm-line' : '' ) : '' );
+			. ( $eff['sticky'] && $wm ? ' twd-sk-chrome--wordmark' . ( $wm_front ? ' twd-sk-chrome--wm-front' . ( '' === $profile['logo_line'] ? ' twd-sk-chrome--noline' : '' ) : '' ) . ( $small_line ? ' twd-sk-chrome--wm-line' : '' ) . ( $wm_rows ? ' twd-sk-chrome--wm-rows' : '' ) : '' );
 		// The text wordmark: the stacked lockup on the front page, the one-row bar on every other page.
-		$cls   = 'twd-sk-header' . ( $wm ? ' twd-sk-header--wordmark twd-sk-header--mark-' . $eff['menu_marker'] . ( $wm_front ? ' twd-sk-header--wm-front' . ( $eff['wm_name'] ? ' twd-sk-header--wm-name' : '' ) : ' twd-sk-header--bar' ) . ( $small_line ? ' twd-sk-header--wm-line' : '' ) : ' twd-sk-header--' . $eff['header'] )
+		$cls   = 'twd-sk-header' . ( $wm ? ' twd-sk-header--wordmark twd-sk-header--mark-' . $eff['menu_marker'] . ( $wm_front ? ' twd-sk-header--wm-front' . ( $eff['wm_name'] ? ' twd-sk-header--wm-name' : '' ) : ' twd-sk-header--bar' ) . ( $small_line ? ' twd-sk-header--wm-line' : '' ) . ( $wm_rows ? ' twd-sk-header--wm-rows' : '' ) : ' twd-sk-header--' . $eff['header'] )
 			. ( $eff['sticky'] ? ' twd-sk-header--sticky' : '' ) . ( $eff['shrink'] ? ' twd-sk-header--shrink' : '' ) . ( $front ? ' twd-sk-header--front' : '' ) . ( $over ? ' twd-sk-header--over' : '' );
 
 		$out  = '<div class="' . $wrap . '"><header class="' . $cls . '">' . ( $skip ? self::skip_link() : '' );

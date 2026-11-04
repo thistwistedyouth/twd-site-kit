@@ -147,6 +147,7 @@ class TWD_SK_Style {
 				'wordmark'       => $c['wordmark'],
 				'wordmark_scrolled_name' => $c['wordmark_scrolled_name'],
 				'wordmark_small_line' => $c['wordmark_small_line'],
+				'wordmark_rows' => $c['wordmark_rows'],
 				'menu_marker'    => $c['menu_marker'],
 				'show_button'    => $c['show_button'],
 				'show_strip'     => $c['show_strip'],

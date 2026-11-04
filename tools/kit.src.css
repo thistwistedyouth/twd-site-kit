@@ -736,6 +736,7 @@
 &.twd-sk-chrome--sticky.twd-sk-chrome--wordmark { height: calc(max(#{$wordmark-symbol}, #{$menu-size} * 1.3 + 20px) + 29px + var(--twd-sk-wm-strip)); }
 /* Second line in the smaller header: the bar is as tall as the name and line (before the front page rule, which keeps its own). */
 &.twd-sk-chrome--sticky.twd-sk-chrome--wordmark.twd-sk-chrome--wm-line { height: calc(max(#{$wordmark-symbol}, #{$menu-size} * 1.3 + 20px, #{$wordmark-name} * 1.2 + 2px + #{$wordmark-line-front} * 1.3) + 29px + var(--twd-sk-wm-strip)); }
+&.twd-sk-chrome--sticky.twd-sk-chrome--wordmark.twd-sk-chrome--wm-rows { height: calc(max(#{$wordmark-symbol}, #{$wordmark-name} * 1.2 + 2px + #{$wordmark-line-front} * 1.3) + 29px + 12px + #{$menu-size} * 1.3 + 20px + var(--twd-sk-wm-strip)); }
 &.twd-sk-chrome--sticky.twd-sk-chrome--wordmark.twd-sk-chrome--wm-front { height: calc(var(--twd-sk-wm-s) + var(--twd-sk-wm-n) * 1.2 + var(--twd-sk-wm-l) * 1.3 + #{$menu-size} * 1.3 + var(--twd-sk-wm-pad) + var(--twd-sk-wm-strip)); }
 .twd-sk-header { position: relative; background-color: $color-surface; border-bottom: 1px solid $color-border; color: $color-title; }
 /* Transparent over the picture (0.14.0): printed only on a page that opens with a full-width picture hero.
@@ -880,6 +881,16 @@
 .twd-sk-header--wm-line .twd-sk-header__words { min-width: 0; }
 .twd-sk-header--wm-line.twd-sk-header--bar .twd-sk-header__words, .twd-sk-header--wm-front.twd-sk-header--wm-line.twd-sk-header--shrunk .twd-sk-header__words { text-align: left; }
 .twd-sk-header--wm-line.twd-sk-header--bar .twd-sk-header__line, .twd-sk-header--wm-front.twd-sk-header--wm-line.twd-sk-header--shrunk .twd-sk-header__line { display: block; margin: 2px 0 0; padding: 0; letter-spacing: 0.2em; white-space: nowrap; overflow: clip; }
+/* The two-row wordmark header (0.15.0, a setting, off by default): the same on every page. Row one has the mark, name and second line at the left and the header
+   button at the right; a thin rule; row two is the menu, left aligned, with a small arrow on the items that open a sub-menu. The name and second line print as typed. */
+.twd-sk-header--wm-rows .twd-sk-header__inner { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 24px; row-gap: 0; }
+.twd-sk-header--wm-rows { background-color: $color-tint; }
+.twd-sk-header--wm-rows .twd-sk-header__logo { grid-column: 1; grid-row: 1; }
+.twd-sk-header--wm-rows .twd-sk-header__panel { display: contents; }
+.twd-sk-header--wm-rows .twd-sk-header__cta { grid-column: 2; grid-row: 1; justify-self: end; }
+.twd-sk-header--wm-rows .twd-sk-header__nav { grid-column: 1 / -1; grid-row: 2; margin-top: 10px; border-top: 1px solid $color-border; }
+.twd-sk-header--wm-rows .twd-sk-header__name, .twd-sk-header--wm-rows .twd-sk-header__line { text-transform: none; }
+.twd-sk-header--wm-rows .twd-sk-header__item--parent > .twd-sk-header__link::after { content: ""; display: inline-block; margin-left: 10px; vertical-align: middle; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid currentColor; }
 /* Over a picture: the name and second line take the on-image colour; scrolled, the header is solid again. */
 .twd-sk-header--over.twd-sk-header--wordmark .twd-sk-header__name, .twd-sk-header--over.twd-sk-header--wordmark .twd-sk-header__line { color: $color-on-image; }
 .twd-sk-header--over.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__name, .twd-sk-header--over.twd-sk-header--wordmark.twd-sk-header--shrunk .twd-sk-header__line { color: $color-heading; }
@@ -1065,6 +1076,15 @@
 /* The text wordmark header on a phone (0.14.0): the bar keeps the symbol and name readable beside the menu button; the front page stack stays
    centred with the menu button at the corner; scrolled, the symbol (and the name, if kept) sits at the left and the menu button at the right. */
 @media (max-width: 900px) {
+  .twd-sk-header--wm-rows .twd-sk-header__inner { display: flex; }
+  .twd-sk-header--wm-rows .twd-sk-header__panel { display: flex; }
+  .twd-sk-header--js.twd-sk-header--wm-rows .twd-sk-header__panel { display: none; }
+  .twd-sk-header--js.twd-sk-header--wm-rows.twd-sk-header--open .twd-sk-header__panel { display: flex; }
+  .twd-sk-header--wm-rows .twd-sk-header__nav { margin-top: 0; border-top: 0; }
+  .twd-sk-header--wm-rows .twd-sk-header__inner { flex-wrap: nowrap; }
+  .twd-sk-header--wm-rows .twd-sk-header__logo { flex: 1 1 0; }
+  .twd-sk-header--wm-rows.twd-sk-header--wm-line .twd-sk-header__line { white-space: normal; }
+  .twd-sk-header--wm-rows .twd-sk-header__toggle { flex: 0 0 auto; }
   .twd-sk-header--wordmark .twd-sk-header__mark { height: $wordmark-symbol-sm; margin-right: 10px; }
   .twd-sk-header--wordmark .twd-sk-header__name { font-size: $wordmark-name-sm; }
   .twd-sk-header--wordmark .twd-sk-header__link { padding: 12px 2px; }

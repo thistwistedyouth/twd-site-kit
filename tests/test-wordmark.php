@@ -442,5 +442,51 @@ twd_sk_test( 'second line in the smaller header: in the site brief, a style snap
 	foreach ( array( 'twd-sk-ch-wmline', 'wordmark_small_line: cui.wmline.checked', 'cui.wmline.checked = !!c.settings.wordmark_small_line' ) as $needle ) {
 		twd_sk_has( $needle, $js, $needle );
 	}
-	twd_sk_has( 'cui.wordmark.checked, cui.wmname.checked, cui.wmline.checked, cui.clientFooter.checked, cui.marker.value', $js, 'an unsaved tick counts as an unsaved change' );
+	twd_sk_has( 'cui.wordmark.checked, cui.wmname.checked, cui.wmline.checked, cui.wmrows.checked, cui.clientFooter.checked, cui.marker.value', $js, 'an unsaved tick counts as an unsaved change' );
+} );
+
+// The two-row wordmark header (0.15.0). A setting, off by default; with it off every header prints the same bytes as before.
+
+twd_sk_test( 'two-row wordmark header: off by default and validated; on, the front page prints the same two rows as every other page', function () {
+	$d = TWD_SK_Chrome::defaults();
+	twd_sk_true( false === $d['wordmark_rows'], 'off by default' );
+	twd_sk_is_error( 'twd_sk_bad_chrome', TWD_SK_Chrome::save_settings( array( 'wordmark_rows' => 'yes' ) ) );
+	twd_sk_chrome_setup( twd_sk_wm_profile(), array( 'wordmark' => true, 'sticky' => true, 'wordmark_rows' => false ) );
+	$GLOBALS['twd_stub']['front'] = true;
+	$html = TWD_SK_Chrome::render_header();
+	twd_sk_hasnt( 'wm-rows', $html );
+	twd_sk_has( 'twd-sk-header--wm-front', $html );
+	TWD_SK_Chrome::save_settings( array( 'wordmark_rows' => true ) );
+	$e = TWD_SK_Chrome::effective();
+	twd_sk_true( $e['wm_rows'] && $e['wm_line'] && $e['wm_name'], 'on: the second line and the name come with it' );
+	foreach ( array( true, false ) as $front ) {
+		$GLOBALS['twd_stub']['front'] = $front;
+		$html = TWD_SK_Chrome::render_header();
+		twd_sk_has( 'twd-sk-header--wm-rows', $html );
+		twd_sk_has( 'twd-sk-chrome--wm-rows', $html );
+		twd_sk_hasnt( 'twd-sk-header--wm-front', $html );
+		twd_sk_has( 'twd-sk-header__words', $html );
+	}
+	TWD_SK_Chrome::save_settings( array( 'wordmark' => false ) );
+	$GLOBALS['twd_stub']['front'] = true;
+	twd_sk_hasnt( 'wm-rows', TWD_SK_Chrome::render_header() );
+	TWD_SK_Chrome::save_settings( array( 'wordmark' => false, 'wordmark_rows' => false, 'sticky' => false ) );
+	$GLOBALS['twd_stub']['front'] = false;
+} );
+
+twd_sk_test( 'two-row wordmark header: in the site brief, a style snapshot, the command line and the Site tab script; the stylesheet styles both classes', function () {
+	twd_sk_true( array_key_exists( 'wordmark_rows', TWD_SK_Brief::export()['header'] ), 'the brief export has it' );
+	twd_sk_true( array_key_exists( 'wordmark_rows', TWD_SK_Style::current()['chrome'] ), 'a snapshot keeps it' );
+	( new TWD_SK_CLI() )->style( array( 'apply' ), array( 'wordmark' => true, 'rows' => 'on' ) );
+	twd_sk_true( TWD_SK_Chrome::settings()['wordmark_rows'] );
+	( new TWD_SK_CLI() )->style( array( 'apply' ), array( 'rows' => 'off' ) );
+	twd_sk_true( ! TWD_SK_Chrome::settings()['wordmark_rows'] );
+	TWD_SK_Chrome::save_settings( array( 'wordmark' => false, 'wordmark_rows' => false ) );
+	$js = file_get_contents( dirname( __DIR__ ) . '/assets/twd-site-kit-editor-site.js' );
+	foreach ( array( 'twd-sk-ch-wmrows', 'wordmark_rows: cui.wmrows.checked', 'cui.wmrows.checked = !!c.settings.wordmark_rows' ) as $needle ) {
+		twd_sk_has( $needle, $js, $needle );
+	}
+	$css = file_get_contents( dirname( __DIR__ ) . '/tools/kit.src.css' );
+	twd_sk_has( '.twd-sk-header--wm-rows', $css );
+	twd_sk_has( '.twd-sk-chrome--wm-rows', $css );
 } );

@@ -925,6 +925,7 @@
 		cui.wordmark.checked = !!c.settings.wordmark;
 		cui.wmname.checked = !!c.settings.wordmark_scrolled_name;
 		cui.wmline.checked = !!c.settings.wordmark_small_line;
+		cui.wmrows.checked = !!c.settings.wordmark_rows;
 		cui.clientFooter.checked = !!c.settings.client_footer_text;
 		cui.marker.value = c.settings.menu_marker;
 		cui.button.checked = !!c.settings.show_button;
@@ -987,6 +988,7 @@
 				wordmark: cui.wordmark.checked,
 				wordmark_scrolled_name: cui.wmname.checked,
 				wordmark_small_line: cui.wmline.checked,
+				wordmark_rows: cui.wmrows.checked,
 				client_footer_text: cui.clientFooter.checked,
 				menu_marker: cui.marker.value,
 				show_button: cui.button.checked,
@@ -1043,12 +1045,14 @@
 		var wordmark = checkbox('twd-sk-ch-wordmark', 'Text wordmark: the logo as live text. On the front page a centred stack: a small symbol (the Small logo mark in Site details), the site name in capitals, an optional second line, and the menu centred below. On every other page one row: the symbol and the name at the left, the menu at the right. The menu gets its own smaller look. Replaces the header layout above while it is ticked. Sizes are in the Style section.');
 		var wmname = checkbox('twd-sk-ch-wmname', 'Keep the name when the front page header is scrolled (otherwise only the small symbol stays, beside the menu). Only works with the fixed header and the smaller-when-scrolling option above.');
 		var wmline = checkbox('twd-sk-ch-wmline', 'Show the second line under the name in the smaller header too: on every page except the large front page header, and on the front page once it is scrolled (this also keeps the name beside the symbol). The second line is set in Site details; keep it short so it fits beside the symbol on a phone.');
+		var wmrows = checkbox('twd-sk-ch-wmrows', 'Two rows on every page (needs Text wordmark): the symbol, name and second line at the left with the header button at the right, a thin rule, then the menu on its own row below. The name and second line print as typed, not in capitals. This also shows the second line on every page.');
 		var clientFooter = checkbox('twd-sk-ch-clientfooter', 'Clients may edit the footer text: a "Footer words" box in their editor (up to three lines, bold and italic). Nothing else in the header or footer; contact details stay in Site details.');
 		cui.clientFooter = clientFooter.input;
 		cui.marker = selectWith('twd-sk-ch-marker', {}, '');
 		cui.wordmark = wordmark.input;
 		cui.wmname = wmname.input;
 		cui.wmline = wmline.input;
+		cui.wmrows = wmrows.input;
 		cui.sticky = sticky.input;
 		cui.shrink = shrink.input;
 		cui.front = front.input;
@@ -1101,6 +1105,7 @@
 			wordmark.label,
 			wmname.label,
 			wmline.label,
+			wmrows.label,
 			field('Marking the page you are on', cui.marker, 'In the text wordmark header\'s menu.'),
 			front.label,
 			over.label,
@@ -1247,7 +1252,7 @@
 	}
 
 	function chromeSnap() {
-		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.textStyle.value, cui.contactBar.checked, cui.exit.checked, cui.exitUrl.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.over.checked, cui.wordmark.checked, cui.wmname.checked, cui.wmline.checked, cui.clientFooter.checked, cui.marker.value, cui.button.checked, cui.strip.checked, cui.placement.value]);
+		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.textStyle.value, cui.contactBar.checked, cui.exit.checked, cui.exitUrl.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.over.checked, cui.wordmark.checked, cui.wmname.checked, cui.wmline.checked, cui.wmrows.checked, cui.clientFooter.checked, cui.marker.value, cui.button.checked, cui.strip.checked, cui.placement.value]);
 	}
 
 	ED.addDirtyCheck(function () {
