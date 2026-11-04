@@ -434,7 +434,10 @@ twd_sk_test( 'version label: signed-in editors get a small version label in the 
 	ob_start();
 	TWD_SK_Editor::print_root();
 	$html = ob_get_clean();
-	twd_sk_has( '<span class="twd-sk-ed__version" title="TWD Site Kit version">v' . TWD_SK_VERSION . '</span>', $html );
+	twd_sk_has( '<span class="twd-sk-ed__version" title="TWD Site Kit version" hidden>v' . TWD_SK_VERSION . '</span>', $html );
+	// Hidden by its own attribute (4 Nov 2026): on a page where the editor stylesheet is not loaded (it hides the label with display: none) it must not
+	// show as plain text under the footer. The Your Edits menu still reads its words, which hidden does not change.
+	twd_sk_has( "'Site Kit ' + version.textContent", file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' ) );
 	$GLOBALS['twd_stub']['user'] = 0;
 	ob_start();
 	TWD_SK_Editor::print_root();

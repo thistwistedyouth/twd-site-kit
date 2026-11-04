@@ -345,6 +345,6 @@ class TWD_SK_Editor {
 		}
 		echo '<div id="twd-sk-ed" class="twd-sk-ed"' . ( self::launchers_hidden() ? ' data-twd-sk-tools="off"' : '' ) . '><button type="button" id="twd-sk-ed-open" class="twd-sk-ed__open" hidden aria-haspopup="dialog">'
 			. esc_html__( 'Edit with AI', 'twd-site-kit' )
-			. '</button><span class="twd-sk-ed__version" title="TWD Site Kit version">v' . esc_html( defined( 'TWD_SK_VERSION' ) ? TWD_SK_VERSION : '' ) . '</span></div>';
+			. '</button><span class="twd-sk-ed__version" title="TWD Site Kit version" hidden>v' . esc_html( defined( 'TWD_SK_VERSION' ) ? TWD_SK_VERSION : '' ) . '</span></div>';
 	}
 }
