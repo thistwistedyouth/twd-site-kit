@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.17.3
+Stable tag: 0.18.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,12 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.18.0 =
+* New: write search titles and descriptions with the AI. In the Site tab, Search wording with AI finds the pages that have none, drafts each one from the page's own words, your saved facts and your keywords, and lets you read and change them before you save. A page's own Search tab can also write for one page. The AI never saves anything and never replaces wording you already have unless you tick that.
+* New: a featured picture for each page, in the Search tab. A page with no picture for sharing now shares its featured picture, then the site's default.
+* New: in the simple editor's Page details, clients can choose the picture shown when the page is shared and the featured picture. These save straight away and are not part of Undo.
+* Nothing changes how a site looks until these are used. The AI features need the AI key from the Articles plugin. Update one site first.
 
 = 0.17.3 =
 * Export for an AI now holds the whole of a page's search setup (social share picture and keep-out-of-search, as well as title and description), a file of the site-wide search settings, a list of every picture used (where, description, size, whether the file is there, and what is wrong), and the results of the site's own launch check.

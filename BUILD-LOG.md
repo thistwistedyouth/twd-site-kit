@@ -5,7 +5,7 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
-## 5 Nov 2026: search wording by the AI and a featured picture (0.18.0, test build 0.18.0-test1 on the pilot staging site; NOT released)
+## 5 Nov 2026: RELEASE 0.18.0, search wording by the AI and a featured picture (pushed to main at the owner's yes; tried first as test build 0.18.0-test1 on the pilot staging site)
 
 Asked for by the owner: generate the search title and description with the AI from a page's content and keywords, for one page or the whole site, and let clients set the featured and social pictures.
 
