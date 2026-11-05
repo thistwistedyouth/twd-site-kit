@@ -238,6 +238,10 @@ class TWD_SK_Page {
 		if ( ! TWD_SK_Safe::on() && class_exists( 'TWD_SK_Images' ) ) {
 			$html = TWD_SK_Images::process( $html );
 		}
+		// Social buttons: the icon for each is drawn now, never stored (0.16.0).
+		if ( class_exists( 'TWD_SK_Social' ) ) {
+			$html = TWD_SK_Social::decorate( $html );
+		}
 		$allowed = array_keys( TWD_SK_Registry::allowed_shortcodes() );
 		$slots   = array();
 		$salt    = substr( md5( uniqid( '', true ) ), 0, 8 );

@@ -39,7 +39,7 @@
 /* section spacing */
 .twd-sk-hero--split, .twd-sk-hero--compact, .twd-sk-text, .twd-sk-image-text, .twd-sk-quote,
 .twd-sk-faq, .twd-sk-services, .twd-sk-steps, .twd-sk-contact, .twd-sk-notice,
-.twd-sk-resources, .twd-sk-pictures, .twd-sk-pricing, .twd-sk-hours, .twd-sk-areas, .twd-sk-facts {
+.twd-sk-resources, .twd-sk-pictures, .twd-sk-pricing, .twd-sk-hours, .twd-sk-areas, .twd-sk-facts, .twd-sk-social-links {
   padding-top: $section-y; padding-bottom: $section-y;
 }
 .twd-sk-hero--compact { padding-bottom: $gap-sm; }
@@ -642,6 +642,22 @@
 .twd-sk-hours--card .twd-sk-hours__list { margin-top: 32px; padding: $card-pad-sm $card-pad; background-color: $color-surface; border-radius: $radius-card; box-shadow: $shadow-card; }
 .twd-sk-hours--card .twd-sk-hours__row:last-child { border-bottom: 0; }
 
+/* ---- social buttons and the Social links section (0.16.0): the icon is drawn by the plugin when the page is shown ---- */
+.twd-sk-social, .twd-sk-social--whatsapp, .twd-sk-social--facebook, .twd-sk-social--instagram, .twd-sk-social--youtube { text-decoration: none; }
+.twd-sk-social { display: inline-flex; align-items: center; justify-content: center; gap: 0.6em; }
+.twd-sk-social__icon { display: inline-flex; flex: none; width: 1.3em; height: 1.3em; }
+.twd-sk-social__icon svg { display: block; width: 100%; height: 100%; }
+.twd-sk-social-links__list { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 28px; }
+.twd-sk-social-links .twd-sk-title, .twd-sk-social-links .twd-sk-lead { text-align: center; }
+.twd-sk-social-links .twd-sk-lead { margin-left: auto; margin-right: auto; }
+/* Icon only (the section layout, or one button): the words stay for screen readers. */
+.twd-sk-social--icon .twd-sk-social__label, .twd-sk-social-links--icons .twd-sk-social__label {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: 0; border: 0;
+  clip-path: inset(50%); white-space: nowrap; overflow: clip;
+}
+.twd-sk-social--icon, .twd-sk-social-links--icons .twd-sk-social { width: 48px; height: 48px; padding: 0; border-radius: $radius-pill; }
+.twd-sk-social--icon .twd-sk-social__icon, .twd-sk-social-links--icons .twd-sk-social__icon { width: 24px; height: 24px; }
+
 /* ---- areas covered (0.8.0) ---- */
 .twd-sk-areas__list { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 12px; margin-top: 8px; }
 .twd-sk-areas__item {
@@ -1001,7 +1017,7 @@
   & > :not(section):not(.twd-sk-inner):not(.twd-sk-gallery-label):not(.twd-sk-header):not(.twd-sk-footer) { padding-left: $gutter-sm; padding-right: $gutter-sm; }
   .twd-sk-hero--split, .twd-sk-hero--compact, .twd-sk-text, .twd-sk-image-text, .twd-sk-quote,
   .twd-sk-faq, .twd-sk-services, .twd-sk-steps, .twd-sk-contact, .twd-sk-notice,
-  .twd-sk-resources, .twd-sk-pictures, .twd-sk-pricing, .twd-sk-hours, .twd-sk-areas, .twd-sk-enquiry, .twd-sk-embed { padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
+  .twd-sk-resources, .twd-sk-pictures, .twd-sk-pricing, .twd-sk-hours, .twd-sk-areas, .twd-sk-social-links, .twd-sk-enquiry, .twd-sk-embed { padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
   .twd-sk-pictures__grid, .twd-sk-pricing__grid { grid-template-columns: 1fr 1fr; }
   .twd-sk-logos__img { max-width: 120px; height: 48px; }
   .twd-sk-logos--grid .twd-sk-logos__list { grid-template-columns: 1fr 1fr; }

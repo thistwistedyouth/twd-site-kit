@@ -133,6 +133,13 @@ class TWD_SK_Registry {
 			'twd-sk-btn--secondary',
 			'twd-sk-btn--outline',
 			'twd-sk-btn--light',
+			// 0.16.0: a social button is a button link that also carries one of these; the plugin draws its icon at display time.
+			'twd-sk-social',
+			'twd-sk-social--whatsapp',
+			'twd-sk-social--facebook',
+			'twd-sk-social--instagram',
+			'twd-sk-social--youtube',
+			'twd-sk-social--icon',
 			'twd-sk-card',
 			'twd-sk-card--accent',
 			'twd-sk-card__title',
@@ -915,6 +922,37 @@ class TWD_SK_Registry {
 		) );
 	}
 
+	/** Social links (0.16.0): a heading and a row of social buttons. The sample links are flagged until replaced. */
+	private static function social( $variant = '' ) {
+		$icons = ( 'icons' === $variant );
+		$btn   = $icons ? 'twd-sk-btn twd-sk-btn--outline twd-sk-social twd-sk-social--icon' : 'twd-sk-btn twd-sk-btn--outline twd-sk-social';
+		$nets  = array(
+			'whatsapp'  => 'WhatsApp',
+			'facebook'  => 'Facebook',
+			'instagram' => 'Instagram',
+			'youtube'   => 'YouTube',
+		);
+		$items = array();
+		foreach ( $nets as $key => $label ) {
+			$items[] = '<a class="' . $btn . ' twd-sk-social--' . $key . '" href="https://www.example.com/' . $key . '">' . $label . '</a>';
+		}
+		return self::lines( array_merge(
+			array(
+				'<section class="twd-sk-social-links' . ( $icons ? ' twd-sk-social-links--icons' : '' ) . ' twd-sk-tone-base">',
+				'<div class="twd-sk-inner">',
+				'<h2 class="twd-sk-title">Heading here</h2>',
+				'<p class="twd-sk-lead">Short introduction here.</p>',
+				'<div class="twd-sk-social-links__list">',
+			),
+			$items,
+			array(
+				'</div>',
+				'</div>',
+				'</section>',
+			)
+		) );
+	}
+
 	/** An enquiry form: a heading, a line of introduction and the [twd_enquiry] shortcode (0.8.1). */
 	private static function enquiry() {
 		return self::lines( array(
@@ -1473,6 +1511,27 @@ class TWD_SK_Registry {
 					'twd-sk-areas__list',
 					'twd-sk-areas__item',
 					'twd-sk-areas__actions',
+				),
+				'shortcodes'  => array(),
+			),
+
+			'social'     => array(
+				'id'          => 'social',
+				'label'       => 'Social links',
+				'description' => 'A heading and a row of buttons that link to WhatsApp, Facebook, Instagram or YouTube. Each button carries its network as a class and the plugin draws the icon when the page is shown (nothing is stored). The icons layout shows the icon alone; the words stay for screen readers.',
+				'skeleton'    => self::social(),
+				'variants'    => array(
+					'twd-sk-social-links--icons' => array(
+						'label'    => 'Icons only: round icon buttons, the words kept for screen readers',
+						'skeleton' => self::social( 'icons' ),
+					),
+				),
+				'classes'     => array(
+					'twd-sk-social-links',
+					'twd-sk-social-links--icons',
+					'twd-sk-social-links__list',
+					'twd-sk-social__icon',
+					'twd-sk-social__label',
 				),
 				'shortcodes'  => array(),
 			),

@@ -103,6 +103,8 @@ twd_sk_test( 'privacy: every web address points at an example domain or a known 
 		'therapywebdesigns.co.uk',
 		'github.com', 'raw.githubusercontent.com',
 		'www.gnu.org', 'www.w3.org', 'schema.org', 'scripts.sil.org', 'openfontlicense.org',
+		// The social networks the social buttons link to (0.16.0), in tests only as sample links.
+		'www.whatsapp.com', 'www.facebook.com', 'instagram.com', 'www.youtube.com', 'wa.me', 'api.whatsapp.com', 'youtu.be', 'facebook.com',
 	);
 	foreach ( twd_sk_privacy_files() as $rel => $path ) {
 		preg_match_all( '#https?://(?:[^/@\s"\'<>]*@)?([A-Za-z0-9.-]+)(/[^\s"\'<>)`]*)?#', file_get_contents( $path ), $m, PREG_SET_ORDER );

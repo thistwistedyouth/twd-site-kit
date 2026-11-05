@@ -76,6 +76,13 @@ class TWD_SK_Quality {
 			$out[] = array( 'id' => 'empty_link', 'count' => $empty, 'label' => $empty . ( 1 === $empty ? ' link has' : ' links have' ) . ' no words, so a screen reader cannot say what it is.' );
 		}
 
+		// Social buttons whose link would not show an icon (0.16.0).
+		if ( class_exists( 'TWD_SK_Social' ) ) {
+			foreach ( TWD_SK_Social::problems( $html ) as $problem ) {
+				$out[] = array( 'id' => 'social_link', 'count' => 1, 'label' => $problem );
+			}
+		}
+
 		if ( 0 === preg_match( '/<h1\b/i', $html ) ) {
 			$out[] = array( 'id' => 'no_h1', 'count' => 1, 'label' => 'The page has no main heading (h1). Use a hero at the top.' );
 		}
