@@ -263,6 +263,9 @@ class TWD_SK_Editor {
 			'components'     => ( (bool) $context['is_kit_page'] && ! $simple ) ? TWD_SK_Recipes::parts_menu( TWD_SK_Embed::can_manage() && ! TWD_SK_Safe::on() ) : array(),
 			// The saved embeds an administrator can add to a page from Add a section (0.15.0): names only, never the code.
 			'embeds'         => ( (bool) $context['is_kit_page'] && ! $simple && TWD_SK_Embed::can_manage() && ! TWD_SK_Safe::on() ) ? TWD_SK_Embed::summaries() : array(),
+			// The footer when it is a saved HTML embed (0.17.0): its number and name only, never the code. The Site tab's
+			// Footer HTML section and the Edit footer button over it load the code on demand, administrators who may save HTML.
+			'footerEmbed'    => ( ! $simple && ! TWD_SK_Safe::on() && TWD_SK_Embed::can_save_kind( 'html' ) && TWD_SK_Chrome::footer_embed() ) ? array( 'id' => (int) TWD_SK_Chrome::footer_embed()['id'], 'label' => (string) TWD_SK_Chrome::footer_embed()['label'] ) : array(),
 			// Changing words and pictures in place (0.10.0): kit pages, outside safe mode.
 			'inline'         => (bool) $context['is_kit_page'] && ! TWD_SK_Safe::on(),
 			// The layouts and options the Visual editor's Look panel offers (0.15.0): labels and class names only.

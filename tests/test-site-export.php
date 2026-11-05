@@ -1,5 +1,5 @@
 <?php
-// The site export (a zip an AI can read) and the AI's reply read back as changes (0.16.2): TWD_SK_SiteExport and
+// The site export (a zip an AI can read) and the AI's reply read back as changes (0.17.0): TWD_SK_SiteExport and
 // TWD_SK_SiteImport. Administrators only; the export writes nothing; a change is checked, shown, then applied page
 // by page as one version each.
 
@@ -241,4 +241,29 @@ twd_sk_test( 'site export and changes: administrators only, every write through 
 			twd_sk_hasnt( $bad, $src, $file . ' ' . $bad );
 		}
 	}
+} );
+
+twd_sk_test( 'site tab js (0.17.0): Export for an AI downloads from the export route, Changes from an AI checks then applies the ticked ones, and the Footer HTML window only exists for a saved HTML footer', function () {
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' );
+	twd_sk_has( "api('POST', '/site/export-site'", $js );
+	twd_sk_has( "api('GET', '/site/export-site')", $js );
+	twd_sk_has( "api('POST', '/site/changes/plan'", $js );
+	twd_sk_has( "api('POST', '/site/changes/apply'", $js );
+	twd_sk_has( 'Nothing is saved until you press Apply.', $js, 'the plan says so' );
+	twd_sk_has( 'Untick any you do not want.', $js );
+	twd_sk_has( 'bases[p.page_id] = p.base', $js, 'a page that moved on is refused by version' );
+	twd_sk_has( 'atob(', $js );
+	twd_sk_has( 'createObjectURL', $js );
+	twd_sk_has( 'function buildFooterHtmlSection(', $js );
+	twd_sk_true( 1 === preg_match( '/function buildFooterHtmlSection\(panel\) \{\s*if \( ?!ED\.cfg \|\| !ED\.cfg\.footerEmbed/', str_replace( array( "\r\n" ), "\n", $js ) ) || false !== strpos( $js, "if (!ED.cfg || !ED.cfg.footerEmbed || !ED.cfg.footerEmbed.id)" ), 'the window is built only when the footer is an embed' );
+	twd_sk_has( "api('POST', '/site/embeds', { embed_id: FH.id, label: FH.label, kind: 'html', code: code })", $js, 'saved through the embeds route' );
+	twd_sk_has( "field: 'twd-sk-fh-code'", $js, 'the pill over the embed footer opens it' );
+	twd_sk_has( 'Copy prompt and code for an AI', $js );
+	twd_sk_has( 'Put back the footer before this save', $js );
+	twd_sk_hasnt( 'srcdoc', $js, 'no frame is fed code' );
+	twd_sk_hasnt( 'innerHTML', $js );
+	$ed = file_get_contents( ABSPATH . 'includes/class-twd-sk-editor.php' );
+	twd_sk_has( "'footerEmbed'", $ed );
+	twd_sk_true( 1 === preg_match( "/'footerEmbed'[^\n]*can_save_kind\( 'html' \)[^\n]*footer_embed\(\)/", $ed ), 'only for someone who may save HTML, and only when the footer is an embed' );
+	twd_sk_hasnt( "['code']", substr( $ed, strpos( $ed, "'footerEmbed'" ), 400 ), 'never the code' );
 } );

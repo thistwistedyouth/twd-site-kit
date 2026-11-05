@@ -332,11 +332,18 @@ class TWD_SK_REST {
 			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 		) );
 		// The whole site, a page, or the header and footer as one download for an AI, and the AI's reply read back
-		// as changes (0.16.2). Administrators only. Export reads only; plan reads only; apply writes through the store.
+		// as changes (0.17.0). Administrators only. Export reads only; plan reads only; apply writes through the store.
 		register_rest_route( self::ROUTE_NS, '/site/export-site', array(
-			'methods'             => 'POST',
-			'callback'            => array( __CLASS__, 'post_site_export' ),
-			'permission_callback' => array( __CLASS__, 'can_read_site_post' ),
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'get_site_export' ),
+				'permission_callback' => array( __CLASS__, 'can_read_site' ),
+			),
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_site_export' ),
+				'permission_callback' => array( __CLASS__, 'can_read_site_post' ),
+			),
 		) );
 		register_rest_route( self::ROUTE_NS, '/site/changes/plan', array(
 			'methods'             => 'POST',
@@ -1791,6 +1798,11 @@ class TWD_SK_REST {
 			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_not_a_page' === $out->get_error_code() ? 404 : 400 );
 		}
 		return $out;
+	}
+
+	/** The pages that can be exported one at a time. */
+	public static function get_site_export( $request ) {
+		return array( 'pages' => TWD_SK_SiteExport::page_list() );
 	}
 
 	/** The whole site, one page or the header and footer, with the owner's notes, as one download. Nothing is written. */

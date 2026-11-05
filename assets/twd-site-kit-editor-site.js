@@ -1308,6 +1308,10 @@
 		{ selector: '.twd-sk-chrome .twd-sk-header', label: 'Edit header', aria: 'Edit the header: menu and site details', field: 'twd-sk-pf-menu', host: null, node: null },
 		{ selector: '.twd-sk-chrome .twd-sk-footer', label: 'Edit footer', aria: 'Edit the footer: text and legal links', field: 'twd-sk-pf-footertext', host: null, node: null }
 	];
+	// When the footer is a saved HTML embed the footer pill sits over that instead and opens the Footer HTML section.
+	if (ED.cfg && ED.cfg.footerEmbed && ED.cfg.footerEmbed.id) {
+		PILLS.push({ selector: '.twd-sk-footer-embed', label: 'Edit footer', aria: 'Edit the footer HTML, or remix it with an AI', field: 'twd-sk-fh-code', host: null, node: null });
+	}
 	var pillQueued = false;
 
 	function placePills() {
@@ -2772,6 +2776,378 @@
 	}
 	ED.siteHistoryReload = loadHistory;
 
+	/* ---- export for an AI, and changes back from an AI (0.17.0) ----
+	 * Export: the whole site, one page or the header and footer, with the owner's notes, as one download (a zip, or one
+	 * markdown file where the server cannot zip). Changes: the AI's whole reply pasted in, checked first (nothing is
+	 * saved), each change shown with a tick, then Apply makes the ticked ones, one version per page. */
+	var xui = {};
+	var XC = { plan: null, reply: '' };
+
+	function downloadBase64(name, b64, type) {
+		var bin = window.atob(b64);
+		var bytes = new Uint8Array(bin.length);
+		for (var i = 0; i < bin.length; i++) {
+			bytes[i] = bin.charCodeAt(i);
+		}
+		var url = URL.createObjectURL(new Blob([bytes], { type: type }));
+		var a = el('a', { href: url, download: name });
+		document.body.appendChild(a);
+		a.click();
+		window.setTimeout(function () {
+			URL.revokeObjectURL(url);
+			if (a.parentNode) {
+				a.parentNode.removeChild(a);
+			}
+		}, 1000);
+	}
+
+	function exportScope() {
+		return xui.scopePage.checked ? 'page' : (xui.scopeChrome.checked ? 'chrome' : 'all');
+	}
+
+	function runSiteExport() {
+		var scope = exportScope();
+		var body = { scope: scope, notes: xui.notes.value };
+		if (scope === 'page') {
+			body.page = parseInt(xui.pageSel.value, 10) || 0;
+			if (!body.page) {
+				message(xui.exMsg, 'Choose the page first.', false);
+				return;
+			}
+		}
+		xui.exGo.disabled = true;
+		message(xui.exMsg, 'Building the download...', true);
+		api('POST', '/site/export-site', body).then(function (data) {
+			xui.exGo.disabled = false;
+			downloadBase64(data.name, data.base64, data.kind === 'zip' ? 'application/zip' : 'text/markdown;charset=utf-8');
+			message(xui.exMsg, 'Saved ' + data.name + ' (' + Math.round(data.bytes / 1024) + ' KB, ' + data.pages + ' page' + (data.pages === 1 ? '' : 's') + '). Give it to your AI and tell it to start with README-FOR-AI.md. It holds the client\'s words and contact details: keep it private.', true);
+		}, function (err) {
+			xui.exGo.disabled = false;
+			message(xui.exMsg, err.message, false);
+		});
+	}
+
+	function loadExportPages() {
+		api('GET', '/site/export-site').then(function (data) {
+			clear(xui.pageSel);
+			xui.pageSel.appendChild(el('option', { value: '', text: 'Choose a page' }));
+			(data.pages || []).forEach(function (p) {
+				xui.pageSel.appendChild(el('option', { value: String(p.id), text: p.title + (p.status && p.status !== 'publish' ? ' (' + p.status + ')' : '') }));
+			});
+		}, function () {});
+	}
+
+	function buildExportSection(panel) {
+		xui.scopeAll = el('input', { type: 'radio', name: 'twd-sk-xs-scope', id: 'twd-sk-xs-all', checked: '' });
+		xui.scopePage = el('input', { type: 'radio', name: 'twd-sk-xs-scope', id: 'twd-sk-xs-page' });
+		xui.scopeChrome = el('input', { type: 'radio', name: 'twd-sk-xs-scope', id: 'twd-sk-xs-chrome' });
+		xui.pageSel = el('select', { id: 'twd-sk-xs-pagesel', className: 'twd-sk-ed__input', 'aria-label': 'Which page to export' }, [el('option', { value: '', text: 'Choose a page' })]);
+		xui.pageSel.addEventListener('focus', function () {
+			xui.scopePage.checked = true;
+		});
+		xui.notes = textArea('twd-sk-xs-notes', 6);
+		xui.exMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		xui.exGo = button('Download', 'primary', runSiteExport);
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Export for an AI' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'Get the site as files an AI can read when it cannot reach the site itself: every page (one file each, sections numbered), the header and footer, the style, the site stylesheet, your facts and your notes, with a README that tells the AI how to reply. Its reply can be pasted into Changes from an AI below to check and apply. The download holds the client\'s words and contact details, so keep it private.' }),
+			el('div', { className: 'twd-sk-ed__radios', role: 'radiogroup', 'aria-label': 'What to export' }, [
+				el('label', { 'for': 'twd-sk-xs-all' }, [xui.scopeAll, el('span', { text: 'The whole site: every page, the header and footer, the style and the notes' })]),
+				el('label', { 'for': 'twd-sk-xs-page' }, [xui.scopePage, el('span', { text: 'One page, with the style and the notes' })]),
+				el('label', { 'for': 'twd-sk-xs-chrome' }, [xui.scopeChrome, el('span', { text: 'The header and footer only, with the style and the notes' })])
+			]),
+			xui.pageSel,
+			field('Your notes for the AI (optional)', xui.notes, 'What you want checked or changed, in your own words, for example wording to match, things to add, what to leave alone. They go into the download as notes/your-notes.md and are not saved on the site.'),
+			el('div', { className: 'twd-sk-ed__actions' }, [xui.exGo]),
+			xui.exMsg
+		]));
+		loadExportPages();
+	}
+
+	function changeRow(it) {
+		var tick = el('input', { type: 'checkbox', id: 'twd-sk-xc-' + it.n, 'data-n': String(it.n) });
+		if (it.ok) {
+			tick.checked = true;
+		} else {
+			tick.disabled = true;
+		}
+		var kids = [el('strong', { text: (it.what || 'A change') })];
+		if (it.why) {
+			kids.push(el('span', { className: 'twd-sk-ed__help', text: ' Why: ' + it.why }));
+		}
+		if (it.error) {
+			kids.push(el('p', { className: 'twd-sk-ed__help', text: 'Cannot be used: ' + it.error }));
+		} else {
+			if (it.before) {
+				kids.push(el('p', { className: 'twd-sk-ed__help', text: 'Now: ' + it.before }));
+			}
+			if (it.after) {
+				kids.push(el('p', { className: 'twd-sk-ed__help', text: 'Would become: ' + it.after }));
+			}
+		}
+		return el('li', {}, [el('label', { 'for': 'twd-sk-xc-' + it.n }, [tick, el('span', {}, kids)])]);
+	}
+
+	function drawPlan(plan) {
+		XC.plan = plan;
+		clear(xui.items);
+		var n = 0;
+		plan.items.forEach(function (it) {
+			xui.items.appendChild(changeRow(it));
+			if (it.ok) {
+				n++;
+			}
+		});
+		var notes = [];
+		if (plan.what_changed) {
+			notes.push('The AI says: ' + plan.what_changed);
+		}
+		if (plan.css && plan.css.given) {
+			notes.push(plan.css.ok ? 'It also adds or changes stylesheet rules (the site stylesheet becomes ' + Math.round(plan.css.bytes / 1024) + ' KB of its ' + Math.round(plan.css.budget / 1024) + ' KB).' : plan.css.error);
+		}
+		plan.pages.forEach(function (p) {
+			(p.warnings || []).forEach(function (w) {
+				notes.push(p.title + ': ' + w);
+			});
+		});
+		clear(xui.planNotes);
+		notes.forEach(function (t) {
+			xui.planNotes.appendChild(el('li', { text: t }));
+		});
+		show(xui.planWrap, true);
+		xui.applyBtn.disabled = n === 0;
+		message(xui.xcMsg, n + ' of ' + plan.items.length + ' change' + (plan.items.length === 1 ? '' : 's') + ' can be applied. Untick any you do not want. Nothing is saved until you press Apply.', n > 0);
+	}
+
+	function checkChanges() {
+		var reply = xui.reply.value;
+		show(xui.planWrap, false);
+		show(xui.results, false);
+		xui.checkBtn.disabled = true;
+		message(xui.xcMsg, 'Checking the reply...', true);
+		api('POST', '/site/changes/plan', { reply: reply }).then(function (plan) {
+			xui.checkBtn.disabled = false;
+			XC.reply = reply;
+			drawPlan(plan);
+		}, function (err) {
+			xui.checkBtn.disabled = false;
+			message(xui.xcMsg, err.message, false);
+		});
+	}
+
+	function applyChanges() {
+		var picked = [];
+		Array.prototype.forEach.call(xui.items.querySelectorAll('input[type=checkbox]'), function (c) {
+			if (c.checked && !c.disabled) {
+				picked.push(parseInt(c.getAttribute('data-n'), 10));
+			}
+		});
+		if (!picked.length) {
+			message(xui.xcMsg, 'Tick at least one change.', false);
+			return;
+		}
+		var bases = {};
+		XC.plan.pages.forEach(function (p) {
+			bases[p.page_id] = p.base;
+		});
+		xui.applyBtn.disabled = true;
+		message(xui.xcMsg, 'Applying...', true);
+		api('POST', '/site/changes/apply', { reply: XC.reply, picked: picked, bases: bases }).then(function (res) {
+			clear(xui.results);
+			res.results.forEach(function (r) {
+				xui.results.appendChild(el('li', { text: (r.ok ? 'Done: ' : 'Not applied: ') + r.title + '. ' + r.message }));
+			});
+			show(xui.results, true);
+			show(xui.planWrap, false);
+			message(xui.xcMsg, res.done + ' applied' + (res.failed ? ', ' + res.failed + ' not applied (see below)' : '') + '. Reload the page to see it. Each page change is one version: Undo in Your Edits takes it back.', res.failed === 0);
+		}, function (err) {
+			xui.applyBtn.disabled = false;
+			message(xui.xcMsg, err.message, false);
+		});
+	}
+
+	function buildChangesSection(panel) {
+		xui.reply = textArea('twd-sk-xc-reply', 10);
+		xui.reply.setAttribute('aria-label', 'The AI\'s reply');
+		xui.checkBtn = button('Check the changes', 'primary', checkChanges);
+		xui.applyBtn = button('Apply the ticked changes', 'primary', applyChanges);
+		xui.items = el('ul', { className: 'twd-sk-ed__list' });
+		xui.planNotes = el('ul', { className: 'twd-sk-ed__list' });
+		xui.planWrap = el('div', { hidden: '' }, [xui.planNotes, xui.items, el('div', { className: 'twd-sk-ed__actions' }, [xui.applyBtn])]);
+		xui.results = el('ul', { className: 'twd-sk-ed__list', hidden: '' });
+		xui.xcMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Changes from an AI' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'Paste the whole reply an AI gave you after you gave it an export (it is one block of JSON starting with { ). Each change is checked and shown with a tick; nothing is saved until you press Apply. Every page you apply becomes one new version, so Undo on that page takes it back. A reply that does not follow the README format is refused with a reason.' }),
+			field('The AI\'s reply', xui.reply),
+			el('div', { className: 'twd-sk-ed__actions' }, [xui.checkBtn]),
+			xui.planWrap,
+			xui.results,
+			xui.xcMsg
+		]));
+	}
+
+	/* ---- the footer's own HTML, edited in the window (0.17.0) ----
+	 * Only when the footer is a saved HTML embed (the editor config carries its number). The code is loaded on demand,
+	 * edited in a box with a preview of what it draws (a frame that runs nothing), and saved through the embeds route.
+	 * Remix with an AI: copy a prompt with the rules and the current code, paste the reply, check the preview, Save.
+	 * The embed keeps no earlier version, so this window holds the one before the last save for this visit. */
+	var FH = { id: 0, label: '', saved: '', before: '' };
+	var fhui = {};
+
+	var FH_PROMPT = 'Rewrite the footer of a website. Reply with ONE fenced html block holding the whole new footer HTML and nothing else, then one line starting "What changed:" in plain words.\n\nRules:\n'
+		+ '- Change only what I ask. Keep every link address, phone number and email address exactly as it is unless I say otherwise. Never invent a fact, name, price or qualification; where something is missing write [PLACEHOLDER: what is needed].\n'
+		+ '- Plain HTML with inline style attributes where styling is needed. No script, iframe, form, style element or event handler. No outside requests: no web fonts, no pictures or stylesheets from another address. Links to other websites start with https; links to this site are paths such as /about/.\n'
+		+ '- It must work from 320px to a wide desktop: stack columns on a phone, text never smaller than 14px, readable colour contrast.\n'
+		+ '- Colours and fonts: use the site\'s own where you can: var(--twd-site-color-heading), var(--twd-site-color-body), var(--twd-site-color-primary), var(--twd-site-color-band), var(--twd-site-color-surface), var(--twd-site-color-tint), var(--twd-site-color-border), var(--twd-site-font-heading), var(--twd-site-font-body).\n'
+		+ '- Plain hyphens, never long dashes. Every link has clear words and every picture has alt text.\n\n';
+
+	function fhCode() {
+		return fhui.code.value;
+	}
+
+	function fhUpdate() {
+		fhui.save.disabled = fhCode().trim() === '' || fhCode() === FH.saved;
+		fhui.discard.disabled = fhCode() === FH.saved;
+		fhui.restore.hidden = !FH.before || FH.before === FH.saved;
+	}
+
+	function fhLoad() {
+		api('GET', '/site/embeds').then(function (data) {
+			var rec = null;
+			(data.embeds || []).forEach(function (e) {
+				if (e.id === FH.id) {
+					rec = e;
+				}
+			});
+			if (!rec) {
+				message(fhui.msg, 'The footer embed could not be found. It may have been deleted: choose the footer again under Header and footer.', false);
+				return;
+			}
+			FH.saved = rec.code;
+			FH.label = rec.label;
+			fhui.code.value = rec.code;
+			fhUpdate();
+		}, function (err) {
+			message(fhui.msg, err.message, false);
+		});
+	}
+
+	function fhSave() {
+		var code = fhCode();
+		fhui.save.disabled = true;
+		message(fhui.msg, 'Saving...', true);
+		api('POST', '/site/embeds', { embed_id: FH.id, label: FH.label, kind: 'html', code: code }).then(function () {
+			FH.before = FH.saved;
+			FH.saved = code;
+			fhUpdate();
+			message(fhui.msg, 'Saved. Reload the page to see the footer everywhere. The footer before this save is kept in this window until you reload (Put back the footer before this save).', true);
+		}, function (err) {
+			fhUpdate();
+			message(fhui.msg, err.message, false);
+		});
+	}
+
+	function fhCopy(text, msgNode, okText) {
+		var done = function () {
+			message(msgNode, okText, true);
+		};
+		var fallback = function () {
+			fhui.box.value = text;
+			show(fhui.box, true);
+			fhui.box.focus();
+			fhui.box.select();
+			var ok = false;
+			try {
+				ok = document.execCommand('copy');
+			} catch (e) {
+				ok = false;
+			}
+			message(msgNode, ok ? okText : 'The text is selected below. Press Ctrl+C (Cmd+C on a Mac) to copy it.', ok);
+		};
+		if (navigator.clipboard && window.isSecureContext && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(text).then(function () {
+				show(fhui.box, false);
+				done();
+			}, fallback);
+			return;
+		}
+		fallback();
+	}
+
+	function fhUseReply() {
+		var text = fhui.reply.value.trim();
+		if (!text) {
+			message(fhui.msg, 'Paste the AI\'s reply first.', false);
+			return;
+		}
+		var m = /```[ \t]*[a-zA-Z]*[^\n]*\n([\s\S]*?)\n[ \t]*```/.exec(text);
+		var html = m ? m[1].trim() : (text.charAt(0) === '<' ? text : '');
+		if (!html) {
+			message(fhui.msg, 'The reply has no HTML block. It should hold one fenced html block with the whole footer.', false);
+			return;
+		}
+		if (/<\s*(script|iframe|form|object|embed)\b/i.test(html)) {
+			message(fhui.msg, 'The reply holds a script, frame or form, which a footer should not carry. Ask the AI to leave it out.', false);
+			return;
+		}
+		fhui.code.value = html;
+		fhui.reply.value = '';
+		fhUpdate();
+		message(fhui.msg, 'The reply is in the box above. Read it, then press Save footer to use it. Nothing is saved until you do.', true);
+	}
+
+	function buildFooterHtmlSection(panel) {
+		if (!ED.cfg || !ED.cfg.footerEmbed || !ED.cfg.footerEmbed.id) {
+			return;
+		}
+		FH.id = ED.cfg.footerEmbed.id;
+		fhui.code = textArea('twd-sk-fh-code', 14);
+		fhui.code.setAttribute('aria-label', 'The footer HTML');
+		fhui.code.addEventListener('input', function () {
+			fhUpdate();
+		});
+		fhui.reply = textArea('twd-sk-fh-reply', 6);
+		fhui.reply.setAttribute('aria-label', 'The AI\'s reply');
+		fhui.box = el('textarea', { className: 'twd-sk-ed__textarea', rows: '6', hidden: '', 'aria-label': 'Text to copy' });
+		fhui.msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		fhui.save = button('Save footer', 'primary', fhSave);
+		fhui.discard = button('Discard changes', 'secondary', function () {
+			fhui.code.value = FH.saved;
+			fhUpdate();
+			message(fhui.msg, 'Back to the saved footer.', true);
+		});
+		fhui.restore = button('Put back the footer before this save', 'secondary', function () {
+			fhui.code.value = FH.before;
+			fhUpdate();
+			message(fhui.msg, 'The earlier footer is in the box. Press Save footer to keep it.', true);
+		});
+		fhui.restore.hidden = true;
+		fhui.copy = button('Copy prompt and code for an AI', 'secondary', function () {
+			fhCopy(FH_PROMPT + 'The current footer HTML:\n\n```html\n' + fhCode().trim() + '\n```\n\nWhat I would like changed: ', fhui.msg, 'Copied. Paste it into your AI chat and add what you want changed at the end.');
+		});
+		fhui.use = button('Use the reply', 'secondary', fhUseReply);
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Footer HTML' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'The footer on this site is a saved piece of HTML. Edit it here and press Save footer. It shows on every page: reload the page after saving to see it. To change it with an AI, copy the prompt and the code, paste the AI\'s reply back and press Use the reply, then Save. Nothing is saved until you press Save footer. The site keeps no earlier copy, so this window holds the footer from before your last save until you reload (Put back the footer before this save).' }),
+			fhui.code,
+			el('div', { className: 'twd-sk-ed__actions' }, [fhui.save, fhui.discard, fhui.restore]),
+			el('h4', { className: 'twd-sk-ed__sub-title', text: 'Remix with an AI' }),
+			el('div', { className: 'twd-sk-ed__actions' }, [fhui.copy]),
+			fhui.box,
+			field('The AI\'s reply', fhui.reply),
+			el('div', { className: 'twd-sk-ed__actions' }, [fhui.use]),
+			fhui.msg
+		]));
+		fhLoad();
+		ED.addDirtyCheck(function () {
+			return FH.saved !== '' && fhCode() !== FH.saved ? 'the footer HTML' : '';
+		}, function () {
+			fhui.code.value = FH.saved;
+			fhUpdate();
+		});
+	}
+
 	function buildSite(panel) {
 		buildModeSection(panel);
 		buildLooksSection(panel);
@@ -2781,6 +3157,9 @@
 		buildHistorySection(panel);
 		buildFactsSection(panel);
 		buildEmbedsSection(panel);
+		buildFooterHtmlSection(panel);
+		buildExportSection(panel);
+		buildChangesSection(panel);
 		buildCssSection(panel);
 		buildUpgradesSection(panel);
 		buildChromeSection(panel);
@@ -2795,6 +3174,9 @@
 			'Site details': 'Name, menu, contact lines, footer text',
 			'Site changes': 'Undo a saved style, site details or header and footer change',
 			'Embeds': 'Show a booking calendar, map or other outside code on a page',
+			'Footer HTML': 'Edit the footer\'s own HTML, or remix it with an AI',
+			'Export for an AI': 'Download the site, a page or the header and footer for an AI to check',
+			'Changes from an AI': 'Paste an AI\'s reply, check each change, apply the ones you want',
 			'Site stylesheet': 'The rules behind custom sections: edit, remove unused ones, go back a version',
 			'Bring pages up to date': 'Add what newer versions added to pages built earlier',
 			'Header and footer': 'Who places them, layout, fixed header',

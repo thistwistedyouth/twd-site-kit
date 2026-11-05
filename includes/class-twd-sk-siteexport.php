@@ -33,6 +33,21 @@ class TWD_SK_SiteExport {
 		return '' !== $slug ? $slug : 'page-' . (int) $page_id;
 	}
 
+	/** The kit pages, for choosing one to export: id, the name a reply uses, title, status. */
+	public static function page_list() {
+		$out = array();
+		foreach ( array_slice( TWD_SK_Launch::kit_pages(), 0, self::MAX_PAGES ) as $id ) {
+			$post  = get_post( (int) $id );
+			$out[] = array(
+				'id'     => (int) $id,
+				'page'   => self::stem( $id ),
+				'title'  => trim( (string) get_the_title( (int) $id ) ),
+				'status' => $post && isset( $post->post_status ) ? (string) $post->post_status : '',
+			);
+		}
+		return $out;
+	}
+
 	/** Plain text for the owner's notes: no tags or control characters, line breaks kept, capped. */
 	public static function clean_notes( $text ) {
 		if ( ! is_string( $text ) ) {
