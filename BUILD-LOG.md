@@ -1,3 +1,10 @@
+## 5 Nov 2026: fix, a link in a custom section did not take a new address (test build 0.16.0-test1-linkfix on the pilot staging site; NOT released, would be 0.16.1)
+
+- **Fault (found by the owner on the pilot site):** in the Visual editor, Link then Set the link on a link that is the whole piece but is not a kit button (a custom section's link with a `c-` class, for example a ghost button) looked done and did not stick. The browser stored the address; `TWD_SK_Inline::apply()` only applied an address to `twd-sk-btn` links and tab links and silently dropped it for any other whole-link piece. Words inside text worked because that goes through `createLink`. The kit button path was unchanged since 0.10.0.
+- **Fix:** after the words are filled, a numbered piece that is itself an `a` takes `href` through `safe_url` (same allowed schemes, same plain refusal). Words-only edits leave the address alone. 1 test (`tests/test-custom.php`), suite 1119 passed on an LF copy.
+- Checked on the real home page (dry run, nothing saved): 0.16.0 left the old address, the test build replaces it.
+- Staging now runs `0.16.0-test1-linkfix`; rollback zip `~/twd-site-kit-ROLLBACK-before-linkfix.zip` (0.16.0), style snapshot "before linkfix test". To release: bump to 0.16.1 and follow the release steps (needs the owner's yes).
+
 ## 5 Nov 2026: RELEASE 0.16.0 (pushed to main at the owner's yes)
 
 - Version 0.16.0 in the three places. Standing site stylesheet budget cut to 40,000 built bytes, warning from 32,000 (the staging build used 48,000 and 40,000); the editor's upload-size fallback follows.

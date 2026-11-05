@@ -683,6 +683,16 @@ class TWD_SK_Inline {
 				}
 			} else {
 				self::fill( $doc, $el, $edit['html'] );
+				// A link that is the whole piece but not a kit button (a link in a custom section, with a c- class):
+				// its new address is applied like a button's, the markup inside it stays as filled. Before 0.16.1 the
+				// address was read here and silently dropped, so Set the link looked done and did not stick.
+				if ( 'a' === strtolower( $el->nodeName ) && isset( $edit['href'] ) && is_string( $edit['href'] ) && '' !== trim( $edit['href'] ) ) {
+					$href = TWD_SK_Sanitizer::safe_url( trim( $edit['href'] ), array( 'http', 'https', 'mailto', 'tel' ) );
+					if ( false === $href ) {
+						return new WP_Error( 'twd_sk_bad_input', 'That link address is not allowed. Use a page on this site, https, mailto or tel.' );
+					}
+					$el->setAttribute( 'href', $href );
+				}
 			}
 			$changed++;
 		}

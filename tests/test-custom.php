@@ -233,6 +233,23 @@ twd_sk_test( 'inline: in a custom section only labelled words and pictures are n
 	twd_sk_eq( 'custom', TWD_SK_Sections::type_of( TWD_SK_Replace::mark_custom( twd_sk_custom_section() ) ), 'a custom section reads as type custom once marked' );
 } );
 
+twd_sk_test( 'inline: a link in a custom section that is not a kit button (a c- class link) takes a new address when its whole text is the link; its markup and label stay; a bad address is refused', function () {
+	TWD_SK_Css::save( twd_sk_custom_css(), 'x', 51 );
+	$page = TWD_SK_Sanitizer::clean( '<section class="twd-sk-custom c-intro"><div class="twd-sk-inner"><a href="/old-page/" class="c-intro__title" data-twd-edit="Link: About">About us</a></div></section>' );
+	twd_sk_has( 'href="/old-page/"', $page );
+	$marked = TWD_SK_Inline::mark( $page );
+	twd_sk_true( 1 === preg_match( '/data-twd-edit="Link: About" data-twd-sk-t="(\d+)"/', $marked, $n ), 'the link is a numbered piece' );
+	$out = TWD_SK_Inline::apply( $page, array( array( 'i' => (int) $n[1], 'html' => 'About us', 'href' => '/about/' ) ), array() );
+	twd_sk_true( ! is_wp_error( $out ), is_wp_error( $out ) ? $out->get_error_message() : '' );
+	twd_sk_has( 'href="/about/"', $out['html'], 'the new address is saved' );
+	twd_sk_hasnt( '/old-page/', $out['html'], 'the old address is gone' );
+	twd_sk_has( 'class="c-intro__title"', $out['html'], 'its class stays' );
+	twd_sk_has( 'data-twd-edit="Link: About"', $out['html'], 'its label stays' );
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Inline::apply( $page, array( array( 'i' => (int) $n[1], 'html' => 'About us', 'href' => 'javascript:alert(1)' ) ), array() ), 'a bad address is refused, as for a button' );
+	$words = TWD_SK_Inline::apply( $page, array( array( 'i' => (int) $n[1], 'html' => 'About me' ) ), array() );
+	twd_sk_has( 'href="/old-page/"', $words['html'], 'words only: the address is untouched' );
+} );
+
 twd_sk_test( 'replace: mark_custom() puts twd-sk-custom first on every non-kit section and wraps bare HTML; kit sections are left alone', function () {
 	$marked = TWD_SK_Replace::mark_custom( twd_sk_custom_section() . "\n" . TWD_SK_Registry::get( 'cta' )['skeleton'] . '<section><p>plain</p></section>' );
 	twd_sk_has( '<section class="twd-sk-custom c-intro twd-sk-tone-surface">', $marked );
