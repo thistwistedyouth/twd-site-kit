@@ -792,6 +792,167 @@ class TWD_SK_Inline {
 		return array( 'html' => self::save( $doc, $root ), 'changed' => $changed, 'removed' => $removed );
 	}
 
+	// -- Adding text and duplicating an item (0.19.0) -----------------------------------
+
+	/** The number of the top-level section a node sits in (counted as mark() counts), or -1. */
+	private static function section_number( DOMElement $root, DOMNode $node ) {
+		$top = null;
+		for ( $up = $node; $up instanceof DOMElement && $up !== $root; $up = $up->parentNode ) {
+			if ( 'section' === strtolower( $up->nodeName ) ) {
+				$top = $up;
+			}
+		}
+		if ( ! $top ) {
+			return -1;
+		}
+		$n = 0;
+		foreach ( iterator_to_array( $root->getElementsByTagName( 'section' ) ) as $sec ) {
+			$nested = false;
+			for ( $up = $sec->parentNode; $up instanceof DOMElement && $up !== $root; $up = $up->parentNode ) {
+				if ( 'section' === strtolower( $up->nodeName ) ) {
+					$nested = true;
+					break;
+				}
+			}
+			if ( $nested ) {
+				continue;
+			}
+			if ( $sec === $top ) {
+				return $n;
+			}
+			$n++;
+		}
+		return -1;
+	}
+
+	/**
+	 * A new paragraph (or list entry) straight after the piece of text numbered $i, in the same style as its
+	 * neighbours, holding a [PLACEHOLDER] so the publish check holds the page back until it is written.
+	 *
+	 * @return array|WP_Error { html, at, piece, note } at: the section's number; piece: the new text's number
+	 */
+	public static function add_text( $html, $i ) {
+		$loaded = self::load( (string) $html );
+		if ( ! $loaded ) {
+			return new WP_Error( 'twd_sk_bad_input', 'This page could not be read. Reload it and try again.' );
+		}
+		list( $doc, $root ) = $loaded;
+		$found = self::targets( $root );
+		$i     = is_numeric( $i ) ? (int) $i : -1;
+		if ( ! isset( $found['text'][ $i ] ) ) {
+			return new WP_Error( 'twd_sk_conflict', 'The page changed since it was opened, so that text could not be matched. Reload the page and try again.' );
+		}
+		$el  = $found['text'][ $i ];
+		$tag = strtolower( $el->nodeName );
+		if ( self::is_button( $el ) || self::is_tab_link( $el ) || ! in_array( $tag, array( 'p', 'li', 'h2', 'h3', 'h4', 'h5', 'h6' ), true ) ) {
+			return new WP_Error( 'twd_sk_bad_input', 'A new paragraph goes below a paragraph, a list entry or a heading. Click one of those first.' );
+		}
+		$new_tag = 'li' === $tag ? 'li' : 'p';
+		$source  = null;
+		if ( 'p' === $tag || 'li' === $tag ) {
+			$source = $el;
+		} else {
+			foreach ( $el->parentNode->childNodes as $sib ) {
+				if ( $sib instanceof DOMElement && 'p' === strtolower( $sib->nodeName ) ) {
+					$source = $sib;
+					break;
+				}
+			}
+		}
+		$skip    = array_merge( TWD_SK_Looks::text_style_classes(), array( 'twd-sk-quoteline', 'twd-sk-notebox', 'twd-sk-text__subheading' ) );
+		$classes = $source ? array_values( array_diff( preg_split( '/\s+/', trim( (string) $source->getAttribute( 'class' ) ), -1, PREG_SPLIT_NO_EMPTY ), $skip ) ) : array();
+		$new     = $doc->createElement( $new_tag );
+		if ( $classes ) {
+			$new->setAttribute( 'class', implode( ' ', $classes ) );
+		}
+		// Inside a custom section only a labelled piece can be changed in place, so the new one carries a label too
+		// (the one its neighbour has, else a plain word), or it could be added but never written.
+		for ( $up = $el; $up instanceof DOMElement && $up !== $root; $up = $up->parentNode ) {
+			if ( 'section' === strtolower( $up->nodeName ) && self::has_class( $up, TWD_SK_Css::CUSTOM_CLASS ) ) {
+				$label = $source && $source->hasAttribute( TWD_SK_Replace::LABEL_ATTR ) ? $source->getAttribute( TWD_SK_Replace::LABEL_ATTR ) : '';
+				$new->setAttribute( TWD_SK_Replace::LABEL_ATTR, '' !== $label ? $label : 'paragraph' );
+				break;
+			}
+		}
+		$new->appendChild( $doc->createTextNode( 'li' === $new_tag ? '[PLACEHOLDER: new item]' : '[PLACEHOLDER: new paragraph]' ) );
+		$el->parentNode->insertBefore( $new, $el->nextSibling );
+		$piece = -1;
+		$after = self::targets( $root );
+		foreach ( $after['text'] as $k => $t ) {
+			if ( $t === $new ) {
+				$piece = (int) $k;
+				break;
+			}
+		}
+		if ( $piece < 0 ) {
+			return new WP_Error( 'twd_sk_bad_input', 'A new paragraph cannot go here, because it could not be changed afterwards. Try below a different paragraph.' );
+		}
+		return array(
+			'html'  => self::save( $doc, $root ),
+			'at'    => max( 0, self::section_number( $root, $new ) ),
+			'piece' => $piece,
+			'note'  => 'li' === $new_tag ? 'Added a new list entry' : 'Added a new paragraph',
+		);
+	}
+
+	/**
+	 * A copy of the one-of-several item numbered $r (a card, a list entry, a step, a question, a button, a paragraph)
+	 * put straight after it, to be changed with the Visual editor. Not a whole section (Add section does that), not a
+	 * question group (it is tied to its tab). Every id is dropped from the copy so none appears twice.
+	 *
+	 * @return array|WP_Error { html, at, piece, note }
+	 */
+	public static function duplicate( $html, $r ) {
+		$loaded = self::load( (string) $html );
+		if ( ! $loaded ) {
+			return new WP_Error( 'twd_sk_bad_input', 'This page could not be read. Reload it and try again.' );
+		}
+		list( $doc, $root ) = $loaded;
+		$found = self::targets( $root );
+		$r     = is_numeric( $r ) ? (int) $r : -1;
+		if ( ! isset( $found['removes'][ $r ] ) ) {
+			return new WP_Error( 'twd_sk_conflict', 'The page changed since it was opened, so that item could not be matched. Reload the page and try again.' );
+		}
+		$el = $found['removes'][ $r ];
+		if ( 'section' === strtolower( $el->nodeName ) ) {
+			return new WP_Error( 'twd_sk_bad_input', 'A whole section is copied with Add section. Click a card, list entry, step, question or paragraph inside it.' );
+		}
+		if ( self::has_class( $el, 'twd-sk-faq__group' ) || self::has_class( $el, 'twd-sk-faq__tab' ) || null !== self::group_partner( $el ) ) {
+			return new WP_Error( 'twd_sk_bad_input', 'A question group is tied to its tab, so it cannot be copied. Copy one of its questions instead.' );
+		}
+		$copy = $el->cloneNode( true );
+		if ( $copy->hasAttribute( 'id' ) ) {
+			$copy->removeAttribute( 'id' );
+		}
+		foreach ( iterator_to_array( $copy->getElementsByTagName( '*' ) ) as $inner ) {
+			if ( $inner->hasAttribute( 'id' ) ) {
+				$inner->removeAttribute( 'id' );
+			}
+		}
+		$el->parentNode->insertBefore( $copy, $el->nextSibling );
+		$piece = -1;
+		$after = self::targets( $root );
+		foreach ( $after['text'] as $k => $t ) {
+			$inside = false;
+			for ( $up = $t; $up instanceof DOMNode; $up = $up->parentNode ) {
+				if ( $up === $copy ) {
+					$inside = true;
+					break;
+				}
+			}
+			if ( $inside ) {
+				$piece = (int) $k;
+				break;
+			}
+		}
+		return array(
+			'html'  => self::save( $doc, $root ),
+			'at'    => max( 0, self::section_number( $root, $copy ) ),
+			'piece' => $piece,
+			'note'  => 'Copied an item (to be changed)',
+		);
+	}
+
 	/** The address of a picture in the media library, at the large size when there is one. */
 	private static function picture_url( $id ) {
 		if ( $id <= 0 || ! function_exists( 'wp_attachment_is_image' ) || ! wp_attachment_is_image( $id ) ) {

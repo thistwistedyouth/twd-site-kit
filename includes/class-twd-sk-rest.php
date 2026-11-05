@@ -1713,15 +1713,17 @@ class TWD_SK_REST {
 			) );
 		} elseif ( 'move' === $op ) {
 			$out = TWD_SK_Structure::move( $id, array( 'index' => $request->get_param( 'index' ), 'dir' => $request->get_param( 'dir' ) ) );
+		} elseif ( 'add_text' === $op || 'duplicate' === $op ) {
+			$out = TWD_SK_Structure::inside( $id, $op, array( 'piece' => $request->get_param( 'piece' ), 'item' => $request->get_param( 'item' ) ) );
 		} else {
-			return self::error( 'twd_sk_bad_input', 'Choose to add a section or move one.', 400 );
+			return self::error( 'twd_sk_bad_input', 'Choose to add a section, move one, add a paragraph or copy an item.', 400 );
 		}
 		if ( is_wp_error( $out ) ) {
 			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_empty_page' === $out->get_error_code() || 'twd_sk_bad_input' === $out->get_error_code() ? 400 : 502 );
 		}
 		$saved = TWD_SK_Store::save( $id, $out['html'], array( 'base_version' => $base, 'note' => $out['note'] ) );
 		$done  = self::after_write( $id, $saved );
-		return is_wp_error( $done ) ? $done : $done + array( 'at' => (int) $out['at'] );
+		return is_wp_error( $done ) ? $done : $done + array( 'at' => (int) $out['at'], 'piece' => isset( $out['piece'] ) ? (int) $out['piece'] : -1 );
 	}
 
 	/** The checklist of changes for a request. Nothing is changed. */

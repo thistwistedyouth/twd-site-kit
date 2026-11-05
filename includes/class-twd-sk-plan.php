@@ -40,8 +40,8 @@ class TWD_SK_Plan {
 		$out[] = '{"changes":[{"do":"edit","sections":[2],"what":"..."},{"do":"add","after":3,"component":"services","variant":"twd-sk-services--glow","what":"..."},{"do":"remove","sections":[5]},{"do":"move","sections":[4],"after":1}],"cannot":[{"what":"...","nearest":"..."}]}';
 		$out[] = '';
 		$out[] = '## Rules';
-		$out[] = '1. "edit" changes the words (and, if asked, the layout) inside sections that are already there. List every section number it touches. Put everything asked about the same section in one edit.';
-		$out[] = '2. "add" puts one new section after section number "after". Use only a component and layout from the list given. Choose the closest layout to what was asked. Section 1 is always the hero, so a new section goes after 1 at the earliest. "At the bottom" means after the last section.';
+		$out[] = '1. "edit" changes the words (and, if asked, the layout) inside sections that are already there. List every section number it touches. Put everything asked about the same section in one edit. Adding a new paragraph, sentence, list entry, card, step or question INSIDE a section is an edit of that section, never an "add" and never "cannot": say where in the section it goes and what it says.';
+		$out[] = '2. "add" puts one whole new section after section number "after" (not a paragraph or an item inside a section). Use only a component and layout from the list given. Choose the closest layout to what was asked. Section 1 is always the hero, so a new section goes after 1 at the earliest. "At the bottom" means after the last section.';
 		$out[] = '3. "remove" takes whole sections away. Never remove section 1.';
 		$out[] = '4. "move" moves one section (never section 1) to after another section.';
 		$out[] = '5. "what" says exactly what to write or change, clearly enough for someone who has not seen the request. Copy any wording, quotes, names, prices or details the person gave into it word for word. Never invent facts, quotes, reviews, names, prices or promises.';

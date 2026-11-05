@@ -1546,6 +1546,8 @@
 		ui.remove = oneWindow
 			? toolButton('Delete section', 'Delete the section the cursor is in (it asks first; Put back or Undo brings it back)', deleteSection)
 			: toolButton('Remove', 'Remove this list entry, card, button or section', removeThis);
+		ui.addPara = toolButton('Add paragraph below', 'Put a new paragraph under the words the cursor is in (it reloads the page, so save or cancel your changes first)', addTextBelow);
+		ui.dup = toolButton('Duplicate', 'Copy the card, list entry, step, question or paragraph the cursor is in, then change the copy', duplicateThis);
 		ui.deleteText = toolButton('Delete this text', 'Delete the paragraph or item the cursor is in (Put back or Undo brings it back)', deleteText);
 		ui.putBack = toolButton('Put back', 'Put back the last thing removed', putBack);
 		ui.putBack.disabled = true;
@@ -1671,8 +1673,8 @@
 		// 18d: in the one window the compact row is B, I, Link for words and Look, Move up, Move down, Add section after,
 		// Delete section for a section; More opens the rest (Quote line, Note box, Heading above, Delete this text, View at).
 		var words = oneWindow
-			? el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words', role: 'group', 'aria-label': 'Words' }, [ui.bold, ui.italic, ui.link])
-			: el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words', role: 'group', 'aria-label': 'Words' }, [ui.bold, ui.italic, ui.link, ui.quote, ui.note, ui.heading]);
+			? el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words', role: 'group', 'aria-label': 'Words' }, [ui.bold, ui.italic, ui.link, ui.addPara, ui.dup])
+			: el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words', role: 'group', 'aria-label': 'Words' }, [ui.bold, ui.italic, ui.link, ui.quote, ui.note, ui.heading, ui.addPara, ui.dup]);
 		if (oneWindow) {
 			// 4 Nov 2026: each group says what it changes.
 			words.insertBefore(el('span', { className: 'twd-sk-ed__grouplabel', text: 'This text' }), words.firstChild);
@@ -2370,14 +2372,17 @@
 	// The address's own query string without the two this editor adds ('' or '?a=1&b=2').
 	function plainSearch() {
 		var keep = window.location.search.replace(/^\?/, '').split('&').filter(function (pair) {
-			return pair !== '' && !/^twd_sk_(edit|at)=/.test(pair);
+			return pair !== '' && !/^twd_sk_(edit|at|p)=/.test(pair);
 		});
 		return keep.length ? '?' + keep.join('&') : '';
 	}
 
-	function reloadEditing(at) {
+	function reloadEditing(at, piece) {
 		var search = plainSearch();
 		var url = window.location.pathname + search + (search ? '&' : '?') + 'twd_sk_edit=1&twd_sk_at=' + parseInt(at, 10);
+		if (typeof piece === 'number' && piece >= 0) {
+			url += '&twd_sk_p=' + parseInt(piece, 10);
+		}
 		window.setTimeout(function () {
 			window.location.assign(url);
 		}, 600);
@@ -2389,11 +2394,56 @@
 		status(working);
 		ED.api('POST', '/pages/' + cfg.pageId + '/structure', body).then(function (data) {
 			status(done + ' Saved as version ' + data.version + '. Reloading so you see it.');
-			reloadEditing(data.at);
+			reloadEditing(data.at, data.piece);
 		}, function (err) {
 			S.saving = false;
 			status(err.message);
 		});
+	}
+
+	/* 0.19.0: a new paragraph under the words the cursor is in, and a copy of the card, entry, step, question or
+	 * paragraph the cursor is in. Both are saved as their own version and reload into the editor with the new piece
+	 * focused, like Add section and Move. A live page asks first for the new paragraph (it holds a placeholder). */
+	function addTextBelow() {
+		if (notNow()) {
+			return;
+		}
+		var t = inEditable() || editableOf(S.last);
+		if (!t || t.tagName === 'A') {
+			status('Click the paragraph, list entry or heading you want a new paragraph under first.');
+			return;
+		}
+		var body = { op: 'add_text', piece: parseInt(t.getAttribute('data-twd-sk-t'), 10) };
+		if (!cfg.pagePublished) {
+			structure(body, 'Adding a paragraph...', 'Added a paragraph.');
+			return;
+		}
+		closePanels();
+		ED.clear(ui.confirm);
+		ui.confirm.appendChild(el('span', { text: 'This page is live. The new paragraph shows its placeholder words to visitors until you replace them. Add it now anyway? ' }));
+		var yes = ED.button('Add it anyway', 'primary', function () {
+			show(ui.confirm, false);
+			structure(body, 'Adding a paragraph...', 'Added a paragraph.');
+		});
+		var no = ED.button('Not yet', 'secondary', function () {
+			show(ui.confirm, false);
+		});
+		ui.confirm.appendChild(yes);
+		ui.confirm.appendChild(no);
+		show(ui.confirm, true);
+		yes.focus();
+	}
+
+	function duplicateThis() {
+		if (notNow()) {
+			return;
+		}
+		var node = removableOf(inEditable() || S.last);
+		if (!node || node.tagName === 'SECTION') {
+			status('Click inside the card, list entry, step, question or paragraph you want to copy first. A whole section is copied with Add section.');
+			return;
+		}
+		structure({ op: 'duplicate', item: parseInt(node.getAttribute('data-twd-sk-r'), 10) }, 'Copying it...', 'Copied. The copy sits straight after the original, ready to change.');
 	}
 
 	function moveSection(dir) {
@@ -2519,6 +2569,7 @@
 			return;
 		}
 		var m = /[?&]twd_sk_at=(\d+)/.exec(q);
+		var pm = /[?&]twd_sk_p=(\d+)/.exec(q);
 		try {
 			window.history.replaceState(null, '', window.location.pathname + plainSearch() + window.location.hash);
 		} catch (e) {
@@ -2535,8 +2586,9 @@
 		var sec = document.querySelector('[data-twd-sk-sec="' + parseInt(m[1], 10) + '"]');
 		if (sec) {
 			sec.scrollIntoView({ block: 'center' });
-			var first = sec.querySelector('[data-twd-sk-t]');
+			var first = (pm && document.querySelector('[data-twd-sk-t="' + parseInt(pm[1], 10) + '"]')) || sec.querySelector('[data-twd-sk-t]');
 			if (first) {
+				first.scrollIntoView({ block: 'center' });
 				first.focus({ preventScroll: true });
 			}
 			S.last = first || sec;

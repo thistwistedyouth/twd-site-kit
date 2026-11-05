@@ -63,6 +63,20 @@ class TWD_SK_Structure {
 	}
 
 	/**
+	 * The page with a new paragraph after text piece $in['piece'] (op add_text) or a copy of item $in['item'] (op duplicate).
+	 *
+	 * @return array|WP_Error { html, at, piece, note }
+	 */
+	public static function inside( $page_id, $op, $in ) {
+		$in   = is_array( $in ) ? $in : array();
+		$html = TWD_SK_Store::get_current( (int) $page_id );
+		if ( 'add_text' === $op ) {
+			return TWD_SK_Inline::add_text( $html, isset( $in['piece'] ) ? $in['piece'] : null );
+		}
+		return TWD_SK_Inline::duplicate( $html, isset( $in['item'] ) ? $in['item'] : null );
+	}
+
+	/**
 	 * The page with section $in['index'] moved one place, $in['dir'] being up or down.
 	 *
 	 * @param int   $page_id

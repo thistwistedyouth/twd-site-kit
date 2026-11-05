@@ -53,6 +53,7 @@ class TWD_SK_AI {
 			}
 		}
 		$out[] = 'Change only what the instruction asks for. Keep every other word, link and image as it is.';
+		$out[] = 'You may add a new paragraph, sentence, list entry or repeated item (a card, step or question) inside a chosen section when the instruction asks for one: copy the markup and classes of a similar one already in that section, put it where the instruction says (otherwise after the last similar one), and write it from the supplied facts only.';
 		$out[] = 'Use only the facts in the page, the ' . TWD_SK_Mode::w( 'facts' ) . ' and the site details the ' . TWD_SK_Mode::w( 'person' ) . ' supplied. Where you need a fact you do not have, write [PLACEHOLDER: what is needed]. Never invent a ' . TWD_SK_Mode::w( 'invent_list' ) . '.';
 		return $out;
 	}
