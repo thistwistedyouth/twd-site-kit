@@ -1183,7 +1183,8 @@ class TWD_SK_CLI {
 	 * : Where to write it. Default: the current folder.
 	 */
 	public function export_site( $args, $assoc_args ) {
-		$notes = '';
+		// With no --notes file, the notes kept on the site are used.
+		$notes = null;
 		if ( ! empty( $assoc_args['notes'] ) ) {
 			$notes = (string) @file_get_contents( (string) $assoc_args['notes'] );
 		}

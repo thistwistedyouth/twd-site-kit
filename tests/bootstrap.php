@@ -160,6 +160,10 @@ function update_option( $name, $value ) {
 	$GLOBALS['twd_stub']['options'][ $name ] = $value;
 	return true;
 }
+function delete_option( $name ) {
+	unset( $GLOBALS['twd_stub']['options'][ $name ] );
+	return true;
+}
 function get_post_status( $id = 0 ) {
 	$p = isset( $GLOBALS['twd_stub']['posts'][ (int) $id ] ) ? $GLOBALS['twd_stub']['posts'][ (int) $id ] : null;
 	return $p ? (string) $p->post_status : false;
@@ -671,6 +675,7 @@ require_once ABSPATH . 'includes/class-twd-sk-enquiry.php';
 require_once ABSPATH . 'includes/class-twd-sk-embed.php';
 require_once ABSPATH . 'includes/class-twd-sk-social.php';
 require_once ABSPATH . 'includes/class-twd-sk-siteexport.php';
+require_once ABSPATH . 'includes/class-twd-sk-exportnotes.php';
 require_once ABSPATH . 'includes/class-twd-sk-siteimport.php';
 require_once ABSPATH . 'includes/class-twd-sk-seowriter.php';
 require_once ABSPATH . 'includes/class-twd-sk-houserules.php';

@@ -2807,7 +2807,7 @@
 
 	function runSiteExport() {
 		var scope = exportScope();
-		var body = { scope: scope, notes: xui.notes.value, pictures: !!xui.pics.checked };
+		var body = { scope: scope, notes: xui.notes.value, pictures: !!xui.pics.checked, keep_notes: !!xui.keep.checked };
 		if (scope === 'page') {
 			body.page = parseInt(xui.pageSel.value, 10) || 0;
 			if (!body.page) {
@@ -2829,6 +2829,9 @@
 
 	function loadExportPages() {
 		api('GET', '/site/export-site').then(function (data) {
+			if (typeof data.notes === 'string' && xui.notes.value === '') {
+				xui.notes.value = data.notes;
+			}
 			clear(xui.pageSel);
 			xui.pageSel.appendChild(el('option', { value: '', text: 'Choose a page' }));
 			(data.pages || []).forEach(function (p) {
@@ -2847,6 +2850,16 @@
 		});
 		xui.pics = el('input', { type: 'checkbox', id: 'twd-sk-xs-pics' });
 		xui.notes = textArea('twd-sk-xs-notes', 6);
+		xui.keep = el('input', { type: 'checkbox', id: 'twd-sk-xs-keep' });
+		xui.keep.checked = true;
+		xui.clearNotes = button('Clear the saved notes', 'secondary', function () {
+			xui.notes.value = '';
+			api('POST', '/site/export-notes', { notes: '' }).then(function () {
+				message(xui.exMsg, 'The saved notes are cleared.', true);
+			}, function (err) {
+				message(xui.exMsg, err.message, false);
+			});
+		});
 		xui.exMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
 		xui.exGo = button('Download', 'primary', runSiteExport);
 		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
@@ -2859,8 +2872,9 @@
 			]),
 			xui.pageSel,
 			el('label', { className: 'twd-sk-ed__check', 'for': 'twd-sk-xs-pics' }, [xui.pics, el('span', { text: 'Include small copies of the pictures (a bigger download, but an AI that can look at images can then see which photo is which)' })]),
-			field('Your notes for the AI (optional)', xui.notes, 'What you want checked or changed, in your own words, for example wording to match, things to add, what to leave alone. They go into the download as notes/your-notes.md and are not saved on the site.'),
-			el('div', { className: 'twd-sk-ed__actions' }, [xui.exGo]),
+			field('Your notes for the AI (optional)', xui.notes, 'What you want checked or changed, in your own words, for example wording to match, things to add, what to leave alone. They go into the download as notes/your-notes.md.'),
+			el('label', { className: 'twd-sk-ed__check', 'for': 'twd-sk-xs-keep' }, [xui.keep, el('span', { text: 'Keep these notes on the site for the next export (only administrators can see them)' })]),
+			el('div', { className: 'twd-sk-ed__actions' }, [xui.exGo, xui.clearNotes]),
 			xui.exMsg
 		]));
 		loadExportPages();

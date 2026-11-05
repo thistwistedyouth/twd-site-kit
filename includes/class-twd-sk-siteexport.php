@@ -288,6 +288,11 @@ class TWD_SK_SiteExport {
 		return $out;
 	}
 
+	/** The notes saved on the site, or ''. */
+	public static function saved_notes() {
+		return TWD_SK_ExportNotes::get();
+	}
+
 	/** Plain text for the owner's notes: no tags or control characters, line breaks kept, capped. */
 	public static function clean_notes( $text ) {
 		if ( ! is_string( $text ) ) {
@@ -310,7 +315,8 @@ class TWD_SK_SiteExport {
 		if ( ! in_array( $scope, array( 'all', 'page', 'chrome' ), true ) ) {
 			return new WP_Error( 'twd_sk_bad_input', 'Choose the whole site, one page, or the header and footer.' );
 		}
-		$notes = self::clean_notes( isset( $opts['notes'] ) ? $opts['notes'] : '' );
+		// Notes sent with the request win; with none sent (null), the notes kept on the site are used.
+		$notes = array_key_exists( 'notes', $opts ) && null !== $opts['notes'] ? self::clean_notes( $opts['notes'] ) : self::saved_notes();
 
 		$ids = array();
 		if ( 'all' === $scope ) {

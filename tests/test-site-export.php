@@ -458,3 +458,43 @@ twd_sk_test( 'site export (0.18.2): a picture is flagged for a staging address o
 	twd_sk_se_cleanup();
 	@unlink( $dir . '/rel.png' );
 } );
+
+twd_sk_test( 'export notes (0.18.4): kept on the site, used by an export that sends none, replaced by notes that are sent, cleared by an empty text, cleaned, administrators only', function () {
+	twd_sk_se_setup();
+	TWD_SK_ExportNotes::save( '' );
+	twd_sk_eq( '', TWD_SK_ExportNotes::get(), 'nothing kept to begin with' );
+	$kept = TWD_SK_ExportNotes::save( "  Check the <b>fees</b> page.\r\nKeep the tone warm.  " );
+	twd_sk_eq( "Check the fees page.\nKeep the tone warm.", $kept, 'tags and carriage returns go' );
+	twd_sk_eq( $kept, TWD_SK_ExportNotes::get() );
+	// An export that sends no notes uses the kept ones (the command line and an older screen).
+	$set = TWD_SK_SiteExport::files( array( 'scope' => 'all' ) );
+	twd_sk_has( 'Keep the tone warm.', $set['files']['notes/your-notes.md'] );
+	$set = TWD_SK_SiteExport::files( array( 'scope' => 'all', 'notes' => null ) );
+	twd_sk_has( 'Keep the tone warm.', $set['files']['notes/your-notes.md'], 'null means use the kept notes' );
+	// Notes that are sent win, even empty ones, and keeping them is a separate act.
+	$set = TWD_SK_SiteExport::files( array( 'scope' => 'all', 'notes' => 'Only this.' ) );
+	twd_sk_has( 'Only this.', $set['files']['notes/your-notes.md'] );
+	twd_sk_hasnt( 'Keep the tone warm.', $set['files']['notes/your-notes.md'] );
+	twd_sk_eq( "Check the fees page.\nKeep the tone warm.", TWD_SK_ExportNotes::get(), 'exporting does not change what is kept' );
+	$set = TWD_SK_SiteExport::files( array( 'scope' => 'all', 'notes' => '' ) );
+	twd_sk_has( 'No notes were added', $set['files']['notes/your-notes.md'], 'an empty box sent on purpose means no notes' );
+	// The route: keep_notes saves what was sent, and the saved notes come back with the page list.
+	twd_sk_rest_setup( array( 'edit_pages', 'manage_options' ) );
+	$out = TWD_SK_REST::post_site_export( twd_sk_rest_req( array( 'scope' => 'chrome', 'notes' => 'Saved by the tick.', 'keep_notes' => true ) ) );
+	twd_sk_true( is_array( $out ) && 'zip' === $out['kind'] || 'markdown' === $out['kind'], 'the export still works' );
+	twd_sk_eq( 'Saved by the tick.', TWD_SK_ExportNotes::get() );
+	TWD_SK_REST::post_site_export( twd_sk_rest_req( array( 'scope' => 'chrome', 'notes' => 'Not kept.' ) ) );
+	twd_sk_eq( 'Saved by the tick.', TWD_SK_ExportNotes::get(), 'without the tick nothing is kept' );
+	twd_sk_eq( 'Saved by the tick.', TWD_SK_REST::get_site_export( twd_sk_rest_req() )['notes'], 'the screen gets the kept notes' );
+	$r = TWD_SK_REST::post_site_export_notes( twd_sk_rest_req( array( 'notes' => '' ) ) );
+	twd_sk_true( false === $r['kept'] && '' === TWD_SK_ExportNotes::get(), 'an empty text clears them' );
+	twd_sk_eq( 400, twd_sk_status( TWD_SK_REST::post_site_export_notes( twd_sk_rest_req( array( 'notes' => array( 'x' ) ) ) ) ), 'notes must be text' );
+	$rest = file_get_contents( ABSPATH . 'includes/class-twd-sk-rest.php' );
+	twd_sk_true( 1 === preg_match( "#'/site/export-notes'.*?can_manage_site#s", $rest ), 'administrators only' );
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' );
+	twd_sk_has( 'keep_notes: !!xui.keep.checked', $js );
+	twd_sk_has( "api('POST', '/site/export-notes'", $js );
+	twd_sk_has( 'Clear the saved notes', $js );
+	twd_sk_has( 'Keep these notes on the site for the next export', $js );
+	twd_sk_has( "if (typeof data.notes === 'string' && xui.notes.value === '')", $js, 'the saved notes fill the box' );
+} );

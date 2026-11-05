@@ -5,6 +5,10 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
+## 5 Nov 2026: RELEASE 0.18.4, the export keeps the notes (pushed to main at the owner's yes)
+
+- The notes box of Export for an AI was never saved, so a forgotten paste meant an export with no checklist (four times on the pilot site). `TWD_SK_ExportNotes` (option `twd_sk_export_notes`, not autoloaded, administrators only; a separate class because `TWD_SK_SiteExport` is read-only by test) keeps them. The screen fills the box from `GET /site/export-site` (`notes`), the tick Keep these notes on the site sends `keep_notes` with the export, `POST /site/export-notes` saves or clears (empty text), and an export that sends NO notes (null: the command line without `--notes`, an older screen) uses the kept ones. Notes that are sent win and are only kept with the tick. 85 endpoints, 62 classes. 1 test and a `delete_option` stand-in; suite 1150 passed on an LF copy.
+
 ## 5 Nov 2026: RELEASE 0.18.3, the sharing picture at full size (pushed to main at the owner's yes)
 
 - `TWD_SK_Seo::share_image( $id )` gives the picture's full size with its width and height (the large size, 1024 px, for a file over about 4 MB, since some sites refuse a very big one). The page's head now prints `og:image`, `og:image:width`, `og:image:height` and the same picture for `twitter:image`. Applies when the plugin prints the tags itself (no SEO plugin); Yoast prints its own. One existing test counted `og:image` loosely and now counts the exact property. 1 test; suite 1149 passed on an LF copy.

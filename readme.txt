@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.18.3
+Stable tag: 0.18.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.18.4 =
+* Export for an AI can now keep your notes on the site. Tick Keep these notes on the site and they come back in the notes box, and go into every export, until you press Clear the saved notes. Only administrators can see or change them. The command line export uses the kept notes when no notes file is given. Nothing else changes.
 
 = 0.18.3 =
 * A shared page now carries its sharing picture at full size, with its width and height stated, so social sites show it sharply and as a large card. A picture file over about 4 MB is shared at the large size instead, because some sites refuse a very big file. Nothing else changes.

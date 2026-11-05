@@ -353,6 +353,11 @@ class TWD_SK_REST {
 				'permission_callback' => array( __CLASS__, 'can_read_site_post' ),
 			),
 		) );
+		register_rest_route( self::ROUTE_NS, '/site/export-notes', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_export_notes' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
 		register_rest_route( self::ROUTE_NS, '/site/changes/plan', array(
 			'methods'             => 'POST',
 			'callback'            => array( __CLASS__, 'post_site_changes_plan' ),
@@ -1868,7 +1873,7 @@ class TWD_SK_REST {
 
 	/** The pages that can be exported one at a time. */
 	public static function get_site_export( $request ) {
-		return array( 'pages' => TWD_SK_SiteExport::page_list() );
+		return array( 'pages' => TWD_SK_SiteExport::page_list(), 'notes' => TWD_SK_SiteExport::saved_notes() );
 	}
 
 	/** The whole site, one page or the header and footer, with the owner's notes, as one download. Nothing is written. */
@@ -1879,10 +1884,23 @@ class TWD_SK_REST {
 			'notes' => $request->get_param( 'notes' ),
 			'pictures' => self::truthy( $request->get_param( 'pictures' ) ),
 		) );
+		if ( ! is_wp_error( $out ) && self::truthy( $request->get_param( 'keep_notes' ) ) && is_string( $request->get_param( 'notes' ) ) ) {
+			TWD_SK_ExportNotes::save( $request->get_param( 'notes' ) );
+		}
 		if ( is_wp_error( $out ) ) {
 			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_not_a_page' === $out->get_error_code() ? 404 : 400 );
 		}
 		return $out;
+	}
+
+	/** Keep the export notes on the site, or clear them (an empty text). Administrators only. */
+	public static function post_site_export_notes( $request ) {
+		$notes = $request->get_param( 'notes' );
+		if ( ! is_string( $notes ) ) {
+			return self::error( 'twd_sk_bad_input', 'Send the notes as text (empty to clear them).', 400 );
+		}
+		$kept = TWD_SK_ExportNotes::save( $notes );
+		return array( 'notes' => $kept, 'kept' => '' !== $kept );
 	}
 
 	/** Read an AI's reply and say what it would do. Nothing is written. */
