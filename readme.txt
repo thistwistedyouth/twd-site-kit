@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.17.2
+Stable tag: 0.17.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,11 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.17.3 =
+* Export for an AI now holds the whole of a page's search setup (social share picture and keep-out-of-search, as well as title and description), a file of the site-wide search settings, a list of every picture used (where, description, size, whether the file is there, and what is wrong), and the results of the site's own launch check.
+* New tick in Export for an AI: include small copies of the pictures, so an AI that can look at images can see which photo is which. A bigger download, off by default. On the command line: wp twd-sk export_site --pictures.
+* Nothing else changes.
 
 = 0.17.2 =
 * Export for an AI is easier for an AI to follow: each page's search title and description are in the page index, there is a guide to the kit sections the pages use, a worked example reply made from the site's own words (it changes nothing), and the README now lists what must never be touched, a check to make before replying, and to send the most important changes first.
