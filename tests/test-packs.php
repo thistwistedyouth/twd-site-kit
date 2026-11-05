@@ -469,3 +469,34 @@ twd_sk_test( 'fonts: EB Garamond and Inter are bundled as variable latin woff2 w
 	twd_sk_has( 'font-family:"Inter";font-style:normal;font-weight:100 900', $css );
 	twd_sk_hasnt( 'Lora', $css );
 } );
+
+twd_sk_test( 'sub-menu tokens (0.15.0): by default the dropdown is exactly what it was (the cards look), and each token can be set on its own', function () {
+	$css = TWD_SK_Packs::tokens_css( TWD_SK_Packs::packs()['sage']['tokens'] );
+	$t   = TWD_SK_Packs::packs()['sage']['tokens'];
+	twd_sk_has( '--twd-site-submenu-bg:' . $t['color-surface'] . ';', $css );
+	twd_sk_has( '--twd-site-submenu-border-color:' . $t['color-border'] . ';', $css );
+	twd_sk_has( '--twd-site-submenu-radius:' . $t['radius-card'] . ';', $css );
+	twd_sk_has( '--twd-site-submenu-shadow:' . $t['shadow-card'] . ';', $css );
+	twd_sk_has( '--twd-site-submenu-weight:' . $t['menu-weight'] . ';', $css );
+	twd_sk_has( '--twd-site-submenu-border-width:1px;', $css );
+	twd_sk_has( '--twd-site-submenu-pad-y:8px;', $css );
+	twd_sk_hasnt( ':card', $css, 'the word card never reaches the stylesheet' );
+	// Following the cards means following a per-site change to them too.
+	$t['color-surface'] = '#abcdef';
+	twd_sk_has( '--twd-site-submenu-bg:#abcdef;', TWD_SK_Packs::tokens_css( $t ) );
+	// The target look: pale panel, no border, no corners, no shadow, bold links with room around them.
+	$t['submenu-bg']           = $t['color-tint'];
+	$t['submenu-border-width'] = '0';
+	$t['submenu-radius']       = '0';
+	$t['submenu-shadow']       = 'none';
+	$t['submenu-weight']       = '600';
+	$t['submenu-pad-y']        = '12px';
+	$css = TWD_SK_Packs::tokens_css( $t );
+	twd_sk_has( '--twd-site-submenu-bg:' . $t['color-tint'] . ';', $css );
+	twd_sk_has( '--twd-site-submenu-radius:0;', $css );
+	twd_sk_has( '--twd-site-submenu-shadow:none;', $css );
+	twd_sk_has( '--twd-site-submenu-weight:600;', $css );
+	twd_sk_true( ! TWD_SK_Packs::valid_token( 'submenu-radius', '-4px' ) );
+	twd_sk_true( ! TWD_SK_Packs::valid_token( 'submenu-pad-y', 'card' ) );
+	twd_sk_true( TWD_SK_Packs::valid_token( 'submenu-bg', 'card' ) );
+} );
