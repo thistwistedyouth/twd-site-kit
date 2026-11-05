@@ -331,6 +331,23 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_site_embed_delete' ),
 			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 		) );
+		// The whole site, a page, or the header and footer as one download for an AI, and the AI's reply read back
+		// as changes (0.16.2). Administrators only. Export reads only; plan reads only; apply writes through the store.
+		register_rest_route( self::ROUTE_NS, '/site/export-site', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_export' ),
+			'permission_callback' => array( __CLASS__, 'can_read_site_post' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/changes/plan', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_changes_plan' ),
+			'permission_callback' => array( __CLASS__, 'can_read_site_post' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/changes/apply', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_changes_apply' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
 		// Bring pages built earlier up to date (0.15.0). Administrators only.
 		register_rest_route( self::ROUTE_NS, '/site/upgrades', array(
 			'methods'             => 'GET',
@@ -583,6 +600,11 @@ class TWD_SK_REST {
 
 	public static function can_read_site( $request ) {
 		return self::guard( $request, 'read', false, 'manage_options' );
+	}
+
+	/** A POST that only reads (an export, a plan): administrators, with the preview limit. */
+	public static function can_read_site_post( $request ) {
+		return self::guard( $request, 'preview', false, 'manage_options' );
 	}
 
 	/** Anything about the editor itself (not a page) needs only edit_pages: the editing tools switch. */
@@ -1769,6 +1791,42 @@ class TWD_SK_REST {
 			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_not_a_page' === $out->get_error_code() ? 404 : 400 );
 		}
 		return $out;
+	}
+
+	/** The whole site, one page or the header and footer, with the owner's notes, as one download. Nothing is written. */
+	public static function post_site_export( $request ) {
+		$out = TWD_SK_SiteExport::build( array(
+			'scope' => (string) $request->get_param( 'scope' ),
+			'page'  => (int) $request->get_param( 'page' ),
+			'notes' => $request->get_param( 'notes' ),
+		) );
+		if ( is_wp_error( $out ) ) {
+			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_not_a_page' === $out->get_error_code() ? 404 : 400 );
+		}
+		return $out;
+	}
+
+	/** Read an AI's reply and say what it would do. Nothing is written. */
+	public static function post_site_changes_plan( $request ) {
+		$reply = TWD_SK_SiteImport::read( $request->get_param( 'reply' ) );
+		if ( is_wp_error( $reply ) ) {
+			return self::error( $reply->get_error_code(), $reply->get_error_message(), 400 );
+		}
+		return TWD_SK_SiteImport::public_plan( TWD_SK_SiteImport::plan( $reply ) );
+	}
+
+	/** Make the ticked changes: each page as one version, the footer through the embed save. */
+	public static function post_site_changes_apply( $request ) {
+		$reply = TWD_SK_SiteImport::read( $request->get_param( 'reply' ) );
+		if ( is_wp_error( $reply ) ) {
+			return self::error( $reply->get_error_code(), $reply->get_error_message(), 400 );
+		}
+		$picked = $request->get_param( 'picked' );
+		if ( ! is_array( $picked ) || ! $picked ) {
+			return self::error( 'twd_sk_bad_input', 'Tick at least one change to apply.', 400 );
+		}
+		$bases = $request->get_param( 'bases' );
+		return TWD_SK_SiteImport::apply( $reply, $picked, is_array( $bases ) ? $bases : array(), get_current_user_id() );
 	}
 
 	public static function post_seo( $request ) {

@@ -1162,6 +1162,46 @@ class TWD_SK_CLI {
 	}
 
 	/**
+	 * The whole site, one page, or the header and footer as one zip (or one markdown file) for an AI to read,
+	 * with the notes and a README that says how to reply. The file holds the client's words: keep it private.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--scope=<scope>]
+	 * : all (the default), page or chrome (the header and footer, with the style and notes).
+	 *
+	 * [--page=<id>]
+	 * : The page, with --scope=page.
+	 *
+	 * [--notes=<file>]
+	 * : A text file of notes to put in the export.
+	 *
+	 * [--out=<file>]
+	 * : Where to write it. Default: the current folder.
+	 */
+	public function export_site( $args, $assoc_args ) {
+		$notes = '';
+		if ( ! empty( $assoc_args['notes'] ) ) {
+			$notes = (string) @file_get_contents( (string) $assoc_args['notes'] );
+		}
+		$out = TWD_SK_SiteExport::build( array(
+			'scope' => isset( $assoc_args['scope'] ) ? (string) $assoc_args['scope'] : 'all',
+			'page'  => isset( $assoc_args['page'] ) ? (int) $assoc_args['page'] : 0,
+			'notes' => $notes,
+		) );
+		if ( is_wp_error( $out ) ) {
+			WP_CLI::error( $out->get_error_message() );
+			return;
+		}
+		$path = isset( $assoc_args['out'] ) && '' !== (string) $assoc_args['out'] ? (string) $assoc_args['out'] : $out['name'];
+		if ( false === file_put_contents( $path, base64_decode( $out['base64'] ) ) ) {
+			WP_CLI::error( 'Could not write ' . $path . '.' );
+			return;
+		}
+		WP_CLI::success( 'Wrote ' . $path . ' (' . $out['kind'] . ', ' . $out['bytes'] . ' bytes, ' . $out['pages'] . ' page' . ( 1 === $out['pages'] ? '' : 's' ) . '). It holds the client\'s words: keep it private.' );
+	}
+
+	/**
 	 * Import a page from an AI's reply saved to a file (section 23a): the html block, the css block and the
 	 * What changed note are read out of it, checked like Replace, and either replace a section or the whole
 	 * of a page, or make a new DRAFT page. Nothing is published. With --dry-run only the checks and warnings

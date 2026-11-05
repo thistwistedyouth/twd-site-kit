@@ -595,6 +595,9 @@ class TWD_SK_Replace {
 		}
 		$target  = isset( $in['target'] ) && 'page' === $in['target'] ? 'page' : 'section';
 		$label   = 'page' === $target ? 'Replaced the page with custom HTML' : 'Replaced section ' . ( $out['at'] + 1 ) . ' with custom HTML';
+		if ( isset( $in['note'] ) && is_string( $in['note'] ) && '' !== trim( $in['note'] ) ) {
+			$label = substr( trim( $in['note'] ), 0, 120 );
+		}
 		$was_v   = TWD_SK_Css::version();
 		$css_out = TWD_SK_Css::save( $out['css'], $label . ' (page ' . (int) $page_id . ')', (int) $page_id );
 		if ( is_wp_error( $css_out ) ) {
