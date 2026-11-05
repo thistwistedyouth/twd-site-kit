@@ -1,3 +1,12 @@
+## 5 Nov 2026: menu and footer changes (branch `claude/menu-footer-embed-c670a5`, on top of `header-rows-and-srcset`, test build 0.15.0-test70-menu-footer, NOT pushed, NOT released)
+
+- Sub-menu: `TWD_SK_Profile::MAX_CHILDREN` is 10 (was 6). The renderer has no cap of its own, so the validator and the header agree.
+- Dropdown tokens: `submenu-bg`, `submenu-border-color`, `submenu-border-width`, `submenu-radius`, `submenu-shadow`, `submenu-weight`, `submenu-pad-y`. The word `card` (the default for the first four and the weight) means "the same as the card tokens / the menu weight", resolved when the tokens are printed (`TWD_SK_Packs::resolve_tokens()`), so existing sites look the same and still follow any override of the card tokens.
+- Footer from a saved embed: setting `footer_embed` in `twd_sk_chrome` (0 = the kit footer). HTML-kind embeds only; saving a change needs `unfiltered_html` (`TWD_SK_Chrome::save_settings()`); prints `<div class="twd-sk-footer-embed">` outside the page wrapper; safe mode, a deleted or wrong-kind embed fall back to the kit footer; the launch check names dead links in it (`TWD_SK_Launch::embed_links()`). Site tab: a select with a "not editable on the page" warning.
+- Tests: 1 for the tokens, 5 for the footer embed, 1 changed (sub-menu cap). The 13 failures already present on `header-rows-and-srcset` are unchanged (11 shown here).
+- Needs checking on the staging site: the three things above in a browser at desktop and phone width. This branch lacks the Snag button and the newer Your Edits window that the staging site runs (they are on `claude/sitekit-handover-483076`).
+- Not done: footer logo row, header embed (not wanted).
+
 # Build log
 
 The one place to see where this project is. Newest at the top. Rules live in CLAUDE.md, reasons in HISTORY.md. Update this file at the end of every piece of work, in the same commit.
