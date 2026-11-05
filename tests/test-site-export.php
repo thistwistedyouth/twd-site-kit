@@ -435,3 +435,26 @@ twd_sk_test( 'site tab js and routes (0.17.3): the pictures tick is sent to the 
 	$cli = file_get_contents( ABSPATH . 'includes/class-twd-sk-cli.php' );
 	twd_sk_has( '[--pictures]', $cli );
 } );
+
+twd_sk_test( 'site export (0.18.2): a picture is flagged for a staging address only when the page WRITES one; a path is never flagged, however the site is addressed', function () {
+	$dir = sys_get_temp_dir() . '/twdsk-uploads-test/2026/11';
+	if ( ! is_dir( $dir ) ) {
+		mkdir( $dir, 0777, true );
+	}
+	file_put_contents( $dir . '/rel.png', base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' ) );
+	twd_sk_se_setup();
+	TWD_SK_Store::save( 301, TWD_SK_Store::get_current( 301 ) . "\n" . '<section class="twd-sk-text twd-sk-tone-base"><div class="twd-sk-inner">'
+		. '<img src="/wp-content/uploads/2026/11/rel.png" alt="A path">'
+		. '<img src="https://site.twdstaging.example/wp-content/uploads/2026/11/abs.png" alt="A staging address">'
+		. '</div></section>' );
+	$pics = TWD_SK_SiteExport::pictures( array( 'about-me' => TWD_SK_Sections::split( TWD_SK_Store::get_current( 301 ) )['sections'] ), '', false );
+	$by = array();
+	foreach ( $pics['list'] as $p ) {
+		$by[ $p['file'] ] = $p;
+	}
+	twd_sk_eq( array(), $by['rel.png']['issues'], 'a path is not a staging address' );
+	twd_sk_true( false !== strpos( implode( ' ', $by['abs.png']['issues'] ), 'staging site' ), 'a written staging address is named' );
+	twd_sk_true( false !== strpos( implode( ' ', $by['abs.png']['issues'] ), 'wording and address check' ), 'and where to fix it' );
+	twd_sk_se_cleanup();
+	@unlink( $dir . '/rel.png' );
+} );

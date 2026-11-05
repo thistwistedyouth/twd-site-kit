@@ -102,11 +102,17 @@ class TWD_SK_SiteExport {
 			if ( '' === $src || 0 === strpos( $src, 'data:' ) ) {
 				return;
 			}
+			// Only an address WRITTEN as a full staging address counts (a path such as /wp-content/uploads/your-image.jpg is fine
+			// anywhere), and never the media library's own address for a picture in the site details.
+			$written = 'site' !== $role && 1 === preg_match( '#^https?://([^/?\#]+)#i', $src, $hm ) && TWD_SK_HouseRules::is_staging( $hm[1] );
 			if ( '/' === substr( $src, 0, 1 ) && '/' !== substr( $src, 0, 2 ) && function_exists( 'home_url' ) ) {
 				$src = rtrim( home_url( '/' ), '/' ) . $src;
 			}
 			if ( ! isset( $found[ $src ] ) ) {
-				$found[ $src ] = array( 'src' => $src, 'alt' => null, 'roles' => array(), 'used_in' => array() );
+				$found[ $src ] = array( 'src' => $src, 'alt' => null, 'roles' => array(), 'used_in' => array(), 'staging' => false );
+			}
+			if ( $written ) {
+				$found[ $src ]['staging'] = true;
 			}
 			if ( null !== $alt && ( null === $found[ $src ]['alt'] || '' === $found[ $src ]['alt'] ) ) {
 				$found[ $src ]['alt'] = html_entity_decode( (string) $alt, ENT_QUOTES, 'UTF-8' );
@@ -190,8 +196,8 @@ class TWD_SK_SiteExport {
 			} elseif ( '' === trim( $entry['alt'] ) && ! in_array( 'site', $entry['roles'], true ) ) {
 				$entry['issues'][] = 'Empty description. Fine only if the picture is purely decoration.';
 			}
-			if ( false !== stripos( $src, 'twdstaging' ) || false !== stripos( $src, 'staging.' ) ) {
-				$entry['issues'][] = 'The address names a staging site. Use the final address before launch.';
+			if ( ! empty( $f['staging'] ) ) {
+				$entry['issues'][] = 'The page writes this picture\'s full address on a staging site. Change it to the path (the wording and address check can do that) before launch.';
 			}
 			$list[] = $entry;
 		}

@@ -87,7 +87,7 @@ class TWD_SK_HouseRules {
 	}
 
 	/** Is this address one on a staging site (any host with the word staging, or one in the staging list)? */
-	private static function is_staging( $host ) {
+	public static function is_staging( $host ) {
 		$host = strtolower( (string) $host );
 		if ( '' === $host ) {
 			return false;
