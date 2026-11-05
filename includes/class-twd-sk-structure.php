@@ -73,7 +73,7 @@ class TWD_SK_Structure {
 		if ( 'add_text' === $op ) {
 			return TWD_SK_Inline::add_text( $html, isset( $in['piece'] ) ? $in['piece'] : null );
 		}
-		return TWD_SK_Inline::duplicate( $html, isset( $in['item'] ) ? $in['item'] : null, isset( $in['piece'] ) ? $in['piece'] : null );
+		return TWD_SK_Inline::duplicate( $html, isset( $in['item'] ) ? $in['item'] : null, isset( $in['piece'] ) ? $in['piece'] : null, isset( $in['level'] ) && 'text' === $in['level'] ? 'text' : 'box' );
 	}
 
 	/**

@@ -111,7 +111,7 @@ twd_sk_test( 'the AI is told an addition inside a section is an edit, and the ne
 	twd_sk_has( 'INSIDE a section is an edit', TWD_SK_Plan::system_prompt() );
 	twd_sk_has( 'add a new paragraph, sentence, list entry', TWD_SK_AI::system_prompt( 'sections' ) );
 	$js = file_get_contents( TWD_SK_PATH . 'assets/twd-site-kit-inline.js' );
-	foreach ( array( "toolButton('Add paragraph below'", "toolButton('Duplicate'", "op: 'add_text'", "op: 'duplicate'", 'twd_sk_p=' ) as $needle ) {
+	foreach ( array( "toolButton('Add paragraph below'", "toolButton('Duplicate text'", "toolButton('Duplicate block'", "op: 'add_text'", "op: 'duplicate'", 'twd_sk_p=' ) as $needle ) {
 		twd_sk_has( $needle, $js, $needle );
 	}
 } );
@@ -131,7 +131,7 @@ twd_sk_test( 'add text inside a custom section: the new paragraph carries the ne
 
 twd_sk_test( 'duplicate by text: a paragraph on its own, or anything in a custom section, can be copied; a box with a twin beside it is copied whole; ids never repeat', function () {
 	$html = '<section class="twd-sk-custom c-band"><div class="c-wrap"><p class="c-lead" data-twd-edit="intro">First words</p></div></section>';
-	$out  = TWD_SK_Inline::duplicate( $html, null, 0 );
+	$out  = TWD_SK_Inline::duplicate( $html, null, 0, 'text' );
 	twd_sk_true( ! is_wp_error( $out ), is_wp_error( $out ) ? $out->get_error_message() : '' );
 	twd_sk_eq( 2, substr_count( $out['html'], 'First words' ), 'the words are there twice' );
 	twd_sk_true( $out['piece'] >= 0, 'the copy is numbered so it can be changed' );
@@ -142,4 +142,19 @@ twd_sk_test( 'duplicate by text: a paragraph on its own, or anything in a custom
 	preg_match_all( '/\bid="([^"]+)"/', $out['html'], $ids );
 	twd_sk_eq( count( $ids[1] ), count( array_unique( $ids[1] ) ), 'no id repeated' );
 	twd_sk_is_error( 'twd_sk_conflict', TWD_SK_Inline::duplicate( $cards, null, 99 ) );
+} );
+
+twd_sk_test( 'duplicate block copies the smallest box round the words (a column of paragraphs, or a card), never the section; text copies only the words', function () {
+	$html = '<section class="twd-sk-custom c-band"><div class="c-cols"><div class="c-pic"><img src="/a.jpg" alt="x"></div><div class="c-col"><p data-twd-edit="a">Alpha</p><p data-twd-edit="b">Beta</p><p data-twd-edit="c">Gamma</p></div></div></section>';
+	$box  = TWD_SK_Inline::duplicate( $html, null, 1, 'box' );
+	twd_sk_true( ! is_wp_error( $box ), is_wp_error( $box ) ? $box->get_error_message() : '' );
+	twd_sk_eq( 2, substr_count( $box['html'], 'class="c-col"' ), 'the whole column was copied' );
+	twd_sk_eq( 2, substr_count( $box['html'], 'Beta' ) );
+	twd_sk_eq( 1, substr_count( $box['html'], 'class="c-pic"' ), 'the picture column and the section are not copied' );
+	twd_sk_eq( 1, substr_count( $box['html'], 'twd-sk-custom' ), 'the section is not copied' );
+	$text = TWD_SK_Inline::duplicate( $html, null, 1, 'text' );
+	twd_sk_eq( 2, substr_count( $text['html'], 'Beta' ) );
+	twd_sk_eq( 1, substr_count( $text['html'], 'class="c-col"' ), 'only the words were copied' );
+	$lone = '<section class="twd-sk-custom c-band"><div class="c-wrap"><p data-twd-edit="a">Only</p></div></section>';
+	twd_sk_is_error( 'twd_sk_bad_input', TWD_SK_Inline::duplicate( $lone, null, 0, 'box' ), 'no smaller box to copy' );
 } );

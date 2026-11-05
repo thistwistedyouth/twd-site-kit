@@ -902,7 +902,7 @@ class TWD_SK_Inline {
 	 *
 	 * @return array|WP_Error { html, at, piece, note }
 	 */
-	public static function duplicate( $html, $r, $piece = null ) {
+	public static function duplicate( $html, $r, $piece = null, $level = 'box' ) {
 		$loaded = self::load( (string) $html );
 		if ( ! $loaded ) {
 			return new WP_Error( 'twd_sk_bad_input', 'This page could not be read. Reload it and try again.' );
@@ -920,14 +920,32 @@ class TWD_SK_Inline {
 			if ( self::is_tab_link( $el ) ) {
 				return new WP_Error( 'twd_sk_bad_input', 'A question group is tied to its tab, so it cannot be copied. Copy one of its questions instead.' );
 			}
-			for ( $up = $el->parentNode; $up instanceof DOMElement && $up !== $root; $up = $up->parentNode ) {
-				if ( 'section' === strtolower( $up->nodeName ) ) {
-					break;
+			// 'text' copies just these words. 'box' (the default) copies the smallest box round them that is one of
+			// several alike (a card, a step) or holds more than these words (a column of paragraphs), never the section.
+			if ( 'text' !== $level ) {
+				$chosen = null;
+				for ( $up = $el->parentNode; $up instanceof DOMElement && $up !== $root; $up = $up->parentNode ) {
+					if ( 'section' === strtolower( $up->nodeName ) ) {
+						break;
+					}
+					$held = 0;
+					foreach ( $found['text'] as $t ) {
+						for ( $in = $t; $in instanceof DOMNode; $in = $in->parentNode ) {
+							if ( $in === $up ) {
+								$held++;
+								break;
+							}
+						}
+					}
+					if ( self::has_like_sibling( $up ) || $held >= 2 ) {
+						$chosen = $up;
+						break;
+					}
 				}
-				if ( self::has_like_sibling( $up ) ) {
-					$el = $up;
-					break;
+				if ( ! $chosen ) {
+					return new WP_Error( 'twd_sk_bad_input', 'There is no smaller box round these words to copy. Use Duplicate text for the words, or Add section for a whole section.' );
 				}
+				$el = $chosen;
 			}
 		} else {
 			$r = is_numeric( $r ) ? (int) $r : -1;

@@ -1547,7 +1547,12 @@
 			? toolButton('Delete section', 'Delete the section the cursor is in (it asks first; Put back or Undo brings it back)', deleteSection)
 			: toolButton('Remove', 'Remove this list entry, card, button or section', removeThis);
 		ui.addPara = toolButton('Add paragraph below', 'Put a new paragraph under the words the cursor is in (it reloads the page, so save or cancel your changes first)', addTextBelow);
-		ui.dup = toolButton('Duplicate', 'Copy the card, list entry, step, question or paragraph the cursor is in, then change the copy', duplicateThis);
+		ui.dupText = toolButton('Duplicate text', 'Copy just the words the cursor is in, then change the copy', function () {
+			duplicateThis('text');
+		});
+		ui.dup = toolButton('Duplicate block', 'Copy the small block the cursor is in (a card, a step, or the column of paragraphs), then change the copy', function () {
+			duplicateThis('box');
+		});
 		ui.deleteText = toolButton('Delete this text', 'Delete the paragraph or item the cursor is in (Put back or Undo brings it back)', deleteText);
 		ui.putBack = toolButton('Put back', 'Put back the last thing removed', putBack);
 		ui.putBack.disabled = true;
@@ -1673,8 +1678,8 @@
 		// 18d: in the one window the compact row is B, I, Link for words and Look, Move up, Move down, Add section after,
 		// Delete section for a section; More opens the rest (Quote line, Note box, Heading above, Delete this text, View at).
 		var words = oneWindow
-			? el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words', role: 'group', 'aria-label': 'Words' }, [ui.bold, ui.italic, ui.link, ui.addPara, ui.dup])
-			: el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words', role: 'group', 'aria-label': 'Words' }, [ui.bold, ui.italic, ui.link, ui.quote, ui.note, ui.heading, ui.addPara, ui.dup]);
+			? el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words', role: 'group', 'aria-label': 'Words' }, [ui.bold, ui.italic, ui.link, ui.addPara, ui.dupText, ui.dup])
+			: el('div', { className: 'twd-sk-ed__inlinetools twd-sk-ed__inlinetools--words', role: 'group', 'aria-label': 'Words' }, [ui.bold, ui.italic, ui.link, ui.quote, ui.note, ui.heading, ui.addPara, ui.dupText, ui.dup]);
 		if (oneWindow) {
 			// 4 Nov 2026: each group says what it changes.
 			words.insertBefore(el('span', { className: 'twd-sk-ed__grouplabel', text: 'This text' }), words.firstChild);
@@ -2434,23 +2439,19 @@
 		yes.focus();
 	}
 
-	function duplicateThis() {
+	// Duplicate text copies just the words the cursor is in; Duplicate block copies the smallest box round them (a card,
+	// a step, or the column of paragraphs), never the whole section.
+	function duplicateThis(level) {
 		if (notNow()) {
 			return;
 		}
 		var t = inEditable() || editableOf(S.last);
-		var node = removableOf(t || S.last);
-		if (node && node.tagName !== 'SECTION') {
-			structure({ op: 'duplicate', item: parseInt(node.getAttribute('data-twd-sk-r'), 10) }, 'Copying it...', 'Copied. The copy sits straight after the original, ready to change.');
+		if (!t || t.tagName === 'A') {
+			status('Click inside the words you want to copy first. A whole section is copied with Add section.');
 			return;
 		}
-		// No card or entry to copy here (a paragraph on its own, or a section with your own layout): copy the words, or
-		// the box round them when it has a twin beside it.
-		if (t && t.tagName !== 'A') {
-			structure({ op: 'duplicate', piece: parseInt(t.getAttribute('data-twd-sk-t'), 10) }, 'Copying it...', 'Copied. The copy sits straight after the original, ready to change.');
-			return;
-		}
-		status('Click inside the words, card, list entry, step or question you want to copy first. A whole section is copied with Add section.');
+		var what = level === 'text' ? 'the words' : 'the block';
+		structure({ op: 'duplicate', piece: parseInt(t.getAttribute('data-twd-sk-t'), 10), level: level }, 'Copying ' + what + '...', 'Copied. The copy sits straight after the original, ready to change.');
 	}
 
 	function moveSection(dir) {

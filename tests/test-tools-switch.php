@@ -229,7 +229,7 @@ twd_sk_test( 'one editing window (18c and 18d, 29 Oct 2026): a pencil opens one 
 	twd_sk_has( "removes: ", $inline );
 	twd_sk_has( "'removes'", file_get_contents( ABSPATH . 'includes/class-twd-sk-rest.php' ) );
 	// The compact row: B, I, Link for words; the rest behind More. The section row holds Look, the moves, Add after, Delete.
-	twd_sk_has( "[ui.bold, ui.italic, ui.link, ui.addPara, ui.dup])", $inline );
+	twd_sk_has( "[ui.bold, ui.italic, ui.link, ui.addPara, ui.dupText, ui.dup])", $inline );
 	twd_sk_has( "[ui.quote, ui.note, ui.heading, ui.deleteText]", $inline );
 	twd_sk_has( "[ui.look, ui.moveUp, ui.moveDown, ui.addSec, ui.remove]", $inline );
 	// Put back stands on its own, shown whenever something was deleted (after a section goes there is nothing in it to click).
