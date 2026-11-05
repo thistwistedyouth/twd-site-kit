@@ -1,3 +1,15 @@
+## 5 Nov 2026: social buttons (branch `claude/social-buttons-release-419574`, on top of `claude/menu-footer-embed-c670a5`; test build 0.15.0-test73-social on the pilot staging site; NOT released)
+
+- A social button is an ordinary kit button link with a network class: `twd-sk-social` plus `twd-sk-social--whatsapp|facebook|instagram|youtube` (shared classes), and `twd-sk-social--icon` for an icon-only button. The page stores only the link and its words.
+- `TWD_SK_Social` (`includes/class-twd-sk-social.php`, checks nobody, writes nothing): `decorate()` runs in `TWD_SK_Page::render_html()` (display only, never stored, nothing in safe mode) and puts a fixed built-in svg icon (`currentColor`, so contrast is the button's own) in front of the words and wraps the words in `span.twd-sk-social__label`. The icons are strings in the class: never from page HTML, an upload or an address. The sanitiser is untouched (a test pastes an svg and sees it stripped).
+- Links must be https and on the network's own host (`wa.me`, `whatsapp.com`, `facebook.com`, `fb.com`, `fb.me`, `messenger.com`, `m.me`, `instagram.com`, `instagr.am`, `youtube.com`, `youtu.be`, sub-domains allowed, a look-alike host or a user-info address is not). A link that does not fit gets no icon and the quality check names it (`social_link`).
+- Section: registry component `social` ("Social links"): heading, a line, a centred row of four buttons; layout `twd-sk-social-links--icons` shows round 48px icon buttons with the words kept for screen readers. The sample links are `example.com` addresses, so they are leftovers and block publishing until replaced.
+- Stylesheet: about 1.5 KB, tokens only, no `url()`, no colour literal. Default sites print the same bytes (a page with no social class goes through `decorate()` unchanged).
+- Also: the committed starters, gallery, Elementor JSON and generated stylesheets were stale; rebuilt in this commit. **The suite is 1118 passed, 0 failed when run on an LF copy** (what the 20i server does). On this Windows checkout (CRLF) 14 to 16 tests fail for line-ending reasons only: run it with `bash` on an LF copy.
+- Seen in a browser on the pilot staging site (a temporary published page `social-buttons-test`, id 70, now set back to draft): four buttons with icons and words, four round icon-only buttons, two buttons in a band; at 375px wide no sideways overflow, buttons wrap and stay at least 48px tall.
+- Not built: footer icons from the profile's profile links (`same_as`); the icons do not appear in Export (standalone) files; a button inside the Visual editor keeps its icon while editing (saving a changed button keeps plain words, the icon is drawn again on display).
+- Undo on staging: `wp plugin install ~/twd-site-kit-ROLLBACK-before-test73.zip --force`; page 70 is only a draft.
+
 ## 5 Nov 2026: menu and footer changes (branch `claude/menu-footer-embed-c670a5`, rebased onto the sitekit-handover branch, test build 0.15.0-test71-menu-footer, NOT pushed, NOT released)
 
 - Sub-menu: `TWD_SK_Profile::MAX_CHILDREN` is 10 (was 6). The renderer has no cap of its own, so the validator and the header agree.
