@@ -178,6 +178,19 @@ class TWD_SK_Launch {
 		$items[] = $hidden ? self::item( 'visible', 'fail', 'Search engines are asked not to index this site', 'Untick "Discourage search engines from indexing this site" in Settings, Reading when you launch.' ) : self::item( 'visible', 'ok', 'Search engines may index the site' );
 		// Section 23d: WordPress's own sitemap is off while search engines are discouraged, so its absence is not a fault.
 		$items[] = $hidden ? self::item( 'sitemap', 'warn', 'The sitemap appears once search engines are allowed', 'WordPress lists every published page at /wp-sitemap.xml, and names it in robots.txt, as soon as "Discourage search engines" is unticked in Settings, Reading. Nothing to build.' ) : self::item( 'sitemap', 'ok', 'WordPress lists the pages in its sitemap at /wp-sitemap.xml' );
+		// Wording rules from the facts (WORDING CHECKS), long dashes and staging addresses in the pages (0.18.1).
+		if ( class_exists( 'TWD_SK_HouseRules' ) ) {
+			$hr = TWD_SK_HouseRules::scan();
+			if ( $hr['totals'] ) {
+				$lines = array();
+				foreach ( $hr['totals'] as $t ) {
+					$lines[] = $t['label'] . ': ' . $t['count'] . ' on ' . $t['pages'] . ' page' . ( 1 === $t['pages'] ? '' : 's' );
+				}
+				$items[] = self::item( 'wording', 'warn', count( $hr['totals'] ) . ' wording or address rule' . ( 1 === count( $hr['totals'] ) ? '' : 's' ) . ' broken in the pages', implode( '; ', array_slice( $lines, 0, 6 ) ) . ( count( $lines ) > 6 ? ' and more' : '' ) . '. Site tab, Wording and address check, can fix the ones marked fixable.' );
+			} elseif ( $hr['rules'] ) {
+				$items[] = self::item( 'wording', 'ok', 'No wording rule is broken (' . count( $hr['rules'] ) . ' checked)' );
+			}
+		}
 		// Section 23b: an absolute address to a staging site in a page would carry over to the live site.
 		$staging = class_exists( 'TWD_SK_Replace' ) ? TWD_SK_Replace::staging_addresses( $all ) : array();
 		if ( $staging ) {

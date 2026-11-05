@@ -363,6 +363,17 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_site_changes_apply' ),
 			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 		) );
+		// Wording and address check, with a fix for the mechanical rules (0.18.1). Administrators only.
+		register_rest_route( self::ROUTE_NS, '/site/rules', array(
+			'methods'             => 'GET',
+			'callback'            => array( __CLASS__, 'get_site_rules' ),
+			'permission_callback' => array( __CLASS__, 'can_read_site' ),
+		) );
+		register_rest_route( self::ROUTE_NS, '/site/rules/fix', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'post_site_rules_fix' ),
+			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+		) );
 		// The pages with no search title or description, for writing them with the AI (0.18.0). Administrators only.
 		register_rest_route( self::ROUTE_NS, '/site/seo-missing', array(
 			'methods'             => 'GET',
@@ -1824,6 +1835,20 @@ class TWD_SK_REST {
 			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_not_a_page' === $out->get_error_code() ? 404 : 400 );
 		}
 		return $out;
+	}
+
+	/** What is wrong in the pages against the site's own wording rules and address rule. Reads only. */
+	public static function get_site_rules( $request ) {
+		return TWD_SK_HouseRules::scan();
+	}
+
+	/** Fix the chosen rules on every page that has them: one version per page. */
+	public static function post_site_rules_fix( $request ) {
+		$keys = $request->get_param( 'rules' );
+		if ( ! is_array( $keys ) || ! $keys ) {
+			return self::error( 'twd_sk_bad_input', 'Tick at least one rule to fix.', 400 );
+		}
+		return TWD_SK_HouseRules::fix( $keys );
 	}
 
 	/** The pages with no search title or no search description. */

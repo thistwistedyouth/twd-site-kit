@@ -29,9 +29,9 @@ function twd_sk_status( $e ) {
 	return is_array( $d ) && isset( $d['status'] ) ? $d['status'] : 0;
 }
 
-twd_sk_test( 'rest: the eighty-two routes exist under twd-site-kit/v1 and none is open to everyone', function () {
+twd_sk_test( 'rest: the eighty-four routes exist under twd-site-kit/v1 and none is open to everyone', function () {
 	$routes = twd_sk_rest_routes();
-	twd_sk_eq( 82, count( $routes ) );
+	twd_sk_eq( 84, count( $routes ) );
 	foreach ( $routes as $r ) {
 		twd_sk_eq( 'twd-site-kit/v1', $r['ns'] );
 		twd_sk_true( is_array( $r['args']['permission_callback'] ) && 'TWD_SK_REST' === $r['args']['permission_callback'][0], 'a real permission callback on ' . $r['route'] );
@@ -46,7 +46,7 @@ twd_sk_test( 'rest: the eighty-two routes exist under twd-site-kit/v1 and none i
 			$reads[] = $r['route'];
 		}
 	}
-	twd_sk_eq( 25, count( $reads ), 'only prompt, versions, info, the sections, the search details, the site state, the profile, the setup plan, the facts, the Look panel switch, the site type, the launch check, the embeds, the page upgrades, the site history, the site stylesheet, the Snag list, the logo colours, the build state, the site brief, the site report, the templates, the export, the list of pages to export and the pages with no search wording are GET' );
+	twd_sk_eq( 26, count( $reads ), 'only prompt, versions, info, the sections, the search details, the site state, the profile, the setup plan, the facts, the Look panel switch, the site type, the launch check, the embeds, the page upgrades, the site history, the site stylesheet, the Snag list, the logo colours, the build state, the site brief, the site report, the templates, the export, the list of pages to export the pages with no search wording and the wording check are GET' );
 } );
 
 twd_sk_test( 'rest security: a visitor, a missing nonce and a wrong nonce are refused on every route (401)', function () {
@@ -600,8 +600,8 @@ function twd_sk_site_routes() {
 twd_sk_test( 'rest site: the site routes, each with a real permission callback, none registered in safe mode', function () {
 	twd_sk_site_caps();
 	$routes = twd_sk_site_routes();
-	twd_sk_eq( 51, count( $routes ) );
-	twd_sk_eq( array( '/site', '/site/style', '/site/style/reset', '/site/profile', '/site/profile', '/site/chrome', '/site/footer-text', '/site/setup', '/site/setup', '/site/facts', '/site/facts', '/site/looks', '/site/looks', '/site/mode', '/site/mode', '/site/launch', '/site/embeds', '/site/embeds', '/site/embeds/(?P<eid>\\d+)/delete', '/site/export-site', '/site/export-site', '/site/changes/plan', '/site/changes/apply', '/site/seo-missing', '/site/upgrades', '/site/upgrades/apply', '/site/css', '/site/css', '/site/css/revert', '/site/snagbook', '/site/snagbook', '/site/snagbook/(?P<sid>\\d+)/status', '/site/history', '/site/history/undo', '/site/history/restore', '/site/launch/publish', '/site/launch/tidy', '/site/brand', '/site/build', '/site/build/draft', '/site/build/reset', '/site/build/notes', '/site/full/check', '/site/full/prepare', '/site/build/step', '/site/brief', '/site/brief/plan', '/site/brief/apply', '/site/propose', '/site/doctor', '/site/templates' ), array_map( function ( $r ) {
+	twd_sk_eq( 53, count( $routes ) );
+	twd_sk_eq( array( '/site', '/site/style', '/site/style/reset', '/site/profile', '/site/profile', '/site/chrome', '/site/footer-text', '/site/setup', '/site/setup', '/site/facts', '/site/facts', '/site/looks', '/site/looks', '/site/mode', '/site/mode', '/site/launch', '/site/embeds', '/site/embeds', '/site/embeds/(?P<eid>\\d+)/delete', '/site/export-site', '/site/export-site', '/site/changes/plan', '/site/changes/apply', '/site/rules', '/site/rules/fix', '/site/seo-missing', '/site/upgrades', '/site/upgrades/apply', '/site/css', '/site/css', '/site/css/revert', '/site/snagbook', '/site/snagbook', '/site/snagbook/(?P<sid>\\d+)/status', '/site/history', '/site/history/undo', '/site/history/restore', '/site/launch/publish', '/site/launch/tidy', '/site/brand', '/site/build', '/site/build/draft', '/site/build/reset', '/site/build/notes', '/site/full/check', '/site/full/prepare', '/site/build/step', '/site/brief', '/site/brief/plan', '/site/brief/apply', '/site/propose', '/site/doctor', '/site/templates' ), array_map( function ( $r ) {
 		return $r['route'];
 	}, $routes ) );
 	TWD_SK_Safe::set( true );

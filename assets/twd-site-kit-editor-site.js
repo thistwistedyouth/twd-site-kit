@@ -3393,6 +3393,107 @@
 		});
 	}
 
+	/* ---- wording and address check (0.18.1) ----
+	 * Checks every page against the rules written in the facts under WORDING CHECKS, the long-dash rule and staging
+	 * addresses; shows what is wrong and where; fixes the ticked rules that have a fix, one version per page. */
+	var wcui = {};
+	var WC = { data: null };
+
+	function wcDraw(d) {
+		WC.data = d;
+		clear(wcui.list);
+		(d.totals || []).forEach(function (t, i) {
+			var tick = el('input', { type: 'checkbox', id: 'twd-sk-wc-' + i, 'data-key': t.key });
+			if (t.fix) {
+				tick.checked = true;
+			} else {
+				tick.disabled = true;
+			}
+			wcui.list.appendChild(el('li', {}, [el('label', { 'for': 'twd-sk-wc-' + i }, [tick, el('span', {}, [
+				el('strong', { text: t.label }),
+				el('span', { className: 'twd-sk-ed__help', text: ' ' + t.count + ' on ' + t.pages + ' page' + (t.pages === 1 ? '' : 's') + (t.fix ? ' (can be fixed)' : ' (to fix by hand)') })
+			])])]));
+		});
+		clear(wcui.pages);
+		(d.pages || []).forEach(function (p) {
+			wcui.pages.appendChild(el('li', {}, [el('strong', { text: p.title }), el('span', { className: 'twd-sk-ed__help', text: ': ' + p.findings.map(function (f) {
+				return f.count + ' x ' + (f.sample ? '"' + f.sample + '"' : f.label);
+			}).join('; ') })]));
+		});
+		var fixable = (d.totals || []).some(function (t) {
+			return t.fix;
+		});
+		show(wcui.found, (d.totals || []).length > 0);
+		wcui.fix.disabled = !fixable;
+		message(wcui.msg, (d.totals || []).length === 0 ? (d.rules && d.rules.length ? 'No rule is broken (' + d.rules.length + ' written rules, the dash rule and the staging address rule checked).' : 'Nothing is broken. No wording rules are written yet: add them to the facts under WORDING CHECKS.') : (d.pages.length + ' page' + (d.pages.length === 1 ? ' has' : 's have') + ' something to look at.'), (d.totals || []).length === 0);
+	}
+
+	function wcCheck() {
+		wcui.check.disabled = true;
+		message(wcui.msg, 'Checking every page...', true);
+		api('GET', '/site/rules').then(function (d) {
+			wcui.check.disabled = false;
+			show(wcui.results, false);
+			wcDraw(d);
+		}, function (err) {
+			wcui.check.disabled = false;
+			message(wcui.msg, err.message, false);
+		});
+	}
+
+	function wcFix() {
+		var keys = [];
+		Array.prototype.forEach.call(wcui.list.querySelectorAll('input[type=checkbox]'), function (c) {
+			if (c.checked && !c.disabled) {
+				keys.push(c.getAttribute('data-key'));
+			}
+		});
+		if (!keys.length) {
+			message(wcui.msg, 'Tick at least one rule that can be fixed.', false);
+			return;
+		}
+		wcui.fix.disabled = true;
+		message(wcui.msg, 'Fixing...', true);
+		api('POST', '/site/rules/fix', { rules: keys }).then(function (res) {
+			clear(wcui.results);
+			res.results.forEach(function (r) {
+				wcui.results.appendChild(el('li', { text: (r.ok ? 'Fixed: ' : 'Not fixed: ') + r.title + '. ' + r.message }));
+			});
+			show(wcui.results, res.results.length > 0);
+			message(wcui.msg, res.done + ' page' + (res.done === 1 ? '' : 's') + ' fixed' + (res.failed ? ', ' + res.failed + ' not fixed' : '') + '. Each is one version: Undo on that page takes it back. Checking again...', res.failed === 0);
+			wcui.fix.disabled = false;
+			api('GET', '/site/rules').then(wcDraw, function () {});
+		}, function (err) {
+			wcui.fix.disabled = false;
+			message(wcui.msg, err.message, false);
+		});
+	}
+
+	function buildWordingSection(panel) {
+		wcui.check = button('Check all pages', 'primary', wcCheck);
+		wcui.fix = button('Fix the ticked rules', 'primary', wcFix);
+		wcui.fix.disabled = true;
+		wcui.list = el('ul', { className: 'twd-sk-ed__list' });
+		wcui.pages = el('ul', { className: 'twd-sk-ed__list' });
+		wcui.results = el('ul', { className: 'twd-sk-ed__list', hidden: '' });
+		wcui.msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		wcui.found = el('div', { hidden: '' }, [
+			el('h4', { className: 'twd-sk-ed__sub-title', text: 'Rules broken' }),
+			wcui.list,
+			el('div', { className: 'twd-sk-ed__actions' }, [wcui.fix]),
+			el('h4', { className: 'twd-sk-ed__sub-title', text: 'Where' }),
+			wcui.pages
+		]);
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Wording and address check' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'Checks every page against the rules you wrote in the facts under WORDING CHECKS (one per line, like "never: on a journey to healing", or with a fix: "never: Dr Smith -> Dr. Smith"), and always for long dashes and addresses that name a staging site. A rule with an arrow can be fixed here in one go; each page changes as one version, so Undo works.' }),
+			el('div', { className: 'twd-sk-ed__actions' }, [wcui.check]),
+			wcui.found,
+			wcui.results,
+			wcui.msg
+		]));
+	}
+
 	function buildSite(panel) {
 		buildModeSection(panel);
 		buildLooksSection(panel);
@@ -3403,6 +3504,7 @@
 		buildFactsSection(panel);
 		buildEmbedsSection(panel);
 		buildFooterHtmlSection(panel);
+		buildWordingSection(panel);
 		buildSeoWriterSection(panel);
 		buildExportSection(panel);
 		buildChangesSection(panel);
@@ -3421,6 +3523,7 @@
 			'Site changes': 'Undo a saved style, site details or header and footer change',
 			'Embeds': 'Show a booking calendar, map or other outside code on a page',
 			'Footer HTML': 'Edit the footer\'s own HTML, or remix it with an AI',
+			'Wording and address check': 'Check every page against your wording rules, and fix the mechanical ones',
 			'Search wording with AI': 'Draft search titles and descriptions for pages that have none',
 			'Export for an AI': 'Download the site, a page or the header and footer for an AI to check',
 			'Changes from an AI': 'Paste an AI\'s reply, check each change, apply the ones you want',
