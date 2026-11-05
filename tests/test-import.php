@@ -363,7 +363,7 @@ twd_sk_test( 'section 23d: a site-wide social picture (Site details, or the logo
 	twd_sk_has( 'property="og:image" content="https://example.test/u/logo.png"', $h );
 	twd_sk_has( 'name="twitter:image" content="https://example.test/u/logo.png"', $h );
 	twd_sk_has( 'twitter:card" content="summary_large_image"', $h );
-	twd_sk_eq( 1, substr_count( $h, 'og:image' ) );
+	twd_sk_eq( 1, substr_count( $h, 'property="og:image"' ) );
 	// A chosen picture wins over the logo; the field is checked like the logo.
 	$saved = TWD_SK_Profile::save( array( 'social_image_id' => 57 ) );
 	twd_sk_true( ! is_wp_error( $saved ), is_wp_error( $saved ) ? $saved->get_error_message() : '' );

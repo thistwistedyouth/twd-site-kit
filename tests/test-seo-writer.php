@@ -165,3 +165,32 @@ twd_sk_test( 'search wording js (0.18.0): the Site tab section, the Search tab b
 		twd_sk_hasnt( 'srcdoc', $js );
 	}
 } );
+
+twd_sk_test( 'seo (0.18.3): the picture is shared at full size with its width and height, falls back to the large size for a file over 4 MB, and the twitter image matches', function () {
+	twd_sk_sw_page();
+	TWD_SK_Seo::write( 330, array( 'image_id' => 55 ) );
+	$head = twd_sk_seo_head( 330 );
+	twd_sk_has( 'og:image" content="https://example.test/u/pic.jpg"', $head );
+	twd_sk_has( 'og:image:width" content="1200"', $head );
+	twd_sk_has( 'og:image:height" content="630"', $head );
+	twd_sk_has( 'twitter:image" content="https://example.test/u/pic.jpg"', $head );
+	twd_sk_has( 'summary_large_image', $head );
+	twd_sk_eq( 'full', $GLOBALS['twd_stub']['image_size_asked'][55], 'the full size was asked for' );
+	$share = TWD_SK_Seo::share_image( 55 );
+	twd_sk_eq( array( 'url' => 'https://example.test/u/pic.jpg', 'w' => 1200, 'h' => 630 ), $share );
+	twd_sk_eq( array(), TWD_SK_Seo::share_image( 0 ), 'no picture, no share image' );
+	twd_sk_eq( array(), TWD_SK_Seo::share_image( 9999 ), 'a picture that does not exist' );
+	// A file over about 4 MB is shared at the large size instead.
+	$tmp = sys_get_temp_dir() . '/twdsk-bigshare.bin';
+	file_put_contents( $tmp, str_repeat( 'a', 4 * 1000 * 1000 + 10 ) );
+	$GLOBALS['twd_stub']['attachments'][55]['file'] = $tmp;
+	TWD_SK_Seo::share_image( 55 );
+	twd_sk_eq( 'large', $GLOBALS['twd_stub']['image_size_asked'][55], 'a big file is shared at the large size' );
+	unlink( $tmp );
+	// A small file keeps the full size.
+	file_put_contents( $tmp, 'small' );
+	$GLOBALS['twd_stub']['attachments'][55]['file'] = $tmp;
+	TWD_SK_Seo::share_image( 55 );
+	twd_sk_eq( 'full', $GLOBALS['twd_stub']['image_size_asked'][55] );
+	unlink( $tmp );
+} );

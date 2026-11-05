@@ -5,6 +5,10 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
+## 5 Nov 2026: RELEASE 0.18.3, the sharing picture at full size (pushed to main at the owner's yes)
+
+- `TWD_SK_Seo::share_image( $id )` gives the picture's full size with its width and height (the large size, 1024 px, for a file over about 4 MB, since some sites refuse a very big one). The page's head now prints `og:image`, `og:image:width`, `og:image:height` and the same picture for `twitter:image`. Applies when the plugin prints the tags itself (no SEO plugin); Yoast prints its own. One existing test counted `og:image` loosely and now counts the exact property. 1 test; suite 1149 passed on an LF copy.
+
 ## 5 Nov 2026: RELEASE 0.18.2, picture list fix in the export (pushed to main at the owner's yes)
 
 - `site/pictures.json` flagged every picture with a staging address because it made a relative path absolute (using the staging home address) before testing it. It now tests the address AS WRITTEN: only a full staging address in a page or the footer counts (`TWD_SK_HouseRules::is_staging()` is public for this), never a path and never a picture taken from the site details. 1 test; suite 1148 passed on an LF copy. Found by checking a real export of the pilot site.

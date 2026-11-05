@@ -348,6 +348,37 @@ class TWD_SK_Seo {
 		return ! empty( $p['logo_id'] ) ? (int) $p['logo_id'] : 0;
 	}
 
+	/**
+	 * The picture to share, at the size social sites like: the full size, unless the file is over about 4 MB (some
+	 * sites refuse a big one), then the large size. Returns array( url, w, h ), or an empty array. The width and
+	 * height are 0 when they are not known.
+	 */
+	public static function share_image( $id ) {
+		$id = (int) $id;
+		if ( $id <= 0 ) {
+			return array();
+		}
+		if ( function_exists( 'wp_get_attachment_image_src' ) ) {
+			$too_big = false;
+			if ( function_exists( 'get_attached_file' ) ) {
+				$file    = get_attached_file( $id );
+				$too_big = is_string( $file ) && '' !== $file && is_file( $file ) && filesize( $file ) > 4 * 1000 * 1000;
+			}
+			if ( ! $too_big ) {
+				$full = wp_get_attachment_image_src( $id, 'full' );
+				if ( is_array( $full ) && ! empty( $full[0] ) ) {
+					return array( 'url' => (string) $full[0], 'w' => (int) $full[1], 'h' => (int) $full[2] );
+				}
+			}
+			$large = wp_get_attachment_image_src( $id, 'large' );
+			if ( is_array( $large ) && ! empty( $large[0] ) ) {
+				return array( 'url' => (string) $large[0], 'w' => (int) $large[1], 'h' => (int) $large[2] );
+			}
+		}
+		$url = function_exists( 'wp_get_attachment_image_url' ) ? wp_get_attachment_image_url( $id, 'large' ) : '';
+		return $url ? array( 'url' => (string) $url, 'w' => 0, 'h' => 0 ) : array();
+	}
+
 	public static function print_head() {
 		$id = self::printing_for();
 		if ( $id <= 0 ) {
@@ -378,9 +409,14 @@ class TWD_SK_Seo {
 		if ( '' !== $name ) {
 			$out[] = '<meta property="og:site_name" content="' . esc_attr( $name ) . '">';
 		}
-		$image = ( $own['image_id'] && function_exists( 'wp_get_attachment_image_url' ) ) ? (string) wp_get_attachment_image_url( $own['image_id'], 'large' ) : '';
+		$share = $own['image_id'] ? self::share_image( $own['image_id'] ) : array();
+		$image = $share ? $share['url'] : '';
 		if ( '' !== $image ) {
 			$out[] = '<meta property="og:image" content="' . esc_url( $image ) . '">';
+			if ( $share['w'] > 0 && $share['h'] > 0 ) {
+				$out[] = '<meta property="og:image:width" content="' . (int) $share['w'] . '">';
+				$out[] = '<meta property="og:image:height" content="' . (int) $share['h'] . '">';
+			}
 		}
 		$out[] = '<meta name="twitter:card" content="' . ( '' !== $image ? 'summary_large_image' : 'summary' ) . '">';
 		$out[] = '<meta name="twitter:title" content="' . esc_attr( $title ) . '">';

@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.18.2
+Stable tag: 0.18.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.18.3 =
+* A shared page now carries its sharing picture at full size, with its width and height stated, so social sites show it sharply and as a large card. A picture file over about 4 MB is shared at the large size instead, because some sites refuse a very big file. Nothing else changes.
 
 = 0.18.2 =
 * Fix: the picture list in the export for an AI no longer says a picture has a staging address when the page uses a plain path (such as /wp-content/uploads/your-image.jpg). A picture is flagged only when the page writes a full staging address, and the message says the wording and address check can fix it. Nothing else changes.
