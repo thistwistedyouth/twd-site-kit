@@ -295,3 +295,54 @@ twd_sk_test( 'site export: the kit rules the pages use come with it, a draft has
 	$GLOBALS['twd_stub']['posts'][302]->post_status = 'publish';
 	twd_sk_se_cleanup();
 } );
+
+twd_sk_test( 'site export (0.17.2): the index carries each page\'s search title and description, the kit guide covers only the sections used, and a harmless worked example comes from the site\'s own words', function () {
+	twd_sk_se_setup();
+	update_post_meta( 301, TWD_SK_Seo::K_TITLE, 'About me | The Practice' );
+	update_post_meta( 301, TWD_SK_Seo::K_DESC, 'A short description of the page.' );
+	$set   = TWD_SK_SiteExport::files( array( 'scope' => 'all' ) );
+	$index = json_decode( $set['files']['pages/_index.json'], true );
+	$by    = array();
+	foreach ( $index['pages'] as $p ) {
+		$by[ $p['page'] ] = $p;
+	}
+	twd_sk_eq( 'About me | The Practice', $by['about-me']['seo_title'] );
+	twd_sk_eq( 'A short description of the page.', $by['about-me']['seo_description'] );
+	twd_sk_eq( '', $by['contact-me']['seo_title'], 'a page with none says so with an empty string' );
+	// The guide: only hero and text are used on these pages.
+	twd_sk_true( isset( $set['files']['site/kit-sections-guide.md'] ), 'the guide' );
+	$guide = $set['files']['site/kit-sections-guide.md'];
+	twd_sk_has( '(hero)', $guide );
+	twd_sk_has( '(text)', $guide );
+	twd_sk_hasnt( '(pricing)', $guide, 'a section no page uses is left out' );
+	twd_sk_hasnt( '(embed)', $guide );
+	// The worked example is readable by the importer and changes nothing.
+	twd_sk_true( isset( $set['files']['reply-example.json'] ), 'the example' );
+	$read = TWD_SK_SiteImport::read( $set['files']['reply-example.json'] );
+	twd_sk_true( is_array( $read ), is_wp_error( $read ) ? $read->get_error_message() : '' );
+	twd_sk_eq( 1, count( $read['changes'] ) );
+	twd_sk_eq( $read['changes'][0]['find'], $read['changes'][0]['replace'], 'the new words equal the old' );
+	$plan = TWD_SK_SiteImport::plan( $read );
+	twd_sk_true( $plan['items'][0]['ok'], $plan['items'][0]['error'] );
+	twd_sk_true( $plan['pages'][0]['same'], 'applying it leaves the page as it is' );
+	twd_sk_has( 'EXAMPLE ONLY', $set['files']['reply-example.json'] );
+	// README: the new sections.
+	$readme = $set['files']['README-FOR-AI.md'];
+	foreach ( array( 'Never touch these', 'Before you reply, check', 'LEAVE ALONE', 'at most about 25 changes', 'needs a person to look', 'reply-example.json', 'kit-sections-guide.md', 'seo_title' ) as $needle ) {
+		twd_sk_has( $needle, $readme, $needle );
+	}
+	// Header and footer only: no guide (no pages), no example.
+	$chrome = TWD_SK_SiteExport::files( array( 'scope' => 'chrome' ) );
+	twd_sk_true( ! isset( $chrome['files']['site/kit-sections-guide.md'] ) && ! isset( $chrome['files']['reply-example.json'] ), 'nothing about pages' );
+	twd_sk_se_cleanup();
+} );
+
+twd_sk_test( 'site tab js (0.17.2): Copy the problems for the AI appears after a check that refused something and puts the reasons in a ready-to-paste message', function () {
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' );
+	twd_sk_has( 'Copy the problems for the AI', $js );
+	twd_sk_has( 'function problemsText(plan)', $js );
+	twd_sk_has( 'could not use these changes', $js );
+	twd_sk_has( 'Reply again with the complete JSON object', $js );
+	twd_sk_has( "show(xui.problemsBtn, problemsText(plan) !== '')", $js, 'only when something was refused' );
+	twd_sk_hasnt( 'innerHTML', $js );
+} );

@@ -1,3 +1,7 @@
+## 5 Nov 2026: RELEASE 0.17.2 (the export made easier for an AI to respect, pushed to main at the owner's yes)
+
+- `pages/_index.json` gains `seo_title` and `seo_description` (`TWD_SK_Seo::details`), so an AI can check what is not in the page HTML. New files: `site/kit-sections-guide.md` (`TWD_SK_Prompt::style_guide( $only )`, only the kit sections the pages use) and `reply-example.json` (`TWD_SK_SiteExport::example_change()`: the first short heading or paragraph that appears once in its section, replaced by itself, so applying it changes nothing). README: Never touch these, Before you reply check, send the most important first (about 25 at most), leave out what needs a person to look at. Site tab: Copy the problems for the AI after a check that refused something. 2 tests; suite 1132 passed on an LF copy.
+
 ## 5 Nov 2026: RELEASE 0.17.1 (small export fixes, pushed to main at the owner's yes)
 
 - The export gains `site/kit-stylesheet-used.css` (the kit rules the exported pages use, `TWD_SK_Export::kit_rules_for`), a draft page's address is blank (it had shown `/`), and the README has a "What you can and cannot judge" section (code, not a rendered page; the header is settings only; ignore drafts; most pages are one large custom section, so prefer find and replace). 1 test; suite 1130 passed on an LF copy.

@@ -2888,6 +2888,56 @@
 		return el('li', {}, [el('label', { 'for': 'twd-sk-xc-' + it.n }, [tick, el('span', {}, kids)])]);
 	}
 
+	// The refused changes as plain text to send back to the AI, so it can fix just those.
+	function problemsText(plan) {
+		var lines = [];
+		plan.items.forEach(function (it) {
+			if (!it.ok && it.error) {
+				lines.push('- Change ' + (it.n + 1) + (it.what ? ' (' + it.what + ')' : '') + ': ' + it.error);
+			}
+		});
+		if (plan.css && plan.css.given && !plan.css.ok && plan.css.error) {
+			lines.push('- The css: ' + plan.css.error);
+		}
+		plan.pages.forEach(function (p) {
+			if (!p.ok && p.error && !lines.length) {
+				lines.push('- ' + p.title + ': ' + p.error);
+			}
+		});
+		if (!lines.length) {
+			return '';
+		}
+		return 'The site checked your reply and could not use these changes:\n\n' + lines.join('\n') + '\n\nFix only these. Reply again with the complete JSON object (the same schema), including the changes that were fine, and follow README-FOR-AI.md.';
+	}
+
+	function copyProblems() {
+		var text = problemsText(XC.plan);
+		if (!text) {
+			return;
+		}
+		var fallback = function () {
+			xui.box.value = text;
+			show(xui.box, true);
+			xui.box.focus();
+			xui.box.select();
+			var ok = false;
+			try {
+				ok = document.execCommand('copy');
+			} catch (e) {
+				ok = false;
+			}
+			message(xui.xcMsg, ok ? 'Copied. Paste it back into the AI chat.' : 'The text is selected below. Press Ctrl+C (Cmd+C on a Mac) to copy it, then paste it into the AI chat.', ok);
+		};
+		if (navigator.clipboard && window.isSecureContext && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(text).then(function () {
+				show(xui.box, false);
+				message(xui.xcMsg, 'Copied. Paste it back into the AI chat.', true);
+			}, fallback);
+			return;
+		}
+		fallback();
+	}
+
 	function drawPlan(plan) {
 		XC.plan = plan;
 		clear(xui.items);
@@ -2915,6 +2965,7 @@
 			xui.planNotes.appendChild(el('li', { text: t }));
 		});
 		show(xui.planWrap, true);
+		show(xui.problemsBtn, problemsText(plan) !== '');
 		xui.applyBtn.disabled = n === 0;
 		message(xui.xcMsg, n + ' of ' + plan.items.length + ' change' + (plan.items.length === 1 ? '' : 's') + ' can be applied. Untick any you do not want. Nothing is saved until you press Apply.', n > 0);
 	}
@@ -2971,9 +3022,12 @@
 		xui.reply.setAttribute('aria-label', 'The AI\'s reply');
 		xui.checkBtn = button('Check the changes', 'primary', checkChanges);
 		xui.applyBtn = button('Apply the ticked changes', 'primary', applyChanges);
+		xui.problemsBtn = button('Copy the problems for the AI', 'secondary', copyProblems);
+		xui.problemsBtn.hidden = true;
+		xui.box = el('textarea', { className: 'twd-sk-ed__textarea', rows: '6', hidden: '', 'aria-label': 'Text to copy' });
 		xui.items = el('ul', { className: 'twd-sk-ed__list' });
 		xui.planNotes = el('ul', { className: 'twd-sk-ed__list' });
-		xui.planWrap = el('div', { hidden: '' }, [xui.planNotes, xui.items, el('div', { className: 'twd-sk-ed__actions' }, [xui.applyBtn])]);
+		xui.planWrap = el('div', { hidden: '' }, [xui.planNotes, xui.items, el('div', { className: 'twd-sk-ed__actions' }, [xui.applyBtn, xui.problemsBtn]), xui.box]);
 		xui.results = el('ul', { className: 'twd-sk-ed__list', hidden: '' });
 		xui.xcMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
 		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [

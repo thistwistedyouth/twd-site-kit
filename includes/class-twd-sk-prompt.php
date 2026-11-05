@@ -44,12 +44,15 @@ class TWD_SK_Prompt {
 	/**
 	 * The style guide as text, generated from the registry.
 	 */
-	public static function style_guide() {
+	public static function style_guide( $only = null ) {
 		$data = TWD_SK_Registry::style_guide_data();
 		$out  = array();
 		$out[] = 'A page is a list of sections, one component after another. Each section is a section element with the classes shown. Copy an example, then change the words. Every word in the examples is a sample: replace all of it with the ' . TWD_SK_Mode::w( 'persons' ) . ' own wording, including the words on buttons and links, and every address.';
 		$out[] = '';
 		foreach ( $data['components'] as $id => $c ) {
+			if ( is_array( $only ) && ! in_array( $id, $only, true ) ) {
+				continue;
+			}
 			$out[] = '### ' . $c['label'] . ' (' . $id . ')';
 			$out[] = $c['description'];
 			$out[] = 'Classes: ' . implode( ' ', $c['classes'] );

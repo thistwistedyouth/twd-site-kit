@@ -33,6 +33,22 @@ class TWD_SK_SiteExport {
 		return '' !== $slug ? $slug : 'page-' . (int) $page_id;
 	}
 
+	/**
+	 * A harmless worked example of a find and replace taken from the site's own words: the first short heading or
+	 * paragraph that appears exactly once in its section, replaced by itself. Applying it changes nothing.
+	 */
+	public static function example_change( $stem, $number, $section ) {
+		if ( ! preg_match_all( '#<(?:h[1-6]|p|li)\b[^>]*>([^<]{12,90})</(?:h[1-6]|p|li)>#', $section, $m ) ) {
+			return null;
+		}
+		foreach ( $m[1] as $text ) {
+			if ( 1 === preg_match( '/^[A-Za-z0-9 ,.\'?!-]+$/', $text ) && 1 === substr_count( $section, $text ) ) {
+				return array( 'page' => $stem, 'section' => (int) $number, 'find' => $text, 'replace' => $text, 'why' => 'Example only: shows a find and replace. The new words equal the old ones.' );
+			}
+		}
+		return null;
+	}
+
 	/** The kit pages, for choosing one to export: id, the name a reply uses, title, status. */
 	public static function page_list() {
 		$out = array();
@@ -87,6 +103,8 @@ class TWD_SK_SiteExport {
 		$pages  = array();
 		$stems  = array();
 		$kit_html = '';
+		$types    = array();
+		$example  = null;
 		foreach ( $ids as $id ) {
 			$html = TWD_SK_Store::get_current( (int) $id );
 			if ( '' === trim( (string) $html ) ) {
@@ -108,6 +126,12 @@ class TWD_SK_SiteExport {
 			}
 			$files[ 'pages/' . $stem . '.html' ] = $body;
 			$kit_html .= $html;
+			foreach ( $parts['sections'] as $i => $section ) {
+				$types[ str_replace( '-', '_', TWD_SK_Sections::type_of( $section ) ) ] = true;
+				if ( null === $example ) {
+					$example = self::example_change( $stem, $i + 1, $section );
+				}
+			}
 			$live = $post && isset( $post->post_status ) && 'publish' === $post->post_status;
 			$path = $live && function_exists( 'wp_parse_url' ) ? (string) wp_parse_url( get_permalink( (int) $id ), PHP_URL_PATH ) : '';
 			$pages[] = array(
@@ -116,6 +140,8 @@ class TWD_SK_SiteExport {
 				'title'    => trim( (string) get_the_title( (int) $id ) ),
 				'address'  => $path,
 				'status'   => $post && isset( $post->post_status ) ? (string) $post->post_status : '',
+				'seo_title'       => class_exists( 'TWD_SK_Seo' ) ? (string) TWD_SK_Seo::details( (int) $id )['title'] : '',
+				'seo_description' => class_exists( 'TWD_SK_Seo' ) ? (string) TWD_SK_Seo::details( (int) $id )['description'] : '',
 				'file'     => 'pages/' . $stem . '.html',
 				'sections' => count( $parts['sections'] ),
 			);
@@ -143,6 +169,17 @@ class TWD_SK_SiteExport {
 			'style'  => TWD_SK_Packs::active_slug(),
 			'tokens' => TWD_SK_Export::token_groups( $tokens ),
 		) );
+		$kit_types = array_values( array_diff( array_keys( $types ), array( 'custom', 'section' ) ) );
+		if ( $kit_types ) {
+			$files['site/kit-sections-guide.md'] = "# The kit sections these pages use\n\nEvery kit section is a section element with the classes shown. When you change one, keep this structure and these classes. The words in the examples below are samples only: the real words are in the page files.\n\n" . TWD_SK_Prompt::style_guide( $kit_types ) . "\n";
+		}
+		if ( is_array( $example ) ) {
+			$files['reply-example.json'] = self::json( array(
+				'schema'       => self::REPLY_SCHEMA,
+				'what_changed' => 'EXAMPLE ONLY, to show the format. This one changes nothing: the new words are the same as the old.',
+				'changes'      => array( $example ),
+			) );
+		}
 		if ( $kit_html !== '' ) {
 			$kit = trim( TWD_SK_Export::kit_rules_for( $kit_html, TWD_SK_Export::kit_css() ) );
 			$files['site/kit-stylesheet-used.css'] = "/* The plugin's own rules for the twd-sk- classes these pages use (every rule is scoped under .twd-sk-page). Colours, fonts and sizes are var(--twd-site-NAME): see style-tokens.json for the values. Read-only: the site stylesheet below is where a change to a custom section's look goes. */\n" . $kit . "\n";
@@ -230,12 +267,16 @@ class TWD_SK_SiteExport {
 		if ( 'chrome' === $scope ) {
 			$l[] = '- This export holds no pages, only the header and footer.';
 		} else {
-			$l[] = '- `pages/_index.json`: every page with the name to use in a reply (`page`), its title, address, status and number of sections.';
+			$l[] = '- `pages/_index.json`: every page with the name to use in a reply (`page`), its title, address, status, number of sections, and its search title and description (`seo_title`, `seo_description`: check them here, they are not in the page HTML).';
 			$l[] = '- `pages/NAME.html`: one page. A comment line `<!-- twd-section N: type, label -->` comes before each top-level section. N is the section number to use in a reply. Those comment lines are only for you: never put one in a reply.';
 		}
 		if ( 'page' !== $scope ) {
 			$l[] = '- `site/header-and-footer.json`: the site details, menu, header button, footer words and legal links, and the header and footer settings.';
 			$l[] = '- `site/footer.html`: the footer\'s own HTML, only when the footer is a saved embed.';
+		}
+		$l[] = '- `reply-example.json`: a worked example of a reply taken from this site\'s own words. It changes nothing. Copy its shape.';
+		if ( 'chrome' !== $scope ) {
+			$l[] = '- `site/kit-sections-guide.md`: every kit section these pages use, with its classes and example markup, so you reuse real markup instead of inventing classes.';
 		}
 		$l[] = '- `site/style-tokens.json`: the colours, fonts and sizes the design uses, with their values. A stylesheet refers to them as `var(--twd-site-NAME)`.';
 		$l[] = '- `site/site-stylesheet.css`: the site\'s own rules, for sections that are custom HTML (classes starting `c-`).';
@@ -272,6 +313,26 @@ class TWD_SK_SiteExport {
 		$l[] = '- A **footer_html** change replaces the footer, only if `site/footer.html` exists.';
 		$l[] = '- `page` is the name from `pages/_index.json`. Section numbers refer to the files as exported. Several changes to one page are fine: they are all applied to the page as exported.';
 		$l[] = '- Do not change the site details, menu or settings with this format: write those as a plain list for a person to apply.';
+		$l[] = '';
+		$l[] = '## Never touch these';
+		$l[] = '';
+		$l[] = '- Every `c-` class and every `data-twd-edit` and `data-twd-pic` label: they are how the site styles and edits the text.';
+		$l[] = '- Shortcodes such as `[twd_enquiry]`, `[twd_articles]` and `[twd_embed id="N"]`.';
+		$l[] = '- The safety notice section, and any section the notes say to leave alone.';
+		$l[] = '- Link addresses and picture addresses, unless the notes ask for that exact change.';
+		$l[] = '- The one `<h1>` on each page (its words may change if the notes say so, but there must be exactly one).';
+		$l[] = '- Anything the notes list under LEAVE ALONE.';
+		$l[] = '';
+		$l[] = '## Before you reply, check';
+		$l[] = '';
+		$l[] = '- Every `find` is copied exactly from the file, and appears once in that section.';
+		$l[] = '- Every section number is the one in the comment line of the file you were given.';
+		$l[] = '- No new fact: everything comes from `notes/practice-facts.md` or `notes/your-notes.md`.';
+		$l[] = '- The words and spelling rules in the notes are followed in every change you write.';
+		$l[] = '- No long dashes, no scripts, no style attributes.';
+		$l[] = '- The reply is ONE JSON object with the `schema` line, nothing around it.';
+		$l[] = '- Put the most important changes first. Send at most about 25 changes in one reply; say in `what_changed` what is left for a next reply.';
+		$l[] = '- If a point in the notes cannot be judged from code (a photo, how something looks), list it in `what_changed` as "needs a person to look" and leave it out of `changes`.';
 		$l[] = '';
 		$l[] = '## Rules every change must follow';
 		$l[] = '';
