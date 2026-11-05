@@ -90,19 +90,28 @@ twd_sk_test( 'site css: typed colours, px font sizes, typed fonts, !important, @
 	twd_sk_eq( '', TWD_SK_Css::current()['source'] );
 } );
 
-twd_sk_test( 'site css: a repeated rule warns, the budget refuses, the warning line starts at 16 KB, and merge() replaces a rule with the same selectors and adds the rest', function () {
+twd_sk_test( 'site css: a repeated rule warns, the budget refuses, the warning line starts at its own size, and merge() replaces a rule with the same selectors and adds the rest', function () {
 	$check = TWD_SK_Css::check( ".c-a { color: var(--twd-site-color-body); }\n.c-a { color: var(--twd-site-color-muted); }" );
 	twd_sk_true( $check['ok'] );
 	twd_sk_has( 'appears more than once', implode( ' ', $check['warnings'] ) );
+	$one_rule = static function ( $i ) {
+		return '.c-rule-' . $i . ' { padding: var(--twd-site-card-pad); color: var(--twd-site-color-body); }' . "
+";
+	};
+	$probe = '';
+	for ( $i = 0; $i < 100; $i++ ) {
+		$probe .= $one_rule( $i );
+	}
+	$per = TWD_SK_Css::check( $probe )['bytes'] / 100;
 	$big = '';
-	for ( $i = 0; $i < 400; $i++ ) {
+	for ( $i = 0; $i < (int) ceil( TWD_SK_Css::BUDGET / $per ) + 20; $i++ ) {
 		$big .= '.c-rule-' . $i . ' { padding: var(--twd-site-card-pad); color: var(--twd-site-color-body); }' . "\n";
 	}
 	$over = TWD_SK_Css::check( $big );
 	twd_sk_true( ! $over['ok'] );
 	twd_sk_has( 'over its', implode( ' ', $over['errors'] ) );
 	$mid = '';
-	for ( $i = 0; $i < 220; $i++ ) {
+	for ( $i = 0; $i < (int) ceil( ( TWD_SK_Css::WARN + TWD_SK_Css::BUDGET ) / 2 / $per ); $i++ ) {
 		$mid .= '.c-rule-' . $i . ' { padding: var(--twd-site-card-pad); color: var(--twd-site-color-body); }' . "\n";
 	}
 	$mid = TWD_SK_Css::check( $mid );
@@ -145,7 +154,7 @@ twd_sk_test( 'site css: save() versions the stylesheet (20 kept, numbers never r
 	twd_sk_eq( 4, $none['v'] );
 	twd_sk_eq( 'This site has no stylesheet of its own yet.', TWD_SK_Css::status()['summary'] );
 	TWD_SK_Css::save( twd_sk_custom_css(), 'back', 51 );
-	twd_sk_has( 'of its 23.4 KB budget (5 classes, version 5)', TWD_SK_Css::status()['summary'] );
+	twd_sk_has( 'of its 46.9 KB budget (5 classes, version 5)', TWD_SK_Css::status()['summary'] );
 	// Unused rules: a rule is used when any of its classes is on any page.
 	$unused = TWD_SK_Css::unused_rules( array( 51 => '<section class="c-intro"><p class="c-intro__title">x</p></section>' ) );
 	twd_sk_eq( array( '.c-intro__row', '.c-intro__card', '.c-intro__pic', '@media (max-width: 767px) .c-intro__row' ), $unused );

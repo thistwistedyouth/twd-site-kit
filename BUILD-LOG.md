@@ -5,6 +5,7 @@
 - Footer from a saved embed: setting `footer_embed` in `twd_sk_chrome` (0 = the kit footer). HTML-kind embeds only; saving a change needs `unfiltered_html` (`TWD_SK_Chrome::save_settings()`); prints `<div class="twd-sk-footer-embed">` outside the page wrapper; safe mode, a deleted or wrong-kind embed fall back to the kit footer; the launch check names dead links in it (`TWD_SK_Launch::embed_links()`). Site tab: a select with a "not editable on the page" warning.
 - Tests: 1 for the tokens, 5 for the footer embed, 1 changed (sub-menu cap). The 13 failures already present on `header-rows-and-srcset` are unchanged (11 shown here).
 - Needs checking on the staging site: the three things above in a browser at desktop and phone width. This branch now carries the Snag button and the newer Your Edits window that the staging site runs (they are on the sitekit-handover branch).
+- Site stylesheet budget: `TWD_SK_Css::BUDGET` 24,000 to 48,000 built bytes and `WARN` 16,000 to 40,000, as in the hand-built test61 (the full pilot site needs about 33 KB). The findings recommend 40,000 and 32,000 as a standing default; 48,000 is for the staging test build. The per-page 6 KB check (`PAGE_WARN`) and the 60,000-byte source limit are unchanged.
 - Not done: footer logo row, header embed (not wanted).
 
 # Build log

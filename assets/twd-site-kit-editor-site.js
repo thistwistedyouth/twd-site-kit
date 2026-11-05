@@ -2552,7 +2552,7 @@
 		if (!f) {
 			return;
 		}
-		if (f.size > ((ED.cfg && ED.cfg.cssMax) || 24000) * 3) {
+		if (f.size > ((ED.cfg && ED.cfg.cssMax) || 48000) * 3) {
 			message(csui.msg, 'That file is too large for a site stylesheet.', false);
 			return;
 		}
