@@ -154,6 +154,8 @@ class TWD_SK_Packs {
 			'color-modal-overlay',
 			// 0.15.0: the tint of the frame behind words over a picture (about 30 percent dark).
 			'color-frame',
+			// 0.15.0: the header sub-menu's panel and border (the word card means: the same as a card, or for the weight the same as the menu).
+			'submenu-bg', 'submenu-border-color',
 		) as $name ) {
 			$s[ $name ] = 'color';
 		}
@@ -164,7 +166,7 @@ class TWD_SK_Packs {
 		$s['heading-style'] = array( 'normal', 'italic' );
 		$s['title-style']   = array( 'normal', 'italic' );
 		$s['heading-align'] = array( 'left', 'center' );
-		foreach ( array( 'heading-weight', 'title-weight', 'btn-weight', 'eyebrow-weight', 'menu-weight' ) as $name ) {
+		foreach ( array( 'heading-weight', 'title-weight', 'btn-weight', 'eyebrow-weight', 'menu-weight', 'submenu-weight' ) as $name ) {
 			$s[ $name ] = 'weight';
 		}
 		$s['line-body']    = 'line';
@@ -199,11 +201,14 @@ class TWD_SK_Packs {
 			'band-height', 'band-height-sm', 'band-height-tall', 'band-height-tall-sm', 'band-height-ribbon', 'band-height-ribbon-sm',
 			// 0.15.0: the space between paragraphs in a text section (SK-021).
 			'para-gap',
+			// 0.15.0: the header sub-menu (dropdown): corner radius, border width, and the space above and below each link.
+			'submenu-radius', 'submenu-border-width', 'submenu-pad-y',
 		) as $name ) {
 			$s[ $name ] = 'length';
 		}
 		$s['shadow-card']    = 'shadow';
 		$s['shadow-image']   = 'shadow';
+		$s['submenu-shadow'] = 'shadow';
 		$s['image-position'] = 'position';
 		// 0.14.0: picture treatment. A filter on every kit picture (none, or up to three of grayscale, sepia,
 		// saturate, contrast and brightness) and a tint laid over the hero and image-and-text pictures.
@@ -260,6 +265,13 @@ class TWD_SK_Packs {
 			'band-height-ribbon'            => '140px',
 			'band-height-ribbon-sm'         => '100px',
 			'para-gap'                      => '1em',
+			'submenu-bg'                    => 'card',
+			'submenu-border-color'          => 'card',
+			'submenu-shadow'                => 'card',
+			'submenu-radius'                => 'card',
+			'submenu-border-width'          => '1px',
+			'submenu-weight'                => 'card',
+			'submenu-pad-y'                 => '8px',
 		);
 	}
 
@@ -338,6 +350,31 @@ class TWD_SK_Packs {
 		return (float) $m[1] >= $floors[ $name ];
 	}
 
+	/** Tokens that may say "card": the same as this card token (the sub-menu follows the cards until it is told otherwise). */
+	public static function card_tokens() {
+		return array(
+			'submenu-bg'           => 'color-surface',
+			'submenu-border-color' => 'color-border',
+			'submenu-shadow'       => 'shadow-card',
+			'submenu-radius'       => 'radius-card',
+			'submenu-weight'       => 'menu-weight',
+		);
+	}
+
+	/** Replace each "card" with the value of its card token, so it follows any per-site change to that token. */
+	public static function resolve_tokens( $tokens ) {
+		foreach ( self::card_tokens() as $name => $from ) {
+			if ( isset( $tokens[ $name ] ) && 'card' === $tokens[ $name ] ) {
+				if ( isset( $tokens[ $from ] ) && 'card' !== $tokens[ $from ] ) {
+					$tokens[ $name ] = $tokens[ $from ];
+				} else {
+					unset( $tokens[ $name ] );
+				}
+			}
+		}
+		return $tokens;
+	}
+
 	/**
 	 * Validate one token. Returns true or false.
 	 */
@@ -348,6 +385,11 @@ class TWD_SK_Packs {
 		}
 		$value = trim( $value );
 		$type  = $schema[ $name ];
+
+		// The word card means: the same as the matching card token (resolved when the tokens are printed).
+		if ( 'card' === $value && isset( self::card_tokens()[ $name ] ) ) {
+			return true;
+		}
 
 		if ( is_array( $type ) ) {
 			return in_array( $value, $type, true );
@@ -585,6 +627,7 @@ class TWD_SK_Packs {
 	 * :root custom properties for a set of (already validated) tokens.
 	 */
 	public static function tokens_css( $tokens ) {
+		$tokens = self::resolve_tokens( $tokens );
 		$fonts = self::fonts();
 		$css   = '';
 		foreach ( self::token_names() as $name ) {

@@ -115,6 +115,13 @@
   "band-height-ribbon": "140px",
   "band-height-ribbon-sm": "100px",
   "para-gap": "1em",
+  "submenu-bg": "card",
+  "submenu-border-color": "card",
+  "submenu-shadow": "card",
+  "submenu-radius": "card",
+  "submenu-border-width": "1px",
+  "submenu-weight": "card",
+  "submenu-pad-y": "8px",
   "image-filter": "saturate(0.9)",
   "image-tint": "rgba(154,74,50,0.1)"
  }

@@ -2383,10 +2383,10 @@
   margin: 0 !important;
   padding: 8px 14px !important;
   list-style: none;
-  background-color: var(--twd-site-color-surface) !important;
-  border: 1px solid var(--twd-site-color-border) !important;
-  border-radius: var(--twd-site-radius-card) !important;
-  box-shadow: var(--twd-site-shadow-card) !important;
+  background-color: var(--twd-site-submenu-bg) !important;
+  border: var(--twd-site-submenu-border-width) solid var(--twd-site-submenu-border-color) !important;
+  border-radius: var(--twd-site-submenu-radius) !important;
+  box-shadow: var(--twd-site-submenu-shadow) !important;
 }
 .twd-sk-page .twd-sk-header__item--parent.twd-sk-header__item--parent:hover > .twd-sk-header__sub.twd-sk-header__sub,
 .twd-sk-page .twd-sk-header__item--parent.twd-sk-header__item--parent:focus-within > .twd-sk-header__sub.twd-sk-header__sub {
@@ -2394,7 +2394,8 @@
 }
 .twd-sk-page .twd-sk-header__sublink.twd-sk-header__sublink {
   display: block;
-  padding: 8px 0 !important;
+  padding: var(--twd-site-submenu-pad-y) 0 !important;
+  font-weight: var(--twd-site-submenu-weight) !important;
 }
 .twd-sk-page .twd-sk-header__cta.twd-sk-header__cta {
   white-space: nowrap;
@@ -2517,7 +2518,7 @@
 .twd-sk-page .twd-sk-header--wordmark.twd-sk-header--wordmark .twd-sk-header__sublink.twd-sk-header__sublink {
   font-family: var(--twd-site-menu-font) !important;
   font-size: var(--twd-site-menu-size) !important;
-  font-weight: var(--twd-site-menu-weight) !important;
+  font-weight: var(--twd-site-submenu-weight) !important;
   letter-spacing: var(--twd-site-menu-spacing) !important;
   text-transform: var(--twd-site-menu-transform) !important;
 }
