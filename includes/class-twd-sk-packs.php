@@ -154,6 +154,8 @@ class TWD_SK_Packs {
 			'color-modal-overlay',
 			// 0.15.0: the tint of the frame behind words over a picture (about 30 percent dark).
 			'color-frame',
+			// 0.19.1: three colours of the site's own, for the site stylesheet (typed colours are not allowed there). Unused unless a site sets and uses them.
+			'color-extra-1', 'color-extra-2', 'color-extra-3',
 			// 0.15.0: the header sub-menu's panel and border (the word card means: the same as a card, or for the weight the same as the menu).
 			'submenu-bg', 'submenu-border-color',
 		) as $name ) {
@@ -255,6 +257,9 @@ class TWD_SK_Packs {
 			'image-filter'                  => 'none',
 			'image-tint'                    => 'transparent',
 			'color-frame'                   => 'rgba(0,0,0,0.3)',
+			'color-extra-1'                 => '#6B6B6B',
+			'color-extra-2'                 => '#6B6B6B',
+			'color-extra-3'                 => '#6B6B6B',
 			'frame-padding'                 => '24px',
 			'frame-padding-sm'              => '10px',
 			'frame-padding-lg'              => '40px',

@@ -5,6 +5,14 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
+## 5 Nov 2026: TEST BUILD 0.19.1-test1, three extra colours; Graham's eleven points on the pilot staging site (NOT released)
+
+- **Plugin:** three site colours `color-extra-1` to `-3` (every pack, default grey, Site tab Style list "Extra colour N (for your own sections)"). The site stylesheet refuses typed colours, so a client's own palette (Four Lanes amber and terracotta, WhatsApp green) had no way in; these are usable as `var(--twd-site-color-extra-N)` and used by nothing else. `tests/test-extra-colours.php`; the dead-token test skips them; suite 1160 passed on an LF copy. Installed by hand on the pilot staging site (address checked, snapshots "before Graham eleven points" and "...apply").
+- **Pilot site content (on staging only):** extra colours set to #B77F1F, #B2542C, #25D366; site stylesheet v34 (lane 2 and 3 colours, one green button rule for every Get in touch, white WhatsApp box with green outline and symbol via `> span:first-child`, a normal-case label class, the clinics grid); Home label as a `c-dg-eyebrow-nc` paragraph (kit eyebrows are capitals-only); ADHD main heading; Work with me clinics side by side with four photos (media 83 to 86, resized to 1600 wide); header button to `/contact/#c-contact-form`; Home and About search descriptions exactly as written. Looked at in the browser at desktop and phone width. Email (item 9) deliberately left; Privacy Policy (item 10) needs Graham's answers (28 TO CONFIRM notes).
+- Fresh export `graham-site-export-after-eleven-points.zip` and `WHAT-CHANGED-for-Graham-5-Nov.md` are in the notes folder.
+- **Release later:** 0.19.1 would carry the extra colours (needs the owner's yes).
+- **Found:** the Four Lanes colours and WhatsApp green could not be done with the site stylesheet before this; the header button is global, so "jump to the form on that page" is done by pointing it at the form's anchor for every page.
+
 ## 5 Nov 2026: RELEASE 0.19.0, add paragraph below, duplicate text and block, AI wording (pushed to main at the owner's yes; built from test builds 1 to 3, see below)
 
 - **Why:** the Visual editor could change what was there but never add anything inside a section (Enter is blocked, only Add section added anything), and the AI planner did not treat a new paragraph as an edit.

@@ -31,6 +31,10 @@ class TWD_SK_Site {
 			array( 'colours', 'color-accent', 'Accent', 'color' ),
 			array( 'colours', 'color-eyebrow', 'Small labels', 'color' ),
 			array( 'colours', 'color-accent-text', 'Link and accent text', 'color' ),
+			// 0.19.1: colours of the site's own, used by name in the site stylesheet (typed colours are not allowed there).
+			array( 'colours', 'color-extra-1', 'Extra colour 1 (for your own sections)', 'color' ),
+			array( 'colours', 'color-extra-2', 'Extra colour 2 (for your own sections)', 'color' ),
+			array( 'colours', 'color-extra-3', 'Extra colour 3 (for your own sections)', 'color' ),
 			array( 'fonts', 'font-heading', 'Heading font', 'font' ),
 			array( 'fonts', 'font-body', 'Body font', 'font' ),
 			array( 'shape', 'radius-btn', 'Button corners', 'radius' ),

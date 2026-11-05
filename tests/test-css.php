@@ -230,6 +230,9 @@ twd_sk_test( 'css: every --twd-site-* variable the stylesheet uses is a real tok
 twd_sk_test( 'css: every token in the schema is actually used by the stylesheet (no dead tokens)', function () {
 	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
 	foreach ( TWD_SK_Packs::token_names() as $name ) {
+		if ( 0 === strpos( $name, 'color-extra-' ) ) {
+			continue; // 0.19.1: the site's own colours, used by name in the site stylesheet, never by the kit.
+		}
 		twd_sk_has( 'var(--twd-site-' . $name . ')', $raw, 'used: ' . $name );
 	}
 } );
