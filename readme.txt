@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.18.4
+Stable tag: 0.19.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.19.0 =
+* The Visual editor can now add text inside a section. Add paragraph below puts a new paragraph (or list entry) under the words you are in, in the same style, as a placeholder to write over. Duplicate text copies the words you are in, and Duplicate block copies the small block round them (a card, a step, or a column of paragraphs), never the whole section. Each is saved as its own version, so Undo works. The AI is told that adding a paragraph, entry, card, step or question inside a section is an edit of that section.
 
 = 0.18.4 =
 * Export for an AI can now keep your notes on the site. Tick Keep these notes on the site and they come back in the notes box, and go into every export, until you press Clear the saved notes. Only administrators can see or change them. The command line export uses the kept notes when no notes file is given. Nothing else changes.

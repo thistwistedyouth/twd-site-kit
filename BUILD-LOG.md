@@ -5,7 +5,7 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
-## 5 Nov 2026: TEST BUILD 0.19.0-test1, add a paragraph, duplicate an item, AI wording (NOT released)
+## 5 Nov 2026: RELEASE 0.19.0, add paragraph below, duplicate text and block, AI wording (pushed to main at the owner's yes; built from test builds 1 to 3, see below)
 
 - **Why:** the Visual editor could change what was there but never add anything inside a section (Enter is blocked, only Add section added anything), and the AI planner did not treat a new paragraph as an edit.
 - **Add paragraph below** (a button in the Your Edits "This text" row, classic bar too): `TWD_SK_Inline::add_text()` puts a new `p` (or `li` after a list entry) straight after the piece clicked, with its neighbour's classes (never the quote line, note box or text styles; a heading borrows the paragraph beside it), holding `[PLACEHOLDER: new paragraph]` (or `new item`) so the publish check holds a page back until it is written. Inside a custom section it carries the neighbour's `data-twd-edit` label (or `paragraph`), or it could not be written in place; if the new piece would not be numbered the call refuses.
