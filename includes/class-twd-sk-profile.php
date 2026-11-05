@@ -19,7 +19,7 @@ class TWD_SK_Profile {
 	const OPTION = 'twd_sk_profile';
 
 	const MAX_MENU     = 8;
-	const MAX_CHILDREN = 6;
+	const MAX_CHILDREN = 10;
 	const MAX_LEGAL    = 6;
 	const MAX_REG      = 4;
 	const MAX_SAMEAS   = 4;

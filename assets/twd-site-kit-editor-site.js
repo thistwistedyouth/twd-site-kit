@@ -885,7 +885,7 @@
 			field('Address lines', pui.address, W('address_help', 'Up to three lines. Leave empty for an online practice.')),
 			footerTextField(),
 			field(W('registration_label', 'Registration lines'), pui.registration, W('registration_help', 'Only exactly what the therapist has supplied. One line each, up to four.')),
-			field('Menu', pui.menu, 'One link per line: Label | /link. A line starting with a dash is a sub-menu link under the line above. Up to 8 menu items.'),
+			field('Menu', pui.menu, 'One link per line: Label | /link. A line starting with a dash is a sub-menu link under the line above. Up to 8 menu items, and up to 10 sub-menu links under each.'),
 			field('Legal links', pui.legal, 'One per line: Label | /link. Shown in the footer.'),
 			field('Professional profile links', pui.sameAs, 'Full https addresses, one per line, up to four. Optional.'),
 			el('div', { className: 'twd-sk-ed__actions' }, [pui.saveBtn, pui.reloadBtn]),

@@ -96,11 +96,13 @@ twd_sk_test( 'profile security: menu, button and legal links accept only safe ad
 	}
 } );
 
-twd_sk_test( 'profile: size limits (8 menu items, 6 sub links, 6 legal, 4 registration, 3 address, 4 profile links)', function () {
+twd_sk_test( 'profile: size limits (8 menu items, 10 sub links, 6 legal, 4 registration, 3 address, 4 profile links)', function () {
 	$item = array( 'label' => 'x', 'url' => '/x' );
 	twd_sk_true( ! is_wp_error( TWD_SK_Profile::save( array( 'menu' => array_fill( 0, 8, $item ) ) ) ) );
 	twd_sk_is_error( 'twd_sk_bad_profile', TWD_SK_Profile::save( array( 'menu' => array_fill( 0, 9, $item ) ) ) );
-	twd_sk_is_error( 'twd_sk_bad_profile', TWD_SK_Profile::save( array( 'menu' => array( array( 'label' => 'x', 'url' => '/x', 'children' => array_fill( 0, 7, $item ) ) ) ) ) );
+	twd_sk_is_error( 'twd_sk_bad_profile', TWD_SK_Profile::save( array( 'menu' => array( array( 'label' => 'x', 'url' => '/x', 'children' => array_fill( 0, 11, $item ) ) ) ) ) );
+	twd_sk_true( ! is_wp_error( TWD_SK_Profile::save( array( 'menu' => array( array( 'label' => 'x', 'url' => '/x', 'children' => array_fill( 0, 10, $item ) ) ) ) ) ), 'ten sub-menu links fit' );
+	twd_sk_eq( 10, count( TWD_SK_Profile::get()['menu'][0]['children'] ), 'and all ten are kept on the way out' );
 	twd_sk_is_error( 'twd_sk_bad_profile', TWD_SK_Profile::save( array( 'legal' => array_fill( 0, 7, $item ) ) ) );
 	twd_sk_is_error( 'twd_sk_bad_profile', TWD_SK_Profile::save( array( 'registration' => array_fill( 0, 5, 'x' ) ) ) );
 	twd_sk_is_error( 'twd_sk_bad_profile', TWD_SK_Profile::save( array( 'address' => array_fill( 0, 4, 'x' ) ) ) );
