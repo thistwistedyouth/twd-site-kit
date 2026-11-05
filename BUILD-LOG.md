@@ -1,4 +1,10 @@
-## 5 Nov 2026: social buttons (branch `claude/social-buttons-release-419574`, on top of `claude/menu-footer-embed-c670a5`; test build 0.15.0-test73-social on the pilot staging site; NOT released)
+## 5 Nov 2026: RELEASE 0.16.0 (pushed to main at the owner's yes)
+
+- Version 0.16.0 in the three places. Standing site stylesheet budget cut to 40,000 built bytes, warning from 32,000 (the staging build used 48,000 and 40,000); the editor's upload-size fallback follows.
+- Built on an LF copy on the 20i server (no zip tool and CRLF on the Windows checkout). The full suite there: all pass. Sites are offered the update in Plugins; update ONE site first. Test script, rollback path and what to look at: `RELEASE-PLAN-0.16.0-and-test-script.md` in the notes folder.
+- Rollback: the previous version's zip, safe mode, or a higher version carrying the older code (0.16.1).
+
+## 5 Nov 2026: social buttons (the social buttons branch, on top of `claude/menu-footer-embed-c670a5`; test build 0.15.0-test73-social on the pilot staging site; NOT released)
 
 - A social button is an ordinary kit button link with a network class: `twd-sk-social` plus `twd-sk-social--whatsapp|facebook|instagram|youtube` (shared classes), and `twd-sk-social--icon` for an icon-only button. The page stores only the link and its words.
 - `TWD_SK_Social` (`includes/class-twd-sk-social.php`, checks nobody, writes nothing): `decorate()` runs in `TWD_SK_Page::render_html()` (display only, never stored, nothing in safe mode) and puts a fixed built-in svg icon (`currentColor`, so contrast is the button's own) in front of the words and wraps the words in `span.twd-sk-social__label`. The icons are strings in the class: never from page HTML, an upload or an address. The sanitiser is untouched (a test pastes an svg and sees it stripped).

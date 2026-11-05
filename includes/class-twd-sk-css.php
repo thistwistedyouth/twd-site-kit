@@ -34,8 +34,8 @@ class TWD_SK_Css {
 	const OPTION_VERSIONS = 'twd_sk_site_css_versions';
 	const KEEP            = 20;
 	const MAX_SOURCE      = 60000; // bytes of source a check will read.
-	const BUDGET          = 48000; // built bytes: refused above this.
-	const WARN            = 40000; // built bytes: a warning from here.
+	const BUDGET          = 40000; // built bytes: refused above this.
+	const WARN            = 32000; // built bytes: a warning from here.
 	const CLASS_PREFIX    = 'c-';
 	const CUSTOM_CLASS    = 'twd-sk-custom';
 	const FILTER_BUILT    = 'twd_sk_site_css_built';

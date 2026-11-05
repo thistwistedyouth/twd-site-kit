@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.14.1
+Stable tag: 0.16.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,15 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.16.0 =
+* A large update. Nothing here changes how a site looks until a setting is chosen: a site that updates and changes nothing looks as before. Update one site first and look at it.
+* New: social buttons. WhatsApp, Facebook, Instagram and YouTube buttons with their icons, drawn by the plugin when the page is shown, and a Social links section (a normal row or round icon-only buttons). Links must be https and on the network's own address, and the sample links must be replaced before a page can be published.
+* New: one Your Edits window for editing on the page (compact and grouped, it follows what you click), a simpler editor for clients, a Look panel for each section, shared text styles, Add, Move and Delete a section, Undo and Redo with a history of site changes, Page details and Footer words for clients.
+* New: the Embed section, Replace this section with custom HTML and CSS, Describe a change with the AI, Import a page, Export a page, and the site's own stylesheet with a panel in the Site tab (budget 40 KB, warning from 32 KB).
+* New: the Snag button, an administrator's own list of faults and wants.
+* New: a two-row text header, a second line in the smaller header, up to 10 links in a sub-menu with its own dropdown look settings, a footer taken from a saved HTML embed, and pictures that load at the right size for the screen.
+* Safe mode and Undo are unchanged. To go back: put the previous version of the plugin back, or turn on safe mode with `wp twd-sk safe-mode on`.
 
 = 0.14.1 =
 * A larger update. Nothing here is on by default: a site that updates and changes nothing looks exactly as before. Update one site first and look at it.
