@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.16.1
+Stable tag: 0.17.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,12 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.17.0 =
+* New: Export for an AI. In the Site tab, download the whole site, one page, or the header and footer as one zip an AI can read, with your own notes and a README that tells the AI how to reply. Useful when an AI cannot reach the site itself.
+* New: Changes from an AI. Paste the AI's reply, see each change with its before and after words, untick any you do not want, then apply. Each page becomes one new version, so Undo works page by page. A reply that does not follow the format is refused with a reason.
+* New: Footer HTML. When the footer is a saved HTML embed, edit it in the Site tab (or from the Edit footer button over it), save it, and copy a prompt with the code to remix it with an AI.
+* Nothing changes how a site looks until these are used. Update one site first.
 
 = 0.16.1 =
 * Fix: in the Visual editor, setting a new address on a link that is not a Site Kit button (for example a button in a custom section) now saves. Before, Set the link looked done but the old address stayed. Nothing else changes.

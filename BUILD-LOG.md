@@ -1,3 +1,5 @@
+## 5 Nov 2026: RELEASE 0.17.0 (the three pieces below, pushed to main at the owner's yes)
+
 ## 5 Nov 2026: export for an AI, changes from an AI, the Footer HTML window (test build 0.17.0-test1 on the pilot staging site; NOT released, would be 0.17.0)
 
 Asked for by the owner: a collaborator's AI cannot reach the staging subdomain, so the site has to go to it as files, and its answer has to come back as changes that can be applied without much back and forth.
