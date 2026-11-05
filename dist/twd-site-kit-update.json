@@ -1,7 +1,7 @@
 {
     "version": "0.18.2",
     "download_url": "https://raw.githubusercontent.com/thistwistedyouth/twd-site-kit/main/dist/twd-site-kit-latest.zip",
-    "sha256": "d6f718b8292448eb0935fb08298238e0f23f641f585af9f6f7648dc2b6e9d955",
+    "sha256": "20d4ffd0592a200969be69a4bbc3515ba174f222b9e1fc4e330a0849f0c661f4",
     "homepage": "https://therapywebdesigns.co.uk/",
     "requires": "6.0",
     "tested": "6.6",
