@@ -34,6 +34,8 @@ class TWD_SK_REST {
 			'build'   => array( 60, 600 ),
 			// The one-box planner's changes: one request per change, each may spend the key once.
 			'plan'    => array( 40, 600 ),
+			// Search wording written by the AI, one page per request (0.18.0).
+			'seo'     => array( 40, 600 ),
 		);
 	}
 
@@ -83,6 +85,12 @@ class TWD_SK_REST {
 			'permission_callback' => array( __CLASS__, 'can_read_page' ),
 		) );
 		if ( ! TWD_SK_Safe::on() ) {
+			// Search wording drafted by the AI for one page (0.18.0): suggests, never saves. Administrators only.
+			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/seo/generate', array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_seo_generate' ),
+				'permission_callback' => array( __CLASS__, 'can_generate_seo' ),
+			) );
 			register_rest_route( self::ROUTE_NS, '/pages/' . $id . '/seo', array(
 				array(
 					'methods'             => 'GET',
@@ -355,6 +363,12 @@ class TWD_SK_REST {
 			'callback'            => array( __CLASS__, 'post_site_changes_apply' ),
 			'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 		) );
+		// The pages with no search title or description, for writing them with the AI (0.18.0). Administrators only.
+		register_rest_route( self::ROUTE_NS, '/site/seo-missing', array(
+			'methods'             => 'GET',
+			'callback'            => array( __CLASS__, 'get_site_seo_missing' ),
+			'permission_callback' => array( __CLASS__, 'can_read_site' ),
+		) );
 		// Bring pages built earlier up to date (0.15.0). Administrators only.
 		register_rest_route( self::ROUTE_NS, '/site/upgrades', array(
 			'methods'             => 'GET',
@@ -607,6 +621,18 @@ class TWD_SK_REST {
 
 	public static function can_read_site( $request ) {
 		return self::guard( $request, 'read', false, 'manage_options' );
+	}
+
+	/** Search wording by the AI for one page: an administrator who can edit the page, with the seo limit. */
+	public static function can_generate_seo( $request ) {
+		$ok = self::guard( $request, 'seo' );
+		if ( true !== $ok ) {
+			return $ok;
+		}
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return self::error( 'twd_sk_forbidden', 'Only administrators can ask the AI to write the search wording.', 403 );
+		}
+		return true;
 	}
 
 	/** A POST that only reads (an export, a plan): administrators, with the preview limit. */
@@ -1796,6 +1822,21 @@ class TWD_SK_REST {
 		}
 		if ( is_wp_error( $out ) ) {
 			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_not_a_page' === $out->get_error_code() ? 404 : 400 );
+		}
+		return $out;
+	}
+
+	/** The pages with no search title or no search description. */
+	public static function get_site_seo_missing( $request ) {
+		return array( 'pages' => TWD_SK_SeoWriter::missing(), 'ai' => TWD_SK_AI::available() );
+	}
+
+	/** A search title and description drafted by the AI for one page. Nothing is saved. */
+	public static function post_seo_generate( $request ) {
+		$out = TWD_SK_SeoWriter::generate( (int) $request->get_param( 'id' ), $request->get_param( 'keywords' ) );
+		if ( is_wp_error( $out ) ) {
+			$code = $out->get_error_code();
+			return self::error( $code, $out->get_error_message(), 'twd_sk_not_a_page' === $code ? 404 : 400 );
 		}
 		return $out;
 	}

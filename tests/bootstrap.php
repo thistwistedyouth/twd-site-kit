@@ -672,6 +672,7 @@ require_once ABSPATH . 'includes/class-twd-sk-embed.php';
 require_once ABSPATH . 'includes/class-twd-sk-social.php';
 require_once ABSPATH . 'includes/class-twd-sk-siteexport.php';
 require_once ABSPATH . 'includes/class-twd-sk-siteimport.php';
+require_once ABSPATH . 'includes/class-twd-sk-seowriter.php';
 require_once ABSPATH . 'includes/class-twd-sk-brand.php';
 require_once ABSPATH . 'includes/class-twd-sk-sets.php';
 require_once ABSPATH . 'includes/class-twd-sk-launch.php';

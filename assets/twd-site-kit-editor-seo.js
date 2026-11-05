@@ -74,6 +74,20 @@
 			ui.imgId.value = '';
 			ui.imgPreview.setAttribute('hidden', '');
 		});
+		ui.featPreview = el('img', { className: 'twd-sk-ed__thumb', alt: '', hidden: '' });
+		ui.featId = el('input', { id: 'twd-sk-seo-featured', type: 'text', className: 'twd-sk-ed__input', inputmode: 'numeric', autocomplete: 'off' });
+		ui.featPick = button('Choose from the media library', 'secondary', function () {
+			pickInto(ui.featId, ui.featPreview, 'Choose the featured picture');
+		});
+		ui.featClear = button('Remove picture', 'secondary', function () {
+			ui.featId.value = '';
+			ui.featPreview.setAttribute('hidden', '');
+		});
+		// Write the title and description with the AI (administrators, when the site has an AI): suggests, never saves.
+		if (ED.cfg.canManage && ED.cfg.aiAvailable) {
+			ui.aiKeys = el('input', { id: 'twd-sk-seo-keys', type: 'text', className: 'twd-sk-ed__input', maxlength: '300', autocomplete: 'off' });
+			ui.aiBtn = button('Write the title and description with AI', 'secondary', writeWithAi);
+		}
 		ui.noindex = el('input', { id: 'twd-sk-seo-noindex', type: 'checkbox' });
 		ui.slug = el('input', { id: 'twd-sk-seo-slug', type: 'text', className: 'twd-sk-ed__input', autocomplete: 'off', spellcheck: 'false' });
 		ui.slugHelp = el('p', { className: 'twd-sk-ed__help' });
@@ -85,6 +99,10 @@
 
 		panel.appendChild(ui.note);
 		panel.appendChild(ui.leftovers);
+		if (ui.aiBtn) {
+			panel.appendChild(field('Keywords for the AI (optional)', ui.aiKeys, 'Words people might search for, separated by commas. The AI uses them only where they fit the page, and never invents facts.'));
+			panel.appendChild(el('div', { className: 'twd-sk-ed__actions' }, [ui.aiBtn]));
+		}
 		panel.appendChild(field('Search title', ui.title, 'The blue link in search results.'));
 		panel.appendChild(ui.titleCount);
 		panel.appendChild(field('Search description', ui.desc, 'The grey text under it.'));
@@ -92,6 +110,9 @@
 		panel.appendChild(field('Picture for sharing', ui.imgId, 'The picture shown when the page is shared. It must be in the media library; type its number or choose it.'));
 		panel.appendChild(ui.imgPreview);
 		panel.appendChild(el('div', { className: 'twd-sk-ed__actions' }, [ui.imgPick, ui.imgClear]));
+		panel.appendChild(field('Featured picture', ui.featId, 'WordPress\'s own featured picture for this page. It is shared when the page has no picture for sharing above. It must be in the media library; type its number or choose it.'));
+		panel.appendChild(ui.featPreview);
+		panel.appendChild(el('div', { className: 'twd-sk-ed__actions' }, [ui.featPick, ui.featClear]));
 		panel.appendChild(el('div', { className: 'twd-sk-ed__field' }, [
 			ui.noindex,
 			el('label', { className: 'twd-sk-ed__label', 'for': 'twd-sk-seo-noindex', text: ' Keep this page out of search results' })
@@ -111,20 +132,41 @@
 		ED.tabHooks.seo = load;
 	}
 
-	function pick() {
+	function pickInto(idBox, preview, title) {
 		if (!(window.wp && window.wp.media)) {
 			message(ui.msg, 'The media library is not available here. Type the picture number instead.', false);
 			return;
 		}
-		var frame = window.wp.media({ title: 'Choose a sharing picture', button: { text: 'Use this picture' }, multiple: false, library: { type: 'image' } });
+		var frame = window.wp.media({ title: title, button: { text: 'Use this picture' }, multiple: false, library: { type: 'image' } });
 		frame.on('select', function () {
 			var a = frame.state().get('selection').first().toJSON();
-			ui.imgId.value = String(a.id);
+			idBox.value = String(a.id);
 			var url = a.sizes && a.sizes.medium ? a.sizes.medium.url : a.url;
-			ui.imgPreview.setAttribute('src', url);
-			show(ui.imgPreview, true);
+			preview.setAttribute('src', url);
+			show(preview, true);
 		});
 		frame.open();
+	}
+
+	function pick() {
+		pickInto(ui.imgId, ui.imgPreview, 'Choose a sharing picture');
+	}
+
+	// The AI drafts the title and description from the page's words and the saved facts. Nothing is saved here.
+	function writeWithAi() {
+		ui.aiBtn.disabled = true;
+		message(ui.msg, 'Writing...', true);
+		api('POST', path + '/generate', { keywords: ui.aiKeys.value }).then(function (d) {
+			ui.aiBtn.disabled = false;
+			ui.title.value = d.title;
+			ui.desc.value = d.description;
+			ui.updTitle();
+			ui.updDesc();
+			message(ui.msg, 'Written by the AI. Read it, change anything you like, then press Save search details. Nothing is saved yet.' + (d.warnings && d.warnings.length ? ' ' + d.warnings.join(' ') : ''), true);
+		}, function (e) {
+			ui.aiBtn.disabled = false;
+			message(ui.msg, e.message, false);
+		});
 	}
 
 	function fill(d) {
@@ -138,6 +180,13 @@
 		} else {
 			show(ui.imgPreview, false);
 		}
+		ui.featId.value = d.featured_id ? String(d.featured_id) : '';
+		if (d.featured_url) {
+			ui.featPreview.setAttribute('src', d.featured_url);
+			show(ui.featPreview, true);
+		} else {
+			show(ui.featPreview, false);
+		}
 		ui.noindex.checked = !!d.noindex;
 		ui.slug.value = d.slug || '';
 		ui.updTitle();
@@ -149,6 +198,9 @@
 		});
 		ui.imgPick.disabled = other;
 		ui.imgClear.disabled = other;
+		if (ui.aiBtn) {
+			ui.aiBtn.disabled = other;
+		}
 		var notes = {
 			yoast: 'Saved in Yoast SEO, which prints the tags.',
 			other: d.plugin + ' looks after the title, description, picture and keep-out setting on this site. Change them there. The address below can still be changed here.',
@@ -195,7 +247,7 @@
 	}
 
 	function collect(confirm) {
-		var f = {};
+		var f = { featured_id: ui.featId.value.replace(/\s+/g, '') };
 		if (!ui.title.disabled) {
 			f.title = ui.title.value;
 			f.description = ui.desc.value;

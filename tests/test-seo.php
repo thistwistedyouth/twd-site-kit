@@ -144,8 +144,8 @@ twd_sk_test( 'quality: reports missing alt, skipped headings, vague and empty li
 
 twd_sk_test( 'seo: routes are guarded and the SEO endpoints are missing in safe mode', function () {
 	twd_sk_seo_page();
-	$seo = array_values( array_filter( twd_sk_rest_routes(), function ( $r ) { return false !== strpos( $r['route'], '/seo' ); } ) );
-	twd_sk_eq( 2, count( $seo ) );
+	$seo = array_values( array_filter( twd_sk_rest_routes(), function ( $r ) { return false !== strpos( $r['route'], '/seo' ) && false === strpos( $r['route'], 'seo-missing' ); } ) );
+	twd_sk_eq( 3, count( $seo ), 'the page search details (GET and POST) and the AI draft' );
 	$post = twd_sk_rest_req( array( 'id' => 30, 'fields' => array( 'title' => 'Hello' ) ) );
 	$r = TWD_SK_REST::post_seo( $post );
 	twd_sk_eq( 'Hello', $r['title'] );
@@ -153,7 +153,7 @@ twd_sk_test( 'seo: routes are guarded and the SEO endpoints are missing in safe 
 	twd_sk_eq( 400, twd_sk_status( TWD_SK_REST::post_seo( twd_sk_rest_req( array( 'id' => 30, 'fields' => array( 'bogus' => 1 ) ) ) ) ) );
 	twd_sk_eq( 409, twd_sk_status( TWD_SK_REST::post_seo( twd_sk_rest_req( array( 'id' => 30, 'fields' => array( 'slug' => 'new-one' ) ) ) ) ) );
 	TWD_SK_Safe::set( true );
-	$left = array_filter( twd_sk_rest_routes(), function ( $r ) { return false !== strpos( $r['route'], '/seo' ); } );
+	$left = array_filter( twd_sk_rest_routes(), function ( $r ) { return false !== strpos( $r['route'], '/seo' ) && false === strpos( $r['route'], 'seo-missing' ); } );
 	twd_sk_eq( 0, count( $left ) );
 	TWD_SK_Safe::set( false );
 } );

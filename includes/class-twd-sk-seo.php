@@ -95,6 +95,11 @@ class TWD_SK_Seo {
 		);
 	}
 
+	/** The page's featured picture (WordPress's own), or 0. */
+	public static function featured_id( $id ) {
+		return function_exists( 'get_post_thumbnail_id' ) ? (int) get_post_thumbnail_id( (int) $id ) : 0;
+	}
+
 	/** The page title and description only (session 7): what a page version records and what the Simple editor changes. */
 	public static function details( $id ) {
 		$v = self::values( (int) $id );
@@ -111,7 +116,10 @@ class TWD_SK_Seo {
 			$image = (string) wp_get_attachment_image_url( $vals['image_id'], 'medium' );
 		}
 		$levels = TWD_SK_Sanitizer::find_leftovers_by_level( $vals['title'] . "\n" . $vals['description'] );
+		$featured = self::featured_id( $id );
 		return array(
+			'featured_id'  => $featured,
+			'featured_url' => ( $featured && function_exists( 'wp_get_attachment_image_url' ) ) ? (string) wp_get_attachment_image_url( $featured, 'medium' ) : '',
 			'mode'        => $det['mode'],
 			'plugin'      => $det['name'],
 			'title'       => $vals['title'],
@@ -165,6 +173,15 @@ class TWD_SK_Seo {
 						$out['valid']['image_id'] = (int) $value;
 					} else {
 						$out['errors'][] = 'The social picture must be the number of a picture in the media library.';
+					}
+					break;
+				case 'featured_id':
+					if ( '' === $value || null === $value || 0 === $value || '0' === $value ) {
+						$out['valid']['featured_id'] = 0;
+					} elseif ( ( is_int( $value ) || ( is_string( $value ) && ctype_digit( $value ) ) ) && (int) $value > 0 && function_exists( 'wp_attachment_is_image' ) && wp_attachment_is_image( (int) $value ) ) {
+						$out['valid']['featured_id'] = (int) $value;
+					} else {
+						$out['errors'][] = 'The featured picture must be the number of a picture in the media library.';
 					}
 					break;
 				case 'noindex':
@@ -231,6 +248,14 @@ class TWD_SK_Seo {
 			$touched = true;
 		}
 
+		// The featured picture is WordPress's own, so it is kept in every mode (another SEO plugin included).
+		if ( isset( $v['featured_id'] ) ) {
+			if ( $v['featured_id'] > 0 && function_exists( 'set_post_thumbnail' ) ) {
+				set_post_thumbnail( $id, (int) $v['featured_id'] );
+			} elseif ( 0 === $v['featured_id'] && function_exists( 'delete_post_thumbnail' ) ) {
+				delete_post_thumbnail( $id );
+			}
+		}
 		if ( $fields ) {
 			if ( 'yoast' === $det['mode'] ) {
 				self::write_yoast( $id, $fields );
@@ -329,6 +354,9 @@ class TWD_SK_Seo {
 			return;
 		}
 		$own = self::own( $id );
+		if ( ! $own['image_id'] ) {
+			$own['image_id'] = self::featured_id( $id );
+		}
 		if ( ! $own['image_id'] ) {
 			$own['image_id'] = self::default_image_id();
 		}

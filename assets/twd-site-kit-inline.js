@@ -2927,7 +2927,7 @@
 	   One small box: the title as it shows on Google, the description with a live preview and a character count
 	   (guidance, never a block), and where picture descriptions are changed. Saved with the page through the same
 	   route, as one version, so Undo takes the details back with the words. */
-	var D = { saved: null, snap: null, url: '', page: '', busy: false };
+	var D = { saved: null, snap: null, url: '', page: '', busy: false, rows: {} };
 
 	function detailsNow() {
 		return { title: ui.detTitle.value, description: ui.detDesc.value };
@@ -2987,7 +2987,65 @@
 		}
 	}
 
+	// The two pictures of a page: the one shown when it is shared, and its featured picture. Each is saved straight
+	// away through the search route (they are not part of Undo: choose another, or Remove, to change one back).
+	function picRow(key, label, help) {
+		var row = { key: key };
+		row.img = el('img', { className: 'twd-sk-ed__thumb', alt: '', hidden: '' });
+		row.choose = ED.button('Choose a picture', 'secondary', function () {
+			choosePagePicture(row);
+		});
+		row.remove = ED.button('Remove', 'secondary', function () {
+			savePagePicture(row, 0);
+		});
+		row.remove.hidden = true;
+		row.node = el('div', { className: 'twd-sk-ed__field' }, [
+			el('p', { className: 'twd-sk-ed__inlinehead', text: label }),
+			el('p', { className: 'twd-sk-ed__count', text: help }),
+			row.img,
+			el('div', { className: 'twd-sk-ed__inlinetools' }, [row.choose, row.remove])
+		]);
+		return row;
+	}
+
+	function setPagePicture(row, url) {
+		if (url) {
+			row.img.setAttribute('src', url);
+		}
+		show(row.img, !!url);
+		row.remove.hidden = !url;
+	}
+
+	function choosePagePicture(row) {
+		if (!(window.wp && window.wp.media)) {
+			ui.detMsg.textContent = 'The media library is not available here.';
+			return;
+		}
+		var frame = window.wp.media({ title: 'Choose a picture', library: { type: 'image' }, multiple: false, button: { text: 'Use this picture' } });
+		frame.on('select', function () {
+			var a = frame.state().get('selection').first().toJSON();
+			savePagePicture(row, a.id);
+		});
+		frame.open();
+	}
+
+	function savePagePicture(row, id) {
+		var fields = {};
+		fields[row.key] = id;
+		ui.detMsg.textContent = 'Saving the picture...';
+		ED.api('POST', '/pages/' + cfg.pageId + '/seo', { fields: fields }).then(function (data) {
+			setPagePicture(D.rows.social, data.image_url);
+			setPagePicture(D.rows.featured, data.featured_url);
+			ui.detMsg.textContent = 'Picture saved straight away. It is not part of Undo: choose another, or Remove, to change it back.';
+		}, function (err) {
+			ui.detMsg.textContent = err.message;
+		});
+	}
+
 	function fillDetails(data) {
+		setPagePicture(D.rows.social, data.image_url);
+		setPagePicture(D.rows.featured, data.featured_url);
+		D.rows.social.choose.disabled = data.mode === 'other';
 		D.saved = { title: data.title || '', description: data.description || '' };
 		D.url = data.permalink || '';
 		D.page = document.title || '';
@@ -3039,6 +3097,8 @@
 	}
 
 	function buildDetails() {
+		D.rows.social = picRow('image_id', 'Picture shown when this page is shared', 'The picture that appears with the link when someone shares this page on social media or in a message.');
+		D.rows.featured = picRow('featured_id', 'Featured picture', 'The main picture for this page. It is shared when the page has no picture for sharing above.');
 		ui.details = toolButton('Page details', 'The page title and description that search engines show', openDetails);
 		ui.detTitle = el('input', { type: 'text', id: 'twd-sk-det-title', className: 'twd-sk-ed__input', maxlength: '120', autocomplete: 'off' });
 		ui.detDesc = el('textarea', { id: 'twd-sk-det-desc', className: 'twd-sk-ed__textarea twd-sk-ed__textarea--css', maxlength: '300', rows: '3' });
@@ -3064,6 +3124,8 @@
 			ui.detDesc,
 			ui.detDescCount,
 			el('div', { className: 'twd-sk-ed__serp', role: 'img', 'aria-label': 'How it may look in a search result' }, [ui.serpTitle, ui.serpUrl, ui.serpDesc]),
+			D.rows.social.node,
+			D.rows.featured.node,
 			el('p', { className: 'twd-sk-ed__count', text: 'Picture descriptions: click any picture on the page, then Change the description. Press Save to keep the details with the page; Undo takes them back.' }),
 			ui.detMsg,
 			el('div', { className: 'twd-sk-ed__inlinetools' }, [ED.button('Close', 'secondary', closePanels)])

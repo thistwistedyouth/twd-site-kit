@@ -3204,6 +3204,195 @@
 		});
 	}
 
+	/* ---- search wording with the AI (0.18.0) ----
+	 * Finds the pages with no search title or description, drafts both for each ticked page one request at a time
+	 * (from the page's words, the saved facts and the keywords), shows them in boxes you can edit, and saves only
+	 * the ones you keep. A title or description a page already has is left alone unless you tick Replace. */
+	var sw = { rows: {}, ai: false };
+	var swui = {};
+
+	function swCount(n, lo, hi) {
+		if (!n) {
+			return 'Nothing yet.';
+		}
+		return n + ' characters' + (n > hi ? ', longer than ' + hi + ': may be cut short.' : (n < lo ? '. Aim for ' + lo + ' to ' + hi + '.' : '. Good length.'));
+	}
+
+	function swRow(p) {
+		var r = { p: p, made: false, saved: false };
+		r.tick = el('input', { type: 'checkbox', id: 'twd-sk-sw-' + p.id });
+		r.tick.checked = true;
+		r.title = el('input', { type: 'text', className: 'twd-sk-ed__input', maxlength: '120', autocomplete: 'off', 'aria-label': 'Search title for ' + p.title, hidden: '' });
+		r.desc = el('textarea', { className: 'twd-sk-ed__textarea', rows: '3', maxlength: '300', 'aria-label': 'Search description for ' + p.title, hidden: '' });
+		r.count = el('p', { className: 'twd-sk-ed__help', hidden: '' });
+		r.msg = el('p', { className: 'twd-sk-ed__help', role: 'status', 'aria-live': 'polite' });
+		r.keys = el('input', { type: 'text', className: 'twd-sk-ed__input', maxlength: '300', autocomplete: 'off', placeholder: 'Keywords for this page only (optional)', 'aria-label': 'Keywords for ' + p.title });
+		var update = function () {
+			r.count.textContent = 'Title: ' + swCount(r.title.value.length, 50, 60) + ' Description: ' + swCount(r.desc.value.length, 140, 160);
+		};
+		r.title.addEventListener('input', update);
+		r.desc.addEventListener('input', update);
+		r.update = update;
+		var state = (p.has_title ? '' : 'no title') + (!p.has_title && !p.has_description ? ' and ' : '') + (p.has_description ? '' : 'no description');
+		r.li = el('li', {}, [
+			el('label', { 'for': 'twd-sk-sw-' + p.id }, [r.tick, el('strong', { text: ' ' + p.title }), el('span', { className: 'twd-sk-ed__help', text: ' (' + state + (p.status && p.status !== 'publish' ? ', ' + p.status : '') + ')' })]),
+			r.keys, r.title, r.desc, r.count, r.msg
+		]);
+		return r;
+	}
+
+	function swFind() {
+		swui.find.disabled = true;
+		message(swui.msg, 'Looking...', true);
+		api('GET', '/site/seo-missing').then(function (d) {
+			swui.find.disabled = false;
+			sw.ai = !!d.ai;
+			sw.rows = {};
+			clear(swui.list);
+			(d.pages || []).forEach(function (p) {
+				var r = swRow(p);
+				sw.rows[p.id] = r;
+				swui.list.appendChild(r.li);
+			});
+			var n = (d.pages || []).length;
+			show(swui.work, n > 0);
+			swui.run.disabled = !sw.ai;
+			message(swui.msg, n === 0 ? 'Every page has a search title and description.' : n + ' page' + (n === 1 ? ' has' : 's have') + ' no search title or description.' + (sw.ai ? '' : ' The AI is not set up on this site, so write them by hand in each page\'s Search tab.'), n === 0 || sw.ai);
+		}, function (err) {
+			swui.find.disabled = false;
+			message(swui.msg, err.message, false);
+		});
+	}
+
+	function swTicked() {
+		var out = [];
+		Object.keys(sw.rows).forEach(function (id) {
+			if (sw.rows[id].tick.checked) {
+				out.push(sw.rows[id]);
+			}
+		});
+		return out;
+	}
+
+	function swRun() {
+		var rows = swTicked();
+		if (!rows.length) {
+			message(swui.msg, 'Tick at least one page.', false);
+			return;
+		}
+		swui.run.disabled = true;
+		var i = 0;
+		var next = function () {
+			if (i >= rows.length) {
+				swui.run.disabled = false;
+				message(swui.msg, 'Done. Read each one, change anything you like, untick any you do not want, then press Save the ticked pages. Nothing is saved yet.', true);
+				return;
+			}
+			var r = rows[i++];
+			r.msg.textContent = 'Writing...';
+			message(swui.msg, 'Writing ' + i + ' of ' + rows.length + '...', true);
+			api('POST', '/pages/' + r.p.id + '/seo/generate', { keywords: r.keys.value.trim() !== '' ? r.keys.value : swui.keys.value }).then(function (d) {
+				r.title.value = d.title;
+				r.desc.value = d.description;
+				show(r.title, true);
+				show(r.desc, true);
+				show(r.count, true);
+				r.made = true;
+				r.saved = false;
+				r.update();
+				r.msg.textContent = (d.warnings && d.warnings.length) ? d.warnings.join(' ') : 'Written. Not saved yet.';
+				next();
+			}, function (err) {
+				r.msg.textContent = err.message;
+				if (err.code === 'twd_sk_rate_limited') {
+					swui.run.disabled = false;
+					message(swui.msg, err.message, false);
+					return;
+				}
+				next();
+			});
+		};
+		next();
+	}
+
+	function swSave() {
+		var rows = swTicked().filter(function (r) {
+			return r.made && !r.saved;
+		});
+		if (!rows.length) {
+			message(swui.msg, 'Nothing to save yet: write some wording first, and tick the pages you want.', false);
+			return;
+		}
+		swui.save.disabled = true;
+		var replace = swui.replace.checked;
+		var done = 0;
+		var i = 0;
+		var next = function () {
+			if (i >= rows.length) {
+				swui.save.disabled = false;
+				message(swui.msg, 'Saved ' + done + ' page' + (done === 1 ? '' : 's') + '.', true);
+				return;
+			}
+			var r = rows[i++];
+			var fields = {};
+			if (replace || !r.p.has_title) {
+				fields.title = r.title.value;
+			}
+			if (replace || !r.p.has_description) {
+				fields.description = r.desc.value;
+			}
+			if (!Object.keys(fields).length) {
+				r.msg.textContent = 'This page already has both, so it was left alone. Tick Replace to change them.';
+				next();
+				return;
+			}
+			api('POST', '/pages/' + r.p.id + '/seo', { fields: fields }).then(function () {
+				r.saved = true;
+				done++;
+				r.msg.textContent = 'Saved.';
+				next();
+			}, function (err) {
+				r.msg.textContent = err.message;
+				next();
+			});
+		};
+		next();
+	}
+
+	function buildSeoWriterSection(panel) {
+		swui.keys = el('input', { id: 'twd-sk-sw-keys', type: 'text', className: 'twd-sk-ed__input', maxlength: '300', autocomplete: 'off' });
+		swui.replace = el('input', { type: 'checkbox', id: 'twd-sk-sw-replace' });
+		swui.find = button('Find pages with no search wording', 'primary', swFind);
+		swui.run = button('Write with AI for the ticked pages', 'primary', swRun);
+		swui.save = button('Save the ticked pages', 'primary', swSave);
+		swui.list = el('ul', { className: 'twd-sk-ed__list' });
+		swui.msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
+		swui.work = el('div', { hidden: '' }, [
+			field('Keywords for the whole site (optional)', swui.keys, 'Words people might search for, separated by commas. The AI uses them only where they fit a page and never invents facts. You can also give keywords for one page in its own box.'),
+			swui.list,
+			el('label', { className: 'twd-sk-ed__check', 'for': 'twd-sk-sw-replace' }, [swui.replace, el('span', { text: 'Replace a title or description a page already has (otherwise they are left alone)' })]),
+			el('div', { className: 'twd-sk-ed__actions' }, [swui.run, swui.save])
+		]);
+		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
+			el('h3', { className: 'twd-sk-ed__step-title', text: 'Search wording with AI' }),
+			el('p', { className: 'twd-sk-ed__help', text: 'Find the pages that have no search title or description and have the AI draft them from each page\'s words, your saved facts and your keywords. You read and change each one first; nothing is saved until you press Save. A page\'s own Search tab can also write for one page.' }),
+			el('div', { className: 'twd-sk-ed__actions' }, [swui.find]),
+			swui.work,
+			swui.msg
+		]));
+		ED.addDirtyCheck(function () {
+			var unsaved = Object.keys(sw.rows).some(function (id) {
+				return sw.rows[id].made && !sw.rows[id].saved;
+			});
+			return unsaved ? 'search wording that has not been saved' : '';
+		}, function () {
+			Object.keys(sw.rows).forEach(function (id) {
+				sw.rows[id].made = false;
+			});
+			show(swui.work, false);
+		});
+	}
+
 	function buildSite(panel) {
 		buildModeSection(panel);
 		buildLooksSection(panel);
@@ -3214,6 +3403,7 @@
 		buildFactsSection(panel);
 		buildEmbedsSection(panel);
 		buildFooterHtmlSection(panel);
+		buildSeoWriterSection(panel);
 		buildExportSection(panel);
 		buildChangesSection(panel);
 		buildCssSection(panel);
@@ -3231,6 +3421,7 @@
 			'Site changes': 'Undo a saved style, site details or header and footer change',
 			'Embeds': 'Show a booking calendar, map or other outside code on a page',
 			'Footer HTML': 'Edit the footer\'s own HTML, or remix it with an AI',
+			'Search wording with AI': 'Draft search titles and descriptions for pages that have none',
 			'Export for an AI': 'Download the site, a page or the header and footer for an AI to check',
 			'Changes from an AI': 'Paste an AI\'s reply, check each change, apply the ones you want',
 			'Site stylesheet': 'The rules behind custom sections: edit, remove unused ones, go back a version',
