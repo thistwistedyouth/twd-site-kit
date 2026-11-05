@@ -86,6 +86,7 @@ class TWD_SK_SiteExport {
 		$files  = array();
 		$pages  = array();
 		$stems  = array();
+		$kit_html = '';
 		foreach ( $ids as $id ) {
 			$html = TWD_SK_Store::get_current( (int) $id );
 			if ( '' === trim( (string) $html ) ) {
@@ -106,7 +107,9 @@ class TWD_SK_SiteExport {
 				$body .= '<!-- twd-section ' . ( $i + 1 ) . ': ' . TWD_SK_Sections::type_of( $section ) . ( '' !== $label ? ', ' . str_replace( '--', '- -', preg_replace( '/[\r\n]+/', ' ', $label ) ) : '' ) . " -->\n" . trim( $section ) . "\n\n";
 			}
 			$files[ 'pages/' . $stem . '.html' ] = $body;
-			$path = function_exists( 'wp_parse_url' ) ? (string) wp_parse_url( get_permalink( (int) $id ), PHP_URL_PATH ) : '';
+			$kit_html .= $html;
+			$live = $post && isset( $post->post_status ) && 'publish' === $post->post_status;
+			$path = $live && function_exists( 'wp_parse_url' ) ? (string) wp_parse_url( get_permalink( (int) $id ), PHP_URL_PATH ) : '';
 			$pages[] = array(
 				'id'       => (int) $id,
 				'page'     => $stem,
@@ -140,6 +143,10 @@ class TWD_SK_SiteExport {
 			'style'  => TWD_SK_Packs::active_slug(),
 			'tokens' => TWD_SK_Export::token_groups( $tokens ),
 		) );
+		if ( $kit_html !== '' ) {
+			$kit = trim( TWD_SK_Export::kit_rules_for( $kit_html, TWD_SK_Export::kit_css() ) );
+			$files['site/kit-stylesheet-used.css'] = "/* The plugin's own rules for the twd-sk- classes these pages use (every rule is scoped under .twd-sk-page). Colours, fonts and sizes are var(--twd-site-NAME): see style-tokens.json for the values. Read-only: the site stylesheet below is where a change to a custom section's look goes. */\n" . $kit . "\n";
+		}
 		$css = class_exists( 'TWD_SK_Css' ) ? trim( TWD_SK_Css::current()['source'] ) : '';
 		$files['site/site-stylesheet.css'] = '' !== $css ? $css . "\n" : "/* The site has no stylesheet of its own yet. */\n";
 
@@ -231,7 +238,15 @@ class TWD_SK_SiteExport {
 			$l[] = '- `site/footer.html`: the footer\'s own HTML, only when the footer is a saved embed.';
 		}
 		$l[] = '- `site/style-tokens.json`: the colours, fonts and sizes the design uses, with their values. A stylesheet refers to them as `var(--twd-site-NAME)`.';
-		$l[] = '- `site/site-stylesheet.css`: the site\'s own rules, for sections that are custom HTML. Kit sections (classes starting `twd-sk-`) are styled by the plugin and need no rules from you.';
+		$l[] = '- `site/site-stylesheet.css`: the site\'s own rules, for sections that are custom HTML (classes starting `c-`).';
+		$l[] = '- `site/kit-stylesheet-used.css`: the plugin\'s own rules for the kit classes (starting `twd-sk-`) these pages use, so you can read how a kit section looks. Do not write rules for those classes.';
+		$l[] = '';
+		$l[] = '## What you can and cannot judge';
+		$l[] = '';
+		$l[] = '- You are reading code, not looking at a rendered page. You can judge wording, structure, headings, links and where they go, labels, alt text, what a control does (tabs, accordions, buttons) and, from the stylesheets and tokens, colours, fonts, sizes, spacing and how a layout will behave on a phone. Say plainly when something can only be judged by looking at it.';
+		$l[] = '- The header is not exported as HTML: `site/header-and-footer.json` gives its menu, button and layout settings.';
+		$l[] = '- Pages marked `draft` in `pages/_index.json` are not live. Ignore them unless the notes ask about them.';
+		$l[] = '- Many pages are ONE large custom section (class `twd-sk-custom`), so a section change on them replaces the whole page. For wording, prefer a find and replace, and keep every `c-` class and every `data-twd-edit` label as it is.';
 		$l[] = '';
 		$l[] = '## How to answer';
 		$l[] = '';

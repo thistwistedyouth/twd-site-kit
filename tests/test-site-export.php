@@ -267,3 +267,31 @@ twd_sk_test( 'site tab js (0.17.0): Export for an AI downloads from the export r
 	twd_sk_true( 1 === preg_match( "/'footerEmbed'[^\n]*can_save_kind\( 'html' \)[^\n]*footer_embed\(\)/", $ed ), 'only for someone who may save HTML, and only when the footer is an embed' );
 	twd_sk_hasnt( "['code']", substr( $ed, strpos( $ed, "'footerEmbed'" ), 400 ), 'never the code' );
 } );
+
+twd_sk_test( 'site export: the kit rules the pages use come with it, a draft has no address, and the README says what an AI can and cannot judge', function () {
+	twd_sk_se_setup();
+	$GLOBALS['twd_stub']['posts'][302]->post_status = 'draft';
+	$set = TWD_SK_SiteExport::files( array( 'scope' => 'all' ) );
+	twd_sk_true( isset( $set['files']['site/kit-stylesheet-used.css'] ), 'the kit rules file' );
+	$css = $set['files']['site/kit-stylesheet-used.css'];
+	twd_sk_has( '.twd-sk-page .twd-sk-hero', $css, 'the hero rules the pages use' );
+	twd_sk_hasnt( '.twd-sk-pricing', $css, 'a section no page uses is left out' );
+	twd_sk_has( 'var(--twd-site-', $css, 'tokens stay as names' );
+	twd_sk_hasnt( '/*', substr( $css, strpos( $css, '*/' ) + 2 ), 'no other comments' );
+	$index = json_decode( $set['files']['pages/_index.json'], true );
+	$by = array();
+	foreach ( $index['pages'] as $p ) {
+		$by[ $p['page'] ] = $p;
+	}
+	twd_sk_eq( '', $by['contact-me']['address'], 'a draft has no address' );
+	twd_sk_eq( 'draft', $by['contact-me']['status'] );
+	$readme = $set['files']['README-FOR-AI.md'];
+	twd_sk_has( 'What you can and cannot judge', $readme );
+	twd_sk_has( 'Pages marked `draft`', $readme );
+	twd_sk_has( 'ONE large custom section', $readme );
+	twd_sk_has( 'kit-stylesheet-used.css', $readme );
+	$chrome = TWD_SK_SiteExport::files( array( 'scope' => 'chrome' ) );
+	twd_sk_true( ! isset( $chrome['files']['site/kit-stylesheet-used.css'] ), 'no pages, no kit rules' );
+	$GLOBALS['twd_stub']['posts'][302]->post_status = 'publish';
+	twd_sk_se_cleanup();
+} );

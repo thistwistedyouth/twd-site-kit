@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.17.0
+Stable tag: 0.17.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.17.1 =
+* Export for an AI now also holds the plugin's own style rules for the sections a page uses (site/kit-stylesheet-used.css), so an AI can read how every section looks. A draft page no longer shows a made-up address in the export. The README tells the AI what it can and cannot judge from code, to ignore drafts, and to prefer find and replace on pages that are one large custom section. Nothing else changes.
 
 = 0.17.0 =
 * New: Export for an AI. In the Site tab, download the whole site, one page, or the header and footer as one zip an AI can read, with your own notes and a README that tells the AI how to reply. Useful when an AI cannot reach the site itself.

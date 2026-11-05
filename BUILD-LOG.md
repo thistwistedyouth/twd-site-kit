@@ -1,3 +1,7 @@
+## 5 Nov 2026: RELEASE 0.17.1 (small export fixes, pushed to main at the owner's yes)
+
+- The export gains `site/kit-stylesheet-used.css` (the kit rules the exported pages use, `TWD_SK_Export::kit_rules_for`), a draft page's address is blank (it had shown `/`), and the README has a "What you can and cannot judge" section (code, not a rendered page; the header is settings only; ignore drafts; most pages are one large custom section, so prefer find and replace). 1 test; suite 1130 passed on an LF copy.
+
 ## 5 Nov 2026: RELEASE 0.17.0 (the three pieces below, pushed to main at the owner's yes)
 
 ## 5 Nov 2026: export for an AI, changes from an AI, the Footer HTML window (test build 0.17.0-test1 on the pilot staging site; NOT released, would be 0.17.0)
