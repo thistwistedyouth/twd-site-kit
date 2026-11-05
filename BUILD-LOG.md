@@ -1,3 +1,5 @@
+## 5 Nov 2026: RELEASE 0.16.1 (the fix below, pushed to main at the owner's yes after he confirmed it on the pilot site)
+
 ## 5 Nov 2026: fix, a link in a custom section did not take a new address (test build 0.16.0-test1-linkfix on the pilot staging site; NOT released, would be 0.16.1)
 
 - **Fault (found by the owner on the pilot site):** in the Visual editor, Link then Set the link on a link that is the whole piece but is not a kit button (a custom section's link with a `c-` class, for example a ghost button) looked done and did not stick. The browser stored the address; `TWD_SK_Inline::apply()` only applied an address to `twd-sk-btn` links and tab links and silently dropped it for any other whole-link piece. Words inside text worked because that goes through `createLink`. The kit button path was unchanged since 0.10.0.

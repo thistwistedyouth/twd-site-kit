@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.16.0
+Stable tag: 0.16.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.16.1 =
+* Fix: in the Visual editor, setting a new address on a link that is not a Site Kit button (for example a button in a custom section) now saves. Before, Set the link looked done but the old address stayed. Nothing else changes.
 
 = 0.16.0 =
 * A large update. Nothing here changes how a site looks until a setting is chosen: a site that updates and changes nothing looks as before. Update one site first and look at it.
