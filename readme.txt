@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.18.0
+Stable tag: 0.18.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,10 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.18.1 =
+* New: a wording and address check. Write rules in the saved facts under WORDING CHECKS, one per line (never: on a journey to healing, or with a fix: never: Dr Smith -> Dr. Smith). The Site tab's Wording and address check looks at the words of every page, and always for long dashes and for addresses that name a staging site. The rules that have a fix can be fixed in one go: each page changes as one version, so Undo works. The launch check and the export for an AI report it too.
+* Nothing changes how a site looks until rules are written or a fix is run.
 
 = 0.18.0 =
 * New: write search titles and descriptions with the AI. In the Site tab, Search wording with AI finds the pages that have none, drafts each one from the page's own words, your saved facts and your keywords, and lets you read and change them before you save. A page's own Search tab can also write for one page. The AI never saves anything and never replaces wording you already have unless you tick that.
