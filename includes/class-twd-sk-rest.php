@@ -1811,6 +1811,7 @@ class TWD_SK_REST {
 			'scope' => (string) $request->get_param( 'scope' ),
 			'page'  => (int) $request->get_param( 'page' ),
 			'notes' => $request->get_param( 'notes' ),
+			'pictures' => self::truthy( $request->get_param( 'pictures' ) ),
 		) );
 		if ( is_wp_error( $out ) ) {
 			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_not_a_page' === $out->get_error_code() ? 404 : 400 );

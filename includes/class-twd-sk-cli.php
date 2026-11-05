@@ -1176,6 +1176,9 @@ class TWD_SK_CLI {
 	 * [--notes=<file>]
 	 * : A text file of notes to put in the export.
 	 *
+	 * [--pictures]
+	 * : Include small copies of the pictures (up to 40, 600 pixels wide) for an AI that can look at images. A bigger file.
+	 *
 	 * [--out=<file>]
 	 * : Where to write it. Default: the current folder.
 	 */
@@ -1188,6 +1191,7 @@ class TWD_SK_CLI {
 			'scope' => isset( $assoc_args['scope'] ) ? (string) $assoc_args['scope'] : 'all',
 			'page'  => isset( $assoc_args['page'] ) ? (int) $assoc_args['page'] : 0,
 			'notes' => $notes,
+			'pictures' => isset( $assoc_args['pictures'] ),
 		) );
 		if ( is_wp_error( $out ) ) {
 			WP_CLI::error( $out->get_error_message() );

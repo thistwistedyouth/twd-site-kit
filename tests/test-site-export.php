@@ -346,3 +346,92 @@ twd_sk_test( 'site tab js (0.17.2): Copy the problems for the AI appears after a
 	twd_sk_has( "show(xui.problemsBtn, problemsText(plan) !== '')", $js, 'only when something was refused' );
 	twd_sk_hasnt( 'innerHTML', $js );
 } );
+
+if ( ! function_exists( 'wp_upload_dir' ) ) {
+	function wp_upload_dir() {
+		return array( 'baseurl' => 'https://example.test/wp-content/uploads', 'basedir' => sys_get_temp_dir() . '/twdsk-uploads-test' );
+	}
+}
+
+twd_sk_test( 'site export (0.17.3): the picture list says where each picture is used, its description, size and whether the file is there, and names problems; small copies come only when asked', function () {
+	$dir = sys_get_temp_dir() . '/twdsk-uploads-test/2026/11';
+	@mkdir( $dir, 0777, true );
+	$png = base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' );
+	file_put_contents( $dir . '/here.png', $png );
+	twd_sk_se_setup();
+	$html = TWD_SK_Store::get_current( 301 )
+		. "\n" . '<section class="twd-sk-text twd-sk-tone-base"><div class="twd-sk-inner">'
+		. '<img src="https://example.test/wp-content/uploads/2026/11/here.png" alt="A white square" width="1" height="1">'
+		. '<img src="https://example.test/wp-content/uploads/2026/11/gone.png" alt="">'
+		. '<img src="https://example.org/x.jpg" alt="Elsewhere">'
+		. '<img src="/wp-content/uploads/2026/11/here.png" alt="A white square">'
+		. '</div></section>';
+	TWD_SK_Store::save( 301, $html );
+	$set  = TWD_SK_SiteExport::files( array( 'scope' => 'all' ) );
+	$pics = json_decode( $set['files']['site/pictures.json'], true );
+	$by   = array();
+	foreach ( $pics['pictures'] as $p ) {
+		$by[ $p['file'] ] = $p;
+	}
+	twd_sk_true( isset( $by['here.png'], $by['gone.png'], $by['x.jpg'] ), 'every picture is listed once: ' . implode( ',', array_keys( $by ) ) );
+	twd_sk_eq( 3, count( $pics['pictures'] ), 'the same picture used twice is one entry' );
+	twd_sk_true( $by['here.png']['file_found'] && $by['here.png']['in_media_library'], 'found in the media library' );
+	twd_sk_eq( '1x1', $by['here.png']['pixels'] );
+	twd_sk_eq( 'A white square', $by['here.png']['alt'] );
+	twd_sk_true( false !== strpos( implode( ' ', $by['here.png']['used_in'] ), 'about-me section 4' ), 'where it is used' );
+	twd_sk_eq( array(), $by['here.png']['issues'], 'no problem for a good picture' );
+	twd_sk_true( false === $by['gone.png']['file_found'] && false !== strpos( implode( ' ', $by['gone.png']['issues'] ), 'not on the server' ), 'a missing file is named' );
+	twd_sk_true( false !== strpos( implode( ' ', $by['gone.png']['issues'] ), 'Empty description' ), 'an empty description is named' );
+	twd_sk_true( false === $by['x.jpg']['in_media_library'] && null === $by['x.jpg']['file_found'], 'a picture from another address cannot be checked' );
+	twd_sk_true( ! isset( $set['files']['pictures/here.png'] ), 'no copies unless asked' );
+	$with = TWD_SK_SiteExport::files( array( 'scope' => 'all', 'pictures' => true ) );
+	twd_sk_true( isset( $with['files']['pictures/here.png'] ) && strlen( $with['files']['pictures/here.png'] ) > 0, 'a small copy of a picture that exists' );
+	twd_sk_true( ! isset( $with['files']['pictures/gone.png'] ), 'none for a missing file' );
+	twd_sk_has( 'pictures/', TWD_SK_SiteExport::readme( 'all', array(), false ) );
+	$md = TWD_SK_SiteExport::as_markdown( $with['files'] );
+	twd_sk_hasnt( '=== FILE: pictures/', $md, 'binary copies stay out of the markdown fallback' );
+	twd_sk_se_cleanup();
+	@unlink( $dir . '/here.png' );
+} );
+
+twd_sk_test( 'site export (0.17.3): seo.json holds the site-wide search settings, each page carries its social picture and noindex, and site-checks.md holds the launch check', function () {
+	twd_sk_se_setup();
+	update_post_meta( 302, TWD_SK_Seo::K_NOINDEX, '1' );
+	$set = TWD_SK_SiteExport::files( array( 'scope' => 'all' ) );
+	$seo = json_decode( $set['files']['site/seo.json'], true );
+	foreach ( array( 'search_tags_printed_by', 'search_engines_allowed', 'search_engines_note', 'site_name', 'default_social_picture', 'structured_data_on_the_front_page', 'per_page' ) as $k ) {
+		twd_sk_true( array_key_exists( $k, $seo ), 'seo.json has ' . $k );
+	}
+	twd_sk_true( is_bool( $seo['search_engines_allowed'] ) );
+	$index = json_decode( $set['files']['pages/_index.json'], true );
+	$by    = array();
+	foreach ( $index['pages'] as $p ) {
+		$by[ $p['page'] ] = $p;
+	}
+	twd_sk_true( true === $by['contact-me']['seo_noindex'] && false === $by['about-me']['seo_noindex'], 'noindex per page' );
+	twd_sk_true( array_key_exists( 'seo_social_picture', $by['about-me'] ), 'social picture per page' );
+	$checks = $set['files']['site/site-checks.md'];
+	twd_sk_has( '# What the site\'s own checks say', $checks );
+	twd_sk_true( 1 === preg_match( '/^- (FIX|LOOK|OK): /m', $checks ), 'items with a status' );
+	// One page: no site-wide search settings file, but the page's own checks and pictures stay.
+	$one = TWD_SK_SiteExport::files( array( 'scope' => 'page', 'page' => 301 ) );
+	twd_sk_true( ! isset( $one['files']['site/seo.json'] ) && isset( $one['files']['site/pictures.json'] ) && isset( $one['files']['site/site-checks.md'] ), 'a page export' );
+	// Header and footer only: no pictures list, no page files.
+	$chrome = TWD_SK_SiteExport::files( array( 'scope' => 'chrome' ) );
+	twd_sk_true( ! isset( $chrome['files']['site/pictures.json'] ) && isset( $chrome['files']['site/seo.json'] ), 'header and footer scope' );
+	foreach ( array( 'site/seo.json', 'site/pictures.json', 'site/site-checks.md', 'seo_social_picture', 'seo_noindex' ) as $needle ) {
+		twd_sk_has( $needle, $set['files']['README-FOR-AI.md'], 'README names ' . $needle );
+	}
+	update_post_meta( 302, TWD_SK_Seo::K_NOINDEX, '' );
+	twd_sk_se_cleanup();
+} );
+
+twd_sk_test( 'site tab js and routes (0.17.3): the pictures tick is sent to the export route and the command line has --pictures', function () {
+	$js = file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' );
+	twd_sk_has( 'pictures: !!xui.pics.checked', $js );
+	twd_sk_has( 'Include small copies of the pictures', $js );
+	$rest = file_get_contents( ABSPATH . 'includes/class-twd-sk-rest.php' );
+	twd_sk_has( "'pictures' => self::truthy( \$request->get_param( 'pictures' ) )", $rest );
+	$cli = file_get_contents( ABSPATH . 'includes/class-twd-sk-cli.php' );
+	twd_sk_has( '[--pictures]', $cli );
+} );

@@ -2807,7 +2807,7 @@
 
 	function runSiteExport() {
 		var scope = exportScope();
-		var body = { scope: scope, notes: xui.notes.value };
+		var body = { scope: scope, notes: xui.notes.value, pictures: !!xui.pics.checked };
 		if (scope === 'page') {
 			body.page = parseInt(xui.pageSel.value, 10) || 0;
 			if (!body.page) {
@@ -2845,6 +2845,7 @@
 		xui.pageSel.addEventListener('focus', function () {
 			xui.scopePage.checked = true;
 		});
+		xui.pics = el('input', { type: 'checkbox', id: 'twd-sk-xs-pics' });
 		xui.notes = textArea('twd-sk-xs-notes', 6);
 		xui.exMsg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
 		xui.exGo = button('Download', 'primary', runSiteExport);
@@ -2857,6 +2858,7 @@
 				el('label', { 'for': 'twd-sk-xs-chrome' }, [xui.scopeChrome, el('span', { text: 'The header and footer only, with the style and the notes' })])
 			]),
 			xui.pageSel,
+			el('label', { className: 'twd-sk-ed__check', 'for': 'twd-sk-xs-pics' }, [xui.pics, el('span', { text: 'Include small copies of the pictures (a bigger download, but an AI that can look at images can then see which photo is which)' })]),
 			field('Your notes for the AI (optional)', xui.notes, 'What you want checked or changed, in your own words, for example wording to match, things to add, what to leave alone. They go into the download as notes/your-notes.md and are not saved on the site.'),
 			el('div', { className: 'twd-sk-ed__actions' }, [xui.exGo]),
 			xui.exMsg

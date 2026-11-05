@@ -49,6 +49,224 @@ class TWD_SK_SiteExport {
 		return null;
 	}
 
+	/** A page's social share picture: its address, or '' when it has none of its own. */
+	private static function seo_picture( $id ) {
+		if ( ! class_exists( 'TWD_SK_Seo' ) ) {
+			return '';
+		}
+		$pid = (int) TWD_SK_Seo::values( (int) $id )['image_id'];
+		$url = $pid > 0 && function_exists( 'wp_get_attachment_url' ) ? wp_get_attachment_url( $pid ) : '';
+		return is_string( $url ) ? $url : '';
+	}
+
+	/** Search settings for the whole site: who prints the tags, whether engines are allowed, the default share picture, the structured data. */
+	public static function seo_summary() {
+		$det  = TWD_SK_Seo::detect();
+		$p    = TWD_SK_Profile::get();
+		$sid  = (int) $p['social_image_id'] > 0 ? (int) $p['social_image_id'] : (int) $p['logo_id'];
+		$url  = $sid > 0 && function_exists( 'wp_get_attachment_url' ) ? wp_get_attachment_url( $sid ) : '';
+		$nodes = class_exists( 'TWD_SK_Schema' ) ? TWD_SK_Schema::nodes( $p ) : array();
+		return array(
+			'search_tags_printed_by'   => 'none' === $det['mode'] ? 'Site Kit' : ( '' !== $det['name'] ? $det['name'] : $det['mode'] ),
+			'search_engines_allowed'   => '1' === (string) get_option( 'blog_public', '1' ),
+			'search_engines_note'      => '1' === (string) get_option( 'blog_public', '1' ) ? 'Search engines are allowed to index this site.' : 'Search engines are asked NOT to index this site (Settings, Reading). Expected on a staging site; turn it off before launch.',
+			'site_name'                => function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'name' ) : '',
+			'default_social_picture'   => is_string( $url ) ? $url : '',
+			'structured_data_on_the_front_page' => $nodes,
+			'per_page'                 => 'Each page has its own search title, search description, social picture and keep-out-of-search setting in pages/_index.json (seo_title, seo_description, seo_social_picture, seo_noindex). A page with no social picture uses default_social_picture.',
+		);
+	}
+
+	/** Where this site's uploads live: array( base address, folder ), or null. */
+	private static function uploads() {
+		if ( ! function_exists( 'wp_upload_dir' ) ) {
+			return null;
+		}
+		$u = wp_upload_dir();
+		if ( ! is_array( $u ) || empty( $u['baseurl'] ) || empty( $u['basedir'] ) ) {
+			return null;
+		}
+		return array( rtrim( (string) $u['baseurl'], '/' ), rtrim( (string) $u['basedir'], '/\\' ) );
+	}
+
+	/**
+	 * Every picture the exported pages, the footer and the site details use: where it is used, its description, its
+	 * size, and whether the file is there. Pictures outside this site's media library are listed as such.
+	 *
+	 * @return array { list[], notes[] }
+	 */
+	public static function pictures( $sections_by_page, $footer_html = '', $with_site = true ) {
+		$found = array();
+		$add   = function ( $src, $alt, $where, $role ) use ( &$found ) {
+			$src = html_entity_decode( (string) $src, ENT_QUOTES, 'UTF-8' );
+			if ( '' === $src || 0 === strpos( $src, 'data:' ) ) {
+				return;
+			}
+			if ( '/' === substr( $src, 0, 1 ) && '/' !== substr( $src, 0, 2 ) && function_exists( 'home_url' ) ) {
+				$src = rtrim( home_url( '/' ), '/' ) . $src;
+			}
+			if ( ! isset( $found[ $src ] ) ) {
+				$found[ $src ] = array( 'src' => $src, 'alt' => null, 'roles' => array(), 'used_in' => array() );
+			}
+			if ( null !== $alt && ( null === $found[ $src ]['alt'] || '' === $found[ $src ]['alt'] ) ) {
+				$found[ $src ]['alt'] = html_entity_decode( (string) $alt, ENT_QUOTES, 'UTF-8' );
+			}
+			$found[ $src ]['roles'][ $role ]   = true;
+			$found[ $src ]['used_in'][ $where ] = true;
+		};
+		$scan = function ( $html, $where, $role ) use ( $add ) {
+			if ( preg_match_all( '/<img\b[^>]*>/i', (string) $html, $tags ) ) {
+				foreach ( $tags[0] as $tag ) {
+					if ( ! preg_match( '/\ssrc\s*=\s*"([^"]*)"/i', $tag, $s ) ) {
+						continue;
+					}
+					$alt = preg_match( '/\salt\s*=\s*"([^"]*)"/i', $tag, $a ) ? $a[1] : null;
+					$add( $s[1], $alt, $where, $role );
+				}
+			}
+		};
+		foreach ( $sections_by_page as $stem => $sections ) {
+			foreach ( $sections as $i => $section ) {
+				$scan( $section, $stem . ' section ' . ( $i + 1 ), 'page' );
+			}
+		}
+		if ( '' !== $footer_html ) {
+			$scan( $footer_html, 'the footer', 'footer' );
+		}
+		if ( $with_site ) {
+			$p = TWD_SK_Profile::get();
+			foreach ( array( 'logo_id' => 'the logo', 'logo_mark_id' => 'the small logo mark', 'social_image_id' => 'the default social picture' ) as $key => $label ) {
+				$aid = isset( $p[ $key ] ) ? (int) $p[ $key ] : 0;
+				$url = $aid > 0 && function_exists( 'wp_get_attachment_url' ) ? wp_get_attachment_url( $aid ) : '';
+				if ( is_string( $url ) && '' !== $url ) {
+					$alt = function_exists( 'get_post_meta' ) ? (string) get_post_meta( $aid, '_wp_attachment_image_alt', true ) : '';
+					$add( $url, $alt, 'site details: ' . $label, 'site' );
+				}
+			}
+		}
+		$up   = self::uploads();
+		$list = array();
+		foreach ( $found as $src => $f ) {
+			$entry = array(
+				'file'     => basename( (string) parse_url( $src, PHP_URL_PATH ) ),
+				'src'      => $src,
+				'alt'      => $f['alt'],
+				'roles'    => array_keys( $f['roles'] ),
+				'used_in'  => array_keys( $f['used_in'] ),
+				'in_media_library' => null,
+				'file_found'       => null,
+				'bytes'            => null,
+				'pixels'           => null,
+				'issues'           => array(),
+			);
+			$path = '';
+			if ( $up && 0 === strpos( $src, $up[0] . '/' ) ) {
+				$entry['in_media_library'] = true;
+				$path = $up[1] . '/' . rawurldecode( substr( strtok( $src, '?' ), strlen( $up[0] ) + 1 ) );
+			} elseif ( $up ) {
+				$entry['in_media_library'] = false;
+				$entry['issues'][] = 'This picture is not in this site\'s media library (it loads from another address), so it cannot be checked here.';
+			}
+			if ( '' !== $path ) {
+				$entry['file_found'] = is_file( $path );
+				if ( $entry['file_found'] ) {
+					$entry['bytes'] = (int) filesize( $path );
+					$dim = function_exists( 'getimagesize' ) && 1 !== preg_match( '/\.svg$/i', $path ) ? @getimagesize( $path ) : false;
+					if ( is_array( $dim ) ) {
+						$entry['pixels'] = $dim[0] . 'x' . $dim[1];
+						if ( $dim[0] > 2400 ) {
+							$entry['issues'][] = 'Wider than 2400 pixels: larger than any screen needs.';
+						}
+					}
+					if ( $entry['bytes'] > 600 * 1000 ) {
+						$entry['issues'][] = 'Over 600 KB: slow on a phone. A smaller file would do.';
+					}
+				} else {
+					$entry['issues'][] = 'The file is not on the server, so the picture will not show.';
+				}
+			}
+			if ( null === $entry['alt'] ) {
+				$entry['issues'][] = 'No alt attribute at all: a screen reader cannot say what it shows.';
+			} elseif ( '' === trim( $entry['alt'] ) && ! in_array( 'site', $entry['roles'], true ) ) {
+				$entry['issues'][] = 'Empty description. Fine only if the picture is purely decoration.';
+			}
+			if ( false !== stripos( $src, 'twdstaging' ) || false !== stripos( $src, 'staging.' ) ) {
+				$entry['issues'][] = 'The address names a staging site. Use the final address before launch.';
+			}
+			$list[] = $entry;
+		}
+		$notes = array( 'A picture used in a page is listed once with every place it is used. in_media_library false means the picture loads from another web address.' );
+		return array( 'list' => $list, 'notes' => $notes );
+	}
+
+	/**
+	 * Small copies of the pictures for an AI that can look at images: at most 600 pixels wide, at most 40 pictures,
+	 * nothing over 12 MB read. Returns file name => bytes.
+	 */
+	public static function picture_copies( $list ) {
+		$up  = self::uploads();
+		$out = array();
+		if ( ! $up ) {
+			return $out;
+		}
+		$total = 0;
+		foreach ( $list as $entry ) {
+			if ( count( $out ) >= 40 || $total > 9 * 1000 * 1000 ) {
+				break;
+			}
+			if ( empty( $entry['file_found'] ) || 0 !== strpos( $entry['src'], $up[0] . '/' ) ) {
+				continue;
+			}
+			$path = $up[1] . '/' . rawurldecode( substr( strtok( $entry['src'], '?' ), strlen( $up[0] ) + 1 ) );
+			if ( ! is_file( $path ) || filesize( $path ) > 12 * 1000 * 1000 ) {
+				continue;
+			}
+			$name  = 'pictures/' . preg_replace( '/[^A-Za-z0-9._-]/', '-', $entry['file'] );
+			$base  = $name;
+			$n     = 2;
+			while ( isset( $out[ $name ] ) ) {
+				$name = preg_replace( '/(\.[^.]*)?$/', '-' . $n++ . '$1', $base, 1 );
+			}
+			$bytes = '';
+			if ( function_exists( 'wp_get_image_editor' ) && 1 !== preg_match( '/\.svg$/i', $path ) ) {
+				$ed = wp_get_image_editor( $path );
+				if ( ! is_wp_error( $ed ) ) {
+					$ed->resize( 600, 600, false );
+					$tmp = tempnam( sys_get_temp_dir(), 'twdp' );
+					$ext = strtolower( pathinfo( $path, PATHINFO_EXTENSION ) );
+					$saved = $tmp ? $ed->save( $tmp . '.' . $ext ) : null;
+					if ( is_array( $saved ) && ! empty( $saved['path'] ) && is_file( $saved['path'] ) ) {
+						$bytes = (string) file_get_contents( $saved['path'] );
+						@unlink( $saved['path'] );
+					}
+					if ( $tmp ) {
+						@unlink( $tmp );
+					}
+				}
+			}
+			if ( '' === $bytes && filesize( $path ) <= 300 * 1000 ) {
+				$bytes = (string) file_get_contents( $path );
+			}
+			if ( '' !== $bytes ) {
+				$out[ $name ] = $bytes;
+				$total       += strlen( $bytes );
+			}
+		}
+		return $out;
+	}
+
+	/** What the site's own launch check says, as plain markdown, so an AI need not find the same things again. */
+	public static function checks_markdown() {
+		$mark  = array( 'fail' => 'FIX', 'warn' => 'LOOK', 'ok' => 'OK' );
+		$check = TWD_SK_Launch::check();
+		$l     = array( '# What the site\'s own checks say', '', 'Made when the export was made. FIX means it blocks launch, LOOK is worth a look, OK needs nothing. Some items (the enquiry form email, whether search engines are allowed) are expected to say FIX or LOOK on a staging site.', '' );
+		foreach ( $check['items'] as $it ) {
+			$l[] = '- ' . ( isset( $mark[ $it['status'] ] ) ? $mark[ $it['status'] ] : $it['status'] ) . ': ' . $it['label'] . ( '' !== $it['detail'] ? ' (' . $it['detail'] . ')' : '' );
+		}
+		$l[] = '';
+		return implode( "\n", $l );
+	}
+
 	/** The kit pages, for choosing one to export: id, the name a reply uses, title, status. */
 	public static function page_list() {
 		$out = array();
@@ -105,6 +323,7 @@ class TWD_SK_SiteExport {
 		$kit_html = '';
 		$types    = array();
 		$example  = null;
+		$sections_by_page = array();
 		foreach ( $ids as $id ) {
 			$html = TWD_SK_Store::get_current( (int) $id );
 			if ( '' === trim( (string) $html ) ) {
@@ -126,6 +345,7 @@ class TWD_SK_SiteExport {
 			}
 			$files[ 'pages/' . $stem . '.html' ] = $body;
 			$kit_html .= $html;
+			$sections_by_page[ $stem ] = $parts['sections'];
 			foreach ( $parts['sections'] as $i => $section ) {
 				$types[ str_replace( '-', '_', TWD_SK_Sections::type_of( $section ) ) ] = true;
 				if ( null === $example ) {
@@ -142,6 +362,8 @@ class TWD_SK_SiteExport {
 				'status'   => $post && isset( $post->post_status ) ? (string) $post->post_status : '',
 				'seo_title'       => class_exists( 'TWD_SK_Seo' ) ? (string) TWD_SK_Seo::details( (int) $id )['title'] : '',
 				'seo_description' => class_exists( 'TWD_SK_Seo' ) ? (string) TWD_SK_Seo::details( (int) $id )['description'] : '',
+				'seo_social_picture' => self::seo_picture( (int) $id ),
+				'seo_noindex'     => class_exists( 'TWD_SK_Seo' ) ? (bool) TWD_SK_Seo::values( (int) $id )['noindex'] : false,
 				'file'     => 'pages/' . $stem . '.html',
 				'sections' => count( $parts['sections'] ),
 			);
@@ -163,6 +385,21 @@ class TWD_SK_SiteExport {
 				$files['site/footer.html'] = trim( $footer['code'] ) . "\n";
 			}
 		}
+		// Search settings for the whole site, the pictures used, and what the site's own checks say.
+		if ( 'page' !== $scope ) {
+			$files['site/seo.json'] = self::json( self::seo_summary() );
+		}
+		if ( 'chrome' !== $scope ) {
+			$footer_code = ( 'page' !== $scope && isset( $files['site/footer.html'] ) ) ? $files['site/footer.html'] : '';
+			$pics = self::pictures( $sections_by_page, $footer_code, 'page' !== $scope );
+			$files['site/pictures.json'] = self::json( array( 'pictures' => $pics['list'], 'notes' => $pics['notes'] ) );
+			if ( ! empty( $opts['pictures'] ) ) {
+				foreach ( self::picture_copies( $pics['list'] ) as $name => $bytes ) {
+					$files[ $name ] = $bytes;
+				}
+			}
+		}
+		$files['site/site-checks.md'] = self::checks_markdown();
 		// Style and stylesheet go with every scope: a page cannot be judged without them.
 		$tokens = TWD_SK_Packs::active_tokens();
 		$files['site/style-tokens.json'] = self::json( array(
@@ -247,6 +484,9 @@ class TWD_SK_SiteExport {
 	public static function as_markdown( $files ) {
 		$out = "# Site export\n\nOne file standing for a folder: each part below begins with a line `=== FILE: name ===`. Read README-FOR-AI.md first.\n\n";
 		foreach ( $files as $name => $content ) {
+			if ( 0 === strpos( $name, 'pictures/' ) ) {
+				continue; // Pictures are binary: only in a zip.
+			}
 			$out .= '=== FILE: ' . $name . " ===\n" . $content . ( "\n" === substr( $content, -1 ) ? '' : "\n" ) . "\n";
 		}
 		return $out;
@@ -267,7 +507,7 @@ class TWD_SK_SiteExport {
 		if ( 'chrome' === $scope ) {
 			$l[] = '- This export holds no pages, only the header and footer.';
 		} else {
-			$l[] = '- `pages/_index.json`: every page with the name to use in a reply (`page`), its title, address, status, number of sections, and its search title and description (`seo_title`, `seo_description`: check them here, they are not in the page HTML).';
+			$l[] = '- `pages/_index.json`: every page with the name to use in a reply (`page`), its title, address, status, number of sections, and its search title and description (`seo_title`, `seo_description`, `seo_social_picture`, `seo_noindex`: check them here, they are not in the page HTML).';
 			$l[] = '- `pages/NAME.html`: one page. A comment line `<!-- twd-section N: type, label -->` comes before each top-level section. N is the section number to use in a reply. Those comment lines are only for you: never put one in a reply.';
 		}
 		if ( 'page' !== $scope ) {
@@ -278,6 +518,13 @@ class TWD_SK_SiteExport {
 		if ( 'chrome' !== $scope ) {
 			$l[] = '- `site/kit-sections-guide.md`: every kit section these pages use, with its classes and example markup, so you reuse real markup instead of inventing classes.';
 		}
+		if ( 'page' !== $scope ) {
+			$l[] = '- `site/seo.json`: search settings for the whole site: whether search engines are allowed, the default social share picture, the structured data printed on the front page.';
+		}
+		if ( 'chrome' !== $scope ) {
+			$l[] = '- `site/pictures.json`: every picture used, where it is used, its description, size, whether the file is on the server, and any problem found. A folder `pictures/` (when present) holds small copies you can look at: match them by file name.';
+		}
+		$l[] = '- `site/site-checks.md`: what the site\'s own launch check found. Start from it rather than finding the same things again.';
 		$l[] = '- `site/style-tokens.json`: the colours, fonts and sizes the design uses, with their values. A stylesheet refers to them as `var(--twd-site-NAME)`.';
 		$l[] = '- `site/site-stylesheet.css`: the site\'s own rules, for sections that are custom HTML (classes starting `c-`).';
 		$l[] = '- `site/kit-stylesheet-used.css`: the plugin\'s own rules for the kit classes (starting `twd-sk-`) these pages use, so you can read how a kit section looks. Do not write rules for those classes.';
