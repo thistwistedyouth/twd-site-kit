@@ -128,3 +128,18 @@ twd_sk_test( 'add text inside a custom section: the new paragraph carries the ne
 	twd_sk_true( ! is_wp_error( $h ), is_wp_error( $h ) ? $h->get_error_message() : '' );
 	twd_sk_true( $h['piece'] >= 0 );
 } );
+
+twd_sk_test( 'duplicate by text: a paragraph on its own, or anything in a custom section, can be copied; a box with a twin beside it is copied whole; ids never repeat', function () {
+	$html = '<section class="twd-sk-custom c-band"><div class="c-wrap"><p class="c-lead" data-twd-edit="intro">First words</p></div></section>';
+	$out  = TWD_SK_Inline::duplicate( $html, null, 0 );
+	twd_sk_true( ! is_wp_error( $out ), is_wp_error( $out ) ? $out->get_error_message() : '' );
+	twd_sk_eq( 2, substr_count( $out['html'], 'First words' ), 'the words are there twice' );
+	twd_sk_true( $out['piece'] >= 0, 'the copy is numbered so it can be changed' );
+	$cards = '<section class="twd-sk-custom c-band"><div class="c-grid"><div class="c-card" id="a"><h3 data-twd-edit="t">One</h3><p data-twd-edit="b">Words</p></div><div class="c-card" id="b"><h3 data-twd-edit="t">Two</h3><p data-twd-edit="b">More</p></div></div></section>';
+	$out = TWD_SK_Inline::duplicate( $cards, null, 1 );
+	twd_sk_true( ! is_wp_error( $out ), is_wp_error( $out ) ? $out->get_error_message() : '' );
+	twd_sk_eq( 3, substr_count( $out['html'], 'class="c-card"' ), 'the whole card was copied' );
+	preg_match_all( '/\bid="([^"]+)"/', $out['html'], $ids );
+	twd_sk_eq( count( $ids[1] ), count( array_unique( $ids[1] ) ), 'no id repeated' );
+	twd_sk_is_error( 'twd_sk_conflict', TWD_SK_Inline::duplicate( $cards, null, 99 ) );
+} );

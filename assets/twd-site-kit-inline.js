@@ -2438,12 +2438,19 @@
 		if (notNow()) {
 			return;
 		}
-		var node = removableOf(inEditable() || S.last);
-		if (!node || node.tagName === 'SECTION') {
-			status('Click inside the card, list entry, step, question or paragraph you want to copy first. A whole section is copied with Add section.');
+		var t = inEditable() || editableOf(S.last);
+		var node = removableOf(t || S.last);
+		if (node && node.tagName !== 'SECTION') {
+			structure({ op: 'duplicate', item: parseInt(node.getAttribute('data-twd-sk-r'), 10) }, 'Copying it...', 'Copied. The copy sits straight after the original, ready to change.');
 			return;
 		}
-		structure({ op: 'duplicate', item: parseInt(node.getAttribute('data-twd-sk-r'), 10) }, 'Copying it...', 'Copied. The copy sits straight after the original, ready to change.');
+		// No card or entry to copy here (a paragraph on its own, or a section with your own layout): copy the words, or
+		// the box round them when it has a twin beside it.
+		if (t && t.tagName !== 'A') {
+			structure({ op: 'duplicate', piece: parseInt(t.getAttribute('data-twd-sk-t'), 10) }, 'Copying it...', 'Copied. The copy sits straight after the original, ready to change.');
+			return;
+		}
+		status('Click inside the words, card, list entry, step or question you want to copy first. A whole section is copied with Add section.');
 	}
 
 	function moveSection(dir) {

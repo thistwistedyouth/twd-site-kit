@@ -902,18 +902,40 @@ class TWD_SK_Inline {
 	 *
 	 * @return array|WP_Error { html, at, piece, note }
 	 */
-	public static function duplicate( $html, $r ) {
+	public static function duplicate( $html, $r, $piece = null ) {
 		$loaded = self::load( (string) $html );
 		if ( ! $loaded ) {
 			return new WP_Error( 'twd_sk_bad_input', 'This page could not be read. Reload it and try again.' );
 		}
 		list( $doc, $root ) = $loaded;
 		$found = self::targets( $root );
-		$r     = is_numeric( $r ) ? (int) $r : -1;
-		if ( ! isset( $found['removes'][ $r ] ) ) {
-			return new WP_Error( 'twd_sk_conflict', 'The page changed since it was opened, so that item could not be matched. Reload the page and try again.' );
+		if ( null === $r && null !== $piece ) {
+			// No removable item here (a paragraph on its own, or anything in a custom section): copy the nearest box
+			// that has a twin beside it, else the piece of text itself, so there is always something to copy.
+			$p = is_numeric( $piece ) ? (int) $piece : -1;
+			if ( ! isset( $found['text'][ $p ] ) ) {
+				return new WP_Error( 'twd_sk_conflict', 'The page changed since it was opened, so that text could not be matched. Reload the page and try again.' );
+			}
+			$el = $found['text'][ $p ];
+			if ( self::is_tab_link( $el ) ) {
+				return new WP_Error( 'twd_sk_bad_input', 'A question group is tied to its tab, so it cannot be copied. Copy one of its questions instead.' );
+			}
+			for ( $up = $el->parentNode; $up instanceof DOMElement && $up !== $root; $up = $up->parentNode ) {
+				if ( 'section' === strtolower( $up->nodeName ) ) {
+					break;
+				}
+				if ( self::has_like_sibling( $up ) ) {
+					$el = $up;
+					break;
+				}
+			}
+		} else {
+			$r = is_numeric( $r ) ? (int) $r : -1;
+			if ( ! isset( $found['removes'][ $r ] ) ) {
+				return new WP_Error( 'twd_sk_conflict', 'The page changed since it was opened, so that item could not be matched. Reload the page and try again.' );
+			}
+			$el = $found['removes'][ $r ];
 		}
-		$el = $found['removes'][ $r ];
 		if ( 'section' === strtolower( $el->nodeName ) ) {
 			return new WP_Error( 'twd_sk_bad_input', 'A whole section is copied with Add section. Click a card, list entry, step, question or paragraph inside it.' );
 		}
