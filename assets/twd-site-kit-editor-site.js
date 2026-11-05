@@ -931,10 +931,25 @@
 		cui.button.checked = !!c.settings.show_button;
 		cui.strip.checked = !!c.settings.show_strip;
 		cui.placement.value = c.settings.placement;
+		fillFooterEmbed(c);
 		var e = c.effective;
 		cui.snap = chromeSnap();
 		cui.note.textContent = 'Now showing: ' + (e.wordmark ? 'the text wordmark header (stacked on the front page, one row elsewhere)' : c.header_variants[e.header]) + ' (header), ' + c.footer_variants[e.footer] + ' (footer).' + (e.sticky_note ? ' The centred header cannot be fixed to the top, so that setting is ignored.' : '') + splitNote();
 		fillPlacementNote();
+	}
+
+	/* The footer embed choice: the saved HTML embeds, the current one selected, locked for anyone who may not add raw HTML. */
+	function fillFooterEmbed(c) {
+		var sel = cui.footerEmbed;
+		while (sel.options.length > 1) {
+			sel.remove(1);
+		}
+		Object.keys(c.footer_embeds || {}).forEach(function (k) {
+			sel.appendChild(el('option', { value: k, text: c.footer_embeds[k] + ' (Embed ' + k + ')' }));
+		});
+		sel.value = c.settings.footer_embed ? String(c.settings.footer_embed) : '';
+		sel.disabled = !c.can_footer_embed;
+		show(cui.footerEmbedNote, !!c.settings.footer_embed || sel.options.length > 1);
 	}
 
 	/* Who places the header and footer, and whether the Theme Builder download is needed at all. */
@@ -993,6 +1008,7 @@
 				menu_marker: cui.marker.value,
 				show_button: cui.button.checked,
 				show_strip: cui.strip.checked,
+				footer_embed: parseInt(cui.footerEmbed.value || '0', 10),
 				placement: cui.placement.value
 			}
 		}).then(function (data) {
@@ -1066,6 +1082,8 @@
 			}
 		});
 		cui.placedNote = el('p', { className: 'twd-sk-ed__help' });
+		cui.footerEmbed = selectWith('twd-sk-ch-footer-embed', {}, 'Site Kit\'s own footer');
+		cui.footerEmbedNote = el('p', { className: 'twd-sk-ed__help', text: 'Warning: a saved embed footer is not editable on the page. Change it only in Site, Embeds. It shows on every page instead of the footer built from the site details, so the footer layout, footer text and legal links above are not used while it is chosen. The header is not affected.' });
 		cui.note = el('p', { className: 'twd-sk-ed__help' });
 		cui.msg = el('div', { className: 'twd-sk-ed__msg', role: 'status', 'aria-live': 'polite', hidden: '' });
 		cui.saveBtn = button('Save header and footer', 'primary', saveChrome);
@@ -1091,6 +1109,8 @@
 			el('p', { className: 'twd-sk-ed__help', text: 'The words (the site name, logo, menu, button, footer text, legal links and contact details) are in Site details above. The layout and options are here. Save, then reload the page to see it; Undo the last site change steps back one Save.' }),
 			el('div', { className: 'twd-sk-ed__actions', id: 'twd-sk-chrome-ways' }, [toMenu, toFooter])
 		].concat(aiBlocks(['header', 'footer'])).concat([
+			field('Footer: Site Kit\'s own, or a saved embed', cui.footerEmbed, 'Only HTML-code embeds are listed, and only an administrator who may add raw HTML can choose one. Pick Site Kit\'s own footer to go back.'),
+			cui.footerEmbedNote,
 			field('Who places them', cui.placement),
 			cui.placedNote,
 			cui.note,
@@ -1252,7 +1272,7 @@
 	}
 
 	function chromeSnap() {
-		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.textStyle.value, cui.contactBar.checked, cui.exit.checked, cui.exitUrl.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.over.checked, cui.wordmark.checked, cui.wmname.checked, cui.wmline.checked, cui.wmrows.checked, cui.clientFooter.checked, cui.marker.value, cui.button.checked, cui.strip.checked, cui.placement.value]);
+		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.textStyle.value, cui.contactBar.checked, cui.exit.checked, cui.exitUrl.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.over.checked, cui.wordmark.checked, cui.wmname.checked, cui.wmline.checked, cui.wmrows.checked, cui.clientFooter.checked, cui.marker.value, cui.button.checked, cui.strip.checked, cui.placement.value, cui.footerEmbed.value]);
 	}
 
 	ED.addDirtyCheck(function () {

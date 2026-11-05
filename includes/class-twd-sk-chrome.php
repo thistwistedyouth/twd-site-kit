@@ -238,6 +238,7 @@ class TWD_SK_Chrome {
 			'quick_exit_url' => '',      // 0.15.0: where it goes (a full https address chosen by the site; empty means no link)
 			'client_footer_text' => false, // session 7 (section 21b): clients may change the footer words from the Simple editor
 			'placement'      => 'kit',
+			'footer_embed'   => 0,       // 0.15.0: the id of a saved HTML embed to print in place of the kit footer (0 means the kit's own footer)
 		);
 	}
 
@@ -308,6 +309,17 @@ class TWD_SK_Chrome {
 						$out['errors'][] = 'Choose how the page you are on is marked in the menu: ' . implode( ', ', array_keys( self::menu_markers() ) ) . '.';
 					}
 					break;
+				case 'footer_embed':
+					if ( is_int( $value ) || ( is_string( $value ) && ctype_digit( $value ) ) ) {
+						$id = (int) $value;
+						$rec = $id > 0 ? TWD_SK_Embed::get( $id ) : null;
+						if ( 0 === $id || ( $rec && 'html' === $rec['kind'] ) ) {
+							$out['valid'][ $key ] = $id;
+							break;
+						}
+					}
+					$out['errors'][] = 'Choose Site Kit\'s own footer, or one of the saved HTML embeds.';
+					break;
 				case 'placement':
 					if ( is_string( $value ) && isset( self::placements()[ $value ] ) ) {
 						$out['valid'][ $key ] = $value;
@@ -349,6 +361,10 @@ class TWD_SK_Chrome {
 		$check = self::validate( $input );
 		if ( $check['errors'] ) {
 			return new WP_Error( 'twd_sk_bad_chrome', implode( ' ', $check['errors'] ) );
+		}
+		// A footer made of raw HTML is the same power as an HTML embed, so it needs the same right (administrator with unfiltered_html).
+		if ( isset( $check['valid']['footer_embed'] ) && (int) $check['valid']['footer_embed'] > 0 && (int) $check['valid']['footer_embed'] !== (int) self::settings()['footer_embed'] && ! TWD_SK_Embed::can_save_kind( 'html' ) ) {
+			return new WP_Error( 'twd_sk_bad_chrome', 'Only an administrator who may add raw HTML can choose an embed as the footer.' );
 		}
 		$merged = array_merge( self::settings(), $check['valid'] );
 		update_option( self::OPTION, $merged );
@@ -681,7 +697,35 @@ class TWD_SK_Chrome {
 		return '<p class="twd-sk-footer__copy">&copy; ' . self::esc( gmdate( 'Y' ) ) . ' ' . self::esc( self::site_name( $profile ) ) . '</p>';
 	}
 
+	/** The saved HTML embeds, id => label, for the footer choice. */
+	public static function footer_embed_choices() {
+		$out = array();
+		foreach ( TWD_SK_Embed::all() as $id => $r ) {
+			if ( 'html' === $r['kind'] ) {
+				$out[ $id ] = $r['label'];
+			}
+		}
+		return $out;
+	}
+
+	/** The HTML embed chosen as the footer, or null (not chosen, deleted, wrong kind, or safe mode). */
+	public static function footer_embed() {
+		if ( TWD_SK_Safe::on() ) {
+			return null;
+		}
+		$id  = (int) self::settings()['footer_embed'];
+		$rec = $id > 0 ? TWD_SK_Embed::get( $id ) : null;
+		return $rec && 'html' === $rec['kind'] ? $rec : null;
+	}
+
 	public static function render_footer() {
+		// A saved embed in place of the kit footer. It sits outside the page wrapper so it is the full width of the window.
+		if ( self::footer_embed() ) {
+			$body = TWD_SK_Embed::render( array( 'id' => self::footer_embed()['id'] ) );
+			if ( '' !== $body ) {
+				return '<div class="twd-sk-footer-embed">' . $body . '</div>';
+			}
+		}
 		$profile = TWD_SK_Profile::get();
 		if ( TWD_SK_Safe::on() || TWD_SK_Profile::is_empty() ) {
 			return self::render_minimal_footer();

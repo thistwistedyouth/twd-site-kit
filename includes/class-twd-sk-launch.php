@@ -214,6 +214,20 @@ class TWD_SK_Launch {
 			}
 		}
 
+		// The footer embed's links (0.15.0): every link in a saved footer reaches a page.
+		$fe = TWD_SK_Chrome::footer_embed();
+		if ( $fe ) {
+			$links = self::embed_links( $fe['code'] );
+			$fm    = self::menu_links( $links );
+			if ( $fm['missing'] ) {
+				$items[] = self::item( 'footer_embed', 'fail', count( $fm['missing'] ) . ' link' . ( 1 === count( $fm['missing'] ) ? '' : 's' ) . ' in the footer embed go' . ( 1 === count( $fm['missing'] ) ? 'es' : '' ) . ' nowhere', 'No page answers to: ' . implode( ', ', $fm['missing'] ) . '. Make the page, or take the link out of the embed (Site tab, Embeds).' );
+			} elseif ( $fm['drafts'] ) {
+				$items[] = self::item( 'footer_embed', 'warn', count( $fm['drafts'] ) . ' footer embed link' . ( 1 === count( $fm['drafts'] ) ? ' points' : 's point' ) . ' at a draft', 'Fine once published: ' . implode( ', ', $fm['drafts'] ) . '.' );
+			} else {
+				$items[] = self::item( 'footer_embed', 'ok', 'Every link in the footer embed reaches a page' );
+			}
+		}
+
 		// WordPress's own leftovers (0.14.0): the sample page, the first post and the suggested privacy text.
 		$wp = self::wp_leftovers();
 		if ( $wp['sample'] || $wp['hello'] ) {
@@ -245,6 +259,22 @@ class TWD_SK_Launch {
 			$counts[ $i['status'] ]++;
 		}
 		return array( 'items' => $items, 'pages' => $pages, 'ready' => 0 === $counts['fail'], 'counts' => $counts );
+	}
+
+	/** The links in a piece of HTML, as array( label, url ) pairs in the shape menu_links() reads (0.15.0). */
+	public static function embed_links( $html ) {
+		$out = array();
+		if ( is_string( $html ) && preg_match_all( '/<a\b[^>]*?\shref\s*=\s*(?:"([^"]*)"|\'([^\']*)\')[^>]*>(.*?)<\/a>/is', $html, $m, PREG_SET_ORDER ) ) {
+			foreach ( $m as $one ) {
+				$url = trim( html_entity_decode( '' !== $one[1] ? $one[1] : $one[2] ) );
+				if ( '' === $url || 0 === stripos( $url, 'javascript:' ) ) {
+					continue;
+				}
+				$label = trim( preg_replace( '/\s+/', ' ', strip_tags( $one[3] ) ) );
+				$out[] = array( 'label' => '' === $label ? $url : $label, 'url' => $url, 'children' => array() );
+			}
+		}
+		return $out;
 	}
 
 	/**

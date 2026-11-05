@@ -1836,6 +1836,8 @@ class TWD_SK_REST {
 				'pack_defaults'   => TWD_SK_Packs::chrome_defaults(),
 				'placements'      => TWD_SK_Chrome::placements(),
 				'placed_by'       => TWD_SK_Chrome::placement_status(),
+				'footer_embeds'   => TWD_SK_Chrome::footer_embed_choices(),
+				'can_footer_embed' => TWD_SK_Embed::can_save_kind( 'html' ),
 				'hello'           => TWD_SK_Chrome::hello_active(),
 			),
 		);
