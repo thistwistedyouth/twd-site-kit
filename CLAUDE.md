@@ -16,6 +16,8 @@ What the product is for: producing good quality content in the Articles plugin a
 
 ## How we work (read this first)
 
+**Something in the owner's other repos** (for example the Articles plugin): attach the owner's private repo `clive-hub` with add_repo and read its `REPO-INDEX.md`, read only. Never copy anything from a private repo into this public one.
+
 **At the start of every session:** read this file, then `BUILD-LOG.md` (where we are, what is next, what is waiting on other projects). Say in one line what state the project is in before starting.
 
 **At the end of every piece of work, without being asked:** update `BUILD-LOG.md` ("Where we are", "Next", "Waiting on other projects", and anything newly verified or found broken) and the Status list here, in the same commit as the work. Add the why to `HISTORY.md` when a decision was made. Then run the full tests and push.
