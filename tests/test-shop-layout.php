@@ -54,7 +54,7 @@ function twd_shop_layout_product() {
 	$hidden->set_visible( false );
 	$p = twd_shop_setup( array(
 		'attributes'  => array( 'period' => $period, 'metal' => $metal, 'note' => $hidden ),
-		'sku'         => 'GJ-12',
+		'sku'         => 'SK-12',
 		'description' => '<p>The story <img src="https://example.test/x.jpg" alt="x"></p><h2>Condition</h2><p>Light wear.</p><h3>History</h3><p>From a collection.</p>',
 	) );
 	update_post_meta( 42, '_twd_sk_shop_labels', array( 'Period', 'Metal' ) );
@@ -66,8 +66,8 @@ twd_sk_test( 'shop layout: off unless ticked; the colour is a #rrggbb or the def
 	update_option( 'twd_sk_shop_layout', 'yes' );
 	twd_sk_true( TWD_SK_Shop_Layout::on() );
 	twd_sk_eq( '#1f3a33', TWD_SK_Shop_Layout::colour() );
-	update_option( 'twd_sk_shop_colour', '#442E54' );
-	twd_sk_eq( '#442e54', TWD_SK_Shop_Layout::colour() );
+	update_option( 'twd_sk_shop_colour', '#5A3D6E' );
+	twd_sk_eq( '#5a3d6e', TWD_SK_Shop_Layout::colour() );
 	update_option( 'twd_sk_shop_colour', 'red;}body{display:none' );
 	twd_sk_eq( '#1f3a33', TWD_SK_Shop_Layout::colour(), 'nothing but a colour gets in' );
 	$css = TWD_SK_Shop_Layout::inline_css( 'https://example.test/fonts/' );
@@ -97,7 +97,7 @@ twd_sk_test( 'shop layout: the story keeps pictures, the card holds the details 
 	twd_sk_has( 'id="twd-sk-shop-piece"', $html );
 	twd_sk_has( '<h2 class="twd-sk-shop-piece__title">About this piece</h2>', $html );
 	twd_sk_has( '<img src="https://example.test/x.jpg"', $html, 'the story is shown as written' );
-	twd_sk_has( 'No. GJ-12', $html );
+	twd_sk_has( 'No. SK-12', $html );
 	twd_sk_has( '<dt>Period</dt><dd>Victorian, about 1870</dd>', $html );
 	twd_sk_hasnt( 'Not shown', $html );
 	twd_sk_has( '<details class="twd-sk-shop-fold" open><summary>Condition</summary>', $html );
@@ -109,7 +109,7 @@ twd_sk_test( 'shop layout: the story keeps pictures, the card holds the details 
 } );
 
 twd_sk_test( 'shop layout: a long short summary shows as a lead near the price and in full in the story', function () {
-	$long = '<p>DESCRIPTION AND CONDITION</p><p>' . str_repeat( 'A fine and rare piece with its original box and a good story to tell. ', 10 ) . '</p>';
+	$long = '<p>ABOUT THE PIECE</p><p>' . str_repeat( 'A fine and rare piece with its original box and a good story to tell. ', 10 ) . '</p>';
 	$p    = twd_shop_setup( array( 'short_description' => $long, 'description' => '<h2>History</h2><p>Old.</p>' ) );
 	twd_sk_true( TWD_SK_Shop_Layout::summary_is_long( $p ) );
 	$lead = TWD_SK_Shop_Layout::lead( $long );
@@ -117,7 +117,7 @@ twd_sk_test( 'shop layout: a long short summary shows as a lead near the price a
 	twd_sk_true( strlen( $lead ) <= TWD_SK_Shop_Layout::LEAD_LENGTH + 3 );
 	twd_sk_has( '...', $lead );
 	$html = TWD_SK_Shop_Layout::piece_html( $p );
-	twd_sk_has( 'DESCRIPTION AND CONDITION', $html );
+	twd_sk_has( 'ABOUT THE PIECE', $html );
 	twd_sk_has( '<h3>History</h3>', $html, 'the description follows under its own heading' );
 	$short = twd_shop_setup( array( 'short_description' => '<p>Short.</p>' ) );
 	twd_sk_true( false === TWD_SK_Shop_Layout::summary_is_long( $short ) );

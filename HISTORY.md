@@ -2,6 +2,17 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 9 Nov 2026: the Shop module, first two pieces
+
+The owner wanted adding and editing products on a WooCommerce shop to be easy, and the site to stay light, without making therapy sites carry anything. Design: `docs/shop-module-design.md`. Decisions made while building:
+
+- **One gate, one folder.** Every site loads one small class; everything else is in `modules/shop/` and loads only when WooCommerce is active and the switch is on. WooCommerce loads after this plugin, so the check runs on `plugins_loaded`. The registry and sanitiser are untouched: product text has no classes, so it is cleaned by the kit sanitiser and then narrowed to a few tags.
+- **The switch lives in WooCommerce's settings,** not the Site tab, because that is where a shop owner looks, and it is only there when WooCommerce is.
+- **A standalone window script,** not built on the main editor script (the design's question 6 said build on it). The main script is one large window with its own life; a separate small script keeps the shop isolated and easier to change.
+- **WooCommerce's own product objects for every write,** and only the fields that changed, so its caches and lookup tables stay right and an untouched tab never rewrites anything. Detail rows are local attributes and sections are h3 headings in the description, so products show properly with the module off.
+- **Versions in the product's own meta (10), with photos from test build 2.** A change made in WooCommerce's screen is kept as a version before Undo, so nothing is lost; an old version with no photo fields leaves the photos alone.
+- **The product page on hooks, never template copies,** with its own tick, so it can be turned off on its own and WooCommerce updates cannot break it. A long short summary becomes a lead near the price and is shown in full lower down, because real shop summaries can run to several screens and push Add to basket out of sight.
+
 ## 4 Nov 2026 (late night): the Your Edits window follows what was clicked, step 2
 
 The owner approved going on after step 1 ("Yes, go on"). The aim: the window should be about the thing clicked, not a permanent pile. Decisions:
