@@ -267,8 +267,11 @@ class TWD_SK_Shop_Layout {
 		return $html;
 	}
 
-	/** A short summary longer than this (in letters) shows as a lead near the price, in full lower down. */
-	const LONG_SUMMARY = 450;
+	/**
+	 * A short summary longer than this (in letters) shows as a lead near the price, in full lower down.
+	 * 700 (0.21.0, was 450): an owner's first paragraph of 300 to 650 letters shows whole beside the photos.
+	 */
+	const LONG_SUMMARY = 700;
 	const LEAD_LENGTH  = 320;
 
 	public static function summary_is_long( $product ) {

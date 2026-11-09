@@ -319,7 +319,8 @@ body.twd-sk-shop-layout .twd-sk-shop-sold {
 	body.twd-sk-shop-layout .twd-sk-shop-piece { grid-template-columns: minmax(0, 1fr); gap: 32px; margin-top: 44px; }
 	body.twd-sk-shop-layout .twd-sk-shop-card { position: static; }
 	body.twd-sk-shop-layout .twd-sk-shop-piece__text,
-	body.twd-sk-shop-layout .twd-sk-shop-fold__body { font-size: 18px !important; }
+	body.twd-sk-shop-layout .twd-sk-shop-fold__body,
+	body.twd-sk-shop-layout.single-product .woocommerce-product-details__short-description { font-size: 18px !important; }
 	body.twd-sk-shop-layout .twd-sk-shop-card__row { grid-template-columns: 7.5em minmax(0, 1fr); }
 }
 

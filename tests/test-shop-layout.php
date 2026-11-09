@@ -109,7 +109,7 @@ twd_sk_test( 'shop layout: the story keeps pictures, the card holds the details 
 } );
 
 twd_sk_test( 'shop layout: a long short summary shows as a lead near the price and in full in the story', function () {
-	$long = '<p>ABOUT THE PIECE</p><p>' . str_repeat( 'A fine and rare piece with its original box and a good story to tell. ', 10 ) . '</p>';
+	$long = '<p>ABOUT THE PIECE</p><p>' . str_repeat( 'A fine and rare piece with its original box and a good story to tell. ', 12 ) . '</p>';
 	$p    = twd_shop_setup( array( 'short_description' => $long, 'description' => '<h2>History</h2><p>Old.</p>' ) );
 	twd_sk_true( TWD_SK_Shop_Layout::summary_is_long( $p ) );
 	$lead = TWD_SK_Shop_Layout::lead( $long );
@@ -121,6 +121,23 @@ twd_sk_test( 'shop layout: a long short summary shows as a lead near the price a
 	twd_sk_has( '<h3>History</h3>', $html, 'the description follows under its own heading' );
 	$short = twd_shop_setup( array( 'short_description' => '<p>Short.</p>' ) );
 	twd_sk_true( false === TWD_SK_Shop_Layout::summary_is_long( $short ) );
+} );
+
+twd_sk_test( 'shop layout: a summary of up to 700 letters shows whole beside the photos; one letter more becomes a lead', function () {
+	twd_sk_eq( 700, TWD_SK_Shop_Layout::LONG_SUMMARY );
+	twd_sk_eq( 320, TWD_SK_Shop_Layout::LEAD_LENGTH );
+	$para = '<p>' . str_repeat( 'a', 700 ) . '</p>';
+	twd_sk_true( false === TWD_SK_Shop_Layout::summary_is_long( twd_shop_setup( array( 'short_description' => $para ) ) ), '700 letters' );
+	twd_sk_true( TWD_SK_Shop_Layout::summary_is_long( twd_shop_setup( array( 'short_description' => '<p>' . str_repeat( 'a', 701 ) . '</p>' ) ) ), '701 letters' );
+	$mid = '<p>' . trim( str_repeat( 'A gold brooch set with garnets, about 1820, in a fitted case. ', 10 ) ) . '</p>';
+	twd_shop_setup( array( 'short_description' => $mid ) );
+	$GLOBALS['product'] = wc_get_product( 42 );
+	ob_start();
+	TWD_SK_Shop_Layout::print_summary();
+	$out = ob_get_clean();
+	$GLOBALS['product'] = null;
+	twd_sk_has( 'in a fitted case.', $out, 'about 620 letters print in full' );
+	twd_sk_hasnt( 'Read the full description', $out );
 } );
 
 twd_sk_test( 'shop layout: the stylesheet stays under its body class, with no web address and no long number', function () {
