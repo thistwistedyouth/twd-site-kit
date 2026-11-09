@@ -3,8 +3,9 @@
  * TWD_SK_Shop: loads the Edit product window for people who can edit products.
  *
  * On a single product page (a draft's preview too) it offers Edit product; on the shop page and a
- * product category page it offers Add a product. Never for visitors, never in wp-admin, the kit's
- * preview frame, Elementor's editor or the customizer. The product's data is fetched when the window
+ * product category page it offers Add a product; on every other page Add a product sits in the
+ * admin bar. Never for visitors, never in wp-admin, the kit's preview frame, Elementor's editor or
+ * the customizer. The product's data is fetched when the window
  * opens, never printed into the page.
  */
 
@@ -46,7 +47,8 @@ class TWD_SK_Shop {
 		if ( $is_cat || ( function_exists( 'is_shop' ) && is_shop() ) ) {
 			return array( 'mode' => 'add', 'product' => 0, 'category' => $is_cat ? (int) get_queried_object_id() : 0 );
 		}
-		return null;
+		// Every other page: Add a product in the admin bar only.
+		return array( 'mode' => 'bar', 'product' => 0, 'category' => 0 );
 	}
 
 	public static function enqueue() {
@@ -57,7 +59,13 @@ class TWD_SK_Shop {
 		$ver  = defined( 'TWD_SK_VERSION' ) ? TWD_SK_VERSION : false;
 		$base = TWD_SK_URL . 'modules/shop/assets/';
 		wp_enqueue_style( self::HANDLE, $base . 'twd-site-kit-shop-editor.css', array(), $ver );
-		wp_register_script( self::HANDLE, $base . 'twd-site-kit-shop-editor.js', array(), $ver, true );
+		$deps = array();
+		if ( 'edit' === $ctx['mode'] && function_exists( 'wp_enqueue_media' ) ) {
+			// WordPress's own media library window, for the Photos tab (product pages only).
+			wp_enqueue_media();
+			$deps[] = 'media-views';
+		}
+		wp_register_script( self::HANDLE, $base . 'twd-site-kit-shop-editor.js', $deps, $ver, true );
 		wp_localize_script( self::HANDLE, 'TWD_SK_SHOP', array(
 			'rest'     => esc_url_raw( rest_url( TWD_SK_REST::ROUTE_NS . '/shop/' ) ),
 			'nonce'    => wp_create_nonce( 'wp_rest' ),

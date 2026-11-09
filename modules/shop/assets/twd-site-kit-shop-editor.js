@@ -308,6 +308,7 @@
 
 	var TABS = [
 		{ key: 'basics', label: 'Basics', build: buildBasics },
+		{ key: 'photos', label: 'Photos', build: buildPhotos },
 		{ key: 'details', label: 'Details', build: buildDetails },
 		{ key: 'story', label: 'Story and condition', build: buildStory }
 	];
@@ -466,6 +467,157 @@
 			more.appendChild(document.createTextNode(' (save here first).'));
 			p.appendChild(more);
 		}
+	}
+
+	// Photos: WordPress's own media library window (choose or upload), the main photo and the gallery in order.
+	function buildPhotos(p) {
+		var photos = data.photos || {};
+		var media = window.wp && window.wp.media;
+		if (!media) {
+			p.appendChild(el('p', 'twd-sk-shop-ed__note', 'The photo picker did not load on this page. Reload the page, or add photos in WooCommerce for now.'));
+			return;
+		}
+		p.appendChild(el('p', 'twd-sk-shop-ed__hint', 'The main photo shows first in the shop and is the picture shared on social media. In the picker you can upload new photos and give each one a short description (Alt Text), which helps search engines and people who use screen readers.'));
+
+		var mainField = el('div', 'twd-sk-shop-ed__field');
+		mainField.appendChild(el('span', 'twd-sk-shop-ed__label', 'Main photo'));
+		var mainBox = el('div', 'twd-sk-shop-ed__photos');
+		mainField.appendChild(mainBox);
+		p.appendChild(mainField);
+
+		var galField = el('div', 'twd-sk-shop-ed__field');
+		galField.appendChild(el('span', 'twd-sk-shop-ed__label', 'More photos, in the order they show'));
+		var galBox = el('div', 'twd-sk-shop-ed__photos');
+		galField.appendChild(galBox);
+		var addBtn = button('Add photos', 'twd-sk-shop-ed__btn--line', addGallery);
+		galField.appendChild(addBtn);
+		p.appendChild(galField);
+
+		function remember(att) {
+			var thumb = att.sizes && att.sizes.thumbnail ? att.sizes.thumbnail.url : att.url;
+			photos[att.id] = { thumb: thumb || '', alt: att.alt || '' };
+		}
+
+		function frame(title, buttonText, multiple) {
+			return media({ title: title, button: { text: buttonText }, library: { type: 'image' }, multiple: multiple });
+		}
+
+		function chooseMain() {
+			var f = frame('Choose the main photo', 'Use this photo', false);
+			f.on('select', function () {
+				var a = f.state().get('selection').first().toJSON();
+				remember(a);
+				var at = draft.gallery.indexOf(a.id);
+				if (at !== -1) {
+					draft.gallery.splice(at, 1);
+				}
+				if (draft.image && draft.image !== a.id && draft.gallery.indexOf(draft.image) === -1) {
+					// The old main photo stays in the gallery, first, so nothing is lost by a change.
+					draft.gallery.unshift(draft.image);
+				}
+				draft.image = a.id;
+				render();
+				changed();
+			});
+			f.open();
+		}
+
+		function addGallery() {
+			var f = frame('Add photos', 'Add these photos', 'add');
+			f.on('select', function () {
+				f.state().get('selection').each(function (m) {
+					var a = m.toJSON();
+					remember(a);
+					if (a.id !== draft.image && draft.gallery.indexOf(a.id) === -1) {
+						draft.gallery.push(a.id);
+					}
+				});
+				if (!draft.image && draft.gallery.length) {
+					draft.image = draft.gallery.shift();
+				}
+				render();
+				changed();
+			});
+			f.open();
+		}
+
+		function tile(id, i) {
+			var t = el('div', 'twd-sk-shop-ed__photo');
+			var info = photos[id] || {};
+			if (info.thumb) {
+				var img = el('img');
+				img.src = info.thumb;
+				img.alt = info.alt || ('Photo ' + id);
+				t.appendChild(img);
+			} else {
+				t.appendChild(el('span', 'twd-sk-shop-ed__nothumb', 'Photo ' + id));
+			}
+			if (!info.alt) {
+				t.appendChild(el('span', 'twd-sk-shop-ed__noalt', 'No description'));
+			}
+			var tools = el('div', 'twd-sk-shop-ed__phototools');
+			if (i === -1) {
+				tools.appendChild(button('Change', 'twd-sk-shop-ed__btn--small', chooseMain));
+				var rm = button('Remove', 'twd-sk-shop-ed__btn--small', function () {
+					draft.image = 0;
+					render();
+					changed();
+				});
+				rm.setAttribute('aria-label', 'Remove the main photo');
+				tools.appendChild(rm);
+			} else {
+				var left = button('Left', 'twd-sk-shop-ed__btn--small', function () {
+					draft.gallery.splice(i - 1, 0, draft.gallery.splice(i, 1)[0]);
+					render();
+					changed();
+				});
+				left.disabled = i === 0;
+				left.setAttribute('aria-label', 'Move photo ' + (i + 1) + ' earlier');
+				var main = button('Main', 'twd-sk-shop-ed__btn--small', function () {
+					var old = draft.image;
+					draft.image = draft.gallery.splice(i, 1)[0];
+					if (old) {
+						draft.gallery.splice(i, 0, old);
+					}
+					render();
+					changed();
+				});
+				main.setAttribute('aria-label', 'Make photo ' + (i + 1) + ' the main photo');
+				var del = button('Remove', 'twd-sk-shop-ed__btn--small', function () {
+					draft.gallery.splice(i, 1);
+					render();
+					changed();
+				});
+				del.setAttribute('aria-label', 'Remove photo ' + (i + 1) + ' from this product');
+				tools.appendChild(left);
+				tools.appendChild(main);
+				tools.appendChild(del);
+			}
+			t.appendChild(tools);
+			return t;
+		}
+
+		function render() {
+			while (mainBox.firstChild) {
+				mainBox.removeChild(mainBox.firstChild);
+			}
+			while (galBox.firstChild) {
+				galBox.removeChild(galBox.firstChild);
+			}
+			if (draft.image) {
+				mainBox.appendChild(tile(draft.image, -1));
+			} else {
+				mainBox.appendChild(button('Choose the main photo', 'twd-sk-shop-ed__btn--line', chooseMain));
+			}
+			draft.gallery.forEach(function (id, i) {
+				galBox.appendChild(tile(id, i));
+			});
+			if (!draft.gallery.length) {
+				galBox.appendChild(el('p', 'twd-sk-shop-ed__hint', 'No more photos yet.'));
+			}
+		}
+		render();
+		p.appendChild(el('p', 'twd-sk-shop-ed__hint', 'Remove takes a photo off this product only. The photo stays in the media library.'));
 	}
 
 	// Details.
@@ -873,23 +1025,28 @@
 
 	// -- Start ----------------------------------------------------------------------------
 
-	function launcher(text, onClick) {
-		var b = el('button', 'twd-sk-shop-launch', text);
-		b.type = 'button';
-		b.addEventListener('click', function () {
-			onClick(b);
-		});
-		document.body.appendChild(b);
+	/* A launcher: a floating button (when floating is true) and an item in the WordPress admin bar.
+	 * Both call onClick with the floating button, or with the admin bar link when there is none. */
+	function launcher(text, key, floating, onClick) {
+		var b = null;
+		if (floating) {
+			b = el('button', 'twd-sk-shop-launch', text);
+			b.type = 'button';
+			b.addEventListener('click', function () {
+				onClick(b);
+			});
+			document.body.appendChild(b);
+		}
 		var bar = document.getElementById('wp-admin-bar-root-default');
 		if (bar) {
 			var li = el('li', '');
-			li.id = 'wp-admin-bar-twd-sk-shop';
+			li.id = 'wp-admin-bar-twd-sk-shop-' + key;
 			var a = el('a', 'ab-item', text);
 			a.href = '#';
 			a.setAttribute('role', 'button');
 			a.addEventListener('click', function (e) {
 				e.preventDefault();
-				onClick(b);
+				onClick(b || a);
 			});
 			li.appendChild(a);
 			bar.appendChild(li);
@@ -897,14 +1054,17 @@
 	}
 
 	if (cfg.mode === 'edit' && cfg.product) {
-		launcher('Edit product', function () {
+		launcher('Edit product', 'edit', true, function () {
 			open();
 		});
+		launcher('Add a product', 'add', false, addProduct);
 		// A new draft opens straight into the window.
 		if (/[?&]twd_sk_shop_open=1/.test(window.location.search)) {
 			open();
 		}
 	} else if (cfg.mode === 'add') {
-		launcher('Add a product', addProduct);
+		launcher('Add a product', 'add', true, addProduct);
+	} else if (cfg.mode === 'bar') {
+		launcher('Add a product', 'add', false, addProduct);
 	}
 }());

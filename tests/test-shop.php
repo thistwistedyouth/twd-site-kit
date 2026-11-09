@@ -24,6 +24,7 @@ class WC_Product_Attribute {
 	public function get_position() { return $this->d['position']; }
 	public function set_visible( $v ) { $this->d['visible'] = $v; }
 	public function set_variation( $v ) { $this->d['variation'] = $v; }
+	public function get_visible() { return $this->d['visible']; }
 	public function is_taxonomy() { return $this->d['id'] > 0; }
 }
 
@@ -36,8 +37,10 @@ class Twd_Fake_Product {
 			'id' => $id, 'type' => 'simple', 'name' => 'Victorian garnet brooch', 'regular_price' => '450', 'sale_price' => '', 'sku' => '',
 			'category_ids' => array(), 'stock_status' => 'instock', 'manage_stock' => false, 'stock_quantity' => null, 'sold_individually' => false,
 			'short_description' => '', 'description' => '', 'attributes' => array(), 'status' => 'publish',
+			'image_id' => 0, 'gallery_image_ids' => array(),
 		);
 	}
+	public function is_on_sale() { return '' !== $this->d['sale_price']; }
 	public function __call( $name, $args ) {
 		if ( 0 === strpos( $name, 'get_' ) ) {
 			return $this->d[ substr( $name, 4 ) ];
@@ -80,6 +83,12 @@ function get_terms( $args ) {
 	}
 	return $out;
 }
+if ( ! function_exists( 'wp_kses_post' ) ) {
+	/** Stand-in: WordPress keeps post-safe tags; here it is enough that scripts go. */
+	function wp_kses_post( $html ) {
+		return preg_replace( '#<script\b[^>]*>.*?</script>#is', '', (string) $html );
+	}
+}
 function wc_attribute_label( $name ) {
 	return 'pa_metal' === $name ? 'Metal' : $name;
 }
@@ -107,6 +116,8 @@ function twd_shop_input( $over = array() ) {
 		'details'  => array(),
 		'summary'  => '',
 		'sections' => array(),
+		'image'    => 0,
+		'gallery'  => array(),
 	);
 }
 

@@ -24,6 +24,7 @@ class TWD_SK_Shop_Product {
 	const MAX_VALUE   = 200;
 	const MAX_TICKS   = 4;
 	const MAX_CATS    = 10;
+	const MAX_PHOTOS  = 30;
 	const NEW_TITLE   = '[PLACEHOLDER: name of the piece]';
 
 	/** Labels offered in the Details tab (any other label may be typed). */
@@ -76,7 +77,32 @@ class TWD_SK_Shop_Product {
 			'details'  => $details,
 			'summary'  => TWD_SK_Shop_Text::clean_summary( (string) $product->get_short_description() ),
 			'sections' => TWD_SK_Shop_Text::split( (string) $product->get_description() ),
+			// Photos (test build 2): the main photo and the gallery, as media library numbers.
+			'image'    => (int) $product->get_image_id(),
+			'gallery'  => array_values( array_map( 'intval', (array) $product->get_gallery_image_ids() ) ),
 		);
+	}
+
+	/** What the window shows for each photo: a small picture and its description (alt text). */
+	public static function photos( $fields ) {
+		$ids = array_merge( array( (int) $fields['image'] ), (array) $fields['gallery'] );
+		$out = array();
+		foreach ( $ids as $pid ) {
+			$pid = (int) $pid;
+			if ( $pid <= 0 || isset( $out[ $pid ] ) ) {
+				continue;
+			}
+			$thumb       = function_exists( 'wp_get_attachment_image_url' ) ? (string) wp_get_attachment_image_url( $pid, 'thumbnail' ) : '';
+			$alt         = get_post_meta( $pid, '_wp_attachment_image_alt', true );
+			$out[ $pid ] = array( 'thumb' => $thumb, 'alt' => is_string( $alt ) ? $alt : '' );
+		}
+		return (object) $out;
+	}
+
+	/** A media library picture number, or 0. */
+	private static function picture_id( $value ) {
+		$id = ( is_int( $value ) || ( is_string( $value ) && ctype_digit( $value ) ) ) ? (int) $value : 0;
+		return ( $id > 0 && function_exists( 'wp_attachment_is_image' ) && wp_attachment_is_image( $id ) ) ? $id : 0;
 	}
 
 	public static function fingerprint( $fields ) {
@@ -131,6 +157,8 @@ class TWD_SK_Shop_Product {
 			'categories'  => self::categories(),
 			'suggested'   => self::suggested_labels(),
 			'markers'     => TWD_SK_Shop_Text::markers( $fields ),
+			'photos'      => self::photos( $fields ),
+			'can_upload'  => current_user_can( 'upload_files' ),
 			'base'        => self::fingerprint( $fields ),
 			'versions'    => TWD_SK_Shop_History::summary( (int) $id ),
 			'can_undo'    => null !== TWD_SK_Shop_History::undo_target( (int) $id, $fields ),
@@ -302,6 +330,29 @@ class TWD_SK_Shop_Product {
 		}
 		$f['sections'] = $sections;
 
+		// Photos: pictures in the media library only; the main photo is never repeated in the gallery.
+		// A photo the product already has is kept as it is, even if the media library cannot vouch for it.
+		$had = array_merge( array( (int) $product->get_image_id() ), array_map( 'intval', (array) $product->get_gallery_image_ids() ) );
+		$pick = function ( $value ) use ( $had ) {
+			$id = ( is_int( $value ) || ( is_string( $value ) && ctype_digit( $value ) ) ) ? (int) $value : 0;
+			return ( $id > 0 && in_array( $id, $had, true ) ) ? $id : self::picture_id( $value );
+		};
+		$f['image'] = $pick( isset( $in['image'] ) ? $in['image'] : 0 );
+		if ( ! empty( $in['image'] ) && 0 === $f['image'] ) {
+			$errors[] = 'The main photo must be a picture in the media library.';
+		}
+		$gallery = array();
+		foreach ( isset( $in['gallery'] ) && is_array( $in['gallery'] ) ? $in['gallery'] : array() as $g ) {
+			$g = $pick( $g );
+			if ( $g > 0 && $g !== $f['image'] && ! in_array( $g, $gallery, true ) ) {
+				$gallery[] = $g;
+			}
+		}
+		if ( count( $gallery ) > self::MAX_PHOTOS ) {
+			$errors[] = 'A product can have ' . self::MAX_PHOTOS . ' gallery photos at most.';
+		}
+		$f['gallery'] = $gallery;
+
 		if ( $errors ) {
 			return new WP_Error( 'twd_sk_shop_invalid', implode( ' ', $errors ), array( 'status' => 422, 'errors' => $errors ) );
 		}
@@ -355,6 +406,13 @@ class TWD_SK_Shop_Product {
 			}
 			if ( $new['sections'] !== $old['sections'] ) {
 				$product->set_description( TWD_SK_Shop_Text::join( $new['sections'] ) );
+			}
+			// A version kept before photos were part of the window has no photo fields: photos are then left alone.
+			if ( array_key_exists( 'image', $new ) && ( ! isset( $old['image'] ) || $new['image'] !== $old['image'] ) ) {
+				$product->set_image_id( (int) $new['image'] );
+			}
+			if ( array_key_exists( 'gallery', $new ) && ( ! isset( $old['gallery'] ) || $new['gallery'] !== $old['gallery'] ) ) {
+				$product->set_gallery_image_ids( array_map( 'intval', (array) $new['gallery'] ) );
 			}
 			$product->save();
 		} catch ( Exception $e ) {

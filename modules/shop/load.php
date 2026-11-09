@@ -13,11 +13,13 @@ require_once __DIR__ . '/includes/class-twd-sk-shop-product.php';
 require_once __DIR__ . '/includes/class-twd-sk-shop-history.php';
 require_once __DIR__ . '/includes/class-twd-sk-shop-rest.php';
 require_once __DIR__ . '/includes/class-twd-sk-shop.php';
+require_once __DIR__ . '/includes/class-twd-sk-shop-layout.php';
 
 class TWD_SK_Shop_Loader {
 
 	public static function init() {
 		TWD_SK_Shop::init();
 		TWD_SK_Shop_Rest::init();
+		TWD_SK_Shop_Layout::init();
 	}
 }

@@ -251,6 +251,29 @@ class TWD_SK_Shop_Text {
 		return $out;
 	}
 
+	/**
+	 * The description as sections for SHOWING (the product page): the same cut as split(), but each part
+	 * is left exactly as written, pictures, embeds and shortcodes included, for WordPress to format.
+	 */
+	public static function split_raw( $description ) {
+		$description = is_string( $description ) ? $description : '';
+		$parts       = preg_split( '#<h([23])\b[^>]*>(.*?)</h\1\s*>#is', $description, -1, PREG_SPLIT_DELIM_CAPTURE );
+		$out         = array();
+		$intro       = isset( $parts[0] ) ? trim( (string) $parts[0] ) : '';
+		if ( '' !== $intro && ( '' !== trim( wp_strip_all_tags( $intro ) ) || preg_match( '#<(img|iframe|video)\b|\[#i', $intro ) ) ) {
+			$out[] = array( 'heading' => self::FIRST, 'html' => $intro );
+		}
+		for ( $i = 1; $i + 1 < count( $parts ); $i += 3 ) {
+			$heading = self::plain( (string) $parts[ $i + 1 ], self::MAX_HEADING );
+			$body    = isset( $parts[ $i + 2 ] ) ? trim( (string) $parts[ $i + 2 ] ) : '';
+			if ( '' === $heading && '' === $body ) {
+				continue;
+			}
+			$out[] = array( 'heading' => '' !== $heading ? $heading : 'More about this piece', 'html' => $body );
+		}
+		return $out;
+	}
+
 	/** Sections back into one description. A section with no words is left out. */
 	public static function join( $sections ) {
 		$html = array();
