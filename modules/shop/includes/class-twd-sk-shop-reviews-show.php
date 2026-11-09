@@ -174,7 +174,10 @@ class TWD_SK_Shop_Reviews_Show {
 			: self::stars_html( $r['stars'] );
 		$out      .= '<blockquote class="twd-sk-reviews__text">' . self::words_html( $r['text'] ) . '</blockquote>';
 		$out      .= '<figcaption class="twd-sk-reviews__by"><span class="twd-sk-reviews__name">' . esc_html( TWD_SK_Shop_Reviews::shown_name( $r['name'] ) ) . '</span>';
-		$out      .= '<span class="twd-sk-reviews__when">' . esc_html( TWD_SK_Shop_Reviews::month_label( $r['month'] ) ) . '</span>';
+		$when      = TWD_SK_Shop_Reviews::month_label( $r['month'] );
+		if ( '' !== $when ) {
+			$out .= '<span class="twd-sk-reviews__when">' . esc_html( $when ) . '</span>';
+		}
 		if ( '' !== $label ) {
 			$out .= '<span class="twd-sk-reviews__platform">' . esc_html( $label ) . '</span>';
 		}

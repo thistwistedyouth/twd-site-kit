@@ -312,5 +312,10 @@ A shop that sells on Etsy and eBay as well often has hundreds of reviews there. 
 - Only star reviews and positive feedback are used for the strip, the single review and favourites. The wall shows every visible review as rated. The summary line stays owner-typed.
 - The Date column also takes a year on its own (`2026`), kept and shown as the year. It sorts after that year's dated reviews and before the year before. "Past year" itself is not read: whoever fills the file writes the year. A date that says `TO CONFIRM` is refused with that reason, so the owner can fill it in.
 
+**Undated reviews (0.21.0-test5).** Much older eBay feedback says only "Past year" or "More than a year ago", so nobody can give its year without guessing.
+- The Date column takes `Undated` (any case): kept with an empty month and `_twd_sk_rv_undated` = `yes`, shown with no date, sorted after every dated review. A blank date and `TO CONFIRM` are still refused, so a slip is still caught.
+- Undated reviews can be favourites and appear in the strip and the single review like dated ones.
+- **Filling the date in later:** the import also matches on platform, name and text alone. A dated row that matches an undated review fills in that review's date (nothing else changes, the Favourite and Hidden ticks stay) instead of adding a second one; the report says "Date filled in". An undated row that matches any kept review is "already there". Dated reviews keep the old rule: the same words with a different month are a different review.
+
 **Settings** (WooCommerce > Settings > Products > Site Kit shop tools, added by the module, so they show only while it is on): Reviews page, Names, Show a review on product pages, Etsy total and link, eBay total and link, Words before "reviews".
 

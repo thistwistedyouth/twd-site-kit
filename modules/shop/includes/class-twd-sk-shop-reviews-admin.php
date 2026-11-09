@@ -108,7 +108,7 @@ class TWD_SK_Shop_Reviews_Admin {
 		echo '<div class="wrap"><h1>Import reviews</h1>';
 		echo '<p>Reviews from Etsy, eBay or elsewhere, from a spreadsheet saved as CSV. Columns: <code>' . esc_html( implode( ', ', TWD_SK_Shop_Reviews_Import::columns() ) ) . '</code>, in any order. Name, Date, Stars and Review are needed in every row; the words are kept exactly as written. A review already saved is never added twice, so the same file can be imported again safely.</p>';
 		echo '<p><a class="button" href="' . esc_url( self::template_url() ) . '">Download the blank template</a></p>';
-		echo '<p>Dates: 2025-03, 14/03/2025 (day first), March 2025 or Mar 14, 2025 all work; only the month and year are kept. Stars: a whole number from 1 to 5, or for eBay feedback the word Positive, Neutral or Negative. A year on its own (2026) is fine when that is all the platform shows.</p>';
+		echo '<p>Dates: 2025-03, 14/03/2025 (day first), March 2025 or Mar 14, 2025 all work; only the month and year are kept. Stars: a whole number from 1 to 5, or for eBay feedback the word Positive, Neutral or Negative. A year on its own (2026) is fine when that is all the platform shows, and Undated when it shows no date at all; a later file with the date fills it in.</p>';
 		echo '<form method="post" enctype="multipart/form-data">';
 		wp_nonce_field( self::NONCE );
 		echo '<p><label>CSV file <input type="file" name="twd_sk_reviews_csv" accept=".csv,text/csv"></label></p>';
@@ -132,8 +132,8 @@ class TWD_SK_Shop_Reviews_Admin {
 		$c    = $result['counts'];
 		$dry  = ! empty( $result['dry'] );
 		$head = $dry
-			? 'Checked, nothing saved: ' . $c['added'] . ' ready to add, ' . $c['there'] . ' already there, ' . $c['refused'] . ' refused.'
-			: 'Imported: ' . $c['added'] . ' added, ' . $c['there'] . ' already there, ' . $c['refused'] . ' refused.';
+			? 'Checked, nothing saved: ' . $c['added'] . ' ready to add, ' . $c['updated'] . ' dates ready to fill in, ' . $c['there'] . ' already there, ' . $c['refused'] . ' refused.'
+			: 'Imported: ' . $c['added'] . ' added, ' . $c['updated'] . ' dates filled in, ' . $c['there'] . ' already there, ' . $c['refused'] . ' refused.';
 		$out  = '<div class="notice ' . ( $c['refused'] ? 'notice-warning' : 'notice-success' ) . '"><p>' . esc_html( $head ) . '</p></div>';
 		$out .= '<table class="widefat striped"><thead><tr><th>Row</th><th>Name</th><th>Result</th></tr></thead><tbody>';
 		foreach ( $result['rows'] as $r ) {
@@ -159,7 +159,7 @@ class TWD_SK_Shop_Reviews_Admin {
 		}
 		echo '</select></td></tr>';
 		echo '<tr><th><label for="twd-sk-rv-name">Name</label></th><td><input id="twd-sk-rv-name" class="regular-text" name="twd_sk_rv[name]" value="' . esc_attr( $r['name'] ) . '" maxlength="' . (int) TWD_SK_Shop_Reviews::MAX_NAME . '"></td></tr>';
-		echo '<tr><th><label for="twd-sk-rv-date">Month and year</label></th><td><input id="twd-sk-rv-date" name="twd_sk_rv[date]" value="' . esc_attr( TWD_SK_Shop_Reviews::month_label( $r['month'] ) ) . '" placeholder="March 2025"><p class="description">Or a year on its own, for example 2026.</p></td></tr>';
+		echo '<tr><th><label for="twd-sk-rv-date">Month and year</label></th><td><input id="twd-sk-rv-date" name="twd_sk_rv[date]" value="' . esc_attr( ! empty( $r['undated'] ) ? 'Undated' : TWD_SK_Shop_Reviews::month_label( $r['month'] ) ) . '" placeholder="March 2025"><p class="description">Or a year on its own (2026), or Undated when the platform gives no date and nobody can say.</p></td></tr>';
 		echo '<tr><th><label for="twd-sk-rv-stars">Stars or rating</label></th><td><select id="twd-sk-rv-stars" name="twd_sk_rv[stars]">';
 		for ( $i = 5; $i >= 1; $i-- ) {
 			echo '<option value="' . (int) $i . '"' . selected( '' === $r['rating'] ? (int) $r['stars'] : 0, $i, false ) . '>' . (int) $i . ' stars</option>';
@@ -264,7 +264,7 @@ class TWD_SK_Shop_Reviews_Admin {
 				echo '' !== $r['rating'] ? esc_html( TWD_SK_Shop_Reviews::ratings()[ $r['rating'] ] ) : (int) $r['stars'];
 				break;
 			case 'twd_sk_rv_month':
-				echo esc_html( TWD_SK_Shop_Reviews::month_label( $r['month'] ) );
+				echo esc_html( $r['undated'] ? 'Undated' : TWD_SK_Shop_Reviews::month_label( $r['month'] ) );
 				break;
 			case 'twd_sk_rv_text':
 				$t = preg_replace( '/\s+/u', ' ', $r['text'] );

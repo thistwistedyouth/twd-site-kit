@@ -86,7 +86,7 @@ twd_sk_test( 'shop reviews import: the template reads back; headings in any orde
 		',,,,,,',
 	) );
 	$check = TWD_SK_Shop_Reviews_Import::run( $csv, true );
-	twd_sk_eq( array( 'added' => 3, 'there' => 1, 'refused' => 3 ), $check['counts'] );
+	twd_sk_eq( array( 'added' => 3, 'updated' => 0, 'there' => 1, 'refused' => 3 ), $check['counts'] );
 	twd_sk_eq( array(), TWD_SK_Shop_Reviews::all(), 'Check saves nothing' );
 	twd_sk_eq( 'ready', $check['rows'][0][1] );
 	twd_sk_eq( 4, $check['rows'][2][0], 'row numbers match the spreadsheet, counting the header and the two-line cell' );
@@ -105,10 +105,10 @@ twd_sk_test( 'shop reviews import: the template reads back; headings in any orde
 	twd_sk_eq( "Two\n\nparagraphs", $bob['text'], 'verbatim, line breaks kept' );
 	twd_sk_eq( 'ebay', $bob['platform'] );
 	$again = TWD_SK_Shop_Reviews_Import::run( $csv, false );
-	twd_sk_eq( array( 'added' => 0, 'there' => 4, 'refused' => 3 ), $again['counts'], 'importing again adds nothing' );
+	twd_sk_eq( array( 'added' => 0, 'updated' => 0, 'there' => 4, 'refused' => 3 ), $again['counts'], 'importing again adds nothing' );
 	twd_sk_eq( 3, count( TWD_SK_Shop_Reviews::all() ) );
 	$html = TWD_SK_Shop_Reviews_Admin::report_html( $again );
-	twd_sk_has( 'Imported: 0 added, 4 already there, 3 refused.', $html );
+	twd_sk_has( 'Imported: 0 added, 0 dates filled in, 4 already there, 3 refused.', $html );
 } );
 
 twd_sk_test( 'shop reviews import: missing columns are named; other common headings and a platform for the whole file', function () {

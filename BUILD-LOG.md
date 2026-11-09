@@ -5,6 +5,13 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
+## 9 Nov 2026: Shop reviews, undated feedback (branch shop-uk-only, NOT merged or released; test build 0.21.0-test5)
+
+- **Asked for (via the restyle session):** about 65 of a shop's older eBay reviews are dated only "Past year" or "More than a year ago", so their year cannot be given without guessing.
+- **Undated:** the Date column takes `Undated` (any case), kept as an empty month with `_twd_sk_rv_undated`, shown with no date, sorted after all dated reviews. Blank and TO CONFIRM still refused. Undated reviews can be favourites, in the strip and the single review.
+- **Re-import fills the date:** a dated row with the same platform, name and text as an undated review fills in its date (`TWD_SK_Shop_Reviews::fill_date()`, nothing else changes) instead of adding a second review; Check shows "ready to fill in". An undated row matching any kept review is already there. The dated duplicate rule is unchanged. The report gains "dates filled in".
+- Tests: `tests/test-shop-reviews-undated.php` (4); count checks in the earlier review tests gained `updated`. Suite 1212 passed on an LF copy.
+
 ## 9 Nov 2026: Shop reviews, eBay feedback (branch shop-uk-only, NOT merged or released; test build 0.21.0-test4)
 
 - **Asked for (via the restyle session, the owner wants eBay reviews too):** eBay feedback is rated Positive, Neutral or Negative with no stars, and dated only "past year", so test3's import refused every row.

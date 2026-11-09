@@ -52,7 +52,7 @@ twd_sk_test( 'shop reviews ebay: a feedback file imports with a report; TO CONFI
 		'eBay,e***f,2026,Neutral,Slow post.,Brooch,https://example.test/fb',
 	) );
 	$r = TWD_SK_Shop_Reviews_Import::run( $csv, false );
-	twd_sk_eq( array( 'added' => 2, 'there' => 0, 'refused' => 1 ), $r['counts'] );
+	twd_sk_eq( array( 'added' => 2, 'updated' => 0, 'there' => 0, 'refused' => 1 ), $r['counts'] );
 	twd_sk_eq( 3, $r['rows'][1][0] );
 	twd_sk_has( 'TO CONFIRM', $r['rows'][1][3] );
 	twd_sk_eq( 0, TWD_SK_Shop_Reviews_Import::run( $csv, false )['counts']['added'], 'importing again adds nothing' );

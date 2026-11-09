@@ -30,7 +30,7 @@ class TWD_SK_Shop_Reviews {
 
 	/** The fields kept for each review, in meta as _twd_sk_rv_<field>. */
 	public static function fields() {
-		return array( 'platform', 'name', 'month', 'stars', 'rating', 'text', 'item', 'link', 'fav', 'hidden', 'key' );
+		return array( 'platform', 'name', 'month', 'undated', 'stars', 'rating', 'text', 'item', 'link', 'fav', 'hidden', 'key' );
 	}
 
 	public static function init() {
@@ -221,6 +221,19 @@ class TWD_SK_Shop_Reviews {
 	}
 
 	/**
+	 * The same review whatever its date: platform, name and text. Used only to find an undated
+	 * review when a later file gives it a date (0.21.0-test5).
+	 */
+	public static function loose_key( $platform, $name, $text ) {
+		return self::key( $platform, $name, 'any date', $text );
+	}
+
+	/** True for the date word that means "the platform gives no date and nobody can say". */
+	public static function is_undated_word( $value ) {
+		return 'undated' === strtolower( trim( (string) $value ) );
+	}
+
+	/**
 	 * Check one review given as words (platform, name, date, stars, text, item, link, fav, hidden).
 	 * Returns array( 'review' => fields, 'notes' => list ) or array( 'error' => one plain sentence ).
 	 */
@@ -236,9 +249,12 @@ class TWD_SK_Shop_Reviews {
 		if ( '' === $name ) {
 			$problems[] = 'no name';
 		}
-		$month = self::month( $get( 'date' ) );
-		if ( '' === trim( $get( 'date' ) ) ) {
-			$problems[] = 'no date';
+		$undated = self::is_undated_word( $get( 'date' ) );
+		$month   = $undated ? '' : self::month( $get( 'date' ) );
+		if ( $undated ) {
+			// Kept with no date, shown with none, sorted after every dated review.
+		} elseif ( '' === trim( $get( 'date' ) ) ) {
+			$problems[] = 'no date (write Undated when the platform gives none)';
 		} elseif ( false !== stripos( $get( 'date' ), 'TO CONFIRM' ) ) {
 			$problems[] = 'the date says TO CONFIRM, so the owner needs to fill it in first (a year such as 2026 is enough)';
 		} elseif ( '' === $month ) {
@@ -278,6 +294,7 @@ class TWD_SK_Shop_Reviews {
 				'platform' => $platform,
 				'name'     => $name,
 				'month'    => $month,
+				'undated'  => $undated,
 				'stars'    => $stars,
 				'rating'   => $rating,
 				'text'     => $text,
@@ -305,7 +322,7 @@ class TWD_SK_Shop_Reviews {
 		}
 		foreach ( self::fields() as $f ) {
 			$v = $review[ $f ];
-			if ( 'fav' === $f || 'hidden' === $f ) {
+			if ( 'fav' === $f || 'hidden' === $f || 'undated' === $f ) {
 				if ( $v ) {
 					update_post_meta( $id, self::META . $f, 'yes' );
 				} else {
@@ -334,12 +351,45 @@ class TWD_SK_Shop_Reviews {
 		if ( '' === $r['rating'] && ( $r['stars'] < 1 || $r['stars'] > 5 ) ) {
 			return null;
 		}
-		$r['fav']    = 'yes' === $r['fav'];
-		$r['hidden'] = 'yes' === $r['hidden'];
+		$r['fav']     = 'yes' === $r['fav'];
+		$r['hidden']  = 'yes' === $r['hidden'];
+		$r['undated'] = 'yes' === $r['undated'];
 		return $r;
 	}
 
-	/** Every saved review (published only), newest month first. */
+	/** Give an undated review the date a later file found for it. Nothing else changes. */
+	public static function fill_date( $id, $month ) {
+		$r = self::read( $id );
+		if ( ! $r || ! $r['undated'] || '' === (string) $month ) {
+			return false;
+		}
+		update_post_meta( (int) $id, self::META . 'month', (string) $month );
+		delete_post_meta( (int) $id, self::META . 'undated' );
+		update_post_meta( (int) $id, self::META . 'key', self::key( $r['platform'], $r['name'], (string) $month, $r['text'] ) );
+		return true;
+	}
+
+	/**
+	 * Every saved review by its loose key: array( 'undated' => id of an undated one or 0,
+	 * 'dated' => true when a dated one exists ).
+	 */
+	public static function loose_index() {
+		$out = array();
+		foreach ( self::all() as $r ) {
+			$k = self::loose_key( $r['platform'], $r['name'], $r['text'] );
+			if ( ! isset( $out[ $k ] ) ) {
+				$out[ $k ] = array( 'undated' => 0, 'dated' => false );
+			}
+			if ( $r['undated'] ) {
+				$out[ $k ]['undated'] = $out[ $k ]['undated'] ? $out[ $k ]['undated'] : $r['id'];
+			} else {
+				$out[ $k ]['dated'] = true;
+			}
+		}
+		return $out;
+	}
+
+	/** Every saved review (published only), newest month first; undated ones last ('' sorts last). */
 	public static function all() {
 		if ( ! function_exists( 'get_posts' ) ) {
 			return array();

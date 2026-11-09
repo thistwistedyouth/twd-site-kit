@@ -124,8 +124,9 @@ class TWD_SK_Shop_Reviews_Import {
 	/**
 	 * Check (and unless $dry, save) every row. $platform is used for rows with no platform of
 	 * their own ('' leaves them as Other). Returns array( 'error' ) or a report:
-	 * array( 'counts' => array( added, there, refused ), 'rows' => list of array( row, status, name, words ) ).
-	 * Status: added (or ready, when only checking), there, refused.
+	 * array( 'counts' => array( added, updated, there, refused ), 'rows' => list of array( row, status, name, words ) ).
+	 * Status: added (or ready, when only checking), updated (an undated review given its date;
+	 * ready-date when only checking), there, refused.
 	 */
 	public static function run( $csv, $dry = true, $platform = '' ) {
 		$parsed = self::parse( $csv );
@@ -133,7 +134,8 @@ class TWD_SK_Shop_Reviews_Import {
 			return $parsed;
 		}
 		$known  = TWD_SK_Shop_Reviews::keys();
-		$counts = array( 'added' => 0, 'there' => 0, 'refused' => 0 );
+		$loose  = TWD_SK_Shop_Reviews::loose_index();
+		$counts = array( 'added' => 0, 'updated' => 0, 'there' => 0, 'refused' => 0 );
 		$report = array();
 		foreach ( $parsed['rows'] as $row ) {
 			list( $n, $fields ) = $row;
@@ -147,12 +149,26 @@ class TWD_SK_Shop_Reviews_Import {
 				$report[] = array( $n, 'refused', $name, $checked['error'] );
 				continue;
 			}
-			$r = $checked['review'];
-			if ( isset( $known[ $r['key'] ] ) ) {
+			$r  = $checked['review'];
+			$lk = TWD_SK_Shop_Reviews::loose_key( $r['platform'], $r['name'], $r['text'] );
+			if ( isset( $known[ $r['key'] ] ) || ( $r['undated'] && isset( $loose[ $lk ] ) ) ) {
 				$counts['there']++;
 				$report[] = array( $n, 'there', $name, 'Already there, so skipped.' );
 				continue;
 			}
+			if ( ! $r['undated'] && ! empty( $loose[ $lk ]['undated'] ) ) {
+				// The same review was kept undated: a later file found its date, so fill it in.
+				$id = (int) $loose[ $lk ]['undated'];
+				$counts['updated']++;
+				if ( ! $dry ) {
+					TWD_SK_Shop_Reviews::fill_date( $id, $r['month'] );
+				}
+				$loose[ $lk ]          = array( 'undated' => 0, 'dated' => true );
+				$known[ $r['key'] ]    = $id;
+				$report[] = array( $n, $dry ? 'ready-date' : 'updated', $name, ( $dry ? 'Ready to fill in the date on the undated review already kept: ' : 'Date filled in on the undated review already kept: ' ) . TWD_SK_Shop_Reviews::month_label( $r['month'] ) . '.' );
+				continue;
+			}
+			$loose[ $lk ] = $r['undated'] ? array( 'undated' => -1, 'dated' => false ) : array( 'undated' => 0, 'dated' => true );
 			$words = implode( ' ', $checked['notes'] );
 			if ( $dry ) {
 				$known[ $r['key'] ] = 0;
@@ -167,6 +183,9 @@ class TWD_SK_Shop_Reviews_Import {
 				continue;
 			}
 			$known[ $r['key'] ] = $id;
+			if ( $r['undated'] ) {
+				$loose[ $lk ]['undated'] = $id;
+			}
 			$counts['added']++;
 			$report[] = array( $n, 'added', $name, trim( 'Added. ' . $words ) );
 		}
