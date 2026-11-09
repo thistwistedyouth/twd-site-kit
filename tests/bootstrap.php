@@ -25,6 +25,32 @@ class WP_Error {
 	public function get_error_data() {
 		return $this->data;
 	}
+	// 0.21.0: enough of WordPress's collecting errors for WooCommerce's checkout checks.
+	private $more = array();
+	public function add( $code, $message, $data = '' ) {
+		if ( '' === $this->code ) {
+			$this->code    = $code;
+			$this->message = $message;
+			$this->data    = $data;
+			return;
+		}
+		$this->more[] = array( $code, $message );
+	}
+	public function has_errors() {
+		return '' !== $this->code;
+	}
+	public function get_error_codes() {
+		if ( '' === $this->code ) {
+			return array();
+		}
+		$codes = array( $this->code );
+		foreach ( $this->more as $m ) {
+			if ( ! in_array( $m[0], $codes, true ) ) {
+				$codes[] = $m[0];
+			}
+		}
+		return $codes;
+	}
 }
 
 function is_wp_error( $thing ) {
@@ -94,6 +120,10 @@ function get_post_meta( $id, $key, $single = false ) {
 	}
 	$value = unserialize( $GLOBALS['twd_stub']['meta'][ $id ][ $key ] );
 	return $single ? $value : array( $value );
+}
+function delete_post_meta( $id, $key ) {
+	unset( $GLOBALS['twd_stub']['meta'][ $id ][ $key ] );
+	return true;
 }
 /** Pages (or any post) with a given meta key and value. Only the arguments the plugin uses. */
 function get_posts( $args = array() ) {

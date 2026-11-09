@@ -427,6 +427,26 @@
 		state.appendChild(el('p', 'twd-sk-shop-ed__hint', 'A one-off piece: when someone buys it, it is marked sold by itself.'));
 		p.appendChild(state);
 
+		// UK delivery only: kept in the product only when ticked.
+		var ukField = el('div', 'twd-sk-shop-ed__field');
+		var ukLabel = el('label', 'twd-sk-shop-ed__check');
+		var uk = el('input');
+		uk.type = 'checkbox';
+		uk.checked = !!draft.uk_only;
+		uk.addEventListener('change', function () {
+			if (uk.checked) {
+				draft.uk_only = true;
+			} else {
+				delete draft.uk_only;
+			}
+			changed();
+		});
+		ukLabel.appendChild(uk);
+		ukLabel.appendChild(document.createTextNode(' UK delivery only'));
+		ukField.appendChild(ukLabel);
+		ukField.appendChild(el('p', 'twd-sk-shop-ed__hint', 'For a piece that must not be sent abroad. The page says "UK delivery only" and the checkout refuses an address outside the UK.'));
+		p.appendChild(ukField);
+
 		// Categories.
 		var cats = el('fieldset', 'twd-sk-shop-ed__cats');
 		cats.appendChild(el('legend', 'twd-sk-shop-ed__label', 'Categories'));

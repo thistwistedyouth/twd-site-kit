@@ -5,6 +5,14 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
+## 9 Nov 2026: Shop module, UK delivery only and short grid titles (branch shop-uk-only, NOT merged or released; test build 0.21.0-test1)
+
+- **Asked for (via the session restyling a shop, the owner said yes to building it):** a shop is importing one-off pieces with titles of 80 to 140 letters, and some pieces may not be sent abroad.
+- **Grid titles:** at most three lines then "...", by `-webkit-line-clamp` and `line-clamp` on `.woocommerce-loop-product__title` under `body.twd-sk-shop-layout` (layout tick only). The full title stays in the page, so screen readers and the product page are unchanged.
+- **UK delivery only** (`TWD_SK_Shop_Uk`, `modules/shop/includes/class-twd-sk-shop-uk.php`): a tick in the Edit product window's Basics tab, stored as product meta `_twd_sk_shop_uk_only` = `yes`. The field `uk_only` is in the window's fields only when ticked, so products without it keep their fingerprint and versions; Undo and Restore cover it (a version without the key clears it). When ticked: "UK delivery only" under the price (priority 11, not on a sold piece, with or without the layout tick); a note naming the piece on the classic cart and checkout pages; the checkout refuses a delivery country other than GB, naming the piece, through `woocommerce_after_checkout_validation` (classic) and `woocommerce_store_api_cart_errors` (block checkout, where the customer's address is set from the form before the cart is checked). No country yet means no refusal. Each check asks `TWD_SK_Shop_Gate::on()` again, and the hooks are added only by the module loader.
+- **Not covered:** Isle of Man, Jersey and Guernsey are separate countries in WooCommerce, so they are refused too. Local pickup is not treated differently.
+- Tests: `tests/test-shop-uk.php` (6); the test WP_Error stub gained `add`, `has_errors`, `get_error_codes`, and a `delete_post_meta` stub. Suite 1190 passed on an LF copy.
+
 ## 9 Nov 2026: RELEASE 0.20.0, the Shop module (pushed to main at the owner's yes; built from test builds 0.20.0-test1 and -test2, both reported working on one shop)
 
 - 0.19.1 plus the optional Shop module (the two entries below). Version, readme changelog, zip and update JSON built on an LF copy, checksum verified. Sites are offered it in Plugins; update one site first.

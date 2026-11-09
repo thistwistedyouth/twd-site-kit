@@ -17,6 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class TWD_SK_Shop_Product {
 
 	const LABELS_META = '_twd_sk_shop_labels';
+	const UK_META     = '_twd_sk_shop_uk_only';
 	const MAX_TITLE   = 120;
 	const MAX_SKU     = 60;
 	const MAX_ROWS    = 20;
@@ -67,7 +68,7 @@ class TWD_SK_Shop_Product {
 		}
 		$cats = array_map( 'intval', (array) $product->get_category_ids() );
 		sort( $cats );
-		return array(
+		$out  = array(
 			'title'    => TWD_SK_Shop_Text::plain( (string) $product->get_name(), self::MAX_TITLE ),
 			'price'    => (string) $product->get_regular_price(),
 			'sale'     => (string) $product->get_sale_price(),
@@ -81,6 +82,17 @@ class TWD_SK_Shop_Product {
 			'image'    => (int) $product->get_image_id(),
 			'gallery'  => array_values( array_map( 'intval', (array) $product->get_gallery_image_ids() ) ),
 		);
+		// UK delivery only (0.21.0): present only when ticked, so a product without it keeps the
+		// fingerprint and versions it had before the tick existed.
+		if ( self::uk_only( $id ) ) {
+			$out['uk_only'] = true;
+		}
+		return $out;
+	}
+
+	/** True when the piece may only be delivered to a UK address. */
+	public static function uk_only( $id ) {
+		return 'yes' === get_post_meta( (int) $id, self::UK_META, true );
 	}
 
 	/** What the window shows for each photo: a small picture and its description (alt text). */
@@ -353,6 +365,10 @@ class TWD_SK_Shop_Product {
 		}
 		$f['gallery'] = $gallery;
 
+		if ( ! empty( $in['uk_only'] ) && 'false' !== $in['uk_only'] && '0' !== $in['uk_only'] ) {
+			$f['uk_only'] = true;
+		}
+
 		if ( $errors ) {
 			return new WP_Error( 'twd_sk_shop_invalid', implode( ' ', $errors ), array( 'status' => 422, 'errors' => $errors ) );
 		}
@@ -431,6 +447,15 @@ class TWD_SK_Shop_Product {
 		$had = get_post_meta( $id, self::LABELS_META, true );
 		if ( ( is_array( $had ) ? $had : array() ) !== $ticks ) {
 			update_post_meta( $id, self::LABELS_META, wp_slash( $ticks ) );
+		}
+		// A missing key means not ticked, so Undo to a version from before the tick clears it.
+		$uk = ! empty( $new['uk_only'] );
+		if ( $uk !== self::uk_only( $id ) ) {
+			if ( $uk ) {
+				update_post_meta( $id, self::UK_META, 'yes' );
+			} else {
+				delete_post_meta( $id, self::UK_META );
+			}
 		}
 		return true;
 	}
