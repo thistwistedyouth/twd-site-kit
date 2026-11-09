@@ -1,0 +1,143 @@
+/* TWD Site Kit: shop reviews (Shop module). Every rule sits under .twd-sk-reviews.
+ * Colours come from the shop's own variables (the product page sets them on the body); outside
+ * the shop the Shop colour arrives as --twd-sk-rv-ink, printed with this file. */
+
+.twd-sk-reviews {
+	--twd-sk-rv-a: var(--twd-sk-shop-ink, var(--twd-sk-rv-ink, #1f3a33));
+	--twd-sk-rv-gold: var(--twd-sk-shop-gold, #a8864b);
+	--twd-sk-rv-line: var(--twd-sk-shop-gold-soft, #ddd0b3);
+	--twd-sk-rv-paper: var(--twd-sk-shop-paper, #fbf8f2);
+	--twd-sk-rv-text: var(--twd-sk-shop-text, #2b2a26);
+	--twd-sk-rv-muted: var(--twd-sk-shop-muted, #5e5a50);
+	--twd-sk-rv-serif: var(--twd-sk-shop-serif, 'twd-sk-shop-serif', 'Cormorant Garamond', Georgia, 'Times New Roman', serif);
+	margin: 0 0 32px !important;
+	color: var(--twd-sk-rv-text) !important;
+	font-variant-numeric: lining-nums;
+}
+.twd-sk-reviews .twd-sk-reviews__summary {
+	margin: 0 0 22px !important;
+	font-family: var(--twd-sk-rv-serif) !important;
+	font-size: 22px !important;
+	line-height: 1.4 !important;
+	text-align: center !important;
+	color: var(--twd-sk-rv-a) !important;
+}
+.twd-sk-reviews .twd-sk-reviews__summary a { color: inherit !important; text-decoration: underline !important; text-underline-offset: 4px; }
+.twd-sk-reviews .twd-sk-reviews__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 20px;
+	align-items: start;
+}
+.twd-sk-reviews.twd-sk-reviews--single .twd-sk-reviews__grid { display: block; }
+.twd-sk-reviews .twd-sk-reviews__card {
+	margin: 0 !important;
+	padding: 22px 22px 18px !important;
+	background: var(--twd-sk-rv-paper) !important;
+	border: 1px solid var(--twd-sk-rv-line) !important;
+	border-top: 2px solid var(--twd-sk-rv-gold) !important;
+	border-radius: 0 !important;
+}
+.twd-sk-reviews.twd-sk-reviews--single .twd-sk-reviews__card { margin: 22px 0 8px !important; padding: 18px 18px 14px !important; }
+.twd-sk-reviews .twd-sk-reviews__stars {
+	margin: 0 0 10px !important;
+	font-size: 16px !important;
+	letter-spacing: .18em !important;
+	line-height: 1 !important;
+}
+.twd-sk-reviews .twd-sk-reviews__on { color: var(--twd-sk-rv-gold) !important; }
+.twd-sk-reviews .twd-sk-reviews__off { color: var(--twd-sk-rv-line) !important; }
+.twd-sk-reviews .twd-sk-reviews__text {
+	margin: 0 0 14px !important;
+	padding: 0 !important;
+	border: 0 !important;
+	background: none !important;
+	font-family: var(--twd-sk-rv-serif) !important;
+	font-style: normal !important;
+	font-size: 19px !important;
+	line-height: 1.55 !important;
+	color: var(--twd-sk-rv-text) !important;
+	quotes: none;
+}
+.twd-sk-reviews .twd-sk-reviews__text::before,
+.twd-sk-reviews .twd-sk-reviews__text::after { content: none !important; }
+.twd-sk-reviews .twd-sk-reviews__text p { margin: 0 0 10px !important; }
+.twd-sk-reviews .twd-sk-reviews__text p:last-child { margin-bottom: 0 !important; }
+.twd-sk-reviews .twd-sk-reviews__more { margin: 6px 0 0 !important; }
+.twd-sk-reviews .twd-sk-reviews__more > summary {
+	cursor: pointer;
+	font-family: inherit !important;
+	font-size: 13px !important;
+	letter-spacing: .12em !important;
+	text-transform: uppercase !important;
+	color: var(--twd-sk-rv-a) !important;
+}
+.twd-sk-reviews .twd-sk-reviews__more[open] > summary { margin-bottom: 8px !important; }
+.twd-sk-reviews .twd-sk-reviews__by {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 12px;
+	align-items: baseline;
+	margin: 0 !important;
+	font-size: 13px !important;
+	letter-spacing: .06em !important;
+	color: var(--twd-sk-rv-muted) !important;
+}
+.twd-sk-reviews .twd-sk-reviews__name { font-weight: 600 !important; color: var(--twd-sk-rv-a) !important; }
+.twd-sk-reviews .twd-sk-reviews__platform {
+	padding: 1px 8px !important;
+	border: 1px solid var(--twd-sk-rv-gold) !important;
+	font-size: 11px !important;
+	letter-spacing: .14em !important;
+	text-transform: uppercase !important;
+	color: var(--twd-sk-rv-a) !important;
+}
+.twd-sk-reviews .twd-sk-reviews__item,
+.twd-sk-reviews .twd-sk-reviews__source { margin: 8px 0 0 !important; font-size: 13px !important; color: var(--twd-sk-rv-muted) !important; }
+.twd-sk-reviews .twd-sk-reviews__item { font-style: italic !important; }
+.twd-sk-reviews .twd-sk-reviews__source a,
+.twd-sk-reviews .twd-sk-reviews__all a,
+.twd-sk-reviews .twd-sk-reviews__next a {
+	color: var(--twd-sk-rv-a) !important;
+	text-decoration: underline !important;
+	text-underline-offset: 3px;
+}
+.twd-sk-reviews .twd-sk-reviews__all,
+.twd-sk-reviews .twd-sk-reviews__next,
+.twd-sk-reviews .twd-sk-reviews__shown { margin: 18px 0 0 !important; text-align: center !important; }
+.twd-sk-reviews.twd-sk-reviews--single .twd-sk-reviews__all { margin: 0 !important; text-align: left !important; font-size: 13px !important; }
+.twd-sk-reviews .twd-sk-reviews__all a,
+.twd-sk-reviews .twd-sk-reviews__next a {
+	font-size: 13px !important;
+	letter-spacing: .14em !important;
+	text-transform: uppercase !important;
+}
+.twd-sk-reviews .twd-sk-reviews__shown { font-size: 13px !important; color: var(--twd-sk-rv-muted) !important; }
+.twd-sk-reviews .twd-sk-reviews__filter {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 8px;
+	margin: 0 0 22px !important;
+}
+.twd-sk-reviews .twd-sk-reviews__pick {
+	padding: 7px 14px !important;
+	border: 1px solid var(--twd-sk-rv-a) !important;
+	border-radius: 0 !important;
+	background: transparent !important;
+	color: var(--twd-sk-rv-a) !important;
+	font-size: 12px !important;
+	letter-spacing: .12em !important;
+	text-transform: uppercase !important;
+	text-decoration: none !important;
+}
+.twd-sk-reviews .twd-sk-reviews__pick[aria-current="true"] { background: var(--twd-sk-rv-a) !important; color: var(--twd-sk-rv-paper) !important; }
+.twd-sk-reviews .twd-sk-reviews__pick:focus-visible,
+.twd-sk-reviews a:focus-visible,
+.twd-sk-reviews summary:focus-visible { outline: 2px solid var(--twd-sk-rv-gold) !important; outline-offset: 2px; }
+
+@media (max-width: 600px) {
+	.twd-sk-reviews .twd-sk-reviews__grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+	.twd-sk-reviews .twd-sk-reviews__text { font-size: 18px !important; }
+	.twd-sk-reviews .twd-sk-reviews__summary { font-size: 20px !important; }
+}

@@ -98,11 +98,16 @@ class TWD_SK_Shop_Layout {
 
 	/** The serif (bundled with the kit, never fetched from outside) and the Shop colour. */
 	public static function inline_css( $fonts ) {
+		return self::font_css( $fonts ) . 'body.twd-sk-shop-layout{--twd-sk-shop-ink:' . self::colour() . '}';
+	}
+
+	/** The bundled serif, also used by the reviews on pages outside the shop. */
+	public static function font_css( $fonts ) {
 		$css = '';
 		foreach ( array( 'normal', 'italic' ) as $style ) {
 			$css .= "@font-face{font-family:'twd-sk-shop-serif';src:url('" . esc_url( $fonts . 'cormorant-garamond-latin-wght-' . $style . '.woff2' ) . "') format('woff2');font-weight:300 700;font-style:" . $style . ';font-display:swap}';
 		}
-		return $css . 'body.twd-sk-shop-layout{--twd-sk-shop-ink:' . self::colour() . '}';
+		return $css;
 	}
 
 	public static function arrange() {

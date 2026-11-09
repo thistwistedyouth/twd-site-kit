@@ -272,3 +272,40 @@ Version: these would be 0.20.0 (slices can be test builds `0.20.0-testN` on a st
 - **Hello's description tag on kit pages.** `TWD_SK_Seo` does not turn off the Hello theme's own description tag, so a kit page that has an excerpt gets two descriptions. Kit pages rarely have an excerpt, so this is small, but the fix (the same filter as section 4) belongs in `TWD_SK_Seo` for every site.
 - **The same tag with Yoast on the live shop.** Hello prints its tag whether or not Yoast is active, so the live shop's products may already have two description tags. Worth a look in a product page's source by the live-site session.
 - **The Articles plugin's sharing tags** (section 7): a brief for that repo.
+
+## 12. Reviews (added 9 Nov 2026, test build 0.21.0-test3)
+
+A shop that sells on Etsy and eBay as well often has hundreds of reviews there. This shows them on its own site in the kit's own look, from a spreadsheet, so no third-party review plugin or outside request is needed.
+
+**Only with the Shop module on.** Every piece lives in `modules/shop/`, so a site without WooCommerce and the switch (every therapy site) has no review post type, no shortcode, no screen and no stylesheet. Switching the module off hides the reviews and keeps them.
+
+**Storage.** A non-public post type `twd_sk_review` (not on the front end, not in search, sitemaps, menus or the REST API), shown in wp-admin as **Products > Shop reviews** for people who can edit products (`capability_type` product). Every field is post meta, so WordPress's post-content filters can never alter the words: `_twd_sk_rv_platform` (`etsy`, `ebay` or `other`), `_twd_sk_rv_name`, `_twd_sk_rv_month` (`YYYY-MM`), `_twd_sk_rv_stars` (1 to 5), `_twd_sk_rv_text`, `_twd_sk_rv_item`, `_twd_sk_rv_link`, `_twd_sk_rv_fav` and `_twd_sk_rv_hidden` (`yes` or absent), and `_twd_sk_rv_key` (the duplicate key). The post title is the reviewer's name, for the admin list only.
+
+**Words kept verbatim.** The cleaner removes HTML tags and does nothing else: no dash change, no spelling change, no trimming inside the text. A file that is not UTF-8 (Excel's usual Windows encoding) is converted to UTF-8 first, which changes no letter. Limits: text 5,000 letters, name 80, item 200; a longer value refuses the row rather than cutting it.
+
+**Editing.** The normal edit screen with one box: platform, name, month and year, stars, text, item, link, Favourite, Hidden. Saving runs the same checks as the import.
+
+**Import.** **Products > Import reviews**: choose a CSV, then **Check** (saves nothing) or **Import**. A report lists every row: added, already there, or refused with the reason. A blank template (header row only) downloads from the same screen.
+- Columns: `Platform, Name, Date, Stars, Review, Item, Link`, in any order, any case. A few common other headings are also read (Reviewer, Buyer, Rating, Star rating, Message, Comment, Date reviewed, Listing, URL).
+- **Etsy's own reviews file:** its exact column names are not known here, so it is not claimed. The headings above may already match it; if not, the first line of a real file is enough to add it.
+- Platform: Etsy, eBay or Other (any other word becomes Other, said in the report).
+- Date: `2025-03`, `2025-03-14`, `14/03/2025` (day first), `03/2025`, `March 2025`, `Mar 2025`, `14 March 2025`. Kept as month and year. Anything else refuses the row.
+- Stars: a whole number 1 to 5 (`5`, `5.0`, `5/5`, `5 stars`, or star characters). Anything else refuses the row: stars are never guessed.
+- Refused: no name, no date, no text, bad stars, bad link (http and https only), too long.
+- **No duplicates:** the key is platform, name (lower case), month, and a hash of the text with its spacing evened out. A row whose key exists, or repeats in the same file, is skipped as "already there". Importing the same file twice adds nothing.
+- Up to 2 MB and 3,000 rows a file.
+
+**Showing them.** One shortcode, `[twd_reviews]`, registered by the module:
+- `style="strip"` (default): up to `count` favourites (3, at most 4), newest first, then a **Read all reviews** link to the chosen Reviews page. With no favourites ticked, the newest reviews.
+- `style="wall"`: every visible review, newest first, with platform filter links (All, Etsy, eBay, Other where present) and 24 at a time with **Show more**. Both are plain links (`?twd_reviews_platform=` and `?twd_reviews_show=`), drawn on the server, so there is no visitor script. A review longer than 360 letters shows about its first 280 and folds the rest into a `details` with Read more.
+- `style="single"`: one short favourite (240 letters or fewer). On product pages it is chosen by the product number, so pieces show different reviews and pages cache cleanly.
+- On a kit page it goes in an **Embed** section (shortcode kind), so the kit's registry and sanitiser do not change and therapy sites cannot use it.
+- Product pages: a setting (on by default) shows the single review under Ask about this piece (`woocommerce_single_product_summary`, priority 36).
+- Each card: stars (text stars with "5 out of 5 stars" for screen readers), the text, the name, month and year, the platform label (Etsy or eBay), the item, and "See it on Etsy" when a link is given (`rel="nofollow noopener"`).
+- **Summary line**, on the strip and the wall: drawn only from what the owner types in settings: a total and a profile link per platform, and optional words before "reviews" (for example "five-star"): "312 five-star reviews on Etsy and eBay", the platform names linked. Never counted or guessed. Nothing typed, no line.
+- **Names:** a setting, as given (default) or initials ("Sarah Kent" becomes "Sarah K."; one word stays as it is).
+
+**Rules.** No review structured data or JSON-LD of any kind (search engines penalise a shop marking up its own reviews); a test checks the module has none. One small stylesheet (`twd-site-kit-reviews.css`), loaded on product pages and on pages that use the shortcode, every rule under `.twd-sk-reviews`, colours only from the shop's variables (`--twd-sk-shop-ink`, the gold) with the same defaults, the kit's own bundled serif, no inline style attributes, nothing fetched from outside.
+
+**Settings** (WooCommerce > Settings > Products > Site Kit shop tools, added by the module, so they show only while it is on): Reviews page, Names, Show a review on product pages, Etsy total and link, eBay total and link, Words before "reviews".
+
