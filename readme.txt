@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.19.1
+Stable tag: 0.20.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,11 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.20.0 =
+* New, optional: shop tools for WooCommerce sites. They wake only when WooCommerce is active and switched on in WooCommerce > Settings > Products > Site Kit shop tools, so other sites carry nothing extra.
+* An Edit product window on product pages for people who can edit products: title, price, stock number, categories, for sale or sold, photos (WordPress's own media window), details as rows, and story and condition sections. Save, Undo, History and Publish; Add a product in the admin bar on every page.
+* A tidier product page, with its own tick: the photos beside a buying panel (period line, labels, price, a short lead, Add to basket, Ask about this piece), then the story beside a details card, then sections that open, including one Delivery and returns text. A Shop colour setting matches it to the site.
 
 = 0.19.1 =
 * Three extra colours for a site's own sections (Site tab, Style: Extra colour 1 to 3). The site stylesheet cannot hold typed colours, so a client's own palette (for example a set of coloured headings, or a brand green on an icon) is set here once and used by name. Nothing in the kit uses them, so no page changes until a site uses them.

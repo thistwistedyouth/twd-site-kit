@@ -5,6 +5,11 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
+## 9 Nov 2026: RELEASE 0.20.0, the Shop module (pushed to main at the owner's yes; built from test builds 0.20.0-test1 and -test2, both reported working on one shop)
+
+- 0.19.1 plus the optional Shop module (the two entries below). Version, readme changelog, zip and update JSON built on an LF copy, checksum verified. Sites are offered it in Plugins; update one site first.
+- **Check after updating a therapy site:** the site looks and edits as before, and the site report shows no new warning (the shop gate loads, nothing else).
+
 ## 9 Nov 2026: Shop module, test build 2 (merged into main at the owner's yes, NOT released; 0.20.0-test2 installed by hand on one shop and reported working)
 
 - **Asked for after test build 1 worked on a shop:** photos in the window, a better product page, an easier Add a product.

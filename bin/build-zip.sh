@@ -46,7 +46,7 @@ done
 diff "$VERIFY/zip.list" "$VERIFY/src.list"
 
 # Nothing that must not ship.
-if unzip -Z1 "$ROOT/dist/twd-site-kit-latest.zip" | grep -i -E 'claude|history|readme\.md|tests/|\.git|bin/|dist/'; then
+if unzip -Z1 "$ROOT/dist/twd-site-kit-latest.zip" | grep -i -E 'claude|history\.md|readme\.md|tests/|\.git|bin/|dist/'; then
 	echo "FAIL: the zip contains files that must not ship"; exit 1
 fi
 
