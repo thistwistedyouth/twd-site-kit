@@ -6,7 +6,7 @@ This repo is public. Everything here is generic: the examples are made-up antiqu
 
 ## The design in one paragraph
 
-An optional **Shop** module inside Site Kit, for a WooCommerce shop on the Hello theme. It only wakes up when WooCommerce is active AND an administrator has ticked "Shop tools" for that site, so a therapy site carries nothing extra. A signed-in shop manager gets an **Edit product** button on a product page. It opens a pop-up with five tabs: **Basics** (title, price, category, for sale or sold), **Details** (rows of label and value, for example "Period: Victorian, about 1870"), **Story and condition** (long text sections), **Search** (search title, description, sharing picture) and **AI help** (copy a prompt into Claude, paste the reply back, check, preview, Save, Undo). Everything is saved as normal WooCommerce data, so a product still shows properly if the module is switched off. With no SEO plugin, Site Kit prints the search and sharing tags for products, product categories and the shop page; with Yoast active it writes into Yoast's fields and prints nothing. That is what lets the shop switch Yoast off later. A tidier product page layout (gallery, title, price, small labels, summary, Add to basket, a details table, then sections you click to open) is a second tick, built on WooCommerce's own hooks, with no Elementor. Photos stay in the normal WooCommerce screen for version one.
+An optional **Shop** module inside Site Kit, for a WooCommerce shop on the Hello theme. It only wakes up when WooCommerce is active AND an administrator has ticked "Shop tools" for that site, so a therapy site carries nothing extra. A signed-in shop manager gets an **Edit product** button on a product page. It opens a pop-up with five tabs: **Basics** (title, price, category, for sale or sold), **Details** (rows of label and value, for example "Period: Victorian, about 1870"), **Story and condition** (long text sections), **Search** (search title, description, sharing picture) and **AI help** (copy a prompt into Claude, paste the reply back, check, preview, Save, Undo). Everything is saved as normal WooCommerce data, so a product still shows properly if the module is switched off. With no SEO plugin, Site Kit prints the search and sharing tags for products, product categories and the shop page; with Yoast active it writes into Yoast's fields and prints nothing. That is what lets the shop switch Yoast off later. A tidier product page layout (gallery, title, price, small labels, summary, Add to basket, the story beside a details card with a small time bar, sections you click to open, then up to three hand-picked articles from the shop's own writing) is a second tick, built on WooCommerce's own hooks, with no Elementor. Photos stay in the normal WooCommerce screen for version one.
 
 ## 1. Isolation: nothing for sites that do not use it
 
@@ -63,6 +63,7 @@ The existing test that every `includes/class-twd-sk-*.php` is loaded by the main
 - **Short summary** (a few lines shown near the price; WooCommerce's short description).
 - Sections, each a heading and its text: **About this piece**, **Condition**, **History** by default, plus Add a section (for example "Hallmarks", "Box and packaging"), up to 8. Each text box has Bold, Italic, Bullet list and Link, the same as the Visual editor (no pictures, no headings inside a section).
 - **Delivery and returns** is one text for the whole shop (question 3), shown on every product; a link here opens it in the Site tab for an administrator.
+- **Further reading**: pick up to three of the site's own published articles (a search box by title; section 5b). Shown under the story and as cards lower down.
 
 **Tab 4: Search** (section 4 has the detail)
 - Search title and description with character counts and a search result preview (the same pieces as the page Search tab).
@@ -95,6 +96,8 @@ The existing test that every `includes/class-twd-sk-*.php` is loaded by the main
 | Sections | The product description, each section as an `h3` heading followed by its text | Shown in WooCommerce's "Description" tab as headed paragraphs |
 | Label ticks | Product meta `_twd_sk_shop_labels` (a list of row labels) | Not shown (harmless) |
 | Delivery and returns | One option `twd_sk_shop_delivery` | Not shown |
+| Further reading | Product meta `_twd_sk_shop_reading` (up to three post ids) | Not shown (harmless) |
+| Eras for the time bar | One option `twd_sk_shop_eras` (site-wide, section 5a) | Not shown |
 | Search fields | Yoast's fields when Yoast is active, else `_twd_sk_seo_*` on the product (the same keys kit pages use) | Not printed without Yoast or the module |
 | Versions | Product meta `_twd_sk_shop_versions` | Ignored |
 
@@ -151,8 +154,10 @@ Built on WooCommerce's own hooks for the classic product page, not by copying Wo
 4. Price, or "Sold" in place of the price for a sold piece (WooCommerce's "Out of stock" wording becomes "Sold", through its own `woocommerce_get_availability_text` filter).
 5. Short summary.
 6. Add to basket (hidden by WooCommerce for a sold piece; question 1 asks about an "Ask about similar pieces" link there).
-7. Below both columns: the **details table** (the detail rows as a two-column table, the label column narrow), then the sections **that you click to open**: About this piece (open to start), Condition, History, any added sections, then Delivery and returns. Plain `details` and `summary`, so they work with no script, with the keyboard and with screen readers.
-8. Related products, as WooCommerce prints them.
+7. Below both columns, side by side on a wide screen: **About this piece** as a reading column (the story, always open, with the further reading links under it), and beside it the **details table** drawn as a framed card (the detail rows, the label column narrow, the stock number in its corner) with the **time bar** under it (5a).
+8. Then the sections **that you click to open**: Condition (open to start), History, any added sections, then Delivery and returns. Plain `details` and `summary`, so they work with no script, with the keyboard and with screen readers.
+9. **From our articles**: the further reading as up to three cards (5b).
+10. Related products, as WooCommerce prints them.
 
 On a phone everything stacks in the same order.
 
@@ -161,6 +166,26 @@ On a phone everything stacks in the same order.
 **Shop and category grids:** a small "Sold" badge on a sold piece's card. Nothing else changes in the grid in version one.
 
 **Style.** The stylesheet follows the kit's rules: generated from `tools/shop.src.css` by the same build script, everything scoped under one body class the module adds on these pages (`twd-sk-shop`), our own classes doubled, `!important` on visual properties only, tokens only (`--twd-site-*`, so the shop follows the site's style pack and its extra colours), no colour or font literals, a size ceiling test. It styles our own pieces (labels, table, sections, badge) and only the layout of WooCommerce's two product columns.
+
+### 5a. The time bar ("Where it sits in time")
+
+A thin bar under the details card showing the periods the shop deals in, with a mark at the piece's date. It helps a visitor place a piece at a glance and is drawn from what the owner typed, never guessed.
+
+- **The periods are site data**, not code: option `twd_sk_shop_eras`, a list of up to six `{ name, from, to }` (years), edited in the Site tab's Shop fold-out. Defaults: Georgian 1714 to 1837, Victorian 1837 to 1901, Edwardian 1901 to 1910. A shop that also sells later pieces adds, for example, Art Deco. The bar runs from the first period's start to the last period's end, each period as wide as its years.
+- **The date comes only from the owner's own words**: the value of the detail row labelled "Period", "Date" or "Age" (the label list is a setting). The first year between 1500 and 2099 in that value is the mark ("about 1820", "c. 1820", "1820s" all give 1820, and the word "about" stays in the visible text); two years ("1810 to 1830") give a short band instead of a mark. No year, or a year outside the bar, and **no bar is drawn**. Nothing is ever worked out from a period name alone, so "Georgian" with no year shows no mark.
+- **Drawing it:** built by PHP at display time (never stored), plain HTML and CSS with no script. The positions are percentages in one CSS custom property on the element (the same display-time exception `TWD_SK_Images` already uses for a picture's crop position). The bar itself is hidden from screen readers. A visually hidden sentence says the same thing in words ("Made about 1820, in the Georgian period, 1714 to 1837").
+- **The AI never touches it:** the bar reads the detail row, which the facts check in section 6 already protects.
+- Tests: each date form, a range, no year, a year outside the bar, a custom period list, the hidden sentence, and that nothing is printed when the layout tick is off.
+
+### 5b. From our articles (further reading)
+
+The shop's own articles, written with the Articles plugin, are part of what the shop is selling: knowledge about the pieces. Each product can point to up to three of them.
+
+- **Choosing them:** in the pop-up's Story and condition tab, a "Further reading" box that searches the site's published posts by title (a small read-only route, `GET shop/articles?search=`, titles and ids only) and lists the chosen ones with Remove and Move. Stored as product meta `_twd_sk_shop_reading`. Part of the product's versions and Undo like everything else in the pop-up.
+- **Showing them:** the titles as links under the story ("Further reading: ...") and, lower down, up to three cards (featured picture, a small category label, the title, "Read the article"). Drawn by the shop module from WordPress's own post data (title, link, featured picture, category), never by calling the Articles plugin's code, which Site Kit must not do. The cards use the same tokens as the rest of the page so they match that plugin's grid closely. A deleted, drafted or private post is skipped silently for visitors and named in the pop-up.
+- **Why hand-picked, not automatic:** the Articles plugin's `[twd_articles]` grid can only be filtered by category or tag, and a wrong match next to a high-value piece looks careless. Hand-picking is three clicks per product and always right. An automatic fallback (articles sharing a tag named after the product's period) could be added later (question 15).
+- **The way back, from an article to the pieces** (optional, question 14): on a single post, a small strip "Pieces mentioned with this article" listing the for-sale products that chose that post as further reading (sold ones left out, four at most), added after the post's content by the shop module only when the module is on and there is at least one such product. It is computed from the same links, so the owner picks once and both directions follow. It never changes the post itself.
+- Tests: picking, order, the limit of three, a missing post, the reverse list (sold left out, drafts left out), nothing on a post with no linked pieces, nothing with the module off.
 
 **Standing aside.** If an Elementor Pro single product template applies to a product (the same `elementor_location_exits()` check the header and footer use), the layout part does nothing for that product; the pop-up and search tags still work. Question 11 asks whether the live shop has one.
 
@@ -174,7 +199,7 @@ No AI key on the site and no call to any AI service. The pop-up builds a prompt;
 >
 > **Firm rule. Never invent, change, round or "correct" any of these: dates and periods, carats and metal fineness, hallmarks and makers' marks, origin and maker, stones and their number, measurements, weights and sizes, and condition, wear, damage or repairs. Copy them exactly as given. You may reword the sentences around them. If something seems missing, unclear or contradictory, do not fill it in: list it under "to_confirm", and where it would go in the text write TO CONFIRM.**
 >
-> Do not add claims of value, rarity, investment or provenance that are not in the facts. No hype words. UK spelling. Never use an em dash or an en dash; use a comma or a full stop. Keep the price, stock, category and photos out of your reply: they are not yours to change.
+> Do not add claims of value, rarity, investment or provenance that are not in the facts. No hype words. UK spelling. Never use an em dash or an en dash; use a comma or a full stop. Keep the price, stock, category, photos and further reading out of your reply: they are not yours to change.
 >
 > Text rules: sections are plain paragraphs and bullet lists with bold and italic; no headings inside a section, no pictures, no styles or classes.
 >
@@ -184,7 +209,7 @@ No AI key on the site and no call to any AI service. The pop-up builds a prompt;
 
 **Checking the reply** (on the server, saves nothing; `POST .../ai-check`):
 1. It must be that JSON (a code fence or a sentence around it is tolerated). Anything else is refused with a plain sentence saying what was wrong.
-2. Price, stock, status, category and photos are never read from a reply. If the reply has them, one line says they were ignored.
+2. Price, stock, status, category, photos and further reading are never read from a reply. If the reply has them, one line says they were ignored.
 3. Every text goes through the product text cleaner; titles and labels are plain text; lengths are cut with a warning.
 4. **The facts check, in code, behind the prompt's rule.** The code lists the "protected" things in the source (the product as it was plus the notes) and in the reply: every number with its unit or neighbour word (years, "15ct", "9 carat", "22 mm", "4.2 g", ring sizes, "about 1870"), and words from a generic list of periods (Georgian, Regency, Victorian, Edwardian, Art Nouveau, Art Deco and so on), metals, stones, maker and hallmark words and condition words (worn, repaired, replaced, chipped, crack, restored and so on). Then:
    - something in the reply that is not in the source is flagged **"New: check this"**;
@@ -199,7 +224,7 @@ The same tab works for a new product: empty product, the notes box does the work
 
 ## 7. Blog posts
 
-Covered already, by the Articles plugin (1.50.0 and newer): with no SEO plugin it prints the title, description, Open Graph and Twitter tags for single posts, and turns the Hello theme's description tag off; with Yoast it writes Yoast's fields. So **the Shop module does not touch posts**, and posts stay in the Articles plugin where their editor is. Small differences to line up there, later, as a brief for that repo (not for this module): its sharing picture is the featured picture at the large size with no width and height and no site default picture to fall back on, and its title adds " - Site name" where Site Kit uses the typed title as the whole title. Switching Yoast off on a site means the Articles plugin starts reading its own fields, so any Yoast wording on a post has to be copied across first (section 8).
+Covered already, by the Articles plugin (1.50.0 and newer): with no SEO plugin it prints the title, description, Open Graph and Twitter tags for single posts, and turns the Hello theme's description tag off; with Yoast it writes Yoast's fields. So **the Shop module does not touch posts' search tags or their words**, and posts stay in the Articles plugin where their editor is. The one thing it may add to a post is the optional "Pieces mentioned with this article" strip after the content (section 5b), which changes nothing stored in the post. Small differences to line up there, later, as a brief for that repo (not for this module): its sharing picture is the featured picture at the large size with no width and height and no site default picture to fall back on, and its title adds " - Site name" where Site Kit uses the typed title as the whole title. Switching Yoast off on a site means the Articles plugin starts reading its own fields, so any Yoast wording on a post has to be copied across first (section 8).
 
 ## 8. Switching Yoast off later (a checklist, not code)
 
@@ -218,7 +243,8 @@ Do this on a staging copy first, then live with the owner's yes:
 3. **The pop-up: Basics, Details, Story and condition.** Reading and writing through WooCommerce's product objects, the text cleaner, the snapshot history, Undo, Restore, the fingerprint check, a new draft product, Publish with the TO CONFIRM rule.
 4. **Search tab and AI help.** The prompt, the reply check, the facts check, the preview, Use these words.
 5. **The tidy product page.** Hooks, the stylesheet, the Sold badge and wording, standing aside for an Elementor template. Looked at at desktop and phone width.
-6. **The Yoast checklist on the staging copy** (section 8), then live only with the owner's yes.
+6. **The time bar and further reading** (sections 5a and 5b): the eras setting, the bar, the Further reading box in the pop-up, the cards, and (if wanted) the strip on articles.
+7. **The Yoast checklist on the staging copy** (section 8), then live only with the owner's yes.
 
 Version: these would be 0.20.0 (slices can be test builds `0.20.0-testN` on a staging copy). Released through the updater only at the owner's yes, as always. Before slice 1, add the shop's own name words to the private client-word list so the privacy test guards this public repo.
 
@@ -237,6 +263,9 @@ Version: these would be 0.20.0 (slices can be test builds `0.20.0-testN` on a st
 11. **The live shop now:** is an Elementor Pro single product template in use? (If so the layout tick stands aside until it is removed.) Is there a staging copy of the shop on the staging domain to build on? This needs checking by the session that looks after the live site, not from here.
 12. **Titles:** use the typed search title as the whole title (as kit pages do, recommended), or add " - Site name" (as the Articles plugin does)?
 13. **New products from the pop-up:** in version one (recommended: Add a product makes a draft, you fill it in, add photos in WooCommerce, then Publish)?
+14. **From an article back to the pieces:** add the "Pieces mentioned with this article" strip on posts (recommended: it costs the owner nothing extra, since it comes from the further reading she already picks), or keep posts exactly as the Articles plugin draws them?
+15. **Further reading when none is picked:** show nothing (recommended), or fall back to articles that share a tag named after the piece's period?
+16. **The time bar's periods:** are Georgian, Victorian and Edwardian the right defaults, and should earlier pieces (for example Stuart, before 1714) have a place on the bar?
 
 ## 11. Found while reading (follow-ups, not part of this module)
 
