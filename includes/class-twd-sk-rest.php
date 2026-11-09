@@ -705,7 +705,13 @@ class TWD_SK_REST {
 		}
 		if ( ! $needs_page ) {
 			if ( ! current_user_can( $cap ) ) {
-				return self::error( 'twd_sk_forbidden', 'manage_options' === $cap ? 'Only administrators can change the site settings.' : 'You do not have permission to create pages.', 403 );
+				$words = 'You do not have permission to do that.';
+				if ( 'manage_options' === $cap ) {
+					$words = 'Only administrators can change the site settings.';
+				} elseif ( 'edit_pages' === $cap ) {
+					$words = 'You do not have permission to create pages.';
+				}
+				return self::error( 'twd_sk_forbidden', $words, 403 );
 			}
 		} else {
 			$page_id = (int) $request->get_param( 'id' );
@@ -721,6 +727,14 @@ class TWD_SK_REST {
 			return self::error( 'twd_sk_too_large', 'That request is too large. A page is limited to 200 KB.', 413 );
 		}
 		return self::rate_limit( $bucket );
+	}
+
+	/**
+	 * The same gate for a module's own routes (the Shop module, 0.20.0): nonce, sign-in, a capability, size and
+	 * rate limit, with no page. The module then checks the item itself.
+	 */
+	public static function gate( $request, $bucket, $cap ) {
+		return self::guard( $request, $bucket, false, $cap );
 	}
 
 	/**

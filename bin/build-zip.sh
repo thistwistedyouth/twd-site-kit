@@ -12,7 +12,7 @@ VERIFY="$(mktemp -d)"
 trap 'rm -rf "$BUILD" "$VERIFY"' EXIT
 
 # What ships: the main file, readme.txt and these folders. Nothing else.
-FOLDERS="includes assets packs starters templates"
+FOLDERS="includes assets packs starters templates modules"
 
 # 1. Copy ONLY the plugin files into a folder named twd-site-kit.
 mkdir -p "$BUILD/twd-site-kit"

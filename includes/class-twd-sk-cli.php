@@ -303,6 +303,34 @@ class TWD_SK_CLI {
 	}
 
 	/**
+	 * Turn the shop tools (the Shop module, for WooCommerce) on or off for this site, or say how they are.
+	 * The same switch as WooCommerce > Settings > Products > Site Kit shop tools.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [<state>]
+	 * : on, off or status (default status).
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp twd-sk shop on
+	 *     wp twd-sk shop status
+	 */
+	public function shop( $args, $assoc_args ) {
+		$state = isset( $args[0] ) ? strtolower( (string) $args[0] ) : 'status';
+		if ( ! in_array( $state, array( 'on', 'off', 'status' ), true ) ) {
+			WP_CLI::error( 'Say on, off or status.' );
+			return;
+		}
+		if ( 'status' !== $state ) {
+			TWD_SK_Shop_Gate::set( 'on' === $state );
+			WP_CLI::success( 'on' === $state ? 'Shop tools switched on. They start on the next page load.' : 'Shop tools switched off.' );
+			return;
+		}
+		WP_CLI::success( TWD_SK_Shop_Gate::status() );
+	}
+
+	/**
 	 * Safe mode turns off the newest features (the 0.4.0 modules) and keeps the rest working.
 	 * Use it if something breaks after an update. The constant TWD_SK_SAFE_MODE in wp-config.php
 	 * does the same and wins over this setting.

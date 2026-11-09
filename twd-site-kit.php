@@ -83,6 +83,7 @@ require_once TWD_SK_PATH . 'includes/class-twd-sk-snagbook.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-guard.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-style.php';
 require_once TWD_SK_PATH . 'includes/class-twd-sk-modules.php';
+require_once TWD_SK_PATH . 'includes/class-twd-sk-shop-gate.php';
 
 add_action( 'init', array( 'TWD_SK_Page', 'init' ) );
 TWD_SK_Assets::init();
@@ -104,6 +105,9 @@ TWD_SK_Embed::init();
 if ( ! TWD_SK_Safe::on() ) {
 	TWD_SK_Modules::init();
 }
+
+// The Shop module (0.20.0): only this small gate loads; it starts modules/shop/ when WooCommerce is active and the switch is on.
+TWD_SK_Shop_Gate::init();
 
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	require_once TWD_SK_PATH . 'includes/class-twd-sk-cli.php';

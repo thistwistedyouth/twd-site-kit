@@ -699,6 +699,9 @@ require_once ABSPATH . 'includes/class-twd-sk-snagbook.php';
 require_once ABSPATH . 'includes/class-twd-sk-guard.php';
 require_once ABSPATH . 'includes/class-twd-sk-style.php';
 require_once ABSPATH . 'includes/class-twd-sk-modules.php';
+require_once ABSPATH . 'includes/class-twd-sk-shop-gate.php';
+// The Shop module's classes are loaded here for its tests only; on a site only the gate loads them.
+require_once ABSPATH . 'modules/shop/load.php';
 
 // Tiny assertion helpers ---------------------------------------------------
 
