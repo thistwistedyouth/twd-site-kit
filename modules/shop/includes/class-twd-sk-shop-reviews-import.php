@@ -150,7 +150,8 @@ class TWD_SK_Shop_Reviews_Import {
 				continue;
 			}
 			$r  = $checked['review'];
-			$lk = TWD_SK_Shop_Reviews::loose_key( $r['platform'], $r['name'], $r['text'] );
+			// The match ignores the date and, when the row names an item, includes it.
+			$lk = TWD_SK_Shop_Reviews::loose_key( $r['platform'], $r['name'], $r['text'], $r['item'] );
 			if ( isset( $known[ $r['key'] ] ) || ( $r['undated'] && isset( $loose[ $lk ] ) ) ) {
 				$counts['there']++;
 				$report[] = array( $n, 'there', $name, 'Already there, so skipped.' );

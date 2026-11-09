@@ -213,19 +213,29 @@ class TWD_SK_Shop_Reviews {
 		return $v;
 	}
 
-	/** The duplicate key: platform, name, month and the text with its spacing evened out. */
-	public static function key( $platform, $name, $month, $text ) {
+	/**
+	 * The duplicate key: platform, name, month and the text with its spacing evened out. $item is
+	 * given only for undated reviews (0.21.0-test6): the same buyer can leave the same words for
+	 * two pieces, and with no date the item is what tells them apart. No item, the key as before.
+	 */
+	public static function key( $platform, $name, $month, $text, $item = '' ) {
+		$lower = function ( $s ) {
+			$s = trim( preg_replace( '/\s+/u', ' ', (string) $s ) );
+			return function_exists( 'mb_strtolower' ) ? mb_strtolower( $s, 'UTF-8' ) : strtolower( $s );
+		};
 		$name = function_exists( 'mb_strtolower' ) ? mb_strtolower( trim( $name ), 'UTF-8' ) : strtolower( trim( $name ) );
 		$text = trim( preg_replace( '/\s+/u', ' ', (string) $text ) );
-		return sha1( $platform . '|' . $name . '|' . $month . '|' . sha1( $text ) );
+		$base = $platform . '|' . $name . '|' . $month . '|' . sha1( $text );
+		$item = $lower( $item );
+		return sha1( '' === $item ? $base : $base . '|item|' . sha1( $item ) );
 	}
 
 	/**
 	 * The same review whatever its date: platform, name and text. Used only to find an undated
 	 * review when a later file gives it a date (0.21.0-test5).
 	 */
-	public static function loose_key( $platform, $name, $text ) {
-		return self::key( $platform, $name, 'any date', $text );
+	public static function loose_key( $platform, $name, $text, $item = '' ) {
+		return self::key( $platform, $name, 'any date', $text, $item );
 	}
 
 	/** True for the date word that means "the platform gives no date and nobody can say". */
@@ -302,7 +312,7 @@ class TWD_SK_Shop_Reviews {
 				'link'     => (string) $link,
 				'fav'      => $yes( 'fav' ),
 				'hidden'   => $yes( 'hidden' ),
-				'key'      => self::key( $platform, $name, $month, $text ),
+				'key'      => self::key( $platform, $name, $month, $text, $undated ? $item : '' ),
 			),
 			'notes'  => $notes,
 		);
@@ -376,7 +386,7 @@ class TWD_SK_Shop_Reviews {
 	public static function loose_index() {
 		$out = array();
 		foreach ( self::all() as $r ) {
-			$k = self::loose_key( $r['platform'], $r['name'], $r['text'] );
+			$k = self::loose_key( $r['platform'], $r['name'], $r['text'], $r['item'] );
 			if ( ! isset( $out[ $k ] ) ) {
 				$out[ $k ] = array( 'undated' => 0, 'dated' => false );
 			}
