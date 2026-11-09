@@ -307,5 +307,10 @@ A shop that sells on Etsy and eBay as well often has hundreds of reviews there. 
 
 **Rules.** No review structured data or JSON-LD of any kind (search engines penalise a shop marking up its own reviews); a test checks the module has none. One small stylesheet (`twd-site-kit-reviews.css`), loaded on product pages and on pages that use the shortcode, every rule under `.twd-sk-reviews`, colours only from the shop's variables (`--twd-sk-shop-ink`, the gold) with the same defaults, the kit's own bundled serif, no inline style attributes, nothing fetched from outside.
 
+**eBay feedback (0.21.0-test4).** eBay feedback has no stars and no exact date: it is rated Positive, Neutral or Negative and dated only "past month", "past 6 months" or "past year".
+- The Stars column also takes `Positive`, `Neutral` or `Negative` (or "Positive feedback"), kept as its own field `_twd_sk_rv_rating` with stars 0. It is never turned into a number of stars, which would misstate it. The card says "Positive feedback" (or Neutral, Negative) in place of stars.
+- Only star reviews and positive feedback are used for the strip, the single review and favourites. The wall shows every visible review as rated. The summary line stays owner-typed.
+- The Date column also takes a year on its own (`2026`), kept and shown as the year. It sorts after that year's dated reviews and before the year before. "Past year" itself is not read: whoever fills the file writes the year. A date that says `TO CONFIRM` is refused with that reason, so the owner can fill it in.
+
 **Settings** (WooCommerce > Settings > Products > Site Kit shop tools, added by the module, so they show only while it is on): Reviews page, Names, Show a review on product pages, Etsy total and link, eBay total and link, Words before "reviews".
 

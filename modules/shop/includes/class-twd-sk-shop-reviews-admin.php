@@ -108,7 +108,7 @@ class TWD_SK_Shop_Reviews_Admin {
 		echo '<div class="wrap"><h1>Import reviews</h1>';
 		echo '<p>Reviews from Etsy, eBay or elsewhere, from a spreadsheet saved as CSV. Columns: <code>' . esc_html( implode( ', ', TWD_SK_Shop_Reviews_Import::columns() ) ) . '</code>, in any order. Name, Date, Stars and Review are needed in every row; the words are kept exactly as written. A review already saved is never added twice, so the same file can be imported again safely.</p>';
 		echo '<p><a class="button" href="' . esc_url( self::template_url() ) . '">Download the blank template</a></p>';
-		echo '<p>Dates: 2025-03, 14/03/2025 (day first), March 2025 or Mar 14, 2025 all work; only the month and year are kept. Stars: a whole number from 1 to 5.</p>';
+		echo '<p>Dates: 2025-03, 14/03/2025 (day first), March 2025 or Mar 14, 2025 all work; only the month and year are kept. Stars: a whole number from 1 to 5, or for eBay feedback the word Positive, Neutral or Negative. A year on its own (2026) is fine when that is all the platform shows.</p>';
 		echo '<form method="post" enctype="multipart/form-data">';
 		wp_nonce_field( self::NONCE );
 		echo '<p><label>CSV file <input type="file" name="twd_sk_reviews_csv" accept=".csv,text/csv"></label></p>';
@@ -150,7 +150,7 @@ class TWD_SK_Shop_Reviews_Admin {
 
 	public static function box( $post ) {
 		$r = TWD_SK_Shop_Reviews::read( $post->ID );
-		$r = $r ? $r : array( 'platform' => 'etsy', 'name' => '', 'month' => '', 'stars' => 5, 'text' => '', 'item' => '', 'link' => '', 'fav' => false, 'hidden' => false );
+		$r = $r ? $r : array( 'platform' => 'etsy', 'name' => '', 'month' => '', 'stars' => 5, 'rating' => '', 'text' => '', 'item' => '', 'link' => '', 'fav' => false, 'hidden' => false );
 		wp_nonce_field( self::NONCE, 'twd_sk_review_nonce' );
 		echo '<table class="form-table"><tbody>';
 		echo '<tr><th><label for="twd-sk-rv-platform">Platform</label></th><td><select id="twd-sk-rv-platform" name="twd_sk_rv[platform]">';
@@ -159,12 +159,15 @@ class TWD_SK_Shop_Reviews_Admin {
 		}
 		echo '</select></td></tr>';
 		echo '<tr><th><label for="twd-sk-rv-name">Name</label></th><td><input id="twd-sk-rv-name" class="regular-text" name="twd_sk_rv[name]" value="' . esc_attr( $r['name'] ) . '" maxlength="' . (int) TWD_SK_Shop_Reviews::MAX_NAME . '"></td></tr>';
-		echo '<tr><th><label for="twd-sk-rv-date">Month and year</label></th><td><input id="twd-sk-rv-date" name="twd_sk_rv[date]" value="' . esc_attr( TWD_SK_Shop_Reviews::month_label( $r['month'] ) ) . '" placeholder="March 2025"></td></tr>';
-		echo '<tr><th><label for="twd-sk-rv-stars">Stars</label></th><td><select id="twd-sk-rv-stars" name="twd_sk_rv[stars]">';
+		echo '<tr><th><label for="twd-sk-rv-date">Month and year</label></th><td><input id="twd-sk-rv-date" name="twd_sk_rv[date]" value="' . esc_attr( TWD_SK_Shop_Reviews::month_label( $r['month'] ) ) . '" placeholder="March 2025"><p class="description">Or a year on its own, for example 2026.</p></td></tr>';
+		echo '<tr><th><label for="twd-sk-rv-stars">Stars or rating</label></th><td><select id="twd-sk-rv-stars" name="twd_sk_rv[stars]">';
 		for ( $i = 5; $i >= 1; $i-- ) {
-			echo '<option value="' . (int) $i . '"' . selected( (int) $r['stars'], $i, false ) . '>' . (int) $i . '</option>';
+			echo '<option value="' . (int) $i . '"' . selected( '' === $r['rating'] ? (int) $r['stars'] : 0, $i, false ) . '>' . (int) $i . ' stars</option>';
 		}
-		echo '</select></td></tr>';
+		foreach ( TWD_SK_Shop_Reviews::ratings() as $k => $label ) {
+			echo '<option value="' . esc_attr( $k ) . '"' . selected( $r['rating'], $k, false ) . '>' . esc_html( $label ) . '</option>';
+		}
+		echo '</select><p class="description">eBay feedback has no stars: choose Positive, Neutral or Negative feedback.</p></td></tr>';
 		echo '<tr><th><label for="twd-sk-rv-text">Review</label></th><td><textarea id="twd-sk-rv-text" class="large-text" rows="7" name="twd_sk_rv[text]">' . esc_textarea( $r['text'] ) . '</textarea><p class="description">Exactly as the customer wrote it.</p></td></tr>';
 		echo '<tr><th><label for="twd-sk-rv-item">Item (optional)</label></th><td><input id="twd-sk-rv-item" class="regular-text" name="twd_sk_rv[item]" value="' . esc_attr( $r['item'] ) . '"></td></tr>';
 		echo '<tr><th><label for="twd-sk-rv-link">Link to the review (optional)</label></th><td><input id="twd-sk-rv-link" class="regular-text" type="url" name="twd_sk_rv[link]" value="' . esc_attr( $r['link'] ) . '"></td></tr>';
@@ -239,7 +242,7 @@ class TWD_SK_Shop_Reviews_Admin {
 			$out[ $k ] = 'title' === $k ? 'Name' : $v;
 			if ( 'title' === $k ) {
 				$out['twd_sk_rv_platform'] = 'Platform';
-				$out['twd_sk_rv_stars']    = 'Stars';
+				$out['twd_sk_rv_stars']    = 'Stars or rating';
 				$out['twd_sk_rv_month']    = 'Month';
 				$out['twd_sk_rv_text']     = 'Review';
 				$out['twd_sk_rv_show']     = 'Shown';
@@ -258,7 +261,7 @@ class TWD_SK_Shop_Reviews_Admin {
 				echo esc_html( TWD_SK_Shop_Reviews::platforms()[ $r['platform'] ] ?? 'Other' );
 				break;
 			case 'twd_sk_rv_stars':
-				echo (int) $r['stars'];
+				echo '' !== $r['rating'] ? esc_html( TWD_SK_Shop_Reviews::ratings()[ $r['rating'] ] ) : (int) $r['stars'];
 				break;
 			case 'twd_sk_rv_month':
 				echo esc_html( TWD_SK_Shop_Reviews::month_label( $r['month'] ) );

@@ -103,7 +103,7 @@ class TWD_SK_Shop_Reviews_Show {
 	/** Up to $count favourites, newest first; with none ticked, the newest reviews. */
 	public static function strip_reviews( $count = 3, $platform = '' ) {
 		$count   = max( 1, min( 4, (int) $count ) );
-		$visible = TWD_SK_Shop_Reviews::visible( $platform );
+		$visible = array_values( array_filter( TWD_SK_Shop_Reviews::visible( $platform ), array( 'TWD_SK_Shop_Reviews', 'praise' ) ) );
 		$favs    = array_values( array_filter( $visible, function ( $r ) {
 			return $r['fav'];
 		} ) );
@@ -114,7 +114,7 @@ class TWD_SK_Shop_Reviews_Show {
 	public static function single_review( $seed = 0 ) {
 		$self  = __CLASS__;
 		$short = array_values( array_filter( TWD_SK_Shop_Reviews::visible(), function ( $r ) use ( $self ) {
-			return $r['fav'] && $self::fits( $r['text'] );
+			return $r['fav'] && TWD_SK_Shop_Reviews::praise( $r ) && $self::fits( $r['text'] );
 		} ) );
 		if ( ! $short ) {
 			return null;
@@ -168,7 +168,10 @@ class TWD_SK_Shop_Reviews_Show {
 		$platforms = TWD_SK_Shop_Reviews::platforms();
 		$label     = 'other' !== $r['platform'] && isset( $platforms[ $r['platform'] ] ) ? $platforms[ $r['platform'] ] : '';
 		$out       = '<figure class="twd-sk-reviews__card"' . ( '' !== $id ? ' id="' . esc_attr( $id ) . '"' : '' ) . '>';
-		$out      .= self::stars_html( $r['stars'] );
+		$ratings   = TWD_SK_Shop_Reviews::ratings();
+		$out      .= '' !== $r['rating'] && isset( $ratings[ $r['rating'] ] )
+			? '<p class="twd-sk-reviews__rating">' . esc_html( $ratings[ $r['rating'] ] ) . '</p>'
+			: self::stars_html( $r['stars'] );
 		$out      .= '<blockquote class="twd-sk-reviews__text">' . self::words_html( $r['text'] ) . '</blockquote>';
 		$out      .= '<figcaption class="twd-sk-reviews__by"><span class="twd-sk-reviews__name">' . esc_html( TWD_SK_Shop_Reviews::shown_name( $r['name'] ) ) . '</span>';
 		$out      .= '<span class="twd-sk-reviews__when">' . esc_html( TWD_SK_Shop_Reviews::month_label( $r['month'] ) ) . '</span>';

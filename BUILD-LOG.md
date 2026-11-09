@@ -5,6 +5,14 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
+## 9 Nov 2026: Shop reviews, eBay feedback (branch shop-uk-only, NOT merged or released; test build 0.21.0-test4)
+
+- **Asked for (via the restyle session, the owner wants eBay reviews too):** eBay feedback is rated Positive, Neutral or Negative with no stars, and dated only "past year", so test3's import refused every row.
+- **Rating:** the Stars column also takes Positive, Neutral or Negative, kept as `_twd_sk_rv_rating` (stars 0), never turned into stars. The card shows "Positive feedback" with no stars; the edit box offers it; the list column is "Stars or rating". Only stars or positive feedback reach the strip, the single review and favourites; the wall shows all visible reviews as rated.
+- **Year on its own:** `2026` is kept and shown as 2026, sorting after that year's dated reviews. A date saying TO CONFIRM is refused with that reason; an empty date is still refused.
+- Checked against the owner's real feedback file in Check mode, in memory only (nothing saved, nothing copied): 6 ready, 2 refused for TO CONFIRM, as expected.
+- Tests: `tests/test-shop-reviews-ebay.php` (4); the year-only date moved from the bad list. Suite 1208 passed on an LF copy.
+
 ## 9 Nov 2026: Shop module, shop reviews (branch shop-uk-only, NOT merged or released; test build 0.21.0-test3)
 
 - **Asked for (via the session restyling a shop, the owner said yes to design and build):** a shop with hundreds of Etsy and eBay reviews wants them on its own site in the kit's look, so a third-party review plugin can go. Design: `docs/shop-module-design.md` section 12.

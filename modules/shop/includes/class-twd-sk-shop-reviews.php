@@ -30,7 +30,7 @@ class TWD_SK_Shop_Reviews {
 
 	/** The fields kept for each review, in meta as _twd_sk_rv_<field>. */
 	public static function fields() {
-		return array( 'platform', 'name', 'month', 'stars', 'text', 'item', 'link', 'fav', 'hidden', 'key' );
+		return array( 'platform', 'name', 'month', 'stars', 'rating', 'text', 'item', 'link', 'fav', 'hidden', 'key' );
 	}
 
 	public static function init() {
@@ -75,6 +75,27 @@ class TWD_SK_Shop_Reviews {
 
 	public static function platforms() {
 		return array( 'etsy' => 'Etsy', 'ebay' => 'eBay', 'other' => 'Other' );
+	}
+
+	/**
+	 * Feedback rated in words, not stars (eBay): kept as its own kind and never turned into a
+	 * number of stars, which would misstate it. Only positive feedback can be a favourite, in the
+	 * strip or the single review.
+	 */
+	public static function ratings() {
+		return array( 'positive' => 'Positive feedback', 'neutral' => 'Neutral feedback', 'negative' => 'Negative feedback' );
+	}
+
+	/** positive, neutral or negative from "Positive" or "Positive feedback", else ''. */
+	public static function rating( $value ) {
+		$v = strtolower( trim( preg_replace( '/\s+/', ' ', (string) $value ) ) );
+		$v = preg_replace( '/ feedback$/', '', $v );
+		return isset( self::ratings()[ $v ] ) ? $v : '';
+	}
+
+	/** True for a review the strip, the single review and favourites may use: stars, or positive feedback. */
+	public static function praise( $r ) {
+		return '' === $r['rating'] || 'positive' === $r['rating'];
 	}
 
 	/** Words in UTF-8: a file saved by Excel in Windows encoding is converted, no letter changed. */
@@ -132,6 +153,10 @@ class TWD_SK_Shop_Reviews {
 	 */
 	public static function month( $value ) {
 		$v = trim( preg_replace( '/\s+/u', ' ', (string) $value ) );
+		// A year on its own (feedback that only says "past year"): kept and shown as the year.
+		if ( preg_match( '/^(\d{4})$/', $v, $x ) ) {
+			return ( (int) $x[1] >= 1990 && (int) $x[1] <= 2100 ) ? $x[1] : '';
+		}
 		$y = 0;
 		$m = 0;
 		$d = 1;
@@ -152,8 +177,11 @@ class TWD_SK_Shop_Reviews {
 		return sprintf( '%04d-%02d', $y, $m );
 	}
 
-	/** "March 2025" from "2025-03". */
+	/** "March 2025" from "2025-03"; "2026" from a year on its own. */
 	public static function month_label( $month ) {
+		if ( preg_match( '/^\d{4}$/', (string) $month ) ) {
+			return (string) $month;
+		}
 		if ( ! preg_match( '/^(\d{4})-(\d{2})$/', (string) $month, $x ) ) {
 			return '';
 		}
@@ -211,15 +239,18 @@ class TWD_SK_Shop_Reviews {
 		$month = self::month( $get( 'date' ) );
 		if ( '' === trim( $get( 'date' ) ) ) {
 			$problems[] = 'no date';
+		} elseif ( false !== stripos( $get( 'date' ), 'TO CONFIRM' ) ) {
+			$problems[] = 'the date says TO CONFIRM, so the owner needs to fill it in first (a year such as 2026 is enough)';
 		} elseif ( '' === $month ) {
 			$problems[] = 'the date "' . trim( $get( 'date' ) ) . '" could not be read';
 		}
 		if ( '' === trim( $text ) ) {
 			$problems[] = 'no review text';
 		}
-		$stars = self::stars( $get( 'stars' ) );
-		if ( 0 === $stars ) {
-			$problems[] = '' === trim( $get( 'stars' ) ) ? 'no stars' : 'the stars "' . trim( $get( 'stars' ) ) . '" are not a whole number from 1 to 5';
+		$stars  = self::stars( $get( 'stars' ) );
+		$rating = 0 === $stars ? self::rating( $get( 'stars' ) ) : '';
+		if ( 0 === $stars && '' === $rating ) {
+			$problems[] = '' === trim( $get( 'stars' ) ) ? 'no stars or rating' : 'the stars "' . trim( $get( 'stars' ) ) . '" are not a whole number from 1 to 5, or Positive, Neutral or Negative';
 		}
 		$link = self::link( $get( 'link' ) );
 		if ( false === $link ) {
@@ -248,6 +279,7 @@ class TWD_SK_Shop_Reviews {
 				'name'     => $name,
 				'month'    => $month,
 				'stars'    => $stars,
+				'rating'   => $rating,
 				'text'     => $text,
 				'item'     => $item,
 				'link'     => (string) $link,
@@ -298,6 +330,10 @@ class TWD_SK_Shop_Reviews {
 			return null;
 		}
 		$r['stars']  = (int) $r['stars'];
+		$r['rating'] = isset( self::ratings()[ $r['rating'] ] ) ? $r['rating'] : '';
+		if ( '' === $r['rating'] && ( $r['stars'] < 1 || $r['stars'] > 5 ) ) {
+			return null;
+		}
 		$r['fav']    = 'yes' === $r['fav'];
 		$r['hidden'] = 'yes' === $r['hidden'];
 		return $r;

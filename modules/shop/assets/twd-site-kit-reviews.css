@@ -46,6 +46,14 @@
 	line-height: 1 !important;
 }
 .twd-sk-reviews .twd-sk-reviews__on { color: var(--twd-sk-rv-gold) !important; }
+.twd-sk-reviews .twd-sk-reviews__rating {
+	margin: 0 0 10px !important;
+	font-size: 12px !important;
+	letter-spacing: .16em !important;
+	line-height: 1.3 !important;
+	text-transform: uppercase !important;
+	color: var(--twd-sk-rv-gold) !important;
+}
 .twd-sk-reviews .twd-sk-reviews__off { color: var(--twd-sk-rv-line) !important; }
 .twd-sk-reviews .twd-sk-reviews__text {
 	margin: 0 0 14px !important;

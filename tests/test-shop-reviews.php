@@ -41,7 +41,7 @@ twd_sk_test( 'shop reviews: dates keep month and year; stars are whole numbers 1
 	}
 	twd_sk_eq( '2025-04', TWD_SK_Shop_Reviews::month( '03/04/2025' ), 'day first' );
 	twd_sk_eq( '2024-09', TWD_SK_Shop_Reviews::month( 'Sept 2024' ) );
-	foreach ( array( '', 'last week', '2025', '13/2025', 'Marchy 2025', '1850-01' ) as $bad ) {
+	foreach ( array( '', 'last week', '13/2025', 'Marchy 2025', '1850-01', '1850' ) as $bad ) {
 		twd_sk_eq( '', TWD_SK_Shop_Reviews::month( $bad ), 'bad: ' . $bad );
 	}
 	twd_sk_eq( 'March 2025', TWD_SK_Shop_Reviews::month_label( '2025-03' ) );
