@@ -110,6 +110,28 @@ class TWD_SK_Shop_Layout {
 		return $css;
 	}
 
+	/** The page's own content, or a Site Kit page's HTML or one of its embeds, holds the shortcode [$tag. */
+	public static function page_uses( $id, $tag ) {
+		$needle = '[' . $tag;
+		if ( false !== strpos( (string) get_post_field( 'post_content', $id ), $needle ) ) {
+			return true;
+		}
+		if ( ! class_exists( 'TWD_SK_Store' ) || ! class_exists( 'TWD_SK_Embed' ) ) {
+			return false;
+		}
+		$html = TWD_SK_Store::get_current( $id );
+		if ( false !== strpos( $html, $needle ) ) {
+			return true;
+		}
+		foreach ( TWD_SK_Embed::ids_in( $html ) as $eid ) {
+			$e = $eid > 0 ? TWD_SK_Embed::get( $eid ) : null;
+			if ( is_array( $e ) && isset( $e['code'] ) && false !== strpos( (string) $e['code'], $needle ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public static function arrange() {
 		if ( ! self::is_product_page() || self::elementor_template() ) {
 			return;

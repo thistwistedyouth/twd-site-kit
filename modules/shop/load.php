@@ -19,6 +19,7 @@ require_once __DIR__ . '/includes/class-twd-sk-shop-reviews.php';
 require_once __DIR__ . '/includes/class-twd-sk-shop-reviews-import.php';
 require_once __DIR__ . '/includes/class-twd-sk-shop-reviews-admin.php';
 require_once __DIR__ . '/includes/class-twd-sk-shop-reviews-show.php';
+require_once __DIR__ . '/includes/class-twd-sk-shop-grid.php';
 
 class TWD_SK_Shop_Loader {
 
@@ -30,5 +31,6 @@ class TWD_SK_Shop_Loader {
 		TWD_SK_Shop_Reviews::init();
 		TWD_SK_Shop_Reviews_Admin::init();
 		TWD_SK_Shop_Reviews_Show::init();
+		TWD_SK_Shop_Grid::init();
 	}
 }

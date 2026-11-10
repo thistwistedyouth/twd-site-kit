@@ -1,0 +1,246 @@
+/* TWD Site Kit: the shop filter bar (Shop module, 0.21.0). Every rule sits under .twd-sk-shop-grid
+ * (the bar) or .twd-sk-shop-grid__results (the grid's wrapper). The products keep WooCommerce's own
+ * ul.products markup and are not restyled here. Colours come from the shop's own variables (the
+ * shop pages set them on the body); elsewhere the Shop colour arrives as --twd-sk-sg-ink, printed
+ * with this file. Small capitals follow the Site Kit menu when its settings are on the page.
+ * Square corners. Nothing is fetched from another site. */
+
+.twd-sk-shop-grid,
+.twd-sk-shop-grid__results {
+	--twd-sk-sg-a: var(--twd-sk-shop-ink, var(--twd-sk-sg-ink, #1f3a33));
+	--twd-sk-sg-gold: var(--twd-sk-shop-gold, #a8864b);
+	--twd-sk-sg-line: var(--twd-sk-shop-gold-soft, #ddd0b3);
+	--twd-sk-sg-paper: var(--twd-sk-shop-paper, #fbf8f2);
+	--twd-sk-sg-text: var(--twd-sk-shop-text, #2b2a26);
+	--twd-sk-sg-muted: var(--twd-sk-shop-muted, #5e5a50);
+	--twd-sk-sg-caps-font: var(--twd-site-menu-font, inherit);
+	--twd-sk-sg-caps-space: var(--twd-site-menu-spacing, .14em);
+}
+
+/* -- The bar -------------------------------------------------------------------------------- */
+
+.twd-sk-shop-grid {
+	box-sizing: border-box;
+	max-width: 100%;
+	min-width: 0;
+	margin: 0 0 26px !important;
+	padding: 0 0 18px !important;
+	border-bottom: 1px solid var(--twd-sk-sg-line) !important;
+	color: var(--twd-sk-sg-text) !important;
+	clear: both;
+}
+.twd-sk-shop-grid *,
+.twd-sk-shop-grid *::before,
+.twd-sk-shop-grid *::after { box-sizing: border-box; }
+
+.twd-sk-shop-grid .twd-sk-shop-grid__bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 14px 28px;
+	min-width: 0;
+}
+.twd-sk-shop-grid .twd-sk-shop-grid__cats { flex: 1 1 380px; min-width: 0; margin: 0 !important; padding: 0 !important; }
+.twd-sk-shop-grid .twd-sk-shop-grid__list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	list-style: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+.twd-sk-shop-grid .twd-sk-shop-grid__list > li { margin: 0 !important; padding: 0 !important; list-style: none !important; flex: 0 0 auto; }
+.twd-sk-shop-grid .twd-sk-shop-grid__list > li::before { content: none !important; }
+
+/* Small capitals, like the menu. */
+.twd-sk-shop-grid .twd-sk-shop-grid__cat,
+.twd-sk-shop-grid .twd-sk-shop-grid__go {
+	font-family: var(--twd-sk-sg-caps-font) !important;
+	font-size: 12px !important;
+	font-weight: 500 !important;
+	line-height: 1.2 !important;
+	letter-spacing: var(--twd-sk-sg-caps-space) !important;
+	text-transform: uppercase !important;
+}
+.twd-sk-shop-grid .twd-sk-shop-grid__cat {
+	display: inline-flex;
+	align-items: center;
+	gap: .35em;
+	min-height: 36px;
+	padding: 8px 14px !important;
+	border: 1px solid var(--twd-sk-sg-line) !important;
+	border-radius: 0 !important;
+	background: transparent !important;
+	color: var(--twd-sk-sg-a) !important;
+	text-decoration: none !important;
+	white-space: nowrap;
+	box-shadow: none !important;
+}
+.twd-sk-shop-grid .twd-sk-shop-grid__cat:hover { border-color: var(--twd-sk-sg-gold) !important; background: var(--twd-sk-sg-paper) !important; }
+.twd-sk-shop-grid .twd-sk-shop-grid__cat[aria-current] {
+	border-color: var(--twd-sk-sg-a) !important;
+	background: var(--twd-sk-sg-a) !important;
+	color: #fff !important;
+}
+.twd-sk-shop-grid .twd-sk-shop-grid__n { opacity: .75; letter-spacing: .04em; font-variant-numeric: lining-nums; }
+
+/* -- Sort and search ------------------------------------------------------------------------ */
+
+.twd-sk-shop-grid .twd-sk-shop-grid__tools { display: flex; align-items: stretch; gap: 10px; flex: 0 1 auto; min-width: 0; }
+.twd-sk-shop-grid .twd-sk-shop-grid__sort,
+.twd-sk-shop-grid .twd-sk-shop-grid__search { display: flex; align-items: stretch; min-width: 0; margin: 0 !important; padding: 0 !important; }
+.twd-sk-shop-grid .twd-sk-shop-grid__select,
+.twd-sk-shop-grid .twd-sk-shop-grid__input {
+	height: 38px !important;
+	min-height: 38px;
+	margin: 0 !important;
+	padding: 0 12px !important;
+	border: 1px solid var(--twd-sk-sg-line) !important;
+	border-radius: 0 !important;
+	background-color: #fff !important;
+	color: var(--twd-sk-sg-text) !important;
+	font-family: inherit !important;
+	font-size: 14px !important;
+	line-height: 1.2 !important;
+	box-shadow: none !important;
+	min-width: 0;
+}
+.twd-sk-shop-grid .twd-sk-shop-grid__select {
+	width: 186px;
+	padding-right: 32px !important;
+	-webkit-appearance: none;
+	appearance: none;
+	background-image: linear-gradient(45deg, transparent 50%, var(--twd-sk-sg-a) 50%), linear-gradient(135deg, var(--twd-sk-sg-a) 50%, transparent 50%) !important;
+	background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50% !important;
+	background-size: 5px 5px, 5px 5px !important;
+	background-repeat: no-repeat !important;
+	cursor: pointer;
+}
+.twd-sk-shop-grid .twd-sk-shop-grid__input { width: 200px; border-right: 0 !important; }
+.twd-sk-shop-grid .twd-sk-shop-grid__input::placeholder { color: var(--twd-sk-sg-muted); opacity: 1; }
+.twd-sk-shop-grid .twd-sk-shop-grid__find,
+.twd-sk-shop-grid .twd-sk-shop-grid__go {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 38px !important;
+	min-width: 40px;
+	margin: 0 !important;
+	padding: 0 12px !important;
+	border: 1px solid var(--twd-sk-sg-a) !important;
+	border-radius: 0 !important;
+	background: var(--twd-sk-sg-a) !important;
+	color: #fff !important;
+	box-shadow: none !important;
+	cursor: pointer;
+}
+.twd-sk-shop-grid .twd-sk-shop-grid__go { margin-left: 6px !important; }
+.twd-sk-shop-grid .twd-sk-shop-grid__find svg { display: block; width: 16px; height: 16px; }
+.twd-sk-shop-grid .twd-sk-shop-grid__find:hover,
+.twd-sk-shop-grid .twd-sk-shop-grid__go:hover { background: var(--twd-sk-sg-text) !important; border-color: var(--twd-sk-sg-text) !important; }
+/* With the script the sort applies as soon as it changes. */
+.twd-sk-shop-grid.twd-sk-shop-grid--js .twd-sk-shop-grid__go { display: none !important; }
+
+.twd-sk-shop-grid .twd-sk-shop-grid__cat:focus-visible,
+.twd-sk-shop-grid .twd-sk-shop-grid__select:focus-visible,
+.twd-sk-shop-grid .twd-sk-shop-grid__input:focus-visible,
+.twd-sk-shop-grid .twd-sk-shop-grid__find:focus-visible,
+.twd-sk-shop-grid .twd-sk-shop-grid__go:focus-visible {
+	outline: 2px solid var(--twd-sk-sg-gold) !important;
+	outline-offset: 2px;
+}
+
+/* Read by screen readers, not shown. */
+.twd-sk-shop-grid .twd-sk-shop-grid__sr {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	margin: -1px !important;
+	padding: 0 !important;
+	overflow: hidden !important;
+	clip: rect(0 0 0 0) !important;
+	white-space: nowrap !important;
+	border: 0 !important;
+}
+
+/* -- Results --------------------------------------------------------------------------------- */
+
+.twd-sk-shop-grid__results { display: block; min-width: 0; }
+.twd-sk-shop-grid__results:focus { outline: none; }
+.twd-sk-shop-grid__results.twd-sk-shop-grid__results--busy { opacity: .5; transition: opacity .2s ease; }
+.twd-sk-shop-grid__results .twd-sk-shop-grid__count {
+	margin: 0 0 18px !important;
+	font-family: var(--twd-sk-sg-caps-font) !important;
+	font-size: 12px !important;
+	letter-spacing: var(--twd-sk-sg-caps-space) !important;
+	text-transform: uppercase !important;
+	color: var(--twd-sk-sg-muted) !important;
+	float: none !important;
+}
+.twd-sk-shop-grid__results .twd-sk-shop-grid__pager { margin: 30px 0 0 !important; text-align: center; clear: both; }
+.twd-sk-shop-grid__results .twd-sk-shop-grid__pager ul.page-numbers {
+	display: inline-flex !important;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	list-style: none !important;
+}
+.twd-sk-shop-grid__results .twd-sk-shop-grid__pager ul.page-numbers li { margin: 0 !important; border: 0 !important; float: none !important; display: block !important; }
+.twd-sk-shop-grid__results .twd-sk-shop-grid__pager .page-numbers a,
+.twd-sk-shop-grid__results .twd-sk-shop-grid__pager .page-numbers span {
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+	min-width: 38px;
+	height: 38px;
+	padding: 0 10px !important;
+	border: 1px solid var(--twd-sk-sg-line) !important;
+	border-radius: 0 !important;
+	background: transparent !important;
+	color: var(--twd-sk-sg-a) !important;
+	font-size: 14px !important;
+	line-height: 1 !important;
+	text-decoration: none !important;
+}
+.twd-sk-shop-grid__results .twd-sk-shop-grid__pager .page-numbers a:hover { border-color: var(--twd-sk-sg-gold) !important; background: var(--twd-sk-sg-paper) !important; }
+.twd-sk-shop-grid__results .twd-sk-shop-grid__pager .page-numbers span.current { background: var(--twd-sk-sg-a) !important; border-color: var(--twd-sk-sg-a) !important; color: #fff !important; }
+.twd-sk-shop-grid__results .twd-sk-shop-grid__pager .page-numbers span.dots { border-color: transparent !important; }
+.twd-sk-shop-grid__results .twd-sk-shop-grid__pager a:focus-visible { outline: 2px solid var(--twd-sk-sg-gold) !important; outline-offset: 2px; }
+
+/* -- Phones: the categories in one row that scrolls sideways; sort and search side by side ------ */
+
+@media (max-width: 767px) {
+	.twd-sk-shop-grid .twd-sk-shop-grid__bar { display: block; }
+	.twd-sk-shop-grid .twd-sk-shop-grid__list {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none;
+		padding-bottom: 2px !important;
+	}
+	.twd-sk-shop-grid .twd-sk-shop-grid__list::-webkit-scrollbar { display: none; }
+	.twd-sk-shop-grid .twd-sk-shop-grid__tools {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		gap: 8px;
+		width: 100%;
+		margin-top: 12px;
+	}
+	.twd-sk-shop-grid .twd-sk-shop-grid__sort,
+	.twd-sk-shop-grid .twd-sk-shop-grid__search { width: 100%; }
+	.twd-sk-shop-grid .twd-sk-shop-grid__select { width: 100%; flex: 1 1 auto; }
+	.twd-sk-shop-grid .twd-sk-shop-grid__input { width: auto; flex: 1 1 auto; }
+	/* 16px stops phones zooming in when the box is tapped. */
+	.twd-sk-shop-grid .twd-sk-shop-grid__select,
+	.twd-sk-shop-grid .twd-sk-shop-grid__input { font-size: 16px !important; height: 42px !important; }
+	.twd-sk-shop-grid .twd-sk-shop-grid__find,
+	.twd-sk-shop-grid .twd-sk-shop-grid__go { height: 42px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.twd-sk-shop-grid__results.twd-sk-shop-grid__results--busy { transition: none; }
+}

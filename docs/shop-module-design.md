@@ -320,3 +320,23 @@ A shop that sells on Etsy and eBay as well often has hundreds of reviews there. 
 
 **Settings** (WooCommerce > Settings > Products > Site Kit shop tools, added by the module, so they show only while it is on): Reviews page, Names, Show a review on product pages, Etsy total and link, eBay total and link, Words before "reviews".
 
+## 13. The filter bar and a grid that updates in place (added 10 Nov 2026, test build 0.21.0-test7)
+
+**Where:** the shop page and product category pages (WooCommerce's own loop; the bar is printed on `woocommerce_before_shop_loop` at 15 in place of WooCommerce's sort list, and on `woocommerce_no_products_found` so it stays when nothing is found), and `[twd_shop_grid limit="12" columns="4"]` for any other page (on a Site Kit page, in an Embed section, shortcode kind). One grid per page: a second shortcode draws nothing. Never inside a `[products]` grid.
+
+**The bar:**
+- Category buttons: All, then each product category with products a visitor can see, with counts ("Ring (5)"), in the shop's own category order. Counts leave out products hidden from the shop and, when the shop hides sold pieces, sold ones; a product in a sub-category counts for its parent too. Counts are cached against WooCommerce's product cache version.
+- Never a button: an empty category, Uncategorised (WooCommerce's default category) and a category called Sold.
+- A name stored all in lower case shows in title case ("earrings" shows "Earrings"); the term itself is never renamed. A name with any capital shows as stored.
+- The category shown is marked `aria-current="page"`.
+- Sort: Latest, Price low to high, Price high to low. Search: a box searching product titles and text within the category shown. Choosing a category clears the search.
+
+**Without a script** every control is a plain link or GET form, and the page reloads at `#twd-sk-shop-grid`. The address uses the module's own parameters, `shop_cat`, `shop_sort`, `shop_q` and `shop_page`, never WordPress's: `?orderby=` or `?s=` on a static front page turns it into the blog or a search page. On the shop and category pages a category is its own page on the shop (`/product-category/ring/`), the sort reaches WooCommerce through its default-sort filter, the search is WordPress's own search on the main query, and WooCommerce's pager lands on the bar too.
+
+**With the script** (`twd-site-kit-shop-grid.js`, vanilla, in the footer): the same address is fetched, the page is parsed with DOMParser and the bar, the result count, the grid and the pager (and a category page's heading and breadcrumb) are imported in place of the old ones, never set as raw HTML. The address goes into the history; Back and Forward swap again. The count is announced in an `aria-live` line. The page then scrolls so the bar sits 12px below whatever fixed or sticky bar is across the top (the header, the admin bar), and corrects once more after a moment for a header that shrinks. A failed fetch, or a page without the bar, simply goes to the address.
+
+**The grid** keeps WooCommerce's markup (`div.woocommerce.columns-N`, `ul.products`, `li.product` from `content-product.php`), so a theme's or the site's own grid CSS still applies. The shortcode sorts with WooCommerce's own ordering helper (as its `[products]` does) and takes WooCommerce's price clauses off straight after.
+
+**Site-wide while the module is on:** Popularity and Average rating leave WooCommerce's sort lists (`woocommerce_catalog_orderby`, `woocommerce_default_catalog_orderby_options`), and the default sort becomes Latest unless a price sort is the stored default.
+
+**Look:** `twd-site-kit-shop-grid.css`, every rule under `.twd-sk-shop-grid` or `.twd-sk-shop-grid__results`, coloured from the shop's variables (the Shop colour printed as `--twd-sk-sg-ink` for pages outside the shop), small capitals following the Site Kit menu settings when present, square corners, gold hairlines. Phones: the categories in one row that scrolls sideways, sort and search side by side under them. Nothing fetched from another site.

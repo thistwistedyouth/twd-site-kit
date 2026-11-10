@@ -49,24 +49,7 @@ class TWD_SK_Shop_Reviews_Show {
 
 	/** The page's own content, or a Site Kit page's HTML or one of its embeds, holds [twd_reviews. */
 	public static function page_uses( $id ) {
-		$needle = '[' . self::SHORTCODE;
-		if ( false !== strpos( (string) get_post_field( 'post_content', $id ), $needle ) ) {
-			return true;
-		}
-		if ( ! class_exists( 'TWD_SK_Store' ) || ! class_exists( 'TWD_SK_Embed' ) ) {
-			return false;
-		}
-		$html = TWD_SK_Store::get_current( $id );
-		if ( false !== strpos( $html, $needle ) ) {
-			return true;
-		}
-		foreach ( TWD_SK_Embed::ids_in( $html ) as $eid ) {
-			$e = $eid > 0 ? TWD_SK_Embed::get( $eid ) : null;
-			if ( is_array( $e ) && isset( $e['code'] ) && false !== strpos( (string) $e['code'], $needle ) ) {
-				return true;
-			}
-		}
-		return false;
+		return TWD_SK_Shop_Layout::page_uses( $id, self::SHORTCODE );
 	}
 
 	public static function maybe_enqueue() {
