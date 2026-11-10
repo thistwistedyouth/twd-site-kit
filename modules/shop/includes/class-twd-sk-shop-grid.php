@@ -512,11 +512,22 @@ class TWD_SK_Shop_Grid {
 		return is_object( $wc ) && isset( $wc->query ) && is_object( $wc->query ) && method_exists( $wc->query, 'get_catalog_ordering_args' ) ? $wc->query : null;
 	}
 
+	/**
+	 * A sort as WooCommerce's ordering helper takes it: array( orderby, order ). It splits "price-desc"
+	 * only when it reads the sort from the address itself; given one word it takes it whole, so
+	 * "price-desc" matched nothing and the grid came back newest first (fixed in 0.21.0-test8).
+	 */
+	public static function wc_order( $sort ) {
+		$parts = explode( '-', (string) $sort, 2 );
+		return array( $parts[0], isset( $parts[1] ) ? strtoupper( $parts[1] ) : '' );
+	}
+
 	/** Run the grid's query with the sort: WooCommerce's own ordering (as its [products] does), else sort_args(). */
 	public static function run_query( $args, $sort ) {
 		$wcq = self::wc_query();
 		if ( $wcq ) {
-			$o               = $wcq->get_catalog_ordering_args( $sort );
+			list( $by, $dir ) = self::wc_order( $sort );
+			$o                = $wcq->get_catalog_ordering_args( $by, $dir );
 			$args['orderby'] = $o['orderby'];
 			$args['order']   = $o['order'];
 			if ( ! empty( $o['meta_key'] ) ) {

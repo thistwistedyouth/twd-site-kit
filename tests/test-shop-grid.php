@@ -159,13 +159,23 @@ if ( ! function_exists( 'WC' ) ) {
 	}
 }
 
-/** WooCommerce's ordering helper, recording what it was asked. */
+/**
+ * WooCommerce's ordering helper, recording what it was asked. Like the real one it splits "price-desc"
+ * only when it reads the address itself: given one word it takes it whole, so "price-desc" matches
+ * nothing and falls back to newest first.
+ */
 class Twd_Fake_Wc_Query {
 	public $asked   = array();
 	public $removed = 0;
+	public $clauses = '';
 	public function get_catalog_ordering_args( $orderby = '', $order = '' ) {
-		$this->asked[] = $orderby;
-		return 'price-desc' === $orderby ? array( 'orderby' => 'price', 'order' => 'DESC', 'meta_key' => '' ) : array( 'orderby' => 'date ID', 'order' => 'DESC', 'meta_key' => '' );
+		$this->asked[] = array( $orderby, $order );
+		$order         = 'DESC' === strtoupper( $order ) ? 'DESC' : 'ASC';
+		if ( 'price' === $orderby ) {
+			$this->clauses = 'DESC' === $order ? 'order_by_price_desc_post_clauses' : 'order_by_price_asc_post_clauses';
+			return array( 'orderby' => 'price', 'order' => $order, 'meta_key' => '' );
+		}
+		return array( 'orderby' => 'date ID', 'order' => 'DESC', 'meta_key' => '' );
 	}
 	public function remove_ordering_args() {
 		$this->removed++;
@@ -262,10 +272,20 @@ twd_sk_test( 'shop grid: sort arguments, and WooCommerce\'s own ordering used an
 	$_GET                   = array( 'shop_sort' => 'price-desc' );
 	TWD_SK_Shop_Grid::shortcode( array() );
 	$q = end( $GLOBALS['twd_grid_queries'] );
-	twd_sk_eq( array( 'price-desc' ), $wcq->asked );
+	twd_sk_eq( array( array( 'price', 'DESC' ) ), $wcq->asked, 'WooCommerce is given the sort and the direction apart (0.21.0-test8)' );
+	twd_sk_eq( 'order_by_price_desc_post_clauses', $wcq->clauses, 'so its highest-price-first clauses are used' );
 	twd_sk_eq( 'price', $q['orderby'] );
 	twd_sk_eq( 'DESC', $q['order'] );
 	twd_sk_eq( 1, $wcq->removed, 'WooCommerce\'s price clauses are taken off again straight after' );
+
+	foreach ( array( 'price' => array( 'price', '' ), 'price-desc' => array( 'price', 'DESC' ), 'date' => array( 'date', '' ) ) as $sort => $want ) {
+		twd_sk_eq( $want, TWD_SK_Shop_Grid::wc_order( $sort ), $sort );
+	}
+	TWD_SK_Shop_Grid::reset();
+	$wcq->clauses = '';
+	$_GET         = array( 'shop_sort' => 'price' );
+	TWD_SK_Shop_Grid::shortcode( array() );
+	twd_sk_eq( 'order_by_price_asc_post_clauses', $wcq->clauses, 'lowest price first' );
 	$_GET = array();
 } );
 

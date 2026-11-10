@@ -5,6 +5,13 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
+## 10 Nov 2026: Shop filter bar, price sort in the shortcode (branch shop-uk-only, NOT merged or released; test build 0.21.0-test8)
+
+- **Found on a live check of test7:** `[twd_shop_grid]` on a static front page ignored the price sorts (the shop page itself was right).
+- **Cause:** `WC_Query::get_catalog_ordering_args()` splits "price-desc" into sort and direction only when it reads the address itself; given it as one word it matched no sort, so WooCommerce's price clauses were never added and the grid fell back to newest first.
+- **Fix:** `TWD_SK_Shop_Grid::wc_order()` splits the sort, and the helper is called with (`price`, `DESC`). The test stand-in now behaves like WooCommerce, so the old call fails the test.
+- Suite 1224 passed on an LF copy.
+
 ## 10 Nov 2026: Shop filter bar, the grid updates in place (branch shop-uk-only, NOT merged or released; test build 0.21.0-test7)
 
 - **Asked for (via the restyle session, Clive's yes):** a filter bar above product grids (categories with counts, sort, search) on the shop and category pages and as `[twd_shop_grid]`, updating the grid without a reload; Popularity and Average rating removed from WooCommerce's sorts.
