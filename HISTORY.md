@@ -2,6 +2,12 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 12 Nov 2026 (later): a small picture under the words on phones
+
+- **Order, not a second picture.** The words and the picture are already two boxes in a one-column grid on a phone; giving the picture's box a later order and a width puts it under the words with no new markup and no second image to download.
+- **A choice, not a new default.** Every picture and text section has always put its picture first on a phone, so the change is opt-in per section.
+- **`excludes`.** An option that needs a class to be present already existed (`requires`); this one needed the opposite (not on a band), so a second small rule was added rather than a fake class.
+
 ## 12 Nov 2026 (later): whole picture on phones, and the resized-address fix
 
 - **A toggle, not a new default.** Cropping a wide picture to a set height on a phone is how every band has always looked, so showing the whole picture is a choice (default off), in line with the rule that a layout stays as it was unless asked.

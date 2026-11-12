@@ -663,6 +663,9 @@
 		if (o.requires && classes.indexOf(o.requires) < 0) {
 			return false;
 		}
+		if (o.excludes && classes.indexOf(o.excludes) > -1) {
+			return false;
+		}
 		if (o.requires_any && !o.requires_any.some(function (c) {
 			return classes.indexOf(c) > -1;
 		})) {

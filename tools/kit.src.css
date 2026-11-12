@@ -1341,3 +1341,9 @@
   .twd-sk-phone-whole.twd-sk-image-text--band { height: auto; }
   .twd-sk-phone-whole .twd-sk-image-text__img { width: 100%; height: auto; aspect-ratio: auto; max-height: 80vh; animation: none; }
 }
+
+/* Picture and text, small picture under the words on phones (12 Nov 2026): a Look choice. On a phone the picture is about half the
+   column wide, centred, after the words instead of before them. Above the phone width nothing changes. */
+@media (max-width: 768px) {
+  .twd-sk-phone-under .twd-sk-image-text__media { order: 2; width: 60%; margin: 0 auto; }
+}

@@ -94,6 +94,13 @@ class TWD_SK_Looks {
 					'requires' => 'twd-sk-image-text--band',
 					'help'     => 'Boxed puts the picture in the page column with rounded corners and shows all of it, unless a Shape trims it. Band height does not apply to a boxed picture.',
 				),
+				'phone_under' => array(
+					'label'    => 'Picture on phones',
+					'kind'     => 'choice',
+					'choices'  => array( '' => 'As built', 'twd-sk-phone-under' => 'Small, centred, under the words' ),
+					'excludes' => 'twd-sk-image-text--band',
+					'help'     => 'On a phone the picture is smaller and sits centred under the words. Tablets and computers are unchanged.',
+				),
 				'phone_whole' => array(
 					'label'    => 'Show the whole picture on phones',
 					'kind'     => 'toggle',
@@ -770,6 +777,9 @@ class TWD_SK_Looks {
 		if ( isset( $o['requires_any'] ) ) {
 			$item['requires_any'] = $o['requires_any'];
 		}
+		if ( isset( $o['excludes'] ) ) {
+			$item['excludes'] = $o['excludes'];
+		}
 		if ( ! empty( $o['help'] ) ) {
 			$item['help'] = $o['help'];
 		}
@@ -808,6 +818,9 @@ class TWD_SK_Looks {
 			return false;
 		}
 		if ( isset( $option['requires_any'] ) && ! array_intersect( $option['requires_any'], $classes ) ) {
+			return false;
+		}
+		if ( isset( $option['excludes'] ) && in_array( $option['excludes'], $classes, true ) ) {
 			return false;
 		}
 		return true;

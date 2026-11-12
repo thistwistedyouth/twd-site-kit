@@ -4147,6 +4147,13 @@
     animation: none;
   }
 }
+@media (max-width: 768px) {
+  .twd-sk-page .twd-sk-phone-under.twd-sk-phone-under .twd-sk-image-text__media.twd-sk-image-text__media {
+    order: 2;
+    width: 60%;
+    margin: 0 auto !important;
+  }
+}
 
 /* Page title fallback for themes other than Hello. Added by TWD_SK_Page only on a
    page whose kit HTML has its own h1 (the hero title). */

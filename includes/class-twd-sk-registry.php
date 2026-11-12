@@ -80,6 +80,7 @@ class TWD_SK_Registry {
 			// 12 Nov 2026: a second picture for phones in a picture band (the picture, and the band's mark that it has one).
 			'twd-sk-phone-img',
 			'twd-sk-phone-whole',
+			'twd-sk-phone-under',
 			'twd-sk-has-phone',
 			'twd-sk-tone-base',
 			'twd-sk-tone-surface',

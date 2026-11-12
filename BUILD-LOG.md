@@ -11,6 +11,15 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
+## 12 Nov 2026 (later): a small picture under the words on phones (at the owner's request, built on `main`, NOT released; test build `0.20.0-dev15` installed by hand on the pilot staging site)
+
+- **Asked for:** on a phone the About page's picture of the person filled the width and sat above the first words; the owner wanted it smaller, centred and under the first paragraph, on phones only.
+- **What it is:** Look on a picture and text section has Picture on phones: As built, or Small, centred, under the words (`twd-sk-phone-under`, one shared class, `TWD_SK_Looks` `phone_under`). At 768px and under the picture's box is 60 percent of the column, centred, and ordered after the words; above that nothing changes, and as built prints the same bytes. On the pilot site's About page the picture is 212 by 283 at 390 wide, centred, below the paragraph.
+- **A new rule for Look options:** `excludes` (a class that hides the option), sent to the browser and read by `lookMet()` and `requirement_met()`, so the choice is not offered on a picture band, which has no words beside it.
+- **Under the section's words, not under the first paragraph:** the picture goes after the section's own words. On this page that is the first paragraph (the rest is the next section); where a section holds several paragraphs it would sit under all of them.
+- **Tests:** `tests/test-phone-under.php` (3). Suite 1223 passed on an LF copy.
+- **To check on a real site:** the Look panel on a picture and text section shows Picture on phones and it is not offered on a band; the phone view; desktop unchanged. Not yet seen in the signed-in Look panel.
+
 ## 12 Nov 2026 (later): whole picture on phones, and sharper wide pictures (at the owner's request, built on `main`, NOT released; test build `0.20.0-dev14` installed by hand on the pilot staging site)
 
 - **Asked for:** from a phone-width screenshot of a Questions banner: the banner cropped the left of a wide picture on a phone (it should show whole), and the wide picture looked low resolution.
