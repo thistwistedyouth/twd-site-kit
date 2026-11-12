@@ -68,6 +68,9 @@ class TWD_SK_Registry {
 			'twd-sk-pos-middle',
 			'twd-sk-pos-bottom',
 			'twd-sk-kenburns',
+			// 12 Nov 2026: how wide the words of a section run (Look, Width).
+			'twd-sk-width-narrow',
+			'twd-sk-width-wide',
 			'twd-sk-tone-base',
 			'twd-sk-tone-surface',
 			'twd-sk-tone-tint',

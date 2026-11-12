@@ -338,6 +338,20 @@ class TWD_SK_Looks {
 		);
 	}
 
+	/**
+	 * How wide the words of a section run (12 Nov 2026): Narrow (the reading width a page title or a form uses), as built, or Wide.
+	 * Two shared classes on the section, acting on its content column (the direct child twd-sk-inner), from the container tokens.
+	 * As built (no class) is exactly as before.
+	 */
+	public static function width_option() {
+		return array(
+			'label'   => 'Width',
+			'kind'    => 'choice',
+			'choices' => array( '' => 'As built', 'twd-sk-width-narrow' => 'Narrow (reading width)', 'twd-sk-width-wide' => 'Wide' ),
+			'help'    => 'How wide the words run. Narrow lines up with a page title or a form; Wide uses more of a big screen.',
+		);
+	}
+
 	/** Space above or below any section (0.15.0): none, small, as before, large. The classes are shared registry classes. */
 	public static function space_option( $where ) {
 		$top = 'top' === $where;
@@ -411,6 +425,7 @@ class TWD_SK_Looks {
 		return self::options( $component ) + array(
 			'space_top'    => self::space_option( 'top' ),
 			'space_bottom' => self::space_option( 'bottom' ),
+			'width'        => self::width_option(),
 		) + self::advanced_options() + array(
 			'background'   => self::background_option(),
 			'text_color'   => self::text_color_option(),

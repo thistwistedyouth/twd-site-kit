@@ -2,6 +2,13 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 12 Nov 2026 (later): a Width choice for every section
+
+- **A class on the section, acting on its column.** A page is built from sections that each hold a `twd-sk-inner` column, narrow or wide when it was made. Rather than editing that inner element (the Look panel only changes the section's own classes), the choice is a shared class on the section and the rule reaches the column with `> .twd-sk-inner`, the way Box, Border and Space already work.
+- **Three steps from the existing tokens.** Narrow is the reading width titles and forms already use, Wide is a quarter wider than the container, As built is no class. No new token: a client changing the container in the Site tab moves Wide with it.
+- **The longer selector wins.** A section built narrow must be able to go Wide, so the rule has more classes in its selector than the old `twd-sk-inner--narrow` rule, and the stylesheet's order is not relied on.
+- **Not offered where it does nothing.** It is offered on every section for simplicity (one shared option), but a picture band or an image hero has no `twd-sk-inner` column, so there it does nothing; their size is the Height choice. Offering it only where a column exists would need the browser to read the section's children, which the Look data does not carry.
+
 ## 12 Nov 2026 (later): turning a picture-only custom section into a picture band
 
 - **Convert, not extend.** The alternative was to give custom sections Look choices (height, position, zoom). A custom section's look belongs to the site's own stylesheet (D-43 to D-48): the Look classes are hooks on kit elements (`twd-sk-image-text__img`, `twd-sk-hero__bg`), which a custom section does not have, so the choices would do nothing there or would have to be taught per section. A picture-only custom section is exactly a picture band in a more awkward form, so turning it into one is the honest fix: the Look panel then works for it with no special cases.

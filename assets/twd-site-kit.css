@@ -4069,6 +4069,12 @@
     justify-content: flex-end;
   }
 }
+.twd-sk-page .twd-sk-width-narrow.twd-sk-width-narrow > .twd-sk-inner.twd-sk-inner {
+  max-width: var(--twd-site-container-narrow);
+}
+.twd-sk-page .twd-sk-width-wide.twd-sk-width-wide > .twd-sk-inner.twd-sk-inner {
+  max-width: calc(var(--twd-site-container) * 1.25);
+}
 
 /* Page title fallback for themes other than Hello. Added by TWD_SK_Page only on a
    page whose kit HTML has its own h1 (the hero title). */

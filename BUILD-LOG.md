@@ -11,6 +11,16 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
+## 12 Nov 2026 (later): Width, a Look choice on every section (at the owner's request, built on `main`, NOT released; test build `0.20.0-dev9` installed by hand on the pilot staging site)
+
+- **Asked for:** on a contact page the title, the form and the closing text were built at the narrow reading width and the details section between them at the wide container, so they did not line up; the owner wanted to choose a boxed (narrow) or wide width for any section.
+- **The choice:** `TWD_SK_Looks::width_option()`, added to `all_options()` after Space below, so every kind of section has it: As built (no class), Narrow (`twd-sk-width-narrow`) and Wide (`twd-sk-width-wide`), two new shared registry classes. Rules at the end of `tools/kit.src.css`: Narrow sets the content column (`> .twd-sk-inner`) to `container-narrow`, Wide to the container times 1.25. The longer selector beats a section that was built with `twd-sk-inner--narrow`. No new token.
+- **Limits:** it acts on a section's direct `twd-sk-inner` column, so it does nothing on a picture band or a hero with a picture (they have their own size choices).
+- **Tests:** `tests/test-width.php` (3); `tests/test-looks.php` updated (two lists of the shared option keys). Suite 1207 passed on an LF copy.
+- **Measured on the pilot staging site:** at 1900 wide Narrow 680, As built 1140, Wide 1425; a section built narrow set to Wide went from 680 to 1425. By hand on the pilot site: the contact details section set to Narrow (one version, Undo works), after which all four sections of the page share one left edge and width.
+- **To check on a real site:** Look on any section shows Width; Narrow and Wide change the column; As built puts it back. Not yet seen in the signed-in Look panel.
+- **Stylesheet size:** 174,248 bytes of the 175,000 ceiling, about 750 bytes left. The next styling feature needs the ceiling raised.
+
 ## 12 Nov 2026 (later): Turn into a picture band (at the owner's request, built on `main`, NOT released; test build `0.20.0-dev8` installed by hand on the pilot staging site)
 
 - **Asked for:** a banner made as a custom section holding only a picture had no Look choices, so its height could not be changed; the owner wanted it changeable like a kit picture band.

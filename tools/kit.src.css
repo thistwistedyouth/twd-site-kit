@@ -1303,3 +1303,9 @@
   .twd-sk-footer__row--cta .twd-sk-footer__brand, .twd-sk-footer__row--cta nav { flex: 1 1 0; }
   .twd-sk-footer__row--cta nav { display: flex; justify-content: flex-end; }
 }
+
+/* Width (12 Nov 2026): a Look choice for how wide the words of any section run, on its content column. Narrow is the reading
+   width a page title or a form uses; Wide is a quarter wider than the container. No class is exactly as built. These come after
+   the container rules, and the longer selector beats a section that was built narrow. */
+.twd-sk-width-narrow > .twd-sk-inner { max-width: $container-narrow; }
+.twd-sk-width-wide > .twd-sk-inner { max-width: calc(#{$container} * 1.25); }
