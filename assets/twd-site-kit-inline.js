@@ -884,6 +884,14 @@
 			return lookMet(o, classes);
 		});
 		if (!info || (can.length < 2 && !hasOption)) {
+			// A custom section that holds only a picture: say why, and offer the one-click way to a picture band.
+			if (pictureOnlyCustom(sec)) {
+				closePanels();
+				S.lookSec = sec;
+				drawCustomLook(sec);
+				show(ui.lookPanel, true);
+				return;
+			}
 			status('This section has nothing to choose here.');
 			return;
 		}
@@ -2412,6 +2420,29 @@
 			S.saving = false;
 			status(err.message);
 		});
+	}
+
+	/* A custom section that holds only a picture (12 Nov 2026): it has no Look choices (its look is the site stylesheet's), so the
+	 * Look panel says why and one button turns it into a picture band, which has Band height, Picture position and Slow
+	 * zoom. Administrators only (the custom tools); the server checks the section again and keeps the picture. */
+	function pictureOnlyCustom(sec) {
+		return CUSTOM && !!sec && sec.classList.contains('twd-sk-custom') && !!sec.querySelector('[data-twd-sk-p]') && !sec.querySelector('[data-twd-sk-t]');
+	}
+
+	function drawCustomLook(sec) {
+		ED.clear(ui.lookBody);
+		ui.lookHead.textContent = 'Look of this section: a custom section with a picture';
+		ui.lookBody.appendChild(el('p', { className: 'twd-sk-ed__help', text: 'This section was made with Replace this section, so it has no Height or Picture position choices. It holds only a picture, so it can be turned into a picture band, which has Band height, Picture position and Slow zoom. The picture and its description stay.' }));
+		ui.lookBody.appendChild(ED.button('Turn into a picture band', 'primary', function () {
+			toPictureBand(sec);
+		}));
+	}
+
+	function toPictureBand(sec) {
+		if (notNow()) {
+			return;
+		}
+		structure({ op: 'to_band', index: parseInt(sec.getAttribute('data-twd-sk-sec'), 10) }, 'Turning it into a picture band...', 'Turned into a picture band.');
 	}
 
 	/* 0.19.0: a new paragraph under the words the cursor is in, and a copy of the card, entry, step, question or

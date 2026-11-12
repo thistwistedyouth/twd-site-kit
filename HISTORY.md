@@ -2,6 +2,13 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 12 Nov 2026 (later): turning a picture-only custom section into a picture band
+
+- **Convert, not extend.** The alternative was to give custom sections Look choices (height, position, zoom). A custom section's look belongs to the site's own stylesheet (D-43 to D-48): the Look classes are hooks on kit elements (`twd-sk-image-text__img`, `twd-sk-hero__bg`), which a custom section does not have, so the choices would do nothing there or would have to be taught per section. A picture-only custom section is exactly a picture band in a more awkward form, so turning it into one is the honest fix: the Look panel then works for it with no special cases.
+- **Only a picture.** A custom section with words or a second picture would lose them or its layout in the swap, so it is refused with the reason and a pointer to Replace this section. The rule is checked on the server (the browser's test, a numbered picture and no numbered text, only decides whether to show the button).
+- **Same route as Add and Move.** `op` `to_band` on the structure route gives the stale-page check, one version with Undo and the reload at the section for free, and it reaches the page only through the store and the sanitiser like everything else.
+- **It starts at Normal.** The conversion makes the plain band; the person then picks Band height in Look, so nothing implies a height they did not choose.
+
 ## 12 Nov 2026 (later): one call to action, in the footer
 
 - **A tick box in the footer, not a section on every page.** The review found a dark band on each page (a sentence and a button) followed by a footer that said much the same. A section on every page is five things to keep in step and easy to leave off a new page; the footer is printed once for the whole site. So the footer gains the option and the pages lose the band.

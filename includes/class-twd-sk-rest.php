@@ -1727,11 +1727,13 @@ class TWD_SK_REST {
 			) );
 		} elseif ( 'move' === $op ) {
 			$out = TWD_SK_Structure::move( $id, array( 'index' => $request->get_param( 'index' ), 'dir' => $request->get_param( 'dir' ) ) );
+		} elseif ( 'to_band' === $op ) {
+			$out = TWD_SK_Structure::to_band( $id, array( 'index' => $request->get_param( 'index' ) ) );
 		} elseif ( 'add_text' === $op || 'duplicate' === $op ) {
 			$item = $request->get_param( 'item' );
 			$out  = TWD_SK_Structure::inside( $id, $op, array( 'piece' => $request->get_param( 'piece' ), 'item' => is_numeric( $item ) ? $item : null, 'level' => $request->get_param( 'level' ) ) );
 		} else {
-			return self::error( 'twd_sk_bad_input', 'Choose to add a section, move one, add a paragraph or copy an item.', 400 );
+			return self::error( 'twd_sk_bad_input', 'Choose to add a section, move one, add a paragraph, copy an item or turn a picture-only custom section into a picture band.', 400 );
 		}
 		if ( is_wp_error( $out ) ) {
 			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_empty_page' === $out->get_error_code() || 'twd_sk_bad_input' === $out->get_error_code() ? 400 : 502 );

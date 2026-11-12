@@ -121,4 +121,56 @@ class TWD_SK_Structure {
 			'note' => 'Moved a ' . str_replace( '-', ' ', $type ) . ' section ' . $dir,
 		);
 	}
+
+	/**
+	 * A custom section that holds only a picture, turned into the kit's picture band (12 Nov 2026), which has Band height, Picture
+	 * position and Slow zoom in the Look panel (a custom section has no Look choices: its look belongs to the site's own stylesheet).
+	 * The picture and its description are kept; a resized media library address goes back to the full size, so a wide screen gets
+	 * a sharp copy. Anything else is refused with the reason, and nothing changes.
+	 *
+	 * @param int   $page_id
+	 * @param array $in index (the section's number)
+	 * @return array|WP_Error { html, at, note }
+	 */
+	public static function to_band( $page_id, $in ) {
+		$in    = is_array( $in ) ? $in : array();
+		$parts = TWD_SK_Sections::split( TWD_SK_Store::get_current( (int) $page_id ) );
+		$n     = count( $parts['sections'] );
+		$index = isset( $in['index'] ) && ( is_int( $in['index'] ) || ( is_string( $in['index'] ) && ctype_digit( $in['index'] ) ) ) ? (int) $in['index'] : -1;
+		if ( $index < 0 || $index >= $n ) {
+			return new WP_Error( 'twd_sk_bad_input', 'Click inside the section you want to change first.' );
+		}
+		$band = self::picture_band_from( $parts['sections'][ $index ] );
+		if ( is_wp_error( $band ) ) {
+			return $band;
+		}
+		$sections           = $parts['sections'];
+		$sections[ $index ] = $band;
+		return array(
+			'html' => TWD_SK_Sections::join( $parts['gaps'], $sections ),
+			'at'   => $index,
+			'note' => 'Turned a custom section into a picture band',
+		);
+	}
+
+	/** The picture band for one section's HTML, or an error saying why it cannot be made. */
+	public static function picture_band_from( $section ) {
+		if ( 'custom' !== TWD_SK_Sections::type_of( $section ) ) {
+			return new WP_Error( 'twd_sk_bad_input', 'Only a custom section (one made with Replace this section) can be turned into a picture band.' );
+		}
+		$more = 'This custom section holds more than a picture, so it cannot be turned into a picture band. Use Replace this section to change it.';
+		if ( '' !== TWD_SK_Sections::text_of( $section ) || 1 !== preg_match_all( '/<img\b[^>]*>/i', $section, $m ) || false !== stripos( $section, '<h1' ) ) {
+			return new WP_Error( 'twd_sk_bad_input', $more );
+		}
+		if ( 1 !== preg_match( '/\ssrc\s*=\s*"([^"]*)"/i', $m[0][0], $src ) || '' === trim( $src[1] ) ) {
+			return new WP_Error( 'twd_sk_bad_input', 'This custom section\'s picture has no address, so it cannot be turned into a picture band.' );
+		}
+		$alt = 1 === preg_match( '/\salt\s*=\s*"([^"]*)"/i', $m[0][0], $a ) ? $a[1] : '';
+		$url = html_entity_decode( $src[1], ENT_QUOTES, 'UTF-8' );
+		// A media library picture saved at a resized address (name-1024x677.jpg) goes back to its full size when that file is a library picture.
+		if ( 1 === preg_match( '/^(.*)-\d+x\d+(\.[A-Za-z0-9]+)$/', $url, $sized ) && function_exists( 'attachment_url_to_postid' ) && (int) attachment_url_to_postid( $sized[1] . $sized[2] ) > 0 ) {
+			$url = $sized[1] . $sized[2];
+		}
+		return '<section class="twd-sk-image-text twd-sk-image-text--band"><img class="twd-sk-image-text__img" src="' . esc_attr( $url ) . '" alt="' . $alt . '"></section>';
+	}
 }
