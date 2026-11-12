@@ -4075,6 +4075,47 @@
 .twd-sk-page .twd-sk-width-wide.twd-sk-width-wide > .twd-sk-inner.twd-sk-inner {
   max-width: calc(var(--twd-site-container) * 1.25);
 }
+.twd-sk-page .twd-sk-shape-natural.twd-sk-shape-natural.twd-sk-image-text--band.twd-sk-image-text--band,
+.twd-sk-page .twd-sk-shape-wide.twd-sk-shape-wide.twd-sk-image-text--band.twd-sk-image-text--band,
+.twd-sk-page .twd-sk-shape-cinema.twd-sk-shape-cinema.twd-sk-image-text--band.twd-sk-image-text--band,
+.twd-sk-page .twd-sk-band-boxed.twd-sk-band-boxed.twd-sk-image-text--band.twd-sk-image-text--band,
+.twd-sk-page .twd-sk-band-boxed-narrow.twd-sk-band-boxed-narrow.twd-sk-image-text--band.twd-sk-image-text--band {
+  height: auto;
+}
+.twd-sk-page .twd-sk-shape-natural.twd-sk-shape-natural .twd-sk-image-text__img.twd-sk-image-text__img,
+.twd-sk-page .twd-sk-shape-wide.twd-sk-shape-wide .twd-sk-image-text__img.twd-sk-image-text__img,
+.twd-sk-page .twd-sk-shape-cinema.twd-sk-shape-cinema .twd-sk-image-text__img.twd-sk-image-text__img,
+.twd-sk-page .twd-sk-band-boxed.twd-sk-band-boxed .twd-sk-image-text__img.twd-sk-image-text__img,
+.twd-sk-page .twd-sk-band-boxed-narrow.twd-sk-band-boxed-narrow .twd-sk-image-text__img.twd-sk-image-text__img {
+  height: auto;
+  max-height: 80vh;
+}
+.twd-sk-page .twd-sk-band-boxed.twd-sk-band-boxed.twd-sk-image-text--band.twd-sk-image-text--band,
+.twd-sk-page .twd-sk-band-boxed-narrow.twd-sk-band-boxed-narrow.twd-sk-image-text--band.twd-sk-image-text--band {
+  padding: var(--twd-site-gap-md) var(--twd-site-gutter) !important;
+}
+.twd-sk-page .twd-sk-band-boxed.twd-sk-band-boxed .twd-sk-image-text__img.twd-sk-image-text__img,
+.twd-sk-page .twd-sk-band-boxed-narrow.twd-sk-band-boxed-narrow .twd-sk-image-text__img.twd-sk-image-text__img {
+  width: auto;
+  display: block;
+  margin: 0 auto !important;
+  border-radius: var(--twd-site-radius-image) !important;
+  animation: none;
+}
+.twd-sk-page .twd-sk-band-boxed.twd-sk-band-boxed .twd-sk-image-text__img.twd-sk-image-text__img {
+  max-width: min(100%, var(--twd-site-container));
+}
+.twd-sk-page .twd-sk-band-boxed-narrow.twd-sk-band-boxed-narrow .twd-sk-image-text__img.twd-sk-image-text__img {
+  max-width: min(100%, var(--twd-site-container-narrow));
+}
+.twd-sk-page .twd-sk-shape-wide.twd-sk-shape-wide .twd-sk-image-text__img.twd-sk-image-text__img {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+}
+.twd-sk-page .twd-sk-shape-cinema.twd-sk-shape-cinema .twd-sk-image-text__img.twd-sk-image-text__img {
+  aspect-ratio: 2 / 1;
+  width: 100%;
+}
 
 /* Page title fallback for themes other than Hello. Added by TWD_SK_Page only on a
    page whose kit HTML has its own h1 (the hero title). */

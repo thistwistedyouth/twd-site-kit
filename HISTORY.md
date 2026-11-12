@@ -2,6 +2,14 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 12 Nov 2026 (later): picture band Shape and Boxed
+
+- **A shape, not a pixel height, so every screen crops alike.** A banner crops because the box and the picture are different shapes. With a fixed height and a width that follows the screen, the box's shape changes with the screen, so the crop does too. Giving the picture an aspect ratio fixes the shape and so the crop. The picture's own shape (Match the picture) crops nothing.
+- **The cap is the screen's height.** A full-width picture at its own shape is taller than a desktop screen (a 3:2 picture at 1900 wide is about 1260 high), so every shape is capped at 80vh and crops the sides beyond that. This means a full-width band can never fully fix a wide, short screen; that is why boxed exists.
+- **Boxed shrinks to fit; it does not crop.** A boxed picture at its own shape would still be cropped by the cap on a short laptop if it kept the column's width. So it takes `width: auto` with `max-width: min(100%, container)` and `max-height: 80vh`: the browser scales it down, keeping its shape, until both limits are met. It is not stretched past its own size either, which a small picture needs. A shape on a boxed picture sets the width to 100 percent of the box so the crop is to that shape.
+- **No separate phone and desktop crops.** Art direction (a different crop for a phone) would need `<picture>` sources, which the sanitiser does not allow and the editor does not offer; one shape for every screen is the simpler and more predictable promise.
+- **The stylesheet ceiling went to 180,000.** The block is about 2.3 KB because each modifier class is doubled and appears in several selector lists; shortening it would mean attribute selectors, which the stylesheet tests do not allow. The Look data for editors also grew past its old cap; neither reaches a visitor except the stylesheet itself.
+
 ## 12 Nov 2026 (later): a Width choice for every section
 
 - **A class on the section, acting on its column.** A page is built from sections that each hold a `twd-sk-inner` column, narrow or wide when it was made. Rather than editing that inner element (the Look panel only changes the section's own classes), the choice is a shared class on the section and the rule reaches the column with `> .twd-sk-inner`, the way Box, Border and Space already work.

@@ -71,6 +71,12 @@ class TWD_SK_Registry {
 			// 12 Nov 2026: how wide the words of a section run (Look, Width).
 			'twd-sk-width-narrow',
 			'twd-sk-width-wide',
+			// 12 Nov 2026: a picture band's shape (its height follows its width) and boxed or full width (Look).
+			'twd-sk-shape-natural',
+			'twd-sk-shape-wide',
+			'twd-sk-shape-cinema',
+			'twd-sk-band-boxed',
+			'twd-sk-band-boxed-narrow',
 			'twd-sk-tone-base',
 			'twd-sk-tone-surface',
 			'twd-sk-tone-tint',

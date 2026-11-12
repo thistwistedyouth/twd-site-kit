@@ -48,7 +48,7 @@ twd_sk_test( 'looks: the browser gets small, static data: labels and class names
 	twd_sk_eq( array( 'box', 'border', 'padding' ), $c['advanced'] );
 	twd_sk_eq( array(), $c['components']['faq']['options'], 'a component with no options of its own sends none' );
 	$json = json_encode( $c );
-	twd_sk_true( strlen( $json ) < 16000, 'light: ' . strlen( $json ) . ' bytes' ); // 8000 until the nearest-choice hints and the Tier C options joined in 0.15.0
+	twd_sk_true( strlen( $json ) < 18000, 'light: ' . strlen( $json ) . ' bytes' ); // 8000 until the nearest-choice hints and the Tier C options joined in 0.15.0; 16,000 then 18,000 on 12 Nov 2026 for the newer Look choices (sent to signed-in editors only, never to visitors)
 	twd_sk_hasnt( 'PLACEHOLDER', $json );
 	// Every class named in it is one the registry allows.
 	$allowed = TWD_SK_Registry::allowed_classes();
@@ -372,7 +372,7 @@ twd_sk_test( 'words over a picture (0.15.0): the Picture text layout, its layer,
 	}
 	twd_sk_eq( array( 'twd-sk-frame' ), $pic[2] );
 	twd_sk_true( count( $cfg['hints'] ) >= 6 );
-	twd_sk_true( strlen( json_encode( $cfg ) ) < 16000, 'config size ' . strlen( json_encode( $cfg ) ) ); // 18b added the text styles and the allow list (about 1,300 bytes); 12 Nov 2026 raised from 13,500 for Height, Picture position and Slow zoom on four section types (about 2,000 bytes). Sent to signed-in editors only, never to visitors.
+	twd_sk_true( strlen( json_encode( $cfg ) ) < 18000, 'config size ' . strlen( json_encode( $cfg ) ) ); // 18b added the text styles and the allow list (about 1,300 bytes); 12 Nov 2026 raised from 13,500 for Height, Picture position and Slow zoom on four section types (about 2,000 bytes). Sent to signed-in editors only, never to visitors.
 	// The frame tint is a Site tab choice, and the contrast check reads the words on the frame over the overlay over a photograph.
 	twd_sk_true( in_array( 'color-frame', TWD_SK_Site::editable_names(), true ) );
 	twd_sk_eq( 'rgba(0,0,0,0.3)', TWD_SK_Site::picture_presets()['color-frame'][0][0] );

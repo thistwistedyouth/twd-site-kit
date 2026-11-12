@@ -1309,3 +1309,17 @@
    the container rules, and the longer selector beats a section that was built narrow. */
 .twd-sk-width-narrow > .twd-sk-inner { max-width: $container-narrow; }
 .twd-sk-width-wide > .twd-sk-inner { max-width: calc(#{$container} * 1.25); }
+
+/* Picture band shape and boxed (12 Nov 2026): Look choices for a band's picture. A fixed height crops a wide screen far more than a
+   phone; a shape (16:9 or 2:1) lets the height follow the width, so every screen shows the same part, and no picture is taller than
+   80 percent of the screen. Boxed puts the picture in the page column (the container, or the reading width) with rounded corners and
+   no zoom, at its own size and shape: it shrinks to fit the column and the screen's height rather than being cropped. A shape on a
+   boxed picture crops it to that shape. They come last so they win over the band's height steps and its phone rules. */
+.twd-sk-shape-natural.twd-sk-image-text--band, .twd-sk-shape-wide.twd-sk-image-text--band, .twd-sk-shape-cinema.twd-sk-image-text--band, .twd-sk-band-boxed.twd-sk-image-text--band, .twd-sk-band-boxed-narrow.twd-sk-image-text--band { height: auto; }
+.twd-sk-shape-natural .twd-sk-image-text__img, .twd-sk-shape-wide .twd-sk-image-text__img, .twd-sk-shape-cinema .twd-sk-image-text__img, .twd-sk-band-boxed .twd-sk-image-text__img, .twd-sk-band-boxed-narrow .twd-sk-image-text__img { height: auto; max-height: 80vh; }
+.twd-sk-band-boxed.twd-sk-image-text--band, .twd-sk-band-boxed-narrow.twd-sk-image-text--band { padding: $gap-md $gutter; }
+.twd-sk-band-boxed .twd-sk-image-text__img, .twd-sk-band-boxed-narrow .twd-sk-image-text__img { width: auto; display: block; margin: 0 auto; border-radius: $radius-image; animation: none; }
+.twd-sk-band-boxed .twd-sk-image-text__img { max-width: min(100%, $container); }
+.twd-sk-band-boxed-narrow .twd-sk-image-text__img { max-width: min(100%, $container-narrow); }
+.twd-sk-shape-wide .twd-sk-image-text__img { aspect-ratio: 16 / 9; width: 100%; }
+.twd-sk-shape-cinema .twd-sk-image-text__img { aspect-ratio: 2 / 1; width: 100%; }
