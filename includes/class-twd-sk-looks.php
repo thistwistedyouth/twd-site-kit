@@ -55,7 +55,7 @@ class TWD_SK_Looks {
 	 */
 	public static function options( $component ) {
 		$all = array(
-			'text' => self::picture_options( 'twd-sk-text--picture' ) + self::type_options() + self::page_options(),
+			'text' => self::picture_options( 'twd-sk-text--picture' ) + array( 'cover_height' => self::cover_height_option( 'twd-sk-text--picture' ) ) + self::type_options() + self::page_options(),
 			'cta'  => self::picture_options( 'twd-sk-cta--band' ),
 			'quote' => array(
 				'marks' => array(
@@ -76,7 +76,7 @@ class TWD_SK_Looks {
 				'band_height' => array(
 					'label'    => 'Band height',
 					'kind'     => 'choice',
-					'choices'  => array( '' => 'Normal', 'twd-sk-image-text--band-tall' => 'Tall', 'twd-sk-image-text--band-ribbon' => 'Ribbon (thin)' ),
+					'choices'  => array( '' => 'Normal', 'twd-sk-image-text--band-tall' => 'Tall', 'twd-sk-image-text--band-taller' => 'Taller', 'twd-sk-image-text--band-tallest' => 'Tallest', 'twd-sk-image-text--band-ribbon' => 'Ribbon (thin)' ),
 					'requires' => 'twd-sk-image-text--band',
 					'help'     => 'The heights themselves are set in the Site tab under Style, Pictures.',
 				),
@@ -101,6 +101,7 @@ class TWD_SK_Looks {
 					'requires' => 'twd-sk-hero--image',
 					'help'     => 'How much the picture is darkened behind the words.',
 				),
+				'cover_height' => self::cover_height_option( 'twd-sk-hero--image' ),
 				'left'     => array(
 					'label'    => 'Words on the left',
 					'kind'     => 'toggle',
@@ -174,6 +175,21 @@ class TWD_SK_Looks {
 				'class' => 'twd-sk-text-lg',
 				'help'  => 'The paragraphs a size up, like an introduction.',
 			),
+		);
+	}
+
+	/**
+	 * The Height choice of a section with a picture behind its words (12 Nov 2026): the opening hero with a picture, and the
+	 * Picture text layout. Two shared classes; the heights are tokens in the Site tab (Style, Pictures), and wider screens get
+	 * a little more, so a banner crops less on a big monitor. Normal (no class) is exactly as before.
+	 */
+	private static function cover_height_option( $requires ) {
+		return array(
+			'label'    => 'Height',
+			'kind'     => 'choice',
+			'choices'  => array( '' => 'Normal', 'twd-sk-cover-tall' => 'Tall', 'twd-sk-cover-taller' => 'Taller' ),
+			'requires' => $requires,
+			'help'     => 'The heights themselves are set in the Site tab under Style, Pictures.',
 		);
 	}
 

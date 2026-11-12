@@ -434,7 +434,7 @@ class TWD_SK_Export {
 				$group = 'Spacing';
 			} elseif ( preg_match( '/^(radius-|card-accent-width)/', $name ) ) {
 				$group = 'Corners and edges';
-			} elseif ( preg_match( '/^(band-height|hero-min-height)/', $name ) ) {
+			} elseif ( preg_match( '/^(band-height|hero-min-height|cover-min-height)/', $name ) ) {
 				$group = 'Band, frame and picture heights';
 			} elseif ( preg_match( '/^(logo-|footer-logo-|wordmark-|menu-)/', $name ) ) {
 				$group = 'Logo and menu';

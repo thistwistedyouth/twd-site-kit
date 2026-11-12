@@ -2,6 +2,16 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 12 Nov 2026: deleting inside a custom section, height steps, the preview buttons
+
+The owner was fixing a picture banner on the pilot site and hit three limits at once. Decisions:
+
+- **Labelled words in a custom section can now be deleted (reverses part of D-48).** D-48 said nothing inside a custom section is removable piece by piece, so a layout could not be broken from the page. The harm D-48 guarded against was losing the box or the picture. What is allowed now is only the words the author labelled (`data-twd-edit`), and only through the existing remove path (Put back, Cancel, Save, Undo), with the empty wrapper going with them. Pictures, anything unlabelled and the main heading stay out of reach, so the section's layout and its picture cannot be lost. The alternative, a "Remove the words frame" action, was rejected: it would be a new tool for one case, and the same rule also lets a note or a card line go.
+- **Height is a set of steps, not a number.** A page holds no inline styles by design, so a typed height per section cannot be saved; steps (classes) whose sizes are tokens keep Tall the same on every page and let the Site tab change them all at once. Normal is no class, so nothing existing moves.
+- **Wide screens by media query, not viewport units.** A banner cropped on a wide monitor because its height was a fixed pixel value. Viewport units are banned (a test), so the new steps are scaled by 1.2 from 1600px and 1.4 from 2000px with `calc()` on the token. The old Tall and Ribbon were left fixed, to keep every existing page as it was.
+- **The height rules are the last block of the source.** Each layout has its own phone rule later in the file than its base rule, and the new classes must beat both, so they sit after everything with their own phone and wide-screen blocks.
+- **Preview: three windows, not a cramped frame.** The in-panel frame is as wide as the panel, so it always showed the phone layout cut off. Desktop, Tablet and Phone each open the same preview in a window of that width (the preview address already carries the 15 minute token); the frame is kept behind a button for the rare case it helps.
+
 ## 9 Nov 2026: the Shop module, first two pieces
 
 The owner wanted adding and editing products on a WooCommerce shop to be easy, and the site to stay light, without making therapy sites carry anything. Design: `docs/shop-module-design.md`. Decisions made while building:

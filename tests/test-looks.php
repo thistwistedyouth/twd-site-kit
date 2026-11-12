@@ -308,7 +308,7 @@ twd_sk_test( 'words over a picture (0.15.0): the Picture text layout, its layer,
 
 	// The options: on a text section they need the Picture layout; the tint and padding need the frame; larger text is always there.
 	$opts = TWD_SK_Looks::options( 'text' );
-	twd_sk_eq( array( 'overlay', 'frame', 'frame_tint', 'frame_pad', 'text_size', 'lead_in', 'small_caps', 'drop_cap', 'fine_lists', 'toc', 'reading' ), array_keys( $opts ) );
+	twd_sk_eq( array( 'overlay', 'frame', 'frame_tint', 'frame_pad', 'text_size', 'cover_height', 'lead_in', 'small_caps', 'drop_cap', 'fine_lists', 'toc', 'reading' ), array_keys( $opts ) );
 	twd_sk_eq( 'twd-sk-text--picture', $opts['overlay']['requires'] );
 	twd_sk_eq( 'twd-sk-text--picture', $opts['frame']['requires'] );
 	twd_sk_eq( 'twd-sk-frame', $opts['frame_tint']['requires'] );

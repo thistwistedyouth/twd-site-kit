@@ -60,6 +60,9 @@ class TWD_SK_Registry {
 			// 0.15.0 (Base, Adapt, Replace): a section of custom HTML, styled by the site's own stylesheet (TWD_SK_Css).
 			// Inside one, only elements labelled data-twd-edit and data-twd-pic can be changed in place.
 			'twd-sk-custom',
+			// 12 Nov 2026: the Height choice of a section with a picture behind its words (Tall, Taller), styled from tokens.
+			'twd-sk-cover-tall',
+			'twd-sk-cover-taller',
 			'twd-sk-tone-base',
 			'twd-sk-tone-surface',
 			'twd-sk-tone-tint',
@@ -1167,6 +1170,9 @@ class TWD_SK_Registry {
 					// 0.15.0: the band at the tall height, or as a thin ribbon (Look choices beside the band layout).
 					'twd-sk-image-text--band-tall',
 					'twd-sk-image-text--band-ribbon',
+					// 12 Nov 2026: two taller steps.
+					'twd-sk-image-text--band-taller',
+					'twd-sk-image-text--band-tallest',
 					'twd-sk-image-text__grid',
 					'twd-sk-image-text__media',
 					'twd-sk-image-text__img',

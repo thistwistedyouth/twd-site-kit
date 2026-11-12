@@ -1248,3 +1248,31 @@
   .twd-sk-space-bottom-sm { padding-bottom: calc(#{$section-y-sm} * 0.6); }
   .twd-sk-space-bottom-lg { padding-bottom: calc(#{$section-y-sm} * 1.5); }
 }
+
+/* Heights (12 Nov 2026): two taller steps for a picture band, and a Height choice (Tall, Taller) for a section with a picture
+   behind its words (the opening hero with a picture, the Picture text layout). New classes only: every section without one is
+   as before. The heights are tokens (Site tab, Style, Pictures); on wide screens each step is a little taller so a banner
+   crops less on a big monitor. Media queries on the screen's width, never viewport units. These come last so they win over
+   the base and phone rules of the layouts they size. */
+.twd-sk-image-text--band-taller { height: $band-height-taller; }
+.twd-sk-image-text--band-tallest { height: $band-height-tallest; }
+.twd-sk-cover-tall { min-height: $cover-min-height-tall; }
+.twd-sk-cover-taller { min-height: $cover-min-height-taller; }
+@media (max-width: 768px) {
+  .twd-sk-image-text--band-taller { height: $band-height-taller-sm; }
+  .twd-sk-image-text--band-tallest { height: $band-height-tallest-sm; }
+  .twd-sk-cover-tall { min-height: $cover-min-height-tall-sm; }
+  .twd-sk-cover-taller { min-height: $cover-min-height-taller-sm; }
+}
+@media (min-width: 1600px) {
+  .twd-sk-image-text--band-taller { height: calc(#{$band-height-taller} * 1.2); }
+  .twd-sk-image-text--band-tallest { height: calc(#{$band-height-tallest} * 1.2); }
+  .twd-sk-cover-tall { min-height: calc(#{$cover-min-height-tall} * 1.2); }
+  .twd-sk-cover-taller { min-height: calc(#{$cover-min-height-taller} * 1.2); }
+}
+@media (min-width: 2000px) {
+  .twd-sk-image-text--band-taller { height: calc(#{$band-height-taller} * 1.4); }
+  .twd-sk-image-text--band-tallest { height: calc(#{$band-height-tallest} * 1.4); }
+  .twd-sk-cover-tall { min-height: calc(#{$cover-min-height-tall} * 1.4); }
+  .twd-sk-cover-taller { min-height: calc(#{$cover-min-height-taller} * 1.4); }
+}

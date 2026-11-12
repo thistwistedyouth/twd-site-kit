@@ -52,6 +52,15 @@ class TWD_SK_Site {
 			array( 'pictures', 'band-height-tall-sm', 'Tall picture band height on phones', 'size' ),
 			array( 'pictures', 'band-height-ribbon', 'Ribbon picture band height', 'size' ),
 			array( 'pictures', 'band-height-ribbon-sm', 'Ribbon picture band height on phones', 'size' ),
+			// 12 Nov 2026: the taller band steps, and the heights for a section with a picture behind its words.
+			array( 'pictures', 'band-height-taller', 'Taller picture band height', 'size' ),
+			array( 'pictures', 'band-height-taller-sm', 'Taller picture band height on phones', 'size' ),
+			array( 'pictures', 'band-height-tallest', 'Tallest picture band height', 'size' ),
+			array( 'pictures', 'band-height-tallest-sm', 'Tallest picture band height on phones', 'size' ),
+			array( 'pictures', 'cover-min-height-tall', 'Tall height of a section with a picture behind its words', 'size' ),
+			array( 'pictures', 'cover-min-height-tall-sm', 'Tall height of a section with a picture behind its words, on phones', 'size' ),
+			array( 'pictures', 'cover-min-height-taller', 'Taller height of a section with a picture behind its words', 'size' ),
+			array( 'pictures', 'cover-min-height-taller-sm', 'Taller height of a section with a picture behind its words, on phones', 'size' ),
 			// 0.15.0 (SK-021): text sizes, the reading width and the space between paragraphs, in pixels.
 			array( 'text', 'size-body', 'Body text size', 'size' ),
 			array( 'text', 'size-lead', 'Introduction text size', 'size' ),

@@ -942,14 +942,25 @@
 		}
 	}
 
-	function sizedButtons(getUrl) {
+	/* The preview buttons (12 Nov 2026): Desktop, Tablet and Phone each open the full preview in a window of that width. The
+	   small frame inside the panel (too narrow to judge a page by) stays hidden until "Small preview here" is pressed. */
+	function sizedButtons(getUrl, frame) {
 		var desk = toolButton('Desktop', 'See the preview in a 1280 pixel wide window', function () {
 			openSized(getUrl(), 'Desktop', 1280, 900);
+		});
+		var tablet = toolButton('Tablet', 'See the preview in a 768 pixel wide window', function () {
+			openSized(getUrl(), 'Tablet', 768, 1024);
 		});
 		var phone = toolButton('Phone', 'See the preview in a 390 pixel wide window', function () {
 			openSized(getUrl(), 'Phone', 390, 844);
 		});
-		return el('div', { className: 'twd-sk-ed__inlinetools', role: 'group', 'aria-label': 'See the preview at a size' }, [el('span', { className: 'twd-sk-ed__inlinehead', text: 'See it at:' }), desk, phone]);
+		var kids = [el('span', { className: 'twd-sk-ed__inlinehead', text: 'See the preview as:' }), desk, tablet, phone];
+		if (frame) {
+			kids.push(toolButton('Small preview here', 'Show or hide a small preview inside this panel', function () {
+				show(frame, frame.hasAttribute('hidden'));
+			}));
+		}
+		return el('div', { className: 'twd-sk-ed__inlinetools', role: 'group', 'aria-label': 'See the preview at a size' }, kids);
 	}
 
 	function openReplace(prefill) {
@@ -1008,7 +1019,6 @@
 			ui.repMsg.textContent = data.same ? 'Nothing changed: this is the same as the page has now.' : 'Preview ready (nothing saved yet). The site stylesheet would be ' + Math.round(data.css_bytes / 102.4) / 10 + ' KB of its ' + Math.round(data.css_budget / 1024) + ' KB budget.';
 			drawWarnings(ui.repWarn, data.warnings);
 			ui.repFrame.setAttribute('src', data.preview_url);
-			show(ui.repFrame, true);
 			show(ui.repSizes, true);
 			ui.repApply.disabled = !!data.same;
 		}, function (err) {
@@ -1098,7 +1108,6 @@
 			show(ui.adWhat, !!data.what_changed);
 			drawWarnings(ui.adWarn, data.warnings);
 			ui.adFrame.setAttribute('src', data.preview_url);
-			show(ui.adFrame, true);
 			show(ui.adSizes, true);
 			show(ui.adApply, !data.same);
 			show(ui.adEdit, true);
@@ -1167,7 +1176,7 @@
 		ui.repFrame = el('iframe', { className: 'twd-sk-ed__miniframe', title: 'Preview of the page with the new section. Nothing is saved yet.', tabindex: '-1', hidden: '' });
 		ui.repSizes = sizedButtons(function () {
 			return S.rep ? S.rep.url : '';
-		});
+		}, ui.repFrame);
 		show(ui.repSizes, false);
 		ui.repPreview = ED.button('Preview', 'secondary', replacePreview);
 		ui.repApply = ED.button('Apply', 'primary', replaceApply);
@@ -1201,7 +1210,7 @@
 		ui.adFrame = el('iframe', { className: 'twd-sk-ed__miniframe', title: 'Preview of the page with the changed section. Nothing is saved yet.', tabindex: '-1', hidden: '' });
 		ui.adSizes = sizedButtons(function () {
 			return S.ad ? S.ad.url : '';
-		});
+		}, ui.adFrame);
 		show(ui.adSizes, false);
 		ui.adAsk = ED.button('Ask the AI', 'secondary', runAdapt);
 		ui.adApply = ED.button('Apply', 'primary', adaptApply);
@@ -1302,7 +1311,6 @@
 			show(ui.impWhat, !!f.note);
 			drawWarnings(ui.impWarn, data.warnings);
 			ui.impFrame.setAttribute('src', data.preview_url);
-			show(ui.impFrame, true);
 			show(ui.impSizes, true);
 			show(ui.impEdit, true);
 			ui.impApply.disabled = !!data.same && impTarget() !== 'new';
@@ -1396,7 +1404,7 @@
 		ui.impFrame = el('iframe', { className: 'twd-sk-ed__miniframe', title: 'Preview of the page with the imported HTML. Nothing is saved yet.', tabindex: '-1', hidden: '' });
 		ui.impSizes = sizedButtons(function () {
 			return S.imp ? S.imp.url : '';
-		});
+		}, ui.impFrame);
 		show(ui.impSizes, false);
 		ui.impPreview = ED.button('Preview', 'secondary', importPreview);
 		ui.impApply = ED.button('Apply', 'primary', importApply);

@@ -201,6 +201,9 @@ class TWD_SK_Packs {
 			'frame-padding', 'frame-padding-sm', 'frame-padding-lg',
 			// 0.15.0: the picture band's height (normal, and the Tall choice), on a computer and on a phone.
 			'band-height', 'band-height-sm', 'band-height-tall', 'band-height-tall-sm', 'band-height-ribbon', 'band-height-ribbon-sm',
+			// 12 Nov 2026: two taller band steps, and two heights for any section with a picture behind its words (hero, Picture text layout), each on a computer and on a phone.
+			'band-height-taller', 'band-height-taller-sm', 'band-height-tallest', 'band-height-tallest-sm',
+			'cover-min-height-tall', 'cover-min-height-tall-sm', 'cover-min-height-taller', 'cover-min-height-taller-sm',
 			// 0.15.0: the space between paragraphs in a text section (SK-021).
 			'para-gap',
 			// 0.15.0: the header sub-menu (dropdown): corner radius, border width, and the space above and below each link.
@@ -269,6 +272,14 @@ class TWD_SK_Packs {
 			'band-height-tall-sm'           => '260px',
 			'band-height-ribbon'            => '140px',
 			'band-height-ribbon-sm'         => '100px',
+			'band-height-taller'            => '520px',
+			'band-height-taller-sm'         => '320px',
+			'band-height-tallest'           => '680px',
+			'band-height-tallest-sm'        => '400px',
+			'cover-min-height-tall'         => '640px',
+			'cover-min-height-tall-sm'      => '460px',
+			'cover-min-height-taller'       => '800px',
+			'cover-min-height-taller-sm'    => '560px',
 			'para-gap'                      => '1em',
 			'submenu-bg'                    => 'card',
 			'submenu-border-color'          => 'card',

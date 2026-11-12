@@ -293,15 +293,41 @@ class TWD_SK_Inline {
 				if ( 0 === $child->getElementsByTagName( 'h1' )->length ) {
 					$list[] = $child;
 				}
-				// A custom section (0.15.0) can go as a whole; nothing inside it is removed piece by piece, so its
-				// layout cannot be broken from the page.
+				// A custom section (0.15.0) can go as a whole. Since 0.20.1 the words its author labelled (a heading, a
+				// card's text) can also be deleted on their own, and the wrapper they leave empty goes with them; its
+				// pictures and every unlabelled piece stay, so its layout cannot be broken from the page.
 				if ( self::has_class( $child, TWD_SK_Css::CUSTOM_CLASS ) ) {
+					self::walk_custom_removables( $child, $list );
 					continue;
 				}
 			}
 			self::walk_removables( $child, $list );
 		}
 		return $list;
+	}
+
+	/**
+	 * Inside a custom section, the elements its author labelled with data-twd-edit (words only, no shortcode) may be
+	 * deleted on their own, even when there is only one. Never a picture, never anything unlabelled, and never a
+	 * main heading: the page keeps its one h1.
+	 */
+	private static function walk_custom_removables( DOMElement $node, array &$list ) {
+		foreach ( $node->childNodes as $child ) {
+			if ( ! $child instanceof DOMElement ) {
+				continue;
+			}
+			$tag = strtolower( $child->nodeName );
+			if ( 'img' === $tag || 'h1' === $tag ) {
+				continue;
+			}
+			if ( $child->hasAttribute( TWD_SK_Replace::LABEL_ATTR ) && self::is_labelled_text( $child ) ) {
+				if ( 0 === $child->getElementsByTagName( 'h1' )->length ) {
+					$list[] = $child;
+				}
+				continue;
+			}
+			self::walk_custom_removables( $child, $list );
+		}
 	}
 
 	private static function walk_removables( DOMElement $node, array &$list ) {
