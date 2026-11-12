@@ -63,6 +63,11 @@ class TWD_SK_Registry {
 			// 12 Nov 2026: the Height choice of a section with a picture behind its words (Tall, Taller), styled from tokens.
 			'twd-sk-cover-tall',
 			'twd-sk-cover-taller',
+			// 12 Nov 2026: where the picture sits in a banner (Top, Middle, Bottom) and a slow zoom on it (both opt-in Look choices).
+			'twd-sk-pos-top',
+			'twd-sk-pos-middle',
+			'twd-sk-pos-bottom',
+			'twd-sk-kenburns',
 			'twd-sk-tone-base',
 			'twd-sk-tone-surface',
 			'twd-sk-tone-tint',

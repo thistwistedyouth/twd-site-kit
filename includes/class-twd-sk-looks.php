@@ -55,8 +55,8 @@ class TWD_SK_Looks {
 	 */
 	public static function options( $component ) {
 		$all = array(
-			'text' => self::picture_options( 'twd-sk-text--picture' ) + array( 'cover_height' => self::cover_height_option( 'twd-sk-text--picture' ) ) + self::type_options() + self::page_options(),
-			'cta'  => self::picture_options( 'twd-sk-cta--band' ),
+			'text' => self::picture_options( 'twd-sk-text--picture' ) + array( 'cover_height' => self::cover_height_option( 'twd-sk-text--picture' ), 'picture_position' => self::picture_position_option( 'twd-sk-text--picture' ), 'slow_zoom' => self::slow_zoom_option( 'twd-sk-text--picture' ) ) + self::type_options() + self::page_options(),
+			'cta'  => self::picture_options( 'twd-sk-cta--band' ) + array( 'picture_position' => self::picture_position_option( 'twd-sk-cta--band' ), 'slow_zoom' => self::slow_zoom_option( 'twd-sk-cta--band' ) ),
 			'quote' => array(
 				'marks' => array(
 					'label'    => 'Quote marks',
@@ -80,6 +80,8 @@ class TWD_SK_Looks {
 					'requires' => 'twd-sk-image-text--band',
 					'help'     => 'The heights themselves are set in the Site tab under Style, Pictures.',
 				),
+				'picture_position' => self::picture_position_option( 'twd-sk-image-text--band' ),
+				'slow_zoom' => self::slow_zoom_option( 'twd-sk-image-text--band' ),
 			),
 			'resources' => array(
 				'hide_empty' => array(
@@ -102,6 +104,8 @@ class TWD_SK_Looks {
 					'help'     => 'How much the picture is darkened behind the words.',
 				),
 				'cover_height' => self::cover_height_option( 'twd-sk-hero--image' ),
+				'picture_position' => self::picture_position_option( 'twd-sk-hero--image' ),
+				'slow_zoom' => self::slow_zoom_option( 'twd-sk-hero--image' ),
 				'left'     => array(
 					'label'    => 'Words on the left',
 					'kind'     => 'toggle',
@@ -175,6 +179,35 @@ class TWD_SK_Looks {
 				'class' => 'twd-sk-text-lg',
 				'help'  => 'The paragraphs a size up, like an introduction.',
 			),
+		);
+	}
+
+	/**
+	 * Where the picture sits in a banner (12 Nov 2026): Top, Middle or Bottom, for a picture that is cropped to fit. Three
+	 * shared classes that beat a picture's own saved keep-in-view point for this one section. Normal (no class) leaves the
+	 * picture as it was.
+	 */
+	private static function picture_position_option( $requires ) {
+		return array(
+			'label'    => 'Picture position',
+			'kind'     => 'choice',
+			'choices'  => array( '' => 'Normal', 'twd-sk-pos-top' => 'Top', 'twd-sk-pos-middle' => 'Middle', 'twd-sk-pos-bottom' => 'Bottom' ),
+			'requires' => $requires,
+			'help'     => 'Which part of the picture stays in view when it is cropped.',
+		);
+	}
+
+	/**
+	 * A slow zoom on the picture of a banner (12 Nov 2026), off by default: one CSS animation, no script, stopped for visitors
+	 * who ask for less motion.
+	 */
+	private static function slow_zoom_option( $requires ) {
+		return array(
+			'label'    => 'Slow zoom on the picture',
+			'kind'     => 'toggle',
+			'class'    => 'twd-sk-kenburns',
+			'requires' => $requires,
+			'help'     => 'The picture drifts in very slowly. Still for visitors who ask for less motion.',
 		);
 	}
 

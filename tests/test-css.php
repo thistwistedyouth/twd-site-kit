@@ -345,7 +345,8 @@ twd_sk_test( 'css: images use the object-position token and object-fit cover, an
 					twd_sk_eq( 'stretch', $props['align-items'], 'image row stretches' );
 				}
 			}
-			if ( false !== strpos( $sel, 'twd-sk-image-text__img' ) && null === $rule['media'] && false === strpos( $sel, '--band' ) ) {
+			// The Look choices that act on a picture (position, slow zoom) are modifier rules, not the picture's own base rule.
+			if ( false !== strpos( $sel, 'twd-sk-image-text__img' ) && null === $rule['media'] && false === strpos( $sel, '--band' ) && false === strpos( $sel, 'twd-sk-pos-' ) && false === strpos( $sel, 'twd-sk-kenburns' ) ) {
 				$props = array();
 				foreach ( $rule['decls'] as $d ) {
 					$props[ $d['prop'] ] = $d['value'];
@@ -491,10 +492,24 @@ twd_sk_test( 'css: stray direct children of the page (not sections) get a max-wi
 	}
 } );
 
-twd_sk_test( 'css: animations are named twd-sk-*, animate only the outline colour, and stop for visitors who ask for less motion', function () {
+twd_sk_test( 'css: animations are named twd-sk-*, the glow animates only the outline colour and the slow zoom only a small scale, and both stop for visitors who ask for less motion', function () {
 	$GLOBALS['twd_sk_css_keyframes'] = array();
 	twd_sk_css_parse( file_get_contents( ABSPATH . 'assets/twd-site-kit.css' ) );
-	twd_sk_eq( array( 'twd-sk-glow' ), $GLOBALS['twd_sk_css_keyframes'] );
+	twd_sk_eq( array( 'twd-sk-glow', 'twd-sk-kenburns' ), $GLOBALS['twd_sk_css_keyframes'] );
+	// The slow zoom (12 Nov 2026): one transform, no !important, a small scale, stopped by the reduced-motion block.
+	$zoom = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
+	preg_match( '/@keyframes twd-sk-kenburns \{(.*?)\n\}/s', $zoom, $z );
+	twd_sk_true( isset( $z[1] ), 'the zoom keyframes are there' );
+	twd_sk_hasnt( '!important', $z[1] );
+	preg_match_all( '/([a-z-]+):/', $z[1], $zprops );
+	twd_sk_eq( array( 'transform' ), array_values( array_unique( $zprops[1] ) ), 'the zoom animates only transform' );
+	$zoom_stopped = false;
+	foreach ( twd_sk_css_rules() as $rule ) {
+		if ( '@media (prefers-reduced-motion: reduce)' === $rule['media'] && false !== strpos( implode( ',', $rule['selectors'] ), 'twd-sk-kenburns' ) && 'animation' === $rule['decls'][0]['prop'] && 'none' === $rule['decls'][0]['value'] ) {
+			$zoom_stopped = true;
+		}
+	}
+	twd_sk_true( $zoom_stopped, 'reduced motion switches the zoom off' );
 	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
 	preg_match( '/@keyframes twd-sk-glow \{(.*?)\n\}/s', $raw, $m );
 	twd_sk_true( isset( $m[1] ) );

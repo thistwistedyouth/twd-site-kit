@@ -308,7 +308,7 @@ twd_sk_test( 'words over a picture (0.15.0): the Picture text layout, its layer,
 
 	// The options: on a text section they need the Picture layout; the tint and padding need the frame; larger text is always there.
 	$opts = TWD_SK_Looks::options( 'text' );
-	twd_sk_eq( array( 'overlay', 'frame', 'frame_tint', 'frame_pad', 'text_size', 'cover_height', 'lead_in', 'small_caps', 'drop_cap', 'fine_lists', 'toc', 'reading' ), array_keys( $opts ) );
+	twd_sk_eq( array( 'overlay', 'frame', 'frame_tint', 'frame_pad', 'text_size', 'cover_height', 'picture_position', 'slow_zoom', 'lead_in', 'small_caps', 'drop_cap', 'fine_lists', 'toc', 'reading' ), array_keys( $opts ) );
 	twd_sk_eq( 'twd-sk-text--picture', $opts['overlay']['requires'] );
 	twd_sk_eq( 'twd-sk-text--picture', $opts['frame']['requires'] );
 	twd_sk_eq( 'twd-sk-frame', $opts['frame_tint']['requires'] );
@@ -372,7 +372,7 @@ twd_sk_test( 'words over a picture (0.15.0): the Picture text layout, its layer,
 	}
 	twd_sk_eq( array( 'twd-sk-frame' ), $pic[2] );
 	twd_sk_true( count( $cfg['hints'] ) >= 6 );
-	twd_sk_true( strlen( json_encode( $cfg ) ) < 13500, 'config size ' . strlen( json_encode( $cfg ) ) ); // 18b added the text styles and the allow list (about 1,300 bytes).
+	twd_sk_true( strlen( json_encode( $cfg ) ) < 16000, 'config size ' . strlen( json_encode( $cfg ) ) ); // 18b added the text styles and the allow list (about 1,300 bytes); 12 Nov 2026 raised from 13,500 for Height, Picture position and Slow zoom on four section types (about 2,000 bytes). Sent to signed-in editors only, never to visitors.
 	// The frame tint is a Site tab choice, and the contrast check reads the words on the frame over the overlay over a photograph.
 	twd_sk_true( in_array( 'color-frame', TWD_SK_Site::editable_names(), true ) );
 	twd_sk_eq( 'rgba(0,0,0,0.3)', TWD_SK_Site::picture_presets()['color-frame'][0][0] );

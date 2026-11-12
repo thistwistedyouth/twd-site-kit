@@ -1276,3 +1276,21 @@
   .twd-sk-cover-tall { min-height: calc(#{$cover-min-height-tall} * 1.4); }
   .twd-sk-cover-taller { min-height: calc(#{$cover-min-height-taller} * 1.4); }
 }
+
+/* Picture position and Slow zoom (12 Nov 2026): Look choices for a banner picture. Position beats the picture's own saved
+   keep-in-view point (an inline style) for this one section, so it needs !important. The zoom is one slow animation, no script;
+   the picture is clipped by its section (the band gets overflow clip only when it is switched on), it stops for visitors who ask
+   for less motion, and the scrolling-picture hero keeps its own movement. */
+.twd-sk-pos-top .twd-sk-hero__bg, .twd-sk-pos-top .twd-sk-text__bg, .twd-sk-pos-top .twd-sk-cta__bg, .twd-sk-pos-top .twd-sk-image-text__img { object-position: center top !important; }
+.twd-sk-pos-middle .twd-sk-hero__bg, .twd-sk-pos-middle .twd-sk-text__bg, .twd-sk-pos-middle .twd-sk-cta__bg, .twd-sk-pos-middle .twd-sk-image-text__img { object-position: center center !important; }
+.twd-sk-pos-bottom .twd-sk-hero__bg, .twd-sk-pos-bottom .twd-sk-text__bg, .twd-sk-pos-bottom .twd-sk-cta__bg, .twd-sk-pos-bottom .twd-sk-image-text__img { object-position: center bottom !important; }
+@keyframes twd-sk-kenburns {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+.twd-sk-kenburns .twd-sk-hero__bg, .twd-sk-kenburns .twd-sk-text__bg, .twd-sk-kenburns .twd-sk-cta__bg, .twd-sk-kenburns .twd-sk-image-text__img { animation: twd-sk-kenburns 30s ease-in-out infinite alternate; }
+.twd-sk-image-text--band.twd-sk-kenburns { overflow: clip; }
+.twd-sk-hero--parallax.twd-sk-kenburns .twd-sk-hero__bg { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .twd-sk-kenburns .twd-sk-hero__bg, .twd-sk-kenburns .twd-sk-text__bg, .twd-sk-kenburns .twd-sk-cta__bg, .twd-sk-kenburns .twd-sk-image-text__img { animation: none; }
+}

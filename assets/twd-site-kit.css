@@ -4008,6 +4008,48 @@
     min-height: calc(var(--twd-site-cover-min-height-taller) * 1.4);
   }
 }
+.twd-sk-page .twd-sk-pos-top.twd-sk-pos-top .twd-sk-hero__bg.twd-sk-hero__bg,
+.twd-sk-page .twd-sk-pos-top.twd-sk-pos-top .twd-sk-text__bg.twd-sk-text__bg,
+.twd-sk-page .twd-sk-pos-top.twd-sk-pos-top .twd-sk-cta__bg.twd-sk-cta__bg,
+.twd-sk-page .twd-sk-pos-top.twd-sk-pos-top .twd-sk-image-text__img.twd-sk-image-text__img {
+  object-position: center top !important;
+}
+.twd-sk-page .twd-sk-pos-middle.twd-sk-pos-middle .twd-sk-hero__bg.twd-sk-hero__bg,
+.twd-sk-page .twd-sk-pos-middle.twd-sk-pos-middle .twd-sk-text__bg.twd-sk-text__bg,
+.twd-sk-page .twd-sk-pos-middle.twd-sk-pos-middle .twd-sk-cta__bg.twd-sk-cta__bg,
+.twd-sk-page .twd-sk-pos-middle.twd-sk-pos-middle .twd-sk-image-text__img.twd-sk-image-text__img {
+  object-position: center center !important;
+}
+.twd-sk-page .twd-sk-pos-bottom.twd-sk-pos-bottom .twd-sk-hero__bg.twd-sk-hero__bg,
+.twd-sk-page .twd-sk-pos-bottom.twd-sk-pos-bottom .twd-sk-text__bg.twd-sk-text__bg,
+.twd-sk-page .twd-sk-pos-bottom.twd-sk-pos-bottom .twd-sk-cta__bg.twd-sk-cta__bg,
+.twd-sk-page .twd-sk-pos-bottom.twd-sk-pos-bottom .twd-sk-image-text__img.twd-sk-image-text__img {
+  object-position: center bottom !important;
+}
+@keyframes twd-sk-kenburns {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+.twd-sk-page .twd-sk-kenburns.twd-sk-kenburns .twd-sk-hero__bg.twd-sk-hero__bg,
+.twd-sk-page .twd-sk-kenburns.twd-sk-kenburns .twd-sk-text__bg.twd-sk-text__bg,
+.twd-sk-page .twd-sk-kenburns.twd-sk-kenburns .twd-sk-cta__bg.twd-sk-cta__bg,
+.twd-sk-page .twd-sk-kenburns.twd-sk-kenburns .twd-sk-image-text__img.twd-sk-image-text__img {
+  animation: twd-sk-kenburns 30s ease-in-out infinite alternate;
+}
+.twd-sk-page .twd-sk-image-text--band.twd-sk-image-text--band.twd-sk-kenburns.twd-sk-kenburns {
+  overflow: clip;
+}
+.twd-sk-page .twd-sk-hero--parallax.twd-sk-hero--parallax.twd-sk-kenburns.twd-sk-kenburns .twd-sk-hero__bg.twd-sk-hero__bg {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .twd-sk-page .twd-sk-kenburns.twd-sk-kenburns .twd-sk-hero__bg.twd-sk-hero__bg,
+  .twd-sk-page .twd-sk-kenburns.twd-sk-kenburns .twd-sk-text__bg.twd-sk-text__bg,
+  .twd-sk-page .twd-sk-kenburns.twd-sk-kenburns .twd-sk-cta__bg.twd-sk-cta__bg,
+  .twd-sk-page .twd-sk-kenburns.twd-sk-kenburns .twd-sk-image-text__img.twd-sk-image-text__img {
+    animation: none;
+  }
+}
 
 /* Page title fallback for themes other than Hello. Added by TWD_SK_Page only on a
    page whose kit HTML has its own h1 (the hero title). */

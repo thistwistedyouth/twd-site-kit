@@ -2,6 +2,13 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 12 Nov 2026 (later): picture position and slow zoom
+
+- **Position is per section, and it wins over the picture's saved point.** The saved keep-in-view point belongs to a picture and follows it everywhere it is used; one banner sometimes needs a different crop. So the choice is a Look class on the section. It needs `!important` because the saved point is an inline style, and nothing else beats an inline style. This is the only `!important` on `object-position`, and it exists only on three modifier classes nobody gets by default.
+- **Slow zoom is CSS only.** A script would add weight for every visitor of a page that uses it for no gain: one keyframe animation on the picture does it. Scale only (no pan) keeps it to `transform`, cheap to draw and never able to change layout. Off by default because a quiet, text-led site may not want any motion; stopped for visitors who ask for less motion.
+- **The parallax hero keeps its own movement.** Both use `transform` on the same picture and the animation would overwrite the scroll movement, so the zoom is switched off there rather than the two fighting.
+- **A slideshow was not built.** An automatic crossfade loads every picture at once (heavy on a phone) and needs a pause control to be accessible. If one is ever wanted, the manual kind on the existing slider script (swipe, arrows and dots, nothing moving by itself, only the first picture loaded at once) is the one to build.
+
 ## 12 Nov 2026: deleting inside a custom section, height steps, the preview buttons
 
 The owner was fixing a picture banner on the pilot site and hit three limits at once. Decisions:
