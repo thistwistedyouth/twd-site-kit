@@ -2,6 +2,13 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 12 Nov 2026 (later): one call to action, in the footer
+
+- **A tick box in the footer, not a section on every page.** The review found a dark band on each page (a sentence and a button) followed by a footer that said much the same. A section on every page is five things to keep in step and easy to leave off a new page; the footer is printed once for the whole site. So the footer gains the option and the pages lose the band.
+- **It reuses the header button.** The header already holds a button text and link for the site, so the footer button reads them rather than asking for them again: one place to change the wording, and the header and footer can never disagree. The cost is that a site cannot have a different footer button; that can be a later option if it is wanted.
+- **One place for all layouts.** The footer's extras (the contact bar, the quick exit link) already ride through `with_extras()`, so the button is added there rather than copied into six renderers. The compact footer is the one exception in placement (under its tagline), because at the very top it would sit above the words it belongs with.
+- **No marker class on the footer.** A class was first added to the footer to say the button was there; a test (every registry class must be styled) showed it was not used by any rule, so it was removed. The button's own class does the work.
+
 ## 12 Nov 2026 (later): picture position and slow zoom
 
 - **Position is per section, and it wins over the picture's saved point.** The saved keep-in-view point belongs to a picture and follows it everywhere it is used; one banner sometimes needs a different crop. So the choice is a Look class on the section. It needs `!important` because the saved point is an inline style, and nothing else beats an inline style. This is the only `!important` on `object-position`, and it exists only on three modifier classes nobody gets by default.

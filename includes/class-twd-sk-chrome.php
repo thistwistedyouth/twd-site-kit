@@ -191,6 +191,8 @@ class TWD_SK_Chrome {
 			'twd-sk-footer__tagline', 'twd-sk-footer__contact-group', 'twd-sk-footer__links--two',
 			// 0.15.0: the footer text with its first line larger and the rest quieter.
 			'twd-sk-footer__text--lead', 'twd-sk-footer__tagline--lead',
+			// 12 Nov 2026: the call to action at the top of the footer (the header button again).
+			'twd-sk-footer__cta',
 			// 0.15.0: the contact bar on a phone and the quick exit link (both off by default), and the footer's room for the bar.
 			'twd-sk-contactbar', 'twd-sk-contactbar__link', 'twd-sk-footer--contactbar', 'twd-sk-exit',
 			// 0.14.0: the text wordmark header (a mark, the name and a second line as live text, centred on every page).
@@ -237,6 +239,7 @@ class TWD_SK_Chrome {
 			'quick_exit'     => false,   // 0.15.0: a small "Leave quickly" link in the corner of every page
 			'quick_exit_url' => '',      // 0.15.0: where it goes (a full https address chosen by the site; empty means no link)
 			'client_footer_text' => false, // session 7 (section 21b): clients may change the footer words from the Simple editor
+			'footer_button'  => false,    // 12 Nov 2026: the header button (its text and link) as a call to action in the footer of every page, instead of a section on each page
 			'placement'      => 'kit',
 			'footer_embed'   => 0,       // 0.15.0: the id of a saved HTML embed to print in place of the kit footer (0 means the kit's own footer)
 		);
@@ -294,6 +297,7 @@ class TWD_SK_Chrome {
 				case 'show_button':
 				case 'show_strip':
 				case 'contact_bar':
+				case 'footer_button':
 				case 'quick_exit':
 				case 'client_footer_text':
 					if ( is_bool( $value ) || 0 === $value || 1 === $value || '0' === $value || '1' === $value ) {
@@ -399,6 +403,7 @@ class TWD_SK_Chrome {
 			'columns'     => (int) $s['footer_columns'],
 			'text_style'  => $s['footer_text_style'],
 			'contact_bar' => (bool) $s['contact_bar'],
+			'footer_button' => (bool) $s['footer_button'],
 			'exit'        => (bool) $s['quick_exit'] && '' !== $s['quick_exit_url'],
 			'exit_url'    => $s['quick_exit_url'],
 			'sticky_note' => (bool) $s['sticky'] && ! $wm && 'centered' === $h,
@@ -734,12 +739,39 @@ class TWD_SK_Chrome {
 	}
 
 	/**
+	 * The footer's call to action (12 Nov 2026): the header button's own text and link as a button in the footer, for a site that wants
+	 * one call to action at the end of every page instead of a section to keep on each. Nothing when either is empty or still a marker.
+	 */
+	private static function footer_button_html( $profile ) {
+		$label = isset( $profile['cta_label'] ) ? trim( (string) $profile['cta_label'] ) : '';
+		$url   = isset( $profile['cta_url'] ) ? trim( (string) $profile['cta_url'] ) : '';
+		if ( '' === $label || '' === $url || false !== strpos( $label, '[' ) || false !== strpos( $url, '[' ) ) {
+			return '';
+		}
+		return '<div class="twd-sk-inner twd-sk-footer__cta"><a class="twd-sk-btn twd-sk-btn--primary" href="' . self::url( $url ) . '">' . self::esc( $label ) . '</a></div>';
+	}
+
+	/**
 	 * The extras that ride with the footer (0.15.0): the contact bar on a phone (idea 7) and the quick exit
 	 * link (idea 10). Both off by default, so the footers print the same bytes as before until one is on.
 	 */
 	private static function with_extras( $html, $profile ) {
 		$eff   = self::effective();
 		$extra = '';
+		if ( $eff['footer_button'] && '</footer></div>' === substr( $html, -15 ) ) {
+			$btn = self::footer_button_html( $profile );
+			if ( '' !== $btn ) {
+				// The compact footer: after its tagline, before the logo row. Every other layout: at the top of the footer.
+				$row = '<div class="twd-sk-inner twd-sk-footer__row">';
+				if ( false !== strpos( $html, $row ) ) {
+					$html = substr_replace( $html, $btn, strpos( $html, $row ), 0 );
+				} else {
+					$html = preg_replace_callback( '/<footer class="twd-sk-footer [^>]*>/', function ( $m ) use ( $btn ) {
+						return $m[0] . $btn;
+					}, $html, 1 );
+				}
+			}
+		}
 		if ( $eff['contact_bar'] ) {
 			$links = '';
 			if ( '' !== $profile['email'] && false === strpos( $profile['email'], '[' ) ) {

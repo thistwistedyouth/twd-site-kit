@@ -138,6 +138,7 @@ class TWD_SK_Style {
 				'footer_columns' => $c['footer_columns'],
 				'footer_text_style' => $c['footer_text_style'],
 				'contact_bar'    => $c['contact_bar'],
+				'footer_button'  => $c['footer_button'],
 				'quick_exit'     => $c['quick_exit'],
 				'quick_exit_url' => $c['quick_exit_url'],
 				'sticky'         => $c['sticky'],

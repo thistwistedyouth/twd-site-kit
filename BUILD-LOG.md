@@ -11,6 +11,17 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
+## 12 Nov 2026 (later): the footer call to action (at the owner's request, built on `main`, NOT released; test build `0.20.0-dev5` installed by hand on the pilot staging site)
+
+- **Asked for:** after a review with the client, one call to action at the end of every page instead of a dark section on each page plus a footer saying much the same.
+- **The option:** chrome setting `footer_button` (off by default; a tick box in the Site tab's Header and footer: "Show the header button ... as a call to action in the footer of every page"). It prints the header button's own text and link (`cta_label`, `cta_url` of the profile) as `a.twd-sk-btn.twd-sk-btn--primary` in `div.twd-sk-inner.twd-sk-footer__cta`. Nothing prints when either is empty or still a `[` marker. In the compact footer it goes after the tagline and before the logo row; in every other layout at the top of the footer (`TWD_SK_Chrome::footer_button_html()`, placed in `with_extras()` so all six layouts get it from one place). Carried by the style snapshot, the site brief (export and import) and the Site tab. With it off every footer prints the same bytes as before.
+- **Stylesheet:** one rule block at the end of `tools/kit.src.css` (centred, padded from `gap-md`; no space above in the compact footer).
+- **Tests:** `tests/test-footer-button.php` (4). Suite 1200 passed on an LF copy.
+- **Done by hand on the pilot site** (not part of the plugin): the option switched on, the last section (a dark call to action strip with a sentence and the button) taken off five pages (one version each, Undo works), and a line taken out of the footer words.
+- **To check on a real site:** with the tick on, a footer shows one button; with it off a footer is as before; a site with no header button text or link shows no button. On a phone the button and the contact bar do not overlap.
+- **Left to decide:** whether a site wants the whole footer dark (the band footer layout) as well; the compact footer is light with a dark bar at the bottom.
+- **Stylesheet size:** 173,630 bytes of the 175,000 ceiling, about 1.3 KB left. The next styling feature will need the ceiling raised.
+
 ## 12 Nov 2026 (later): Picture position and Slow zoom (at the owner's request, built on `main`, NOT released; test build `0.20.0-dev4` installed by hand on the pilot staging site)
 
 - **Asked for:** to align a banner's picture top, middle or bottom in its section, and a Ken Burns style effect without adding weight.

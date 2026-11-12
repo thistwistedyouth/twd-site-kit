@@ -4050,6 +4050,14 @@
     animation: none;
   }
 }
+.twd-sk-page .twd-sk-footer__cta.twd-sk-footer__cta {
+  padding-top: var(--twd-site-gap-md) !important;
+  padding-bottom: var(--twd-site-gap-md) !important;
+  text-align: center !important;
+}
+.twd-sk-page .twd-sk-footer--compact.twd-sk-footer--compact .twd-sk-footer__cta.twd-sk-footer__cta {
+  padding-top: 0 !important;
+}
 
 /* Page title fallback for themes other than Hello. Added by TWD_SK_Page only on a
    page whose kit HTML has its own h1 (the hero title). */

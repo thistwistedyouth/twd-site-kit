@@ -1294,3 +1294,8 @@
 @media (prefers-reduced-motion: reduce) {
   .twd-sk-kenburns .twd-sk-hero__bg, .twd-sk-kenburns .twd-sk-text__bg, .twd-sk-kenburns .twd-sk-cta__bg, .twd-sk-kenburns .twd-sk-image-text__img { animation: none; }
 }
+
+/* Footer call to action (12 Nov 2026): the header button again, at the top of the footer, when the site switches it on. The compact
+   footer puts it under its tagline, so it needs no space above. */
+.twd-sk-footer__cta { padding-top: $gap-md; padding-bottom: $gap-md; text-align: center; }
+.twd-sk-footer--compact .twd-sk-footer__cta { padding-top: 0; }
