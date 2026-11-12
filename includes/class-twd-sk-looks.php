@@ -94,6 +94,13 @@ class TWD_SK_Looks {
 					'requires' => 'twd-sk-image-text--band',
 					'help'     => 'Boxed puts the picture in the page column with rounded corners and shows all of it, unless a Shape trims it. Band height does not apply to a boxed picture.',
 				),
+				'phone_whole' => array(
+					'label'    => 'Show the whole picture on phones',
+					'kind'     => 'toggle',
+					'class'    => 'twd-sk-phone-whole',
+					'requires' => 'twd-sk-image-text--band',
+					'help'     => 'On a phone the band takes the picture\'s own shape instead of cropping it to a set height. Tablets and computers are unchanged.',
+				),
 				'picture_position' => self::picture_position_option( 'twd-sk-image-text--band' ),
 				'slow_zoom' => self::slow_zoom_option( 'twd-sk-image-text--band' ),
 			),

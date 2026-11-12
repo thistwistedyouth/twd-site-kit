@@ -1334,3 +1334,10 @@
   .twd-sk-has-phone .twd-sk-image-text__img.twd-sk-phone-img { display: block; width: 100%; height: auto; aspect-ratio: auto; max-height: 80vh; animation: none; }
   .twd-sk-has-phone.twd-sk-image-text--band { height: auto; }
 }
+
+/* Picture band, whole picture on phones (12 Nov 2026): a Look toggle. On a phone the band takes the picture's own shape instead of a
+   set height, so nothing is cropped. Above the phone width the band is as it was. */
+@media (max-width: 768px) {
+  .twd-sk-phone-whole.twd-sk-image-text--band { height: auto; }
+  .twd-sk-phone-whole .twd-sk-image-text__img { width: 100%; height: auto; aspect-ratio: auto; max-height: 80vh; animation: none; }
+}

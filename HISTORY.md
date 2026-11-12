@@ -2,6 +2,13 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 12 Nov 2026 (later): whole picture on phones, and the resized-address fix
+
+- **A toggle, not a new default.** Cropping a wide picture to a set height on a phone is how every band has always looked, so showing the whole picture is a choice (default off), in line with the rule that a layout stays as it was unless asked.
+- **Found by measuring, not guessing.** The soft wide picture was a 1024 pixel copy because its stored address was a resized one. The fix is at display time only, so no stored page changes; the page's Undo and history are untouched.
+- **`sizes` is a promise about width.** The kit's usual `(max-width: 1100px) 100vw, 1100px` is right for a picture in the page column and wrong for a full-width band, which really is the screen's width; saying so lets the browser pick the large copy. A boxed band stays capped.
+- **Weight goes up where it should.** A wide screen now downloads a larger copy of a band picture. That is the point (it was being stretched), and a phone is sent a small one.
+
 ## 12 Nov 2026 (later): a picture for phones, as two pictures and a class
 
 - **Why two pictures, not `<picture>`.** The tidy HTML way is `<picture>` with a `<source media>`. The sanitiser rebuilds elements from an allowlist, and `<source>` carries `srcset` and `media`, a new way for an address to get into a page. Two `<img>` elements with classes need nothing new in the sanitiser (the classes are registry data) and the Visual editor already numbers and edits every `<img>`.

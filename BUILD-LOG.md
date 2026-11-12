@@ -11,6 +11,15 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
+## 12 Nov 2026 (later): whole picture on phones, and sharper wide pictures (at the owner's request, built on `main`, NOT released; test build `0.20.0-dev14` installed by hand on the pilot staging site)
+
+- **Asked for:** from a phone-width screenshot of a Questions banner: the banner cropped the left of a wide picture on a phone (it should show whole), and the wide picture looked low resolution.
+- **Whole picture on phones:** Look on a picture band has a toggle, Show the whole picture on phones (`twd-sk-phone-whole`, shared class, `TWD_SK_Looks` `phone_whole`). At 768px and under the band's height is auto and its picture takes its own shape (width 100%, up to 80vh); above that nothing changes, and off prints the same bytes. A 2000 by 840 picture shows whole at 390 by 164.
+- **Why the picture was soft:** the media window stores a resized address (`name-1024x430.jpg`), which WordPress cannot match to a library picture, so such a picture got no list of sizes and every screen was sent that one 1024 pixel copy (stretched 1.8 times at 1900). `TWD_SK_Images::tag()` now looks up the full-size file from a resized address and adds only the list of sizes (no width, height or keep-in-view position, so an old page keeps its shape), and `process()` gives a full-width band `sizes="100vw"` (a boxed band keeps the 1100 pixel cap), so a wide screen chooses the large copies. Measured on the pilot site at 1900 wide: the full-size file (1900 pixels natural) instead of the 1024 copy.
+- **Not fixed:** a picture that is itself small (a 1376 pixel wide AI picture) is still soft when stretched; only a larger source helps.
+- **Tests:** `tests/test-whole-picture.php` (4). Suite 1220 passed on an LF copy; stylesheet 177,596 bytes of 180,000.
+- **To check on a real site:** a band picture chosen from the media window now loads a larger copy on a wide screen (more bytes, sharper); Look on a band shows the toggle. Not yet seen in the signed-in Look panel.
+
 ## 12 Nov 2026 (later): a picture for phones in a picture band (at the owner's request, built on `main`, NOT released; test builds `0.20.0-dev12` and `-dev13` installed by hand on the pilot staging site)
 
 - **Asked for:** a photo with small lettering in it (the "objects in mirror" words) read fine on a desktop and was too small to read on a phone; the owner wanted a different picture for phones and said he would supply it.

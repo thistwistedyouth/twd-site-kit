@@ -123,21 +123,44 @@ class TWD_SK_Images {
 		$first_end = stripos( $html, '</section>' );
 		$first_end = false === $first_end ? strlen( $html ) : $first_end;
 
+		// 12 Nov 2026: a full-width picture band runs the whole width of the screen, so its picture may be chosen from the picture's
+		// larger copies (the usual 1100 pixel cap would send a wide screen the small one). A boxed band is in the column: usual cap.
+		$bands = array();
+		if ( preg_match_all( '#<section\b[^>]*\sclass\s*=\s*"[^"]*\btwd-sk-image-text--band\b[^"]*"[^>]*>.*?</section>#is', $html, $found, PREG_OFFSET_CAPTURE ) ) {
+			foreach ( $found[0] as $band ) {
+				$open = substr( $band[0], 0, (int) strpos( $band[0], '>' ) + 1 );
+				if ( false === strpos( $open, 'twd-sk-band-boxed' ) ) {
+					$bands[] = array( $band[1], $band[1] + strlen( $band[0] ) );
+				}
+			}
+		}
+
 		$index = 0;
 		return preg_replace_callback(
 			'/<img\b[^>]*>/i',
-			function ( $m ) use ( &$index, $first_end, $html ) {
-				$tag   = $m[0];
-				$above = 0 === $index && strpos( $html, $tag ) < $first_end;
+			function ( $m ) use ( &$index, $first_end, $bands ) {
+				$tag    = $m[0][0];
+				$at     = (int) $m[0][1];
+				$above  = 0 === $index && $at < $first_end;
+				$sizes  = '';
+				foreach ( $bands as $range ) {
+					if ( $at >= $range[0] && $at < $range[1] ) {
+						$sizes = '100vw';
+						break;
+					}
+				}
 				$index++;
-				return self::tag( $tag, $above );
+				return self::tag( $tag, $above, $sizes );
 			},
-			$html
+			$html,
+			-1,
+			$count,
+			PREG_OFFSET_CAPTURE
 		);
 	}
 
 	/** One <img> tag with the attributes it is missing. */
-	public static function tag( $tag, $above_the_fold ) {
+	public static function tag( $tag, $above_the_fold, $sizes = '' ) {
 		$add = '';
 		if ( ! preg_match( '/\sloading\s*=/i', $tag ) ) {
 			$add .= $above_the_fold ? ' loading="eager"' : ' loading="lazy"';
@@ -163,7 +186,28 @@ class TWD_SK_Images {
 			if ( is_string( $srcset ) && '' !== $srcset ) {
 				$add .= ' srcset="' . esc_attr( $srcset ) . '"';
 				if ( ! preg_match( '/\ssizes\s*=/i', $tag ) ) {
-					$add .= ' sizes="(max-width: 1100px) 100vw, 1100px"';
+					$add .= ' sizes="' . ( '' !== $sizes ? esc_attr( $sizes ) : '(max-width: 1100px) 100vw, 1100px' ) . '"';
+				}
+			}
+		}
+		// 12 Nov 2026: a picture saved at a resized address (name-1024x430.jpg, which is what choosing from the media window stores) is
+		// not found in the library as it stands, so it got no list of sizes and every screen was sent that one small copy. Its
+		// full-size file is looked up instead and the list is built from that picture's sizes. Only the list is added: the picture's
+		// width, height and keep-in-view position are not (an old page does not change shape).
+		if ( ! $info && ! preg_match( '/\ssrcset\s*=/i', $tag ) && preg_match( '/\ssrc="([^"]+)"/i', $tag, $rs ) && function_exists( 'wp_calculate_image_srcset' ) && function_exists( 'wp_get_attachment_metadata' ) ) {
+			$url = html_entity_decode( $rs[1], ENT_QUOTES, 'UTF-8' );
+			if ( preg_match( '/^(.*)-(\d+)x(\d+)(\.[A-Za-z0-9]+)$/', $url, $sized ) ) {
+				$full = self::info( $sized[1] . $sized[4] );
+				if ( $full && $full['id'] > 0 ) {
+					$meta   = wp_get_attachment_metadata( (int) $full['id'] );
+					$abs    = ( '/' === substr( $url, 0, 1 ) && '/' !== substr( $url, 0, 2 ) ) ? rtrim( home_url( '/' ), '/' ) . $url : $url;
+					$srcset = is_array( $meta ) ? wp_calculate_image_srcset( array( (int) $sized[2], (int) $sized[3] ), $abs, $meta, (int) $full['id'] ) : false;
+					if ( is_string( $srcset ) && '' !== $srcset ) {
+						$add .= ' srcset="' . esc_attr( $srcset ) . '"';
+						if ( ! preg_match( '/\ssizes\s*=/i', $tag ) ) {
+							$add .= ' sizes="' . ( '' !== $sizes ? esc_attr( $sizes ) : '(max-width: 1100px) 100vw, 1100px' ) . '"';
+						}
+					}
 				}
 			}
 		}

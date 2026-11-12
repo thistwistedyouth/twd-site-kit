@@ -4135,6 +4135,18 @@
     height: auto;
   }
 }
+@media (max-width: 768px) {
+  .twd-sk-page .twd-sk-phone-whole.twd-sk-phone-whole.twd-sk-image-text--band.twd-sk-image-text--band {
+    height: auto;
+  }
+  .twd-sk-page .twd-sk-phone-whole.twd-sk-phone-whole .twd-sk-image-text__img.twd-sk-image-text__img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: auto;
+    max-height: 80vh;
+    animation: none;
+  }
+}
 
 /* Page title fallback for themes other than Hello. Added by TWD_SK_Page only on a
    page whose kit HTML has its own h1 (the hero title). */
