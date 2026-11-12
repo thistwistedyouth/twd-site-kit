@@ -153,6 +153,88 @@ class TWD_SK_Structure {
 		);
 	}
 
+	/**
+	 * A second picture for phones in a picture band (12 Nov 2026, from the pilot site: a photo with small lettering in it was fine
+	 * on a desktop and too small to read on a phone). `picture` (a media library number) adds or replaces it, `remove` takes it
+	 * away. The band keeps its main picture and gets a sibling picture with the class twd-sk-phone-img, and the section the class
+	 * twd-sk-has-phone; the stylesheet shows only one of the two (phones the second, everyone else the first), so the other is
+	 * never downloaded. Nothing else in the page changes.
+	 *
+	 * @param int   $page_id
+	 * @param array $in index (the section's number), then picture (a media library number) or remove (true)
+	 * @return array|WP_Error { html, at, note }
+	 */
+	public static function phone_picture( $page_id, $in ) {
+		$in    = is_array( $in ) ? $in : array();
+		$parts = TWD_SK_Sections::split( TWD_SK_Store::get_current( (int) $page_id ) );
+		$n     = count( $parts['sections'] );
+		$index = isset( $in['index'] ) && ( is_int( $in['index'] ) || ( is_string( $in['index'] ) && ctype_digit( $in['index'] ) ) ) ? (int) $in['index'] : -1;
+		if ( $index < 0 || $index >= $n ) {
+			return new WP_Error( 'twd_sk_bad_input', 'Click inside the picture band you want to change first.' );
+		}
+		$section = $parts['sections'][ $index ];
+		if ( ! self::section_has_class( $section, 'twd-sk-image-text--band' ) ) {
+			return new WP_Error( 'twd_sk_bad_input', 'A picture for phones can be added to a picture band only.' );
+		}
+		// Whatever phone picture is there goes first (a change is a remove and an add), so there is never more than one.
+		$plain = preg_replace( '/\s*<img\b(?=[^>]*\sclass\s*=\s*"(?:[^"]*\s)?twd-sk-phone-img(?:\s[^"]*)?")[^>]*>/i', '', $section );
+		if ( ! empty( $in['remove'] ) ) {
+			if ( $plain === $section && ! self::section_has_class( $section, 'twd-sk-has-phone' ) ) {
+				return new WP_Error( 'twd_sk_bad_input', 'This picture band has no phone picture to remove.' );
+			}
+			$sections           = $parts['sections'];
+			$sections[ $index ] = self::section_class( $plain, 'twd-sk-has-phone', false );
+			return array(
+				'html' => TWD_SK_Sections::join( $parts['gaps'], $sections ),
+				'at'   => $index,
+				'note' => 'Removed the phone picture from a picture band',
+			);
+		}
+		$id  = isset( $in['picture'] ) && ( is_int( $in['picture'] ) || ( is_string( $in['picture'] ) && ctype_digit( $in['picture'] ) ) ) ? (int) $in['picture'] : 0;
+		$url = TWD_SK_Inline::picture_url( $id );
+		if ( is_wp_error( $url ) ) {
+			return $url;
+		}
+		if ( 1 !== preg_match( '/<img\b[^>]*>/i', $plain, $main, PREG_OFFSET_CAPTURE ) ) {
+			return new WP_Error( 'twd_sk_bad_input', 'This picture band has no picture yet. Choose its picture first.' );
+		}
+		// The phone picture is described like the main one; the media library's own description is the fallback.
+		$alt = 1 === preg_match( '/\salt\s*=\s*"([^"]*)"/i', $main[0][0], $a ) ? $a[1] : '';
+		if ( '' === trim( $alt ) && function_exists( 'get_post_meta' ) ) {
+			$alt = esc_attr( (string) get_post_meta( $id, '_wp_attachment_image_alt', true ) );
+		}
+		$tag     = '<img class="twd-sk-image-text__img twd-sk-phone-img" src="' . esc_attr( $url ) . '" alt="' . $alt . '">';
+		$added   = substr( $plain, 0, $main[0][1] + strlen( $main[0][0] ) ) . $tag . substr( $plain, $main[0][1] + strlen( $main[0][0] ) );
+		$sections           = $parts['sections'];
+		$sections[ $index ] = self::section_class( $added, 'twd-sk-has-phone', true );
+		return array(
+			'html' => TWD_SK_Sections::join( $parts['gaps'], $sections ),
+			'at'   => $index,
+			'note' => 'Added a phone picture to a picture band',
+		);
+	}
+
+	/** Whether the section's own opening tag carries a class. */
+	private static function section_has_class( $section, $class ) {
+		if ( 1 !== preg_match( '/^<section\b[^>]*\sclass\s*=\s*"([^"]*)"/i', $section, $m ) ) {
+			return false;
+		}
+		return in_array( $class, preg_split( '/\s+/', trim( $m[1] ) ), true );
+	}
+
+	/** The section with a class on its own opening tag added or taken away. */
+	private static function section_class( $section, $class, $on ) {
+		return preg_replace_callback( '/^(<section\b[^>]*\sclass\s*=\s*")([^"]*)(")/i', function ( $m ) use ( $class, $on ) {
+			$tokens = array_values( array_filter( preg_split( '/\s+/', trim( $m[2] ) ), function ( $c ) use ( $class ) {
+				return '' !== $c && $c !== $class;
+			} ) );
+			if ( $on ) {
+				$tokens[] = $class;
+			}
+			return $m[1] . implode( ' ', $tokens ) . $m[3];
+		}, $section, 1 );
+	}
+
 	/** The picture band for one section's HTML, or an error saying why it cannot be made. */
 	public static function picture_band_from( $section ) {
 		if ( 'custom' !== TWD_SK_Sections::type_of( $section ) ) {

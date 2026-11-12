@@ -346,7 +346,7 @@ twd_sk_test( 'css: images use the object-position token and object-fit cover, an
 				}
 			}
 			// The Look choices that act on a picture (position, slow zoom, shape, boxed) are modifier rules, not the picture's own base rule.
-			if ( false !== strpos( $sel, 'twd-sk-image-text__img' ) && null === $rule['media'] && false === strpos( $sel, '--band' ) && false === strpos( $sel, 'twd-sk-pos-' ) && false === strpos( $sel, 'twd-sk-kenburns' ) && false === strpos( $sel, 'twd-sk-shape-' ) && false === strpos( $sel, 'twd-sk-band-boxed' ) ) {
+			if ( false !== strpos( $sel, 'twd-sk-image-text__img' ) && null === $rule['media'] && false === strpos( $sel, '--band' ) && false === strpos( $sel, 'twd-sk-pos-' ) && false === strpos( $sel, 'twd-sk-kenburns' ) && false === strpos( $sel, 'twd-sk-shape-' ) && false === strpos( $sel, 'twd-sk-band-boxed' ) && false === strpos( $sel, 'twd-sk-phone-img' ) ) {
 				$props = array();
 				foreach ( $rule['decls'] as $d ) {
 					$props[ $d['prop'] ] = $d['value'];

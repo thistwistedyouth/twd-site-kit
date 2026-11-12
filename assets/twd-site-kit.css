@@ -4116,6 +4116,25 @@
   aspect-ratio: 2 / 1;
   width: 100%;
 }
+.twd-sk-page .twd-sk-image-text__img.twd-sk-image-text__img.twd-sk-phone-img.twd-sk-phone-img {
+  display: none;
+}
+@media (max-width: 768px) {
+  .twd-sk-page .twd-sk-has-phone.twd-sk-has-phone .twd-sk-image-text__img.twd-sk-image-text__img {
+    display: none;
+  }
+  .twd-sk-page .twd-sk-has-phone.twd-sk-has-phone .twd-sk-image-text__img.twd-sk-image-text__img.twd-sk-phone-img.twd-sk-phone-img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: auto;
+    max-height: 80vh;
+    animation: none;
+  }
+  .twd-sk-page .twd-sk-has-phone.twd-sk-has-phone.twd-sk-image-text--band.twd-sk-image-text--band {
+    height: auto;
+  }
+}
 
 /* Page title fallback for themes other than Hello. Added by TWD_SK_Page only on a
    page whose kit HTML has its own h1 (the hero title). */

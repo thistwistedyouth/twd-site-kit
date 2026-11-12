@@ -2,6 +2,14 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 12 Nov 2026 (later): a picture for phones, as two pictures and a class
+
+- **Why two pictures, not `<picture>`.** The tidy HTML way is `<picture>` with a `<source media>`. The sanitiser rebuilds elements from an allowlist, and `<source>` carries `srcset` and `media`, a new way for an address to get into a page. Two `<img>` elements with classes need nothing new in the sanitiser (the classes are registry data) and the Visual editor already numbers and edits every `<img>`.
+- **Lazy, not removed.** A hidden lazy picture is not fetched by the browsers checked, so showing one and hiding the other by CSS costs nothing in weight for the picture not used. Only an eager (first section) main picture would still download on a phone.
+- **A class on the section, not `:has()`.** The main picture steps aside on a phone only when the section carries `twd-sk-has-phone`, so there is no rule that depends on `:has()`, and a band without a phone picture is untouched.
+- **The phone picture ignores the Look shape and the band height.** The point of a phone picture is that the part the owner chose is all visible, so on a phone the band takes the picture's own shape. Boxed and the shapes still apply from tablet width up.
+- **Phone width is 768px,** the same step the rest of the stylesheet uses.
+
 ## 12 Nov 2026 (later): picture band Shape and Boxed
 
 - **A shape, not a pixel height, so every screen crops alike.** A banner crops because the box and the picture are different shapes. With a fixed height and a width that follows the screen, the box's shape changes with the screen, so the crop does too. Giving the picture an aspect ratio fixes the shape and so the crop. The picture's own shape (Match the picture) crops nothing.

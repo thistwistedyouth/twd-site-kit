@@ -1323,3 +1323,14 @@
 .twd-sk-band-boxed-narrow .twd-sk-image-text__img { max-width: min(100%, $container-narrow); }
 .twd-sk-shape-wide .twd-sk-image-text__img { aspect-ratio: 16 / 9; width: 100%; }
 .twd-sk-shape-cinema .twd-sk-image-text__img { aspect-ratio: 2 / 1; width: 100%; }
+
+/* Picture band phone picture (12 Nov 2026): a second picture shown only on phones, for a photo whose small detail (lettering in a
+   mirror, say) is lost when the whole picture is squeezed to a phone's width. The section carries twd-sk-has-phone and holds both
+   pictures; one is hidden at each width, and a hidden picture is never downloaded (pictures are lazy). On a phone the band takes
+   the phone picture's own shape, so none of it is cropped. Above the phone width the band prints and looks as it did. */
+.twd-sk-image-text__img.twd-sk-phone-img { display: none; }
+@media (max-width: 768px) {
+  .twd-sk-has-phone .twd-sk-image-text__img { display: none; }
+  .twd-sk-has-phone .twd-sk-image-text__img.twd-sk-phone-img { display: block; width: 100%; height: auto; aspect-ratio: auto; max-height: 80vh; animation: none; }
+  .twd-sk-has-phone.twd-sk-image-text--band { height: auto; }
+}

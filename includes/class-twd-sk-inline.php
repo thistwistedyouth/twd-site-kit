@@ -1020,7 +1020,7 @@ class TWD_SK_Inline {
 	}
 
 	/** The address of a picture in the media library, at the large size when there is one. */
-	private static function picture_url( $id ) {
+	public static function picture_url( $id ) {
 		if ( $id <= 0 || ! function_exists( 'wp_attachment_is_image' ) || ! wp_attachment_is_image( $id ) ) {
 			return new WP_Error( 'twd_sk_bad_input', 'That is not a picture in the media library.' );
 		}

@@ -864,9 +864,56 @@
 				changeLook(null, v);
 			}, o.help));
 		});
+		if (classes.indexOf('twd-sk-image-text--band') > -1) {
+			drawPhonePicture(sec, classes);
+		}
 		if (!ui.lookBody.firstChild) {
 			ui.lookBody.appendChild(el('p', { className: 'twd-sk-ed__help', text: 'This section has nothing to choose here.' }));
 		}
+	}
+
+	/* A picture for phones (12 Nov 2026): a picture band can hold a second picture that only phones show, for a photo whose small
+	 * detail is lost when the whole picture is squeezed to a phone's width. Saved through the structure route like Add and Move
+	 * (one version, Undo as usual, the page reloads at the section); the server checks that it is a picture band and a library picture. */
+	function drawPhonePicture(sec, classes) {
+		var has = classes.indexOf('twd-sk-has-phone') > -1;
+		ui.lookBody.appendChild(el('p', { className: 'twd-sk-ed__label', text: 'Picture for phones' }));
+		ui.lookBody.appendChild(el('p', { className: 'twd-sk-ed__help', text: has ? 'Phones show a different picture here, at its own shape. Tablets and computers show the main one.' : 'Phones can show a different picture here, for example a closer crop where small detail would be lost. Tablets and computers keep the main picture.' }));
+		if (libraryReady()) {
+			ui.lookBody.appendChild(ED.button(has ? 'Change the phone picture' : 'Choose a phone picture', 'secondary', function () {
+				choosePhonePicture(sec);
+			}));
+		}
+		if (has) {
+			ui.lookBody.appendChild(ED.button('Remove the phone picture', 'secondary', function () {
+				setPhonePicture(sec, 0);
+			}));
+		}
+	}
+
+	function choosePhonePicture(sec) {
+		if (notNow() || !libraryReady()) {
+			return;
+		}
+		var frame = window.wp.media({ title: 'Choose the picture for phones', library: { type: 'image' }, multiple: false, button: { text: 'Use for phones' } });
+		frame.on('select', function () {
+			var a = frame.state().get('selection').first().toJSON();
+			setPhonePicture(sec, a.id);
+		});
+		frame.open();
+	}
+
+	function setPhonePicture(sec, id) {
+		if (notNow()) {
+			return;
+		}
+		var body = { op: 'phone_picture', index: parseInt(sec.getAttribute('data-twd-sk-sec'), 10) };
+		if (id) {
+			body.picture = id;
+		} else {
+			body.remove = true;
+		}
+		structure(body, id ? 'Adding the phone picture...' : 'Removing the phone picture...', id ? 'Phone picture added.' : 'Phone picture removed.');
 	}
 
 	function openLook() {
