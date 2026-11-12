@@ -1295,7 +1295,11 @@
   .twd-sk-kenburns .twd-sk-hero__bg, .twd-sk-kenburns .twd-sk-text__bg, .twd-sk-kenburns .twd-sk-cta__bg, .twd-sk-kenburns .twd-sk-image-text__img { animation: none; }
 }
 
-/* Footer call to action (12 Nov 2026): the header button again, at the top of the footer, when the site switches it on. The compact
-   footer puts it under its tagline, so it needs no space above. */
+/* Footer call to action (12 Nov 2026): the header button again, when the site switches it on. At the top of the footer in every layout
+   but the compact one, which puts it on its logo row between the logo and the links (no block of its own). */
 .twd-sk-footer__cta { padding-top: $gap-md; padding-bottom: $gap-md; text-align: center; }
-.twd-sk-footer--compact .twd-sk-footer__cta { padding-top: 0; }
+.twd-sk-footer__cta--row { padding-top: 0; padding-bottom: 0; }
+@media (min-width: 769px) {
+  .twd-sk-footer__row--cta .twd-sk-footer__brand, .twd-sk-footer__row--cta nav { flex: 1 1 0; }
+  .twd-sk-footer__row--cta nav { display: flex; justify-content: flex-end; }
+}

@@ -192,7 +192,7 @@ class TWD_SK_Chrome {
 			// 0.15.0: the footer text with its first line larger and the rest quieter.
 			'twd-sk-footer__text--lead', 'twd-sk-footer__tagline--lead',
 			// 12 Nov 2026: the call to action at the top of the footer (the header button again).
-			'twd-sk-footer__cta',
+			'twd-sk-footer__cta', 'twd-sk-footer__cta--row', 'twd-sk-footer__row--cta',
 			// 0.15.0: the contact bar on a phone and the quick exit link (both off by default), and the footer's room for the bar.
 			'twd-sk-contactbar', 'twd-sk-contactbar__link', 'twd-sk-footer--contactbar', 'twd-sk-exit',
 			// 0.14.0: the text wordmark header (a mark, the name and a second line as live text, centred on every page).
@@ -742,13 +742,14 @@ class TWD_SK_Chrome {
 	 * The footer's call to action (12 Nov 2026): the header button's own text and link as a button in the footer, for a site that wants
 	 * one call to action at the end of every page instead of a section to keep on each. Nothing when either is empty or still a marker.
 	 */
-	private static function footer_button_html( $profile ) {
+	private static function footer_button_html( $profile, $in_row = false ) {
 		$label = isset( $profile['cta_label'] ) ? trim( (string) $profile['cta_label'] ) : '';
 		$url   = isset( $profile['cta_url'] ) ? trim( (string) $profile['cta_url'] ) : '';
 		if ( '' === $label || '' === $url || false !== strpos( $label, '[' ) || false !== strpos( $url, '[' ) ) {
 			return '';
 		}
-		return '<div class="twd-sk-inner twd-sk-footer__cta"><a class="twd-sk-btn twd-sk-btn--primary" href="' . self::url( $url ) . '">' . self::esc( $label ) . '</a></div>';
+		$button = '<a class="twd-sk-btn twd-sk-btn--primary" href="' . self::url( $url ) . '">' . self::esc( $label ) . '</a>';
+		return $in_row ? '<div class="twd-sk-footer__cta twd-sk-footer__cta--row">' . $button . '</div>' : '<div class="twd-sk-inner twd-sk-footer__cta">' . $button . '</div>';
 	}
 
 	/**
@@ -758,18 +759,13 @@ class TWD_SK_Chrome {
 	private static function with_extras( $html, $profile ) {
 		$eff   = self::effective();
 		$extra = '';
-		if ( $eff['footer_button'] && '</footer></div>' === substr( $html, -15 ) ) {
+		if ( $eff['footer_button'] && '</footer></div>' === substr( $html, -15 ) && false === strpos( $html, 'twd-sk-footer--compact' ) ) {
 			$btn = self::footer_button_html( $profile );
 			if ( '' !== $btn ) {
-				// The compact footer: after its tagline, before the logo row. Every other layout: at the top of the footer.
-				$row = '<div class="twd-sk-inner twd-sk-footer__row">';
-				if ( false !== strpos( $html, $row ) ) {
-					$html = substr_replace( $html, $btn, strpos( $html, $row ), 0 );
-				} else {
-					$html = preg_replace_callback( '/<footer class="twd-sk-footer [^>]*>/', function ( $m ) use ( $btn ) {
-						return $m[0] . $btn;
-					}, $html, 1 );
-				}
+				// Every layout but the compact one (which places its own button on its logo row): at the top of the footer.
+				$html = preg_replace_callback( '/<footer class="twd-sk-footer [^>]*>/', function ( $m ) use ( $btn ) {
+					return $m[0] . $btn;
+				}, $html, 1 );
 			}
 		}
 		if ( $eff['contact_bar'] ) {
@@ -935,8 +931,12 @@ class TWD_SK_Chrome {
 		if ( '' !== $profile['footer_text'] ) {
 			$out .= '<div class="twd-sk-inner twd-sk-footer__top"><p class="twd-sk-footer__tagline' . self::text_style_class( '__tagline' ) . '">' . TWD_SK_Profile::rich_html( $profile['footer_text'] ) . '</p></div>';
 		}
-		$out .= '<div class="twd-sk-inner twd-sk-footer__row"><div class="twd-sk-footer__brand">'
+		// 12 Nov 2026: with the footer button on, it sits on this row between the logo and the links (the row is marked so the
+		// logo and the links share the space equally and the button lands in the middle, under the tagline).
+		$row_button = self::effective()['footer_button'] ? self::footer_button_html( $profile, true ) : '';
+		$out .= '<div class="twd-sk-inner twd-sk-footer__row' . ( '' !== $row_button ? ' twd-sk-footer__row--cta' : '' ) . '"><div class="twd-sk-footer__brand">'
 			. self::logo_html( $profile, 'twd-sk-footer__logo-img', 'twd-sk-footer__name', true ) . '</div>';
+		$out .= $row_button;
 		if ( $profile['menu'] ) {
 			$out .= '<nav aria-label="Footer"><ul class="twd-sk-footer__links twd-sk-footer__links--row">';
 			foreach ( $profile['menu'] as $item ) {

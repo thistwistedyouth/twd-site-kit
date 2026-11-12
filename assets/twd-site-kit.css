@@ -4055,8 +4055,19 @@
   padding-bottom: var(--twd-site-gap-md) !important;
   text-align: center !important;
 }
-.twd-sk-page .twd-sk-footer--compact.twd-sk-footer--compact .twd-sk-footer__cta.twd-sk-footer__cta {
+.twd-sk-page .twd-sk-footer__cta--row.twd-sk-footer__cta--row {
   padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+@media (min-width: 769px) {
+  .twd-sk-page .twd-sk-footer__row--cta.twd-sk-footer__row--cta .twd-sk-footer__brand.twd-sk-footer__brand,
+  .twd-sk-page .twd-sk-footer__row--cta.twd-sk-footer__row--cta nav {
+    flex: 1 1 0;
+  }
+  .twd-sk-page .twd-sk-footer__row--cta.twd-sk-footer__row--cta nav {
+    display: flex;
+    justify-content: flex-end;
+  }
 }
 
 /* Page title fallback for themes other than Hello. Added by TWD_SK_Page only on a

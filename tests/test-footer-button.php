@@ -17,20 +17,24 @@ twd_sk_test( 'footer button: off by default, every footer layout prints exactly 
 	twd_sk_eq( 1, count( TWD_SK_Chrome::validate( array( 'footer_button' => 'maybe' ) )['errors'] ), 'anything else is refused' );
 } );
 
-twd_sk_test( 'footer button: on, the header button text and link print as a button; in the compact footer under the tagline and above the logo row, in every other layout at the top of the footer', function () {
+twd_sk_test( 'footer button: on, the header button text and link print as a button; in the compact footer on the logo row between the logo and the links, in every other layout at the top of the footer', function () {
 	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'footer_text' => 'Quiet words.' ) ), array( 'footer_button' => true, 'footer_variant' => 'compact' ) );
 	twd_sk_eq( true, TWD_SK_Chrome::effective()['footer_button'] );
 	$html = TWD_SK_Chrome::render_footer();
 	twd_sk_has( '<a class="twd-sk-btn twd-sk-btn--primary" href="/contact">Book a call</a>', $html );
-	$tag = strpos( $html, 'twd-sk-footer__tagline' );
-	$cta = strpos( $html, 'twd-sk-footer__cta' );
-	$row = strpos( $html, 'twd-sk-footer__row' );
-	twd_sk_true( false !== $tag && false !== $cta && false !== $row && $tag < $cta && $cta < $row, 'compact: tagline, then the button, then the logo row' );
-	twd_sk_eq( 1, substr_count( $html, 'twd-sk-footer__cta' ), 'once' );
+	$tag   = strpos( $html, 'twd-sk-footer__tagline' );
+	$row   = strpos( $html, 'twd-sk-footer__row' );
+	$brand = strpos( $html, 'twd-sk-footer__brand' );
+	$cta   = strpos( $html, '<div class="twd-sk-footer__cta twd-sk-footer__cta--row">' );
+	$nav   = strpos( $html, '<nav aria-label="Footer">' );
+	twd_sk_true( false !== $tag && false !== $row && false !== $brand && false !== $cta && false !== $nav && $tag < $row && $row < $brand && $brand < $cta && $cta < $nav, 'compact: tagline, then one row holding the logo, the button and the links, in that order' );
+	twd_sk_eq( 1, substr_count( $html, '<div class="twd-sk-footer__cta' ), 'once' );
+	twd_sk_hasnt( 'twd-sk-inner twd-sk-footer__cta', $html, 'no block of its own in the compact footer' );
 	foreach ( array( 'columns', 'band', 'centered', 'simple', 'feature' ) as $layout ) {
 		TWD_SK_Chrome::save_settings( array( 'footer_variant' => $layout ) );
 		$out = TWD_SK_Chrome::render_footer();
-		twd_sk_eq( 1, substr_count( $out, 'twd-sk-footer__cta' ), $layout . ' has one button' );
+		twd_sk_eq( 1, substr_count( $out, '<div class="twd-sk-inner twd-sk-footer__cta">' ), $layout . ' has one button' );
+		twd_sk_hasnt( 'twd-sk-footer__cta--row', $out, $layout . ' has no row version' );
 		twd_sk_true( 1 === preg_match( '/<footer class="twd-sk-footer [^>]*><div class="twd-sk-inner twd-sk-footer__cta">/', $out ), $layout . ': at the top of the footer' );
 		twd_sk_true( '</footer></div>' === substr( $out, -15 ), $layout . ' still closes as it did' );
 	}
