@@ -11,6 +11,13 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
+## 13 Nov 2026: the compact footer centred on phones (at the owner's request, built on `main`, NOT released; test build `0.20.0-dev16` installed by hand on the pilot staging site)
+
+- **Asked for:** from a phone screenshot, the footer's logo, button, links and small print were all left-aligned under a centred tagline; the owner wanted it centred and balanced on phones.
+- **What it is:** chrome setting `footer_phone_center` (off by default; Site tab tick box "On a phone, centre the compact footer", style snapshot, site brief key `footer.footer_phone_center`). On it, the compact footer gets one class `twd-sk-footer--phone-center` and, at 768px and under, the logo is centred and 70 percent of its height, the button centred, the links sit in one centred wrapped row (not two columns), and the dark bar's copyright, registration line, email and legal links are centred. Above 768px nothing changes; the other footer layouts print the same bytes. Switched on for the pilot site; seen at 375 wide with no sideways scroll.
+- **Tests:** `tests/test-footer-centre.php` (4). Suite 1227 passed on an LF copy. The stylesheet is 179,037 bytes (ceiling 180,000), so there is little room left; the next addition needs the ceiling raised.
+- **To check on a real site:** the tick box in the signed-in Site tab (Header and footer), a footer with a long menu or legal links at phone width, and that a computer shows the footer as before.
+
 ## 12 Nov 2026 (later): a small picture under the words on phones (at the owner's request, built on `main`, NOT released; test build `0.20.0-dev15` installed by hand on the pilot staging site)
 
 - **Asked for:** on a phone the About page's picture of the person filled the width and sat above the first words; the owner wanted it smaller, centred and under the first paragraph, on phones only.

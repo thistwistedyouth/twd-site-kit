@@ -1347,3 +1347,14 @@
 @media (max-width: 768px) {
   .twd-sk-phone-under .twd-sk-image-text__media { order: 2; width: 60%; margin: 0 auto; }
 }
+
+/* The compact footer, centred on phones (13 Nov 2026): a Site tab tick box, off by default (class on the footer). On a phone the logo
+   (smaller), the call to action, the links in one wrapped row and the small print are all centred. Above the phone width nothing changes. */
+@media (max-width: 768px) {
+  .twd-sk-footer--phone-center .twd-sk-footer__row { align-items: center; text-align: center; gap: 14px; padding-top: 14px; }
+  .twd-sk-footer--phone-center .twd-sk-footer__logo-img { margin: 0 auto; max-height: calc(#{$footer-logo-height} * 0.7); }
+  .twd-sk-footer--phone-center .twd-sk-footer__links--row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 22px; }
+  .twd-sk-footer--phone-center .twd-sk-footer__bottom-inner { align-items: center; justify-content: center; text-align: center; }
+  .twd-sk-footer--phone-center .twd-sk-footer__meta { justify-content: center; gap: 4px 16px; }
+  .twd-sk-footer--phone-center .twd-sk-footer__legal { justify-content: center; }
+}

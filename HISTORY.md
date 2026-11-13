@@ -2,6 +2,12 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 13 Nov 2026: the compact footer centred on phones
+
+- **A tick box, not a new default.** Every compact footer has been left-aligned on a phone, so centring is opt-in per site, like the footer button; off prints the same bytes.
+- **Links in one wrapped row, not two columns.** Two columns of left-aligned words looked lopsided under a centred button; a centred wrapped row reads evenly whatever the menu length. The owner agreed.
+- **Compact footer only.** The other layouts have their own phone rules; the class is only printed by the compact one.
+
 ## 12 Nov 2026 (later): a small picture under the words on phones
 
 - **Order, not a second picture.** The words and the picture are already two boxes in a one-column grid on a phone; giving the picture's box a later order and a width puts it under the words with no new markup and no second image to download.

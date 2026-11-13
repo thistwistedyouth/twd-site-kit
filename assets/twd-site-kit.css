@@ -4154,6 +4154,36 @@
     margin: 0 auto !important;
   }
 }
+@media (max-width: 768px) {
+  .twd-sk-page .twd-sk-footer--phone-center.twd-sk-footer--phone-center .twd-sk-footer__row.twd-sk-footer__row {
+    align-items: center;
+    text-align: center !important;
+    gap: 14px;
+    padding-top: 14px !important;
+  }
+  .twd-sk-page .twd-sk-footer--phone-center.twd-sk-footer--phone-center .twd-sk-footer__logo-img.twd-sk-footer__logo-img {
+    margin: 0 auto !important;
+    max-height: calc(var(--twd-site-footer-logo-height) * 0.7);
+  }
+  .twd-sk-page .twd-sk-footer--phone-center.twd-sk-footer--phone-center .twd-sk-footer__links--row.twd-sk-footer__links--row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 22px;
+  }
+  .twd-sk-page .twd-sk-footer--phone-center.twd-sk-footer--phone-center .twd-sk-footer__bottom-inner.twd-sk-footer__bottom-inner {
+    align-items: center;
+    justify-content: center;
+    text-align: center !important;
+  }
+  .twd-sk-page .twd-sk-footer--phone-center.twd-sk-footer--phone-center .twd-sk-footer__meta.twd-sk-footer__meta {
+    justify-content: center;
+    gap: 4px 16px;
+  }
+  .twd-sk-page .twd-sk-footer--phone-center.twd-sk-footer--phone-center .twd-sk-footer__legal.twd-sk-footer__legal {
+    justify-content: center;
+  }
+}
 
 /* Page title fallback for themes other than Hello. Added by TWD_SK_Page only on a
    page whose kit HTML has its own h1 (the hero title). */

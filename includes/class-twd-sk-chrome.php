@@ -192,7 +192,7 @@ class TWD_SK_Chrome {
 			// 0.15.0: the footer text with its first line larger and the rest quieter.
 			'twd-sk-footer__text--lead', 'twd-sk-footer__tagline--lead',
 			// 12 Nov 2026: the call to action at the top of the footer (the header button again).
-			'twd-sk-footer__cta', 'twd-sk-footer__cta--row', 'twd-sk-footer__row--cta',
+			'twd-sk-footer__cta', 'twd-sk-footer__cta--row', 'twd-sk-footer__row--cta', 'twd-sk-footer--phone-center',
 			// 0.15.0: the contact bar on a phone and the quick exit link (both off by default), and the footer's room for the bar.
 			'twd-sk-contactbar', 'twd-sk-contactbar__link', 'twd-sk-footer--contactbar', 'twd-sk-exit',
 			// 0.14.0: the text wordmark header (a mark, the name and a second line as live text, centred on every page).
@@ -240,6 +240,7 @@ class TWD_SK_Chrome {
 			'quick_exit_url' => '',      // 0.15.0: where it goes (a full https address chosen by the site; empty means no link)
 			'client_footer_text' => false, // session 7 (section 21b): clients may change the footer words from the Simple editor
 			'footer_button'  => false,    // 12 Nov 2026: the header button (its text and link) as a call to action in the footer of every page, instead of a section on each page
+			'footer_phone_center' => false, // 13 Nov 2026: on a phone, the compact footer is centred and balanced (logo, button, links in one wrapped row, small print)
 			'placement'      => 'kit',
 			'footer_embed'   => 0,       // 0.15.0: the id of a saved HTML embed to print in place of the kit footer (0 means the kit's own footer)
 		);
@@ -298,6 +299,7 @@ class TWD_SK_Chrome {
 				case 'show_strip':
 				case 'contact_bar':
 				case 'footer_button':
+				case 'footer_phone_center':
 				case 'quick_exit':
 				case 'client_footer_text':
 					if ( is_bool( $value ) || 0 === $value || 1 === $value || '0' === $value || '1' === $value ) {
@@ -404,7 +406,8 @@ class TWD_SK_Chrome {
 			'text_style'  => $s['footer_text_style'],
 			'contact_bar' => (bool) $s['contact_bar'],
 			'footer_button' => (bool) $s['footer_button'],
-			'exit'        => (bool) $s['quick_exit'] && '' !== $s['quick_exit_url'],
+			'footer_phone_center' => (bool) $s['footer_phone_center'],
+			'exit'      => (bool) $s['quick_exit'] && '' !== $s['quick_exit_url'],
 			'exit_url'    => $s['quick_exit_url'],
 			'sticky_note' => (bool) $s['sticky'] && ! $wm && 'centered' === $h,
 		);
@@ -927,7 +930,8 @@ class TWD_SK_Chrome {
 	 * lines, the phone, email and address when the profile has them, and the legal links. No headings.
 	 */
 	private static function render_compact_footer( $profile ) {
-		$out = '<div class="twd-sk-page twd-sk-chrome"><footer class="twd-sk-footer twd-sk-footer--compact twd-sk-footer--cols-1">';
+		$centre = self::effective()['footer_phone_center'] ? ' twd-sk-footer--phone-center' : '';
+		$out    = '<div class="twd-sk-page twd-sk-chrome"><footer class="twd-sk-footer twd-sk-footer--compact twd-sk-footer--cols-1' . $centre . '">';
 		if ( '' !== $profile['footer_text'] ) {
 			$out .= '<div class="twd-sk-inner twd-sk-footer__top"><p class="twd-sk-footer__tagline' . self::text_style_class( '__tagline' ) . '">' . TWD_SK_Profile::rich_html( $profile['footer_text'] ) . '</p></div>';
 		}

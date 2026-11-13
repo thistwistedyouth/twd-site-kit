@@ -917,6 +917,7 @@
 		previewTextStyle();
 		cui.contactBar.checked = !!c.settings.contact_bar;
 		cui.footerBtn.checked = !!c.settings.footer_button;
+		cui.footerCentre.checked = !!c.settings.footer_phone_center;
 		cui.exit.checked = !!c.settings.quick_exit;
 		cui.exitUrl.value = c.settings.quick_exit_url || '';
 		cui.sticky.checked = !!c.settings.sticky;
@@ -996,6 +997,7 @@
 				footer_text_style: cui.textStyle.value,
 				contact_bar: cui.contactBar.checked,
 				footer_button: cui.footerBtn.checked,
+				footer_phone_center: cui.footerCentre.checked,
 				quick_exit: cui.exit.checked,
 				quick_exit_url: cui.exitUrl.value.trim(),
 				sticky: cui.sticky.checked,
@@ -1057,6 +1059,8 @@
 		cui.contactBar = cbar.input;
 		var fbtn = checkbox('twd-sk-ch-footerbtn', 'Show the header button (its text and link above) as a call to action in the footer of every page');
 		cui.footerBtn = fbtn.input;
+		var fcentre = checkbox('twd-sk-ch-footercentre', 'On a phone, centre the compact footer: the logo (a little smaller), the button, the links in one wrapped row and the small print. Computers are unchanged.');
+		cui.footerCentre = fcentre.input;
 		cui.exit = exit.input;
 		cui.exitUrl = textInput('twd-sk-ch-exiturl', 300);
 		var shrink = checkbox('twd-sk-ch-shrink', 'Make the fixed header smaller when scrolling (only works with the fixed header above)');
@@ -1137,6 +1141,7 @@
 			strip.label,
 			cbar.label,
 			fbtn.label,
+			fcentre.label,
 			exit.label,
 			field('Where Leave quickly goes', cui.exitUrl, 'A full https address of a neutral site, such as a weather or news page. Empty means no link.'),
 			clientFooter.label,
@@ -1277,7 +1282,7 @@
 	}
 
 	function chromeSnap() {
-		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.textStyle.value, cui.contactBar.checked, cui.footerBtn.checked, cui.exit.checked, cui.exitUrl.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.over.checked, cui.wordmark.checked, cui.wmname.checked, cui.wmline.checked, cui.wmrows.checked, cui.clientFooter.checked, cui.marker.value, cui.button.checked, cui.strip.checked, cui.placement.value, cui.footerEmbed.value]);
+		return JSON.stringify([cui.header.value, cui.footer.value, cui.cols.value, cui.textStyle.value, cui.contactBar.checked, cui.footerBtn.checked, cui.footerCentre.checked, cui.exit.checked, cui.exitUrl.value, cui.sticky.checked, cui.shrink.checked, cui.front.checked, cui.over.checked, cui.wordmark.checked, cui.wmname.checked, cui.wmline.checked, cui.wmrows.checked, cui.clientFooter.checked, cui.marker.value, cui.button.checked, cui.strip.checked, cui.placement.value, cui.footerEmbed.value]);
 	}
 
 	ED.addDirtyCheck(function () {
