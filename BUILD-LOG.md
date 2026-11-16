@@ -1,3 +1,9 @@
+## 16 Nov 2026: Legal template docs added (no code change, no release needed)
+
+- Added `docs/legal/privacy-cookie-spec.md` - the full rules for DUAA-compliant privacy and cookie policies: mandatory UK GDPR sections, lawful bases (Art 6 and Art 9(2)(h) with DPA 2018 Sch 1 Pt 1 para 2), DUAA 2025 complaints procedure (30-day acknowledgement), ICO wording convention, CSS prefix convention, retention periods, cookie table rows, governing law variants, and variables list.
+- Added `docs/legal/privacy-cookie-template.html` - a complete worked example with placeholder variables, ready to paste into an Elementor HTML widget after swapping `{VARIABLE}` values and renaming the `tpl-` CSS prefix. No client data in either file (repo is public).
+- These documents support the TWD agency workflow for updating ~17 UK therapy client sites to DUAA 2025 compliance.
+
 ## Next (asked for, not built; logged 5 Nov 2026 from the owner's request via another session)
 
 - **The one-box planner refuses a plain colour request about one box.** Example: "make the pale blue box on a condition page white like the box next to it" returns "None of that can be done on this page as asked ... colours for the whole site can be changed in the Site tab". The owner expects this to be an easy AI request.
