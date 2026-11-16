@@ -4256,6 +4256,15 @@
   max-width: 80px;
   height: var(--twd-sk-logo-h, var(--twd-site-logo-height));
 }
+@media (max-width: 480px) {
+  .twd-sk-page .twd-sk-faq__tabs.twd-sk-faq__tabs {
+    gap: 6px;
+  }
+  .twd-sk-page .twd-sk-faq__tablink.twd-sk-faq__tablink {
+    padding: 9px 8px !important;
+    font-size: 14px !important;
+  }
+}
 
 /* Page title fallback for themes other than Hello. Added by TWD_SK_Page only on a
    page whose kit HTML has its own h1 (the hero title). */

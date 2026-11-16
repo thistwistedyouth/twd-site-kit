@@ -2,6 +2,10 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 16 Nov 2026 (after 0.21.0): question tabs on one row
+
+The tabs wrapped to two rows on a 390px phone. Smaller padding, gap and 14px text (the small text floor) at 480px and under fixes it without touching wide screens; a literal 14px, not the token, so a larger Small text setting cannot push it back to two rows.
+
 ## 16 Nov 2026: question tabs on phones, page title size
 
 - **Show one group on phones too, not a new option.** The tabs are buttons; a button that appears to do nothing is a fault, so the fix is the default, not a tick box. The stacked phone layout was the old choice (all answers visible with no tabs needed) but the tabs were still printed, which is what made them look broken.

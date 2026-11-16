@@ -1385,3 +1385,9 @@ picture.twd-sk-header__logo-img > img { display: block; width: auto; max-width: 
 .twd-sk-header--front picture.twd-sk-header__logo-img > img { max-width: 360px; height: $logo-height-front; }
 picture.twd-sk-footer__logo-img > img { display: block; width: auto; max-width: 220px; height: $footer-logo-height; }
 picture.twd-sk-header__logo-mark > img { display: block; width: auto; max-width: 80px; height: var(--twd-sk-logo-h, $logo-height); }
+
+/* Question group tabs on a narrow phone (16 Nov 2026): a little less padding and gap so three short tabs sit on one row; they still wrap if a name is long. */
+@media (max-width: 480px) {
+  .twd-sk-faq__tabs { gap: 6px; }
+  .twd-sk-faq__tablink { padding: 9px 8px; font-size: 14px; }
+}

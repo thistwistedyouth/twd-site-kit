@@ -11,6 +11,10 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
+## 16 Nov 2026 (after 0.21.0): question tabs on one row on narrow phones (from the pilot client's review; built on `main`, NOT released; test build `0.21.1-dev3` installed by hand on the pilot staging site)
+
+A last block in `tools/kit.src.css`: at 480px and under the question group tabs have gap 6px, padding 9px 8px and 14px text, so three short tabs sit on one row (checked at 390 and 375 wide, no sideways scroll); they still wrap if a name is long. Wide screens unchanged. Suite 1234 passed on an LF copy. Also on the pilot site (data, not the plugin): the "On this page" list under the Questions title was removed by dropping the hero's `twd-sk-toc` class. To check: the tabs on a real phone.
+
 ## 16 Nov 2026: RELEASE 0.21.0 (pushed to main at the owner's yes; the owner tests on the real sites)
 
 - Everything from the 12 to 16 Nov 2026 entries below, in one release. Built on an LF copy, the zip checksum verified, release check run, suite 1234 passed.
