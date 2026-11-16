@@ -1377,3 +1377,11 @@
    Nothing prints without a picture chosen in Site details. */
 .twd-sk-footer__badge { display: block; margin: 16px auto 0; text-align: center; }
 .twd-sk-footer__badge-img { display: block; width: auto; max-width: 160px; max-height: 64px; margin: 0 auto; }
+
+/* Imagify picture-tag mode (16 Nov 2026, from another session's hand edit of the generated file, now in the source): the optimiser moves
+   a logo's class onto a picture element, so the picture takes no box of its own and the image inside is sized as the logo is. */
+picture.twd-sk-header__logo-img, picture.twd-sk-footer__logo-img, picture.twd-sk-header__logo-mark { display: contents; }
+picture.twd-sk-header__logo-img > img { display: block; width: auto; max-width: 220px; height: var(--twd-sk-logo-h, $logo-height); }
+.twd-sk-header--front picture.twd-sk-header__logo-img > img { max-width: 360px; height: $logo-height-front; }
+picture.twd-sk-footer__logo-img > img { display: block; width: auto; max-width: 220px; height: $footer-logo-height; }
+picture.twd-sk-header__logo-mark > img { display: block; width: auto; max-width: 80px; height: var(--twd-sk-logo-h, $logo-height); }

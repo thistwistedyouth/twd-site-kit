@@ -11,6 +11,10 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
+## 16 Nov 2026 (later): Imagify picture rules moved into the stylesheet source
+
+- Another session had hand-edited the generated stylesheet so a logo still sizes when the Imagify optimiser wraps it in a picture element. The rules (`picture.twd-sk-header__logo-img`, `-footer__logo-img`, `-header__logo-mark`, with the image inside sized like the logo, from tokens) are now in `tools/kit.src.css`, so the generated file matches its source and the test passes. Not seen on a site that uses Imagify's picture tags in this session. Stylesheet 181,545 of 185,000. Suite 1234 passed on an LF copy.
+
 ## 16 Nov 2026: question tabs on phones, page title size (from the pilot client's review; built on `main`, NOT released; test build `0.20.1-dev20` installed by hand on the pilot staging site)
 
 - **Question tabs did nothing on a phone (a fault):** on a phone every group of questions showed stacked and the page script (which puts the page back where it was after a tab click) left nothing visible happening. The rules that show one group at a time (`:target` and `:has`) are no longer inside the 769px media query, so a phone behaves like a computer: the default group, then the tapped one. Checked at 390 wide: three taps, three groups. This reaches every site with a question groups section when released.

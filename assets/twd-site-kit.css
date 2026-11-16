@@ -4229,6 +4229,33 @@
   max-height: 64px;
   margin: 0 auto !important;
 }
+.twd-sk-page picture.twd-sk-header__logo-img.twd-sk-header__logo-img,
+.twd-sk-page picture.twd-sk-footer__logo-img.twd-sk-footer__logo-img,
+.twd-sk-page picture.twd-sk-header__logo-mark.twd-sk-header__logo-mark {
+  display: contents;
+}
+.twd-sk-page picture.twd-sk-header__logo-img.twd-sk-header__logo-img > img {
+  display: block;
+  width: auto;
+  max-width: 220px;
+  height: var(--twd-sk-logo-h, var(--twd-site-logo-height));
+}
+.twd-sk-page .twd-sk-header--front.twd-sk-header--front picture.twd-sk-header__logo-img.twd-sk-header__logo-img > img {
+  max-width: 360px;
+  height: var(--twd-site-logo-height-front);
+}
+.twd-sk-page picture.twd-sk-footer__logo-img.twd-sk-footer__logo-img > img {
+  display: block;
+  width: auto;
+  max-width: 220px;
+  height: var(--twd-site-footer-logo-height);
+}
+.twd-sk-page picture.twd-sk-header__logo-mark.twd-sk-header__logo-mark > img {
+  display: block;
+  width: auto;
+  max-width: 80px;
+  height: var(--twd-sk-logo-h, var(--twd-site-logo-height));
+}
 
 /* Page title fallback for themes other than Hello. Added by TWD_SK_Page only on a
    page whose kit HTML has its own h1 (the hero title). */
