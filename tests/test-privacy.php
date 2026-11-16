@@ -70,7 +70,8 @@ twd_sk_test( 'privacy: every email address in the repo is an example address', f
 } );
 
 twd_sk_test( 'privacy: no phone numbers, apart from the national helplines', function () {
-	$allowed = array( '0800 58 58 58', '0800585858' );
+	// The Information Commissioner's Office helpline (0303 123 1113) is the regulator's public number, named in the legal template.
+	$allowed = array( '0800 58 58 58', '0800585858', '0303 123 1113' );
 	foreach ( twd_sk_privacy_files() as $rel => $path ) {
 		if ( twd_sk_privacy_is_test( $rel ) ) {
 			continue;
@@ -101,6 +102,8 @@ twd_sk_test( 'privacy: every web address points at an example domain or a known 
 	$hosts = array(
 		'example.com', 'www.example.com', 'example.org', 'example.net', 'example.test',
 		'therapywebdesigns.co.uk',
+		// The regulator's own site, named in the legal template (docs/legal).
+		'www.ico.org.uk',
 		'github.com', 'raw.githubusercontent.com',
 		'www.gnu.org', 'www.w3.org', 'schema.org', 'scripts.sil.org', 'openfontlicense.org',
 		// The social networks the social buttons link to (0.16.0), in tests only as sample links.

@@ -14,15 +14,15 @@ in one widget.
 
 | Variable | Example | Notes |
 |---|---|---|
-| `{THERAPIST_NAME}` | Cheryl Burgess | As they want to appear on the site |
+| `{THERAPIST_NAME}` | Alex Example | As they want to appear on the site |
 | `{QUALIFICATION}` | DCounsPsych | After the name in the intro |
 | `{PROFESSIONAL_BODY}` | BACP | BACP, BACP Accredited, NCPS, BPS, HCPC, COSCA, etc. |
-| `{PRACTICE_NAME}` | Achieve Wellbeing Therapy | Trading name, if different from therapist name |
-| `{EMAIL}` | cherylburgess@achievewellbeingtherapy.co.uk | Public contact email |
-| `{LOCATION}` | Newton Aycliffe, County Durham | Town or city, plus "and online across the UK" if applicable |
-| `{ICO_NUMBER}` | C1490384 | If not yet registered: "Our ICO registration details are available on request" - never leave a [placeholder] |
-| `{SITE_DOMAIN}` | achievewellbeingtherapy.co.uk | Used in the cookie section |
-| `{CSS_PREFIX}` | awb | Two or three letters unique to this site, e.g. awb, pts, an, mc |
+| `{PRACTICE_NAME}` | Example Wellbeing Therapy | Trading name, if different from therapist name |
+| `{EMAIL}` | you@example.com | Public contact email |
+| `{LOCATION}` | Exampletown | Town or city, plus "and online across the UK" if applicable |
+| `{ICO_NUMBER}` | C0000000 | If not yet registered: "Our ICO registration details are available on request" - never leave a [placeholder] |
+| `{SITE_DOMAIN}` | example.com | Used in the cookie section |
+| `{CSS_PREFIX}` | awb | Two or three letters unique to this site, e.g. abc, xyz |
 | `{LAST_UPDATED}` | 19 June 2026 | ISO or plain English |
 | `{GOVERNING_LAW}` | English law | English law / Scots law / Northern Irish law |
 | `{RETENTION_THERAPY}` | 7 years | Usually 7 years (BPS/HCPC/BACP guidance); some use 6 years |
@@ -168,18 +168,15 @@ when multiple HTML widgets appear on the same page.
 Pattern: `.{PREFIX}-legal`, `.{PREFIX}-h1`, `.{PREFIX}-h2`, `.{PREFIX}-updated`,
 `.{PREFIX}-list`, `.{PREFIX}-ol`, `.{PREFIX}-table`, `.{PREFIX}-divider`
 
-Avoid: `twd-`, `twd-sk-`, `an-` (Alice Nicholls), `pts-` (PTSolutions),
-`mom-` (Mind Over Matter), `mc-` (Moor Counselling), `awb-` (Achieve Wellbeing),
-`ccl-` (CCL), `kp-` (Kent Psychologist / Kaya Platt), `gp-` (Psychology with Gisele),
-`drt-` (DRT Global), `pdp-` (Peak District Psychology), `pp-` (Parental Psychology),
-`wp-` (Within Psychology).
+Avoid: `twd-`, `twd-sk-`, `wp-`, and any prefix another site already uses (that list is kept in the
+private repo, not here).
 
 ---
 
 ## ICO registration wording
 
 - **Number known:** "I am registered with the Information Commissioner's Office (ICO)
-  as a data controller under registration number C1490384."
+  as a data controller under registration number C0000000."
 - **Number not yet confirmed:** "Our ICO registration details are available on request."
 - **Never:** leave `[ICO Reg No]` or any placeholder bracket in the published page.
 
