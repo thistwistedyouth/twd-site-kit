@@ -141,7 +141,7 @@ class TWD_SK_SiteExport {
 		}
 		if ( $with_site ) {
 			$p = TWD_SK_Profile::get();
-			foreach ( array( 'logo_id' => 'the logo', 'logo_mark_id' => 'the small logo mark', 'social_image_id' => 'the default social picture' ) as $key => $label ) {
+			foreach ( array( 'logo_id' => 'the logo', 'logo_mark_id' => 'the small logo mark', 'social_image_id' => 'the default social picture', 'registration_logo_id' => 'the registration badge' ) as $key => $label ) {
 				$aid = isset( $p[ $key ] ) ? (int) $p[ $key ] : 0;
 				$url = $aid > 0 && function_exists( 'wp_get_attachment_url' ) ? wp_get_attachment_url( $aid ) : '';
 				if ( is_string( $url ) && '' !== $url ) {

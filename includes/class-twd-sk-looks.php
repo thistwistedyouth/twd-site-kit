@@ -83,9 +83,9 @@ class TWD_SK_Looks {
 				'band_shape' => array(
 					'label'    => 'Shape',
 					'kind'     => 'choice',
-					'choices'  => array( '' => 'Fixed height', 'twd-sk-shape-natural' => 'Match the picture', 'twd-sk-shape-wide' => 'Wide (16:9)', 'twd-sk-shape-cinema' => 'Cinema (2:1)' ),
+					'choices'  => array( '' => 'Fixed height', 'twd-sk-shape-natural' => 'Match the picture', 'twd-sk-shape-wide' => 'Wide (16:9)', 'twd-sk-shape-cinema' => 'Cinema (2:1)', 'twd-sk-shape-whole' => 'Whole picture, full width' ),
 					'requires' => 'twd-sk-image-text--band',
-					'help'     => 'The height follows the width, so every screen shows the same part of the picture. Fixed height is the Band height above.',
+					'help'     => 'The height follows the width, so every screen shows the same part of the picture. Whole picture shows all of it, edge to edge, as tall as the picture needs, with nothing cropped. Fixed height is the Band height above.',
 				),
 				'band_frame' => array(
 					'label'    => 'Boxed or full width',

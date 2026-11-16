@@ -6,7 +6,7 @@
 
 twd_sk_test( 'band shape and boxed: Look offers Shape (fixed height, match the picture, wide, cinema) and Boxed or full width, on the band layout only', function () {
 	$o = TWD_SK_Looks::options( 'image_text' );
-	twd_sk_eq( array( '', 'twd-sk-shape-natural', 'twd-sk-shape-wide', 'twd-sk-shape-cinema' ), array_keys( $o['band_shape']['choices'] ) );
+	twd_sk_eq( array( '', 'twd-sk-shape-natural', 'twd-sk-shape-wide', 'twd-sk-shape-cinema', 'twd-sk-shape-whole' ), array_keys( $o['band_shape']['choices'] ) );
 	twd_sk_eq( array( '', 'twd-sk-band-boxed', 'twd-sk-band-boxed-narrow' ), array_keys( $o['band_frame']['choices'] ) );
 	twd_sk_eq( 'twd-sk-image-text--band', $o['band_shape']['requires'] );
 	twd_sk_eq( 'twd-sk-image-text--band', $o['band_frame']['requires'] );

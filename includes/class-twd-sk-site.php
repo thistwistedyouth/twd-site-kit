@@ -66,6 +66,9 @@ class TWD_SK_Site {
 			array( 'text', 'size-lead', 'Introduction text size', 'size' ),
 			array( 'text', 'size-h2', 'Section heading size', 'size' ),
 			array( 'text', 'size-h3', 'Small heading size', 'size' ),
+			// 16 Nov 2026: the title of a page, above its picture (the compact hero), on a computer and on a phone.
+			array( 'text', 'size-page-title', 'Page title size (above the picture)', 'size' ),
+			array( 'text', 'size-page-title-sm', 'Page title size on phones', 'size' ),
 			array( 'text', 'container-narrow', 'Reading width', 'size' ),
 			array( 'text', 'para-gap', 'Space between paragraphs', 'size' ),
 			// 0.14.0: logo sizes, in pixels.

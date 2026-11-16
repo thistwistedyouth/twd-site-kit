@@ -33,6 +33,8 @@ class TWD_SK_Profile {
 			'logo_mark_id' => 0,   // 0.14.0: a small symbol-only mark for the header on pages other than the front page
 			'logo_line'    => '',  // 0.14.0: the small second line under the name in the text wordmark header (a descriptor)
 			'social_image_id' => 0, // section 23d: the picture shared with a page that has none of its own (0: the logo)
+			'registration_logo_id' => 0, // 13 Nov 2026: a badge picture (the body's logo) printed in the compact footer, linked to registration_url
+			'registration_url' => '',    // 13 Nov 2026: a full https address that the badge and the registration lines link to (the practitioner's own page on the register)
 			'menu'         => array(),
 			'cta_label'    => '',
 			'cta_url'      => '',
@@ -277,8 +279,9 @@ class TWD_SK_Profile {
 			case 'logo_id':
 			case 'logo_mark_id':
 			case 'social_image_id':
+			case 'registration_logo_id':
 			case 'about_page_id':
-				$is_logo = 'logo_id' === $key || 'logo_mark_id' === $key || 'social_image_id' === $key;
+				$is_logo = 'logo_id' === $key || 'logo_mark_id' === $key || 'social_image_id' === $key || 'registration_logo_id' === $key;
 				if ( ! is_int( $value ) && ! ( is_string( $value ) && ctype_digit( $value ) ) ) {
 					return $is_logo ? 'The logo must be the number of a picture in the media library.' : 'That must be a page number.';
 				}
@@ -290,6 +293,19 @@ class TWD_SK_Profile {
 					return 'That logo number is not a picture in the media library.';
 				}
 				return array( max( 0, $value ) );
+			case 'registration_url':
+				if ( ! is_string( $value ) ) {
+					return 'The registration link must be text.';
+				}
+				$value = trim( $value );
+				if ( '' === $value ) {
+					return array( '' );
+				}
+				if ( strlen( $value ) > 300 || 0 !== strpos( $value, 'https://' ) ) {
+					return 'The registration link must be a full https address.';
+				}
+				$u = self::url( $value );
+				return false === $u ? 'The registration link is not allowed.' : array( $u );
 			case 'menu':
 				return self::validate_menu( $value );
 			case 'legal':
@@ -475,6 +491,8 @@ class TWD_SK_Profile {
 			'logo_mark_id' => 0,
 			'logo_line'    => '',
 			'social_image_id' => 0,
+			'registration_logo_id' => 0,
+			'registration_url' => '',
 			'menu'         => array(
 				array( 'label' => 'Home', 'url' => '/', 'children' => array() ),
 				array( 'label' => 'About', 'url' => '/about', 'children' => array() ),

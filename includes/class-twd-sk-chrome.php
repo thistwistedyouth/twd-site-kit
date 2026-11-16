@@ -192,7 +192,7 @@ class TWD_SK_Chrome {
 			// 0.15.0: the footer text with its first line larger and the rest quieter.
 			'twd-sk-footer__text--lead', 'twd-sk-footer__tagline--lead',
 			// 12 Nov 2026: the call to action at the top of the footer (the header button again).
-			'twd-sk-footer__cta', 'twd-sk-footer__cta--row', 'twd-sk-footer__row--cta', 'twd-sk-footer--phone-center',
+			'twd-sk-footer__cta', 'twd-sk-footer__cta--row', 'twd-sk-footer__row--cta', 'twd-sk-footer--phone-center', 'twd-sk-footer__badge', 'twd-sk-footer__badge-img',
 			// 0.15.0: the contact bar on a phone and the quick exit link (both off by default), and the footer's room for the bar.
 			'twd-sk-contactbar', 'twd-sk-contactbar__link', 'twd-sk-footer--contactbar', 'twd-sk-exit',
 			// 0.14.0: the text wordmark header (a mark, the name and a second line as live text, centred on every page).
@@ -756,6 +756,39 @@ class TWD_SK_Chrome {
 	}
 
 	/**
+	 * A registration line (13 Nov 2026): plain words, or a link to the practitioner's own page on the register when the profile has
+	 * one (a full https address). With no address it prints exactly as it always did.
+	 */
+	private static function reg_text( $profile, $line ) {
+		$url = isset( $profile['registration_url'] ) ? trim( (string) $profile['registration_url'] ) : '';
+		if ( '' === $url || 0 !== strpos( $url, 'https://' ) ) {
+			return self::esc( $line );
+		}
+		return '<a class="twd-sk-footer__link" href="' . self::url( $url ) . '">' . self::esc( $line ) . '</a>';
+	}
+
+	/**
+	 * The registration badge (13 Nov 2026): the body's logo, from the media library, linked to the register page when there is an
+	 * address. Used by the compact footer, under its button. Nothing when no picture is chosen.
+	 */
+	private static function badge_html( $profile ) {
+		$id = isset( $profile['registration_logo_id'] ) ? (int) $profile['registration_logo_id'] : 0;
+		if ( $id < 1 ) {
+			return '';
+		}
+		$alt = ! empty( $profile['registration'] ) ? (string) reset( $profile['registration'] ) : 'Registered member';
+		$img = self::logo_img( $id, 'twd-sk-footer__badge-img', $alt, true );
+		if ( '' === $img ) {
+			return '';
+		}
+		$url = isset( $profile['registration_url'] ) ? trim( (string) $profile['registration_url'] ) : '';
+		if ( '' !== $url && 0 === strpos( $url, 'https://' ) ) {
+			return '<a class="twd-sk-footer__badge" href="' . self::url( $url ) . '">' . $img . '</a>';
+		}
+		return '<span class="twd-sk-footer__badge">' . $img . '</span>';
+	}
+
+	/**
 	 * The extras that ride with the footer (0.15.0): the contact bar on a phone (idea 7) and the quick exit
 	 * link (idea 10). Both off by default, so the footers print the same bytes as before until one is on.
 	 */
@@ -808,7 +841,7 @@ class TWD_SK_Chrome {
 		if ( $profile['registration'] ) {
 			$reg = '<div class="twd-sk-inner twd-sk-footer__reg">';
 			foreach ( $profile['registration'] as $line ) {
-				$reg .= '<p class="twd-sk-footer__reg-line">' . self::esc( $line ) . '</p>';
+				$reg .= '<p class="twd-sk-footer__reg-line">' . self::reg_text( $profile, $line ) . '</p>';
 			}
 			$reg .= '</div>';
 		}
@@ -902,7 +935,7 @@ class TWD_SK_Chrome {
 		}
 		$regs = '';
 		foreach ( $profile['registration'] as $line ) {
-			$regs .= '<span class="twd-sk-footer__reg-line">' . self::esc( $line ) . '</span>';
+			$regs .= '<span class="twd-sk-footer__reg-line">' . self::reg_text( $profile, $line ) . '</span>';
 		}
 		$bottom = '<div class="twd-sk-footer__bottom"><div class="twd-sk-inner twd-sk-footer__bottom-inner">' . self::copyright( $profile )
 			. ( '' !== $regs ? '<div class="twd-sk-footer__meta">' . $regs . '</div>' : '' )
@@ -938,6 +971,13 @@ class TWD_SK_Chrome {
 		// 12 Nov 2026: with the footer button on, it sits on this row between the logo and the links (the row is marked so the
 		// logo and the links share the space equally and the button lands in the middle, under the tagline).
 		$row_button = self::effective()['footer_button'] ? self::footer_button_html( $profile, true ) : '';
+		// 13 Nov 2026: a registration badge (the body's logo) goes under the button, in the same middle cell; on its own when the button is off.
+		$badge = self::badge_html( $profile );
+		if ( '' !== $badge ) {
+			$row_button = '' !== $row_button
+				? substr( $row_button, 0, -6 ) . $badge . '</div>'
+				: '<div class="twd-sk-footer__cta twd-sk-footer__cta--row">' . $badge . '</div>';
+		}
 		$out .= '<div class="twd-sk-inner twd-sk-footer__row' . ( '' !== $row_button ? ' twd-sk-footer__row--cta' : '' ) . '"><div class="twd-sk-footer__brand">'
 			. self::logo_html( $profile, 'twd-sk-footer__logo-img', 'twd-sk-footer__name', true ) . '</div>';
 		$out .= $row_button;
@@ -952,7 +992,7 @@ class TWD_SK_Chrome {
 
 		$meta = array();
 		foreach ( $profile['registration'] as $line ) {
-			$meta[] = '<span class="twd-sk-footer__reg-line">' . self::esc( $line ) . '</span>';
+			$meta[] = '<span class="twd-sk-footer__reg-line">' . self::reg_text( $profile, $line ) . '</span>';
 		}
 		if ( '' !== $profile['phone'] ) {
 			$meta[] = '<span class="twd-sk-footer__contact">' . self::phone_html( $profile['phone'], 'twd-sk-footer__link' ) . '</span>';

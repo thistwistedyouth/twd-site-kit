@@ -1130,11 +1130,12 @@
   .twd-sk-header--shrink .twd-sk-header__inner, .twd-sk-header--shrink .twd-sk-header__logo-img, .twd-sk-header--shrink .twd-sk-header__logo-mark { transition: none; }
 }
 
-/* Question groups on a wide screen: one group at a time (0.14.0). */
+/* Question groups: one group at a time (0.14.0). From 16 Nov 2026 on a phone too: before, a phone showed every group stacked and the
+   tabs only scrolled to them (the script puts the page back where it was), so a tap seemed to do nothing. */
+.twd-sk-faq__groups:not(:has(.twd-sk-faq__group:target)) .twd-sk-faq__group:not(.twd-sk-faq__group--default) { display: none; }
+.twd-sk-faq__groups:has(.twd-sk-faq__group:target) .twd-sk-faq__group:not(:target) { display: none; }
+.twd-sk-faq__group + .twd-sk-faq__group { margin-top: 0; }
 @media (min-width: 769px) {
-  .twd-sk-faq__groups:not(:has(.twd-sk-faq__group:target)) .twd-sk-faq__group:not(.twd-sk-faq__group--default) { display: none; }
-  .twd-sk-faq__groups:has(.twd-sk-faq__group:target) .twd-sk-faq__group:not(:target) { display: none; }
-  .twd-sk-faq__group + .twd-sk-faq__group { margin-top: 0; }
   /* The articles strip: introduction beside the cards (0.14.0). */
   .twd-sk-resources__row { grid-template-columns: 1fr 2fr; }
 }
@@ -1348,13 +1349,31 @@
   .twd-sk-phone-under .twd-sk-image-text__media { order: 2; width: 60%; margin: 0 auto; }
 }
 
-/* The compact footer, centred on phones (13 Nov 2026): a Site tab tick box, off by default (class on the footer). On a phone the logo
-   (smaller), the call to action, the links in one wrapped row and the small print are all centred. Above the phone width nothing changes. */
+/* The compact footer, centred on phones (13 Nov 2026): a Site tab tick box, off by default (class on the footer). On a phone the footer
+   stacks in a new order: the logo (larger) first, then the tagline, the call to action, the links in one wrapped row, and the dark
+   bar of small print, all centred. The logo row stops being a box of its own so its pieces can take their place in the stack. Above
+   the phone width nothing changes. */
 @media (max-width: 768px) {
-  .twd-sk-footer--phone-center .twd-sk-footer__row { align-items: center; text-align: center; gap: 14px; padding-top: 14px; }
-  .twd-sk-footer--phone-center .twd-sk-footer__logo-img { margin: 0 auto; max-height: calc(#{$footer-logo-height} * 0.7); }
+  .twd-sk-footer--phone-center { display: flex; flex-direction: column; }
+  .twd-sk-footer--phone-center .twd-sk-footer__row { display: contents; }
+  .twd-sk-footer--phone-center .twd-sk-footer__brand { order: 1; align-self: center; padding-top: 22px; text-align: center; }
+  .twd-sk-footer--phone-center .twd-sk-footer__top { order: 2; padding-top: 10px; }
+  .twd-sk-footer--phone-center .twd-sk-footer__cta { order: 3; padding: 16px 16px 18px; text-align: center; }
+  .twd-sk-footer--phone-center nav { order: 4; padding: 0 16px 22px; }
+  .twd-sk-footer--phone-center .twd-sk-footer__bottom { order: 5; }
+  .twd-sk-footer--phone-center .twd-sk-footer__logo-img { margin: 0 auto; max-height: calc(#{$footer-logo-height} * 1.4); }
   .twd-sk-footer--phone-center .twd-sk-footer__links--row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 22px; }
   .twd-sk-footer--phone-center .twd-sk-footer__bottom-inner { align-items: center; justify-content: center; text-align: center; }
   .twd-sk-footer--phone-center .twd-sk-footer__meta { justify-content: center; gap: 4px 16px; }
   .twd-sk-footer--phone-center .twd-sk-footer__legal { justify-content: center; }
 }
+
+/* Picture band, whole picture (13 Nov 2026): a Shape choice. The picture runs edge to edge at its own shape, so the height follows the
+   width and nothing is cropped on any screen (a tall picture on a wide screen makes a tall band). No zoom, which would crop the edges. */
+.twd-sk-shape-whole.twd-sk-image-text--band { height: auto; }
+.twd-sk-shape-whole .twd-sk-image-text__img { width: 100%; height: auto; max-height: none; aspect-ratio: auto; animation: none; }
+
+/* The registration badge in the compact footer (13 Nov 2026): the body's logo under the call to action, linked to the register page.
+   Nothing prints without a picture chosen in Site details. */
+.twd-sk-footer__badge { display: block; margin: 16px auto 0; text-align: center; }
+.twd-sk-footer__badge-img { display: block; width: auto; max-width: 160px; max-height: 64px; margin: 0 auto; }

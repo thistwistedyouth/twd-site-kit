@@ -243,10 +243,11 @@ twd_sk_test( 'registry: the faq groups layout is pure HTML: a row of in-page lin
 	$r = TWD_SK_Sanitizer::clean_with_report( $g );
 	twd_sk_eq( 0, $r['report']['total'] );
 	twd_sk_true( isset( TWD_SK_Sanitizer::find_leftovers( $g )['Heading here'] ) );
-	// The stylesheet shows one group at a time only on a wide screen, with no script, via :target and :has.
+	// The stylesheet shows one group at a time on every screen (a phone too, from 16 Nov 2026), with no script, via :target and :has.
 	$raw = file_get_contents( ABSPATH . 'assets/twd-site-kit.css' );
-	twd_sk_true( 1 === preg_match( '/@media \(min-width: 769px\)[^@]*twd-sk-faq__group\.twd-sk-faq__group:not\(:target\) \{[^}]*display: none/', $raw ), 'wide screens show the linked group' );
-	twd_sk_true( 1 === preg_match( '/@media \(min-width: 769px\)[^@]*:not\(:has\([^)]*:target\)\)[^{]*twd-sk-faq__group--default[^{]*\{[^}]*display: none/', $raw ), 'with no link followed, the default group shows' );
+	twd_sk_true( 1 === preg_match( '/twd-sk-faq__group\.twd-sk-faq__group:not\(:target\) \{[^}]*display: none/', $raw ), 'the linked group shows' );
+	twd_sk_true( 1 !== preg_match( '/@media \(min-width: 769px\)[^@]*twd-sk-faq__group\.twd-sk-faq__group:not\(:target\) \{[^}]*display: none/', $raw ), 'and not only on a wide screen: a phone has the tabs working too' );
+	twd_sk_true( 1 === preg_match( '/:not\(:has\([^)]*:target\)\)[^{]*twd-sk-faq__group--default[^{]*\{[^}]*display: none/', $raw ), 'with no link followed, the default group shows' );
 	twd_sk_has( 'scroll-margin-top', $raw );
 	// It is offered as a layout in the Visual editor's section menu.
 	twd_sk_true( isset( TWD_SK_Recipes::parts_menu()['faq']['variants']['twd-sk-faq--groups'] ) );

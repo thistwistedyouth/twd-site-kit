@@ -31,7 +31,12 @@ twd_sk_test( 'footer centre css: phones only, the links in one centred row, the 
 	$at   = strpos( $src, '/* The compact footer, centred on phones (13 Nov 2026)' );
 	twd_sk_true( $at > strpos( $src, '/* Picture and text, small picture under the words on phones (12 Nov 2026)' ), 'at the end, so it wins' );
 	$tail = str_replace( "\r", '', substr( $src, $at ) );
-	twd_sk_has( "@media (max-width: 768px) {\n  .twd-sk-footer--phone-center .twd-sk-footer__row { align-items: center; text-align: center;", $tail );
+	twd_sk_has( "@media (max-width: 768px) {
+  .twd-sk-footer--phone-center { display: flex; flex-direction: column; }
+  .twd-sk-footer--phone-center .twd-sk-footer__row { display: contents; }", $tail, 'the footer stacks and the logo row gives its pieces to the stack' );
+	twd_sk_has( '.twd-sk-footer__brand { order: 1;', $tail, 'the logo comes first, above the tagline' );
+	twd_sk_has( '.twd-sk-footer__top { order: 2;', $tail );
+	twd_sk_has( 'max-height: calc(#{$footer-logo-height} * 1.4)', $tail, 'the logo is larger' );
 	twd_sk_has( '.twd-sk-footer--phone-center .twd-sk-footer__links--row { display: flex; flex-wrap: wrap; justify-content: center;', $tail );
 	twd_sk_has( '.twd-sk-footer--phone-center .twd-sk-footer__meta { justify-content: center;', $tail );
 	twd_sk_hasnt( 'vw', $tail, 'no viewport-width units' );

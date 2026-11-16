@@ -705,6 +705,8 @@
 		pui.logo.value = p.logo_id ? String(p.logo_id) : '';
 		pui.logoMark.value = p.logo_mark_id ? String(p.logo_mark_id) : '';
 		pui.social.value = p.social_image_id ? String(p.social_image_id) : '';
+		pui.regLogo.value = p.registration_logo_id ? String(p.registration_logo_id) : '';
+		pui.regUrl.value = p.registration_url || '';
 		pui.logoLine.value = p.logo_line || '';
 		pui.ctaLabel.value = p.cta_label;
 		pui.ctaUrl.value = p.cta_url;
@@ -771,12 +773,18 @@
 		if (social && !/^\d+$/.test(social)) {
 			return { error: 'The default social picture must be the number of a picture in the media library.' };
 		}
+		var regLogo = pui.regLogo.value.trim();
+		if (regLogo && !/^\d+$/.test(regLogo)) {
+			return { error: 'The registration badge must be the number of a picture in the media library.' };
+		}
 		return {
 			profile: {
 				site_name: pui.name.value,
 				logo_id: logo ? parseInt(logo, 10) : 0,
 				logo_mark_id: mark ? parseInt(mark, 10) : 0,
 				social_image_id: social ? parseInt(social, 10) : 0,
+				registration_logo_id: regLogo ? parseInt(regLogo, 10) : 0,
+				registration_url: pui.regUrl.value.trim(),
 				logo_line: pui.logoLine.value,
 				menu: menu.list,
 				cta_label: pui.ctaLabel.value,
@@ -834,6 +842,14 @@
 				pui.social.value = String(id);
 			});
 		});
+		// 13 Nov 2026: a badge (the registering body's logo) for the compact footer, and the address it and the registration lines link to.
+		pui.regLogo = textInput('twd-sk-pf-reglogo', 12);
+		pui.regLogoBtn = button('Choose from the media library', 'secondary', function () {
+			pickMedia(function (id) {
+				pui.regLogo.value = String(id);
+			});
+		});
+		pui.regUrl = textInput('twd-sk-pf-regurl', 300);
 		pui.ctaLabel = textInput('twd-sk-pf-ctalabel', 30);
 		pui.logoLine = textInput('twd-sk-pf-logoline', 40);
 		pui.ctaUrl = textInput('twd-sk-pf-ctaurl', 300);
@@ -864,6 +880,8 @@
 		markRow.setAttribute('id', 'twd-sk-pf-logomark-row');
 		var socialRow = el('div', { className: 'twd-sk-ed__inline' }, [pui.social, pui.socialBtn]);
 		socialRow.setAttribute('id', 'twd-sk-pf-social-row');
+		var regLogoRow = el('div', { className: 'twd-sk-ed__inline' }, [pui.regLogo, pui.regLogoBtn]);
+		regLogoRow.setAttribute('id', 'twd-sk-pf-reglogo-row');
 		panel.appendChild(el('section', { className: 'twd-sk-ed__step' }, [
 			el('h3', { className: 'twd-sk-ed__step-title', text: 'Site details' }),
 			el('p', { className: 'twd-sk-ed__help', text: 'These feed the header, the footer and the search engine details. Only add what the ' + W('person', 'therapist') + ' has given you. Leave a box empty rather than guess.' }),
@@ -885,6 +903,8 @@
 			field('Address lines', pui.address, W('address_help', 'Up to three lines. Leave empty for an online practice.')),
 			footerTextField(),
 			field(W('registration_label', 'Registration lines'), pui.registration, W('registration_help', 'Only exactly what the therapist has supplied. One line each, up to four.')),
+			field('Registration link', pui.regUrl, 'Optional. A full https address, such as the page for this person on the register. The registration lines and the badge below link to it.'),
+			field('Registration badge picture number', regLogoRow, 'Optional. The logo of the registering body, from the media library, shown under the button in the compact footer (only if its rules allow it). Use the registrant logo the body supplies, where there is one.'),
 			field('Menu', pui.menu, 'One link per line: Label | /link. A line starting with a dash is a sub-menu link under the line above. Up to 8 menu items, and up to 10 sub-menu links under each.'),
 			field('Legal links', pui.legal, 'One per line: Label | /link. Shown in the footer.'),
 			field('Professional profile links', pui.sameAs, 'Full https addresses, one per line, up to four. Optional.'),

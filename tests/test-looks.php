@@ -548,7 +548,7 @@ twd_sk_test( 'chunk 4, typography (0.15.0, SK-021): lead-in, small capitals, dro
 			$groups[] = $e['token'];
 		}
 	}
-	twd_sk_eq( array( 'size-body', 'size-lead', 'size-h2', 'size-h3', 'container-narrow', 'para-gap' ), $groups );
+	twd_sk_eq( array( 'size-body', 'size-lead', 'size-h2', 'size-h3', 'size-page-title', 'size-page-title-sm', 'container-narrow', 'para-gap' ), $groups );
 	twd_sk_has( "text: 'Text (pixels)'", file_get_contents( ABSPATH . 'assets/twd-site-kit-editor-site.js' ) );
 	// The floors still hold: a body size under 16px is refused like before, from the Site tab too.
 	$v = TWD_SK_Packs::validate_tokens( array( 'size-body' => '15px' ), false );

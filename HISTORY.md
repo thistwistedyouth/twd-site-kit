@@ -2,6 +2,23 @@
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
 
+## 16 Nov 2026: question tabs on phones, page title size
+
+- **Show one group on phones too, not a new option.** The tabs are buttons; a button that appears to do nothing is a fault, so the fix is the default, not a tick box. The stacked phone layout was the old choice (all answers visible with no tabs needed) but the tabs were still printed, which is what made them look broken.
+- **Title size as two tokens.** The compact hero's title already read `size-page-title` and `-sm`; making them editable is the least new code and the owner can set any size from the Site tab.
+
+## 13 Nov 2026 (later): registration badge and link
+
+- **Fields in Site details, not words in the registration line.** A line such as "Text | address" would have hidden the link in plain text; two clear boxes are easier for a client and are validated (https only).
+- **One address for both.** The badge and the registration lines point to the same register page, so there is one thing to keep right.
+- **Compact footer only for the badge.** The owner asked for it under the button; the other layouts have no such place, so they get the link on the line only.
+
+## 13 Nov 2026 (later): picture band, Whole picture
+
+- **A Shape choice, not a new setting.** The owner asked for the full picture on a computer; Match the picture already followed the width but capped at 80 percent of the screen height (cropping a 4:3 picture on a wide screen), and Boxed shrinks it to a column. Whole picture is the one with no crop and no cap, so it sits beside them in Shape.
+- **Why no cap.** Any cap brings the crop back; a person who wants a shorter band picks another shape.
+- **Ceiling raised to 185,000.** Only 55 bytes were left after the footer work.
+
 ## 13 Nov 2026: the compact footer centred on phones
 
 - **A tick box, not a new default.** Every compact footer has been left-aligned on a phone, so centring is opt-in per site, like the footer button; off prints the same bytes.

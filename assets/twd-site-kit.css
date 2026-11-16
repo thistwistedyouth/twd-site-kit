@@ -3552,16 +3552,16 @@
     transition: none;
   }
 }
+.twd-sk-page .twd-sk-faq__groups.twd-sk-faq__groups:not(:has(.twd-sk-faq__group.twd-sk-faq__group:target)) .twd-sk-faq__group.twd-sk-faq__group:not(.twd-sk-faq__group--default.twd-sk-faq__group--default) {
+  display: none;
+}
+.twd-sk-page .twd-sk-faq__groups.twd-sk-faq__groups:has(.twd-sk-faq__group.twd-sk-faq__group:target) .twd-sk-faq__group.twd-sk-faq__group:not(:target) {
+  display: none;
+}
+.twd-sk-page .twd-sk-faq__group.twd-sk-faq__group + .twd-sk-faq__group.twd-sk-faq__group {
+  margin-top: 0 !important;
+}
 @media (min-width: 769px) {
-  .twd-sk-page .twd-sk-faq__groups.twd-sk-faq__groups:not(:has(.twd-sk-faq__group.twd-sk-faq__group:target)) .twd-sk-faq__group.twd-sk-faq__group:not(.twd-sk-faq__group--default.twd-sk-faq__group--default) {
-    display: none;
-  }
-  .twd-sk-page .twd-sk-faq__groups.twd-sk-faq__groups:has(.twd-sk-faq__group.twd-sk-faq__group:target) .twd-sk-faq__group.twd-sk-faq__group:not(:target) {
-    display: none;
-  }
-  .twd-sk-page .twd-sk-faq__group.twd-sk-faq__group + .twd-sk-faq__group.twd-sk-faq__group {
-    margin-top: 0 !important;
-  }
   .twd-sk-page .twd-sk-resources__row.twd-sk-resources__row {
     grid-template-columns: 1fr 2fr;
   }
@@ -4155,15 +4155,38 @@
   }
 }
 @media (max-width: 768px) {
+  .twd-sk-page .twd-sk-footer--phone-center.twd-sk-footer--phone-center {
+    display: flex;
+    flex-direction: column;
+  }
   .twd-sk-page .twd-sk-footer--phone-center.twd-sk-footer--phone-center .twd-sk-footer__row.twd-sk-footer__row {
-    align-items: center;
+    display: contents;
+  }
+  .twd-sk-page .twd-sk-footer--phone-center.twd-sk-footer--phone-center .twd-sk-footer__brand.twd-sk-footer__brand {
+    order: 1;
+    align-self: center;
+    padding-top: 22px !important;
     text-align: center !important;
-    gap: 14px;
-    padding-top: 14px !important;
+  }
+  .twd-sk-page .twd-sk-footer--phone-center.twd-sk-footer--phone-center .twd-sk-footer__top.twd-sk-footer__top {
+    order: 2;
+    padding-top: 10px !important;
+  }
+  .twd-sk-page .twd-sk-footer--phone-center.twd-sk-footer--phone-center .twd-sk-footer__cta.twd-sk-footer__cta {
+    order: 3;
+    padding: 16px 16px 18px !important;
+    text-align: center !important;
+  }
+  .twd-sk-page .twd-sk-footer--phone-center.twd-sk-footer--phone-center nav {
+    order: 4;
+    padding: 0 16px 22px !important;
+  }
+  .twd-sk-page .twd-sk-footer--phone-center.twd-sk-footer--phone-center .twd-sk-footer__bottom.twd-sk-footer__bottom {
+    order: 5;
   }
   .twd-sk-page .twd-sk-footer--phone-center.twd-sk-footer--phone-center .twd-sk-footer__logo-img.twd-sk-footer__logo-img {
     margin: 0 auto !important;
-    max-height: calc(var(--twd-site-footer-logo-height) * 0.7);
+    max-height: calc(var(--twd-site-footer-logo-height) * 1.4);
   }
   .twd-sk-page .twd-sk-footer--phone-center.twd-sk-footer--phone-center .twd-sk-footer__links--row.twd-sk-footer__links--row {
     display: flex;
@@ -4183,6 +4206,28 @@
   .twd-sk-page .twd-sk-footer--phone-center.twd-sk-footer--phone-center .twd-sk-footer__legal.twd-sk-footer__legal {
     justify-content: center;
   }
+}
+.twd-sk-page .twd-sk-shape-whole.twd-sk-shape-whole.twd-sk-image-text--band.twd-sk-image-text--band {
+  height: auto;
+}
+.twd-sk-page .twd-sk-shape-whole.twd-sk-shape-whole .twd-sk-image-text__img.twd-sk-image-text__img {
+  width: 100%;
+  height: auto;
+  max-height: none;
+  aspect-ratio: auto;
+  animation: none;
+}
+.twd-sk-page .twd-sk-footer__badge.twd-sk-footer__badge {
+  display: block;
+  margin: 16px auto 0 !important;
+  text-align: center !important;
+}
+.twd-sk-page .twd-sk-footer__badge-img.twd-sk-footer__badge-img {
+  display: block;
+  width: auto;
+  max-width: 160px;
+  max-height: 64px;
+  margin: 0 auto !important;
 }
 
 /* Page title fallback for themes other than Hello. Added by TWD_SK_Page only on a

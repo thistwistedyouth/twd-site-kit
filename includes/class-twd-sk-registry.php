@@ -75,6 +75,7 @@ class TWD_SK_Registry {
 			'twd-sk-shape-natural',
 			'twd-sk-shape-wide',
 			'twd-sk-shape-cinema',
+			'twd-sk-shape-whole',
 			'twd-sk-band-boxed',
 			'twd-sk-band-boxed-narrow',
 			// 12 Nov 2026: a second picture for phones in a picture band (the picture, and the band's mark that it has one).
