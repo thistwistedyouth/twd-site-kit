@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.20.0
+Stable tag: 0.21.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,17 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.21.0 =
+* Question groups: the tabs now work on phones. One group shows at a time, as on a computer, instead of every group stacked with tabs that seemed to do nothing. This is the one change that shows without turning anything on.
+* Pictures sent at the right size: a picture saved at a resized address now gets a list of sizes, and a full-width banner asks for the full screen width, so wide screens get the sharper copy.
+* Picture bands (Look): Shape (match the picture, wide, cinema, or whole picture edge to edge), Boxed or full width, taller heights, picture position (top, middle, bottom), a slow zoom, a second picture just for phones, and show the whole picture on phones. All off until chosen.
+* Picture and text (Look): a small centred picture under the words on phones. Off until chosen.
+* Width (Look, every section): narrow or wide words. Turn into a picture band: a section that holds only a picture becomes a picture band.
+* Visual editor: labelled words inside a custom section can be deleted on their own; Desktop, Tablet and Phone preview buttons.
+* Footer: a call to action button in the footer (the header button again), a centred footer on phones, and in Site details a registration link and a registration badge picture. All off or empty until set.
+* Site tab, Text: the title size above a page picture can now be set, on computers and on phones.
+* A logo still sizes correctly when an image optimiser wraps it in a picture element.
 
 = 0.20.0 =
 * New, optional: shop tools for WooCommerce sites. They wake only when WooCommerce is active and switched on in WooCommerce > Settings > Products > Site Kit shop tools, so other sites carry nothing extra.

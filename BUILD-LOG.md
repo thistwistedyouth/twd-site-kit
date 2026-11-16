@@ -11,6 +11,13 @@
 - **Wanted:** (1) when the planner sees the request is about a custom section (`twd-sk-custom` or `c-` classes), hand it to Adapt automatically, or give a Do this instead button that opens Describe a change with the request filled in, instead of refusing; (2) for an ordinary kit section, map a colour request onto the Look panel's Plain, Soft or Tinted background; (3) replace the refusal wording with the real next step; (4) tests, and no change to anything that works today.
 - Done by hand on the pilot site for the one case (the panel's class changed from the tinted variant to the white one, one page version, Undo works), so nothing is urgent.
 
+## 16 Nov 2026: RELEASE 0.21.0 (pushed to main at the owner's yes; the owner tests on the real sites)
+
+- Everything from the 12 to 16 Nov 2026 entries below, in one release. Built on an LF copy, the zip checksum verified, release check run, suite 1234 passed.
+- **Visible without choosing:** question tabs show one group at a time on phones; a picture saved at a resized address gets a list of sizes (sharper on wide screens, possibly heavier on a 2x phone: measure first). Everything else is off or empty until a site chooses it.
+- **To check on the real sites:** a question groups page on a phone; the Look panel's new choices; the Site tab's Registration link and badge boxes, the Centre the footer tick and the page title size; the Plugins update row and one-click update.
+- **Rolling back:** a bad release is fixed by releasing a higher version that carries the older good code; a site can also install the 0.20.0 zip by hand from the Plugins screen.
+
 ## 16 Nov 2026 (later): Imagify picture rules moved into the stylesheet source
 
 - Another session had hand-edited the generated stylesheet so a logo still sizes when the Imagify optimiser wraps it in a picture element. The rules (`picture.twd-sk-header__logo-img`, `-footer__logo-img`, `-header__logo-mark`, with the image inside sized like the logo, from tokens) are now in `tools/kit.src.css`, so the generated file matches its source and the test passes. Not seen on a site that uses Imagify's picture tags in this session. Stylesheet 181,545 of 185,000. Suite 1234 passed on an LF copy.
@@ -27,7 +34,7 @@
 
 - **Asked for:** the registering body's logo under the footer button, linked to the practitioner's own page on the register, and the dark bar's registration line as a link.
 - **What it is:** two Site details fields: `registration_logo_id` (a media library picture) and `registration_url` (a full https address). With a picture set, the compact footer prints it as `a.twd-sk-footer__badge` under the button in the same middle cell (on its own when the button is off; 64px high at most). With an address set, every footer layout prints each registration line as a link to it (`twd-sk-footer__link`). Both empty by default: every footer prints the same bytes. Site tab, Site details has a Registration link box and a Registration badge picture number box with the media picker; the export's picture list names the badge. The alt text is the first registration line.
-- **Pilot site:** the registration line is now "UKCP Registered" (linked), the badge is the UKCP logo, and the About page's logo section was undone (version 13).
+- **Pilot site:** the registration line, its link and the badge picture are set in that site's own Site details (nothing about them is in the plugin), and the About page's logo section was undone (version 13).
 - **Tests:** `tests/test-footer-badge.php` (5). Suite 1234 passed on an LF copy. Stylesheet 180,575 of 185,000.
 - **To check on a real site:** the two boxes in the signed-in Site tab; the badge with the button off; the other footer layouts' linked registration line. The registering body may only allow its own registrant logo: the owner was told to check.
 
