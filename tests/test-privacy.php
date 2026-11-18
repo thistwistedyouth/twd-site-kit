@@ -104,6 +104,8 @@ twd_sk_test( 'privacy: every web address points at an example domain or a known 
 		'therapywebdesigns.co.uk',
 		// The regulator's own site, named in the legal template (docs/legal).
 		'www.ico.org.uk',
+		// Cloudflare Turnstile (0.22.0, the enquiry form's optional robot check): its script and its check address.
+		'challenges.cloudflare.com',
 		'github.com', 'raw.githubusercontent.com',
 		'www.gnu.org', 'www.w3.org', 'schema.org', 'scripts.sil.org', 'openfontlicense.org',
 		// The social networks the social buttons link to (0.16.0), in tests only as sample links.

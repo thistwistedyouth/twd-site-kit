@@ -671,6 +671,7 @@ require_once ABSPATH . 'includes/class-twd-sk-doctor.php';
 require_once ABSPATH . 'includes/class-twd-sk-pictures.php';
 require_once ABSPATH . 'includes/class-twd-sk-full.php';
 require_once ABSPATH . 'includes/class-twd-sk-build.php';
+require_once ABSPATH . 'includes/class-twd-sk-enquiry-settings.php';
 require_once ABSPATH . 'includes/class-twd-sk-enquiry.php';
 require_once ABSPATH . 'includes/class-twd-sk-embed.php';
 require_once ABSPATH . 'includes/class-twd-sk-social.php';

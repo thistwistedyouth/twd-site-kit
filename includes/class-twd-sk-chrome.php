@@ -468,8 +468,12 @@ class TWD_SK_Chrome {
 		$request = isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? (string) parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH ) : '';
 		$path    = (string) parse_url( (string) $url, PHP_URL_PATH );
 		$host    = (string) parse_url( (string) $url, PHP_URL_HOST );
+		// 0.22.0: a link to a part of a page (/#books) is not "the page you are on", or every such link would be marked at once.
+		if ( '' !== (string) parse_url( (string) $url, PHP_URL_FRAGMENT ) ) {
+			return false;
+		}
 		if ( '' !== $host ) {
-			$home = (string) parse_url( self::home(), PHP_URL_HOST );
+			$home =(string) parse_url( self::home(), PHP_URL_HOST );
 			if ( strtolower( $host ) !== strtolower( $home ) ) {
 				return false;
 			}

@@ -50,7 +50,20 @@ class TWD_SK_Enquiry {
 			'limit'    => 'Too many messages have been sent from here. Please try again later, or use the contact details on this page.',
 			'failed'   => 'Sorry, your message could not be sent. Please use the contact details on this page instead.',
 			'off'      => 'The form is switched off at the moment. Please use the contact details on this page.',
+			'captcha'  => 'We could not check that you are a person. Please reload the page and try again, or use the contact details on this page.',
 		);
+	}
+
+	/** The words for a result. The thank-you can be the site's own (set in the form settings). */
+	public static function message( $code ) {
+		$all = self::messages();
+		if ( 'sent' === $code ) {
+			$own = TWD_SK_Enquiry_Settings::get()['thanks'];
+			if ( '' !== $own ) {
+				return $own;
+			}
+		}
+		return isset( $all[ $code ] ) ? $all[ $code ] : '';
 	}
 
 	// -- The token ---------------------------------------------------------------------
@@ -75,7 +88,7 @@ class TWD_SK_Enquiry {
 			return 'expired';
 		}
 		$age = $now - (int) $m[1];
-		if ( $age < self::MIN_SECONDS ) {
+		if ( $age < TWD_SK_Enquiry_Settings::get()['min_seconds'] ) {
 			return 'too_fast';
 		}
 		if ( $age > self::MAX_AGE ) {
@@ -120,19 +133,30 @@ class TWD_SK_Enquiry {
 		$out[]  = '<form class="twd-sk-form" id="' . esc_attr( $id ) . '" method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		$code   = 1 === $n ? self::result_code() : '';
 		if ( '' !== $code ) {
-			$out[] = '<p class="twd-sk-form__status twd-sk-form__status--' . ( 'sent' === $code ? 'ok' : 'error' ) . '" role="' . ( 'sent' === $code ? 'status' : 'alert' ) . '">' . esc_html( self::messages()[ $code ] ) . '</p>';
+			$out[] = '<p class="twd-sk-form__status twd-sk-form__status--' . ( 'sent' === $code ? 'ok' : 'error' ) . '" role="' . ( 'sent' === $code ? 'status' : 'alert' ) . '">' . esc_html( self::message( $code ) ) . '</p>';
 		}
 		$out[] = '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '">';
 		$out[] = '<input type="hidden" name="twd_sk_page" value="' . (int) $page_id . '">';
 		$out[] = '<input type="hidden" name="twd_sk_form" value="' . esc_attr( $id ) . '">';
 		$out[] = '<input type="hidden" name="twd_sk_t" value="' . esc_attr( self::token( $page_id ) ) . '">';
-		$out[] = '<div class="twd-sk-form__hp" aria-hidden="true"><label for="' . esc_attr( $f( 'website' ) ) . '">Leave this empty</label><input type="text" id="' . esc_attr( $f( 'website' ) ) . '" name="twd_sk_website" tabindex="-1" autocomplete="off"></div>';
+		$set   = TWD_SK_Enquiry_Settings::get();
+		if ( $set['honeypot'] ) {
+			$out[] = '<div class="twd-sk-form__hp" aria-hidden="true"><label for="' . esc_attr( $f( 'website' ) ) . '">Leave this empty</label><input type="text" id="' . esc_attr( $f( 'website' ) ) . '" name="twd_sk_website" tabindex="-1" autocomplete="off"></div>';
+		}
 		$out[] = self::field( $f( 'name' ), 'twd_sk_name', 'Your name', 'text', true, 'name', 100 );
 		$out[] = self::field( $f( 'email' ), 'twd_sk_email', 'Your email address', 'email', true, 'email', 120 );
 		$out[] = self::field( $f( 'phone' ), 'twd_sk_phone', 'Your phone number (optional)', 'tel', false, 'tel', 40 );
 		$out[] = '<div class="twd-sk-form__field"><label class="twd-sk-form__label" for="' . esc_attr( $f( 'message' ) ) . '">Your message</label><textarea class="twd-sk-form__textarea" id="' . esc_attr( $f( 'message' ) ) . '" name="twd_sk_message" rows="6" maxlength="' . self::MAX_MESSAGE . '" required></textarea></div>';
 		$privacy = function_exists( 'get_privacy_policy_url' ) ? (string) get_privacy_policy_url() : '';
 		$out[]   = '<div class="twd-sk-form__field twd-sk-form__check"><input type="checkbox" id="' . esc_attr( $f( 'consent' ) ) . '" name="twd_sk_consent" value="1" required><label for="' . esc_attr( $f( 'consent' ) ) . '">I agree to my details being used to reply to me.' . ( '' !== $privacy ? ' <a href="' . esc_url( $privacy ) . '">Privacy policy</a>' : '' ) . '</label></div>';
+		if ( TWD_SK_Enquiry_Settings::turnstile_on( $set ) ) {
+			// Cloudflare Turnstile: its script draws the check where this box is. Without the script the form still
+			// shows; the server refuses a send that has no answer, with a plain message.
+			$out[] = '<div class="twd-sk-form__field twd-sk-form__captcha"><div class="cf-turnstile" data-sitekey="' . esc_attr( $set['turnstile_site'] ) . '"></div></div>';
+			if ( function_exists( 'wp_enqueue_script' ) ) {
+				wp_enqueue_script( 'twd-sk-turnstile', TWD_SK_Enquiry_Settings::SCRIPT, array(), null, true );
+			}
+		}
 		$out[]   = '<div class="twd-sk-form__actions"><button type="submit" class="twd-sk-btn twd-sk-btn--primary">Send message</button></div>';
 		$out[]   = '<p class="twd-sk-form__help">' . esc_html( TWD_SK_Mode::w( 'form_help' ) ) . '</p>';
 		$out[]   = '</form>';
@@ -176,8 +200,8 @@ class TWD_SK_Enquiry {
 		$msg = trim( preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $msg ) );
 		$fields['message'] = function_exists( 'mb_substr' ) ? mb_substr( $msg, 0, self::MAX_MESSAGE, 'UTF-8' ) : substr( $msg, 0, self::MAX_MESSAGE );
 
-		// A filled honeypot is treated as sent, so a robot learns nothing.
-		if ( isset( $post['twd_sk_website'] ) && '' !== trim( (string) $post['twd_sk_website'] ) ) {
+		// A filled honeypot is treated as sent, so a robot learns nothing. (Only when the honeypot is on.)
+		if ( TWD_SK_Enquiry_Settings::get()['honeypot'] && isset( $post['twd_sk_website'] ) && '' !== trim( (string) $post['twd_sk_website'] ) ) {
 			return array( 'code' => 'trap', 'fields' => $fields );
 		}
 		$bad = self::check_token( isset( $post['twd_sk_t'] ) ? (string) $post['twd_sk_t'] : '', $page_id, $now );
@@ -202,7 +226,7 @@ class TWD_SK_Enquiry {
 		$who   = 'twd_sk_enq_' . substr( hash( 'sha256', (string) $ip . ( function_exists( 'wp_salt' ) ? wp_salt( 'nonce' ) : '' ) ), 0, 20 );
 		$count = (int) get_transient( $who );
 		$all   = (int) get_transient( $day );
-		if ( $count >= self::PER_VISITOR || $all >= self::PER_DAY ) {
+		if ( $count >= TWD_SK_Enquiry_Settings::get()['per_visitor'] || $all >= self::PER_DAY ) {
 			return false;
 		}
 		set_transient( $who, $count + 1, 3600 );
@@ -210,11 +234,14 @@ class TWD_SK_Enquiry {
 		return true;
 	}
 
-	/** Where enquiries go: the site details email when it is real, otherwise the WordPress admin email. */
+	/** Where enquiries go: the form settings address when one is set, else the site details email when it is real, otherwise the WordPress admin email. */
 	public static function recipient() {
 		$p     = TWD_SK_Profile::get();
 		$email = is_string( $p['email'] ) ? trim( $p['email'] ) : '';
-		if ( '' === $email || false !== stripos( $email, 'example.com' ) || ! is_email( $email ) ) {
+		$own   = TWD_SK_Enquiry_Settings::get()['to'];
+		if ( '' !== $own ) {
+			$email = $own;
+		} elseif ( '' === $email || false !== stripos( $email, 'example.com' ) || ! is_email( $email ) ) {
 			$email = (string) get_option( 'admin_email', '' );
 		}
 		$email = (string) apply_filters( 'twd_sk_enquiry_recipient', $email );
@@ -243,6 +270,10 @@ class TWD_SK_Enquiry {
 		);
 		$name    = str_replace( array( '"', '<', '>', ',', ';' ), '', $fields['name'] );
 		$headers = array( 'Reply-To: "' . $name . '" <' . $fields['email'] . '>' );
+		$cc      = TWD_SK_Enquiry_Settings::get()['cc'];
+		if ( '' !== $cc && $cc !== $to ) {
+			$headers[] = 'Cc: ' . $cc;
+		}
 		return (bool) wp_mail( $to, $subject, implode( "\n", $body ), $headers );
 	}
 
@@ -277,7 +308,16 @@ class TWD_SK_Enquiry {
 				self::stat( 'refused' );
 				$code = 'sent';
 			} elseif ( '' === $code ) {
-				if ( ! self::within_limits( $ip ) ) {
+				$check = TWD_SK_Enquiry_Settings::turnstile_on() ? TWD_SK_Enquiry_Settings::verify( isset( $post['cf-turnstile-response'] ) ? $post['cf-turnstile-response'] : '', $ip ) : 'ok';
+				if ( 'unreachable' === $check ) {
+					// Cloudflare could not be asked: let a real message through rather than lose it, and count it.
+					self::stat( 'captcha_unreachable' );
+					$check = 'ok';
+				}
+				if ( 'fail' === $check ) {
+					self::stat( 'refused' );
+					$code = 'captcha';
+				} elseif ( ! self::within_limits( $ip ) ) {
 					$code = 'limit';
 				} elseif ( self::send( $r['fields'] ) ) {
 					self::stat( 'sent' );

@@ -1057,3 +1057,22 @@ twd_sk_test( 'Tier C ideas 7 and 10 (0.15.0): a phone contact bar from the site 
 	twd_sk_has( 'quick_exit_url: cui.exitUrl.value.trim()', $js );
 	twd_sk_has( 'twd-sk-ed--contactbar', file_get_contents( ABSPATH . 'assets/twd-site-kit-editor.js' ) );
 } );
+
+twd_sk_test( 'chrome header 0.22: a link to a part of a page is never "the page you are on", so only the real page is marked', function () {
+	twd_sk_chrome_setup( twd_sk_chrome_profile( array( 'menu' => array(
+		array( 'label' => 'Home', 'url' => '/', 'children' => array() ),
+		array( 'label' => 'Books', 'url' => '/#books', 'children' => array() ),
+		array( 'label' => 'Music', 'url' => '/#music', 'children' => array() ),
+		array( 'label' => 'Art', 'url' => '/art-gallery', 'children' => array() ),
+	) ) ) );
+	$_SERVER['REQUEST_URI'] = '/';
+	$html = TWD_SK_Chrome::render_header();
+	twd_sk_eq( 1, substr_count( $html, 'aria-current="page"' ) );
+	twd_sk_has( 'aria-current="page">Home', $html );
+	twd_sk_hasnt( 'aria-current="page">Books', $html );
+	$_SERVER['REQUEST_URI'] = '/art-gallery/';
+	$html = TWD_SK_Chrome::render_header();
+	twd_sk_eq( 1, substr_count( $html, 'aria-current="page"' ) );
+	twd_sk_has( 'aria-current="page">Art', $html );
+	unset( $_SERVER['REQUEST_URI'] );
+} );

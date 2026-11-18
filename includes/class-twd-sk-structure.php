@@ -214,6 +214,72 @@ class TWD_SK_Structure {
 		);
 	}
 
+	/**
+	 * Add pictures to a gallery section (0.22.0). `index` is the section, `pictures` are media library ids (at most 40),
+	 * `group` is which category when the gallery has more than one (0 when it has one). Each picture is added at the end of
+	 * that group, described by the media library's own description (empty when it has none; the editor says so). Nothing else
+	 * in the section changes. Saved as one version by the caller.
+	 */
+	public static function gallery_add( $page_id, $in ) {
+		$in    = is_array( $in ) ? $in : array();
+		$parts = TWD_SK_Sections::split( TWD_SK_Store::get_current( (int) $page_id ) );
+		$n     = count( $parts['sections'] );
+		$index = isset( $in['index'] ) && ( is_int( $in['index'] ) || ( is_string( $in['index'] ) && ctype_digit( $in['index'] ) ) ) ? (int) $in['index'] : -1;
+		if ( $index < 0 || $index >= $n ) {
+			return new WP_Error( 'twd_sk_bad_input', 'Click inside the gallery you want to add pictures to first.' );
+		}
+		$section = $parts['sections'][ $index ];
+		if ( ! self::section_has_class( $section, 'twd-sk-gallery' ) ) {
+			return new WP_Error( 'twd_sk_bad_input', 'Pictures can be added to a gallery section only.' );
+		}
+		$ids = array();
+		if ( isset( $in['pictures'] ) && is_array( $in['pictures'] ) ) {
+			foreach ( $in['pictures'] as $one ) {
+				if ( is_int( $one ) || ( is_string( $one ) && ctype_digit( $one ) ) ) {
+					$ids[] = (int) $one;
+				}
+			}
+		}
+		$ids = array_slice( array_values( array_unique( $ids ) ), 0, 40 );
+		if ( ! $ids ) {
+			return new WP_Error( 'twd_sk_bad_input', 'Choose at least one picture from the media library.' );
+		}
+		$found = preg_match_all( '/<div\b[^>]*\sclass\s*=\s*"(?:[^"]*\s)?twd-sk-gallery__track(?:\s[^"]*)?"[^>]*>/i', $section, $tracks, PREG_OFFSET_CAPTURE );
+		if ( ! $found ) {
+			return new WP_Error( 'twd_sk_bad_input', 'This gallery has no place for pictures. Use Add section to make a new gallery.' );
+		}
+		$group = isset( $in['group'] ) && ( is_int( $in['group'] ) || ( is_string( $in['group'] ) && ctype_digit( $in['group'] ) ) ) ? (int) $in['group'] : ( 1 === $found ? 0 : -1 );
+		if ( $group < 0 || $group >= $found ) {
+			return new WP_Error( 'twd_sk_bad_input', 'Choose which category the pictures go in.' );
+		}
+		$figures = '';
+		$noalt   = 0;
+		foreach ( $ids as $id ) {
+			$url = TWD_SK_Inline::picture_url( $id );
+			if ( is_wp_error( $url ) ) {
+				return $url;
+			}
+			$alt = function_exists( 'get_post_meta' ) ? trim( (string) get_post_meta( $id, '_wp_attachment_image_alt', true ) ) : '';
+			if ( '' === $alt ) {
+				$noalt++;
+			}
+			$figures .= '<figure class="twd-sk-gallery__item"><img class="twd-sk-gallery__img" src="' . esc_attr( $url ) . '" alt="' . esc_attr( $alt ) . '"></figure>' . "\n";
+		}
+		$start = $tracks[0][ $group ][1] + strlen( $tracks[0][ $group ][0] );
+		$close = strpos( $section, '</div>', $start );
+		if ( false === $close ) {
+			return new WP_Error( 'twd_sk_bad_input', 'This gallery could not be read. Use Undo, or Edit with AI.' );
+		}
+		$sections           = $parts['sections'];
+		$sections[ $index ] = substr( $section, 0, $close ) . $figures . substr( $section, $close );
+		return array(
+			'html'  => TWD_SK_Sections::join( $parts['gaps'], $sections ),
+			'at'    => $index,
+			'noalt' => $noalt,
+			'note'  => 'Added ' . count( $ids ) . ( 1 === count( $ids ) ? ' picture' : ' pictures' ) . ' to a gallery',
+		);
+	}
+
 	/** Whether the section's own opening tag carries a class. */
 	private static function section_has_class( $section, $class ) {
 		if ( 1 !== preg_match( '/^<section\b[^>]*\sclass\s*=\s*"([^"]*)"/i', $section, $m ) ) {

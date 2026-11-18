@@ -149,8 +149,9 @@
 	}
 
 	function openBox(section, item) {
+		// Only the pictures a visitor can see: a category hidden by the filter is left out.
 		boxItems = Array.prototype.filter.call(section.querySelectorAll('.twd-sk-gallery__item'), function (it) {
-			return it.querySelector('.twd-sk-gallery__img');
+			return it.querySelector('.twd-sk-gallery__img') && !it.closest('[hidden]');
 		});
 		if (!boxItems.length) {
 			return;
@@ -236,18 +237,64 @@
 		mark();
 	}
 
+	/* ---- categories: a row of buttons built from the group headings, only when there are two or more ---- */
+	function filters(section) {
+		var groups = Array.prototype.slice.call(section.querySelectorAll('.twd-sk-gallery__group'));
+		if (groups.length < 2) {
+			return;
+		}
+		var bar = document.createElement('div');
+		bar.className = 'twd-sk-gallery__filters';
+		bar.setAttribute('role', 'group');
+		bar.setAttribute('aria-label', 'Show pictures by category');
+		var buttons = [];
+
+		function show(which) {
+			groups.forEach(function (g, i) {
+				g.hidden = which !== -1 && which !== i;
+			});
+			section.classList.toggle('twd-sk-gallery--filtered', which !== -1);
+			buttons.forEach(function (b, i) {
+				var on = i - 1 === which;
+				b.classList.toggle('twd-sk-gallery__filter--on', on);
+				b.setAttribute('aria-pressed', on ? 'true' : 'false');
+			});
+		}
+
+		function add(label, which) {
+			var b = makeButton('twd-sk-gallery__filter', label, label);
+			b.removeAttribute('aria-label');
+			b.addEventListener('click', function () {
+				show(which);
+			});
+			bar.appendChild(b);
+			buttons.push(b);
+		}
+
+		add('All', -1);
+		groups.forEach(function (g, i) {
+			var h = g.querySelector('.twd-sk-gallery__groupname');
+			add(h && h.textContent.trim() ? h.textContent.trim() : 'Group ' + (i + 1), i);
+		});
+		groups[0].parentNode.insertBefore(bar, groups[0]);
+		show(-1);
+	}
+
 	function setup(section) {
 		if (section.getAttribute('data-twd-sk-ready')) {
 			return;
 		}
 		section.setAttribute('data-twd-sk-ready', '1');
-		var track = section.querySelector('.twd-sk-gallery__track');
-		if (!track) {
+		var tracks = section.querySelectorAll('.twd-sk-gallery__track');
+		if (!tracks.length) {
 			return;
 		}
 		if (section.classList.contains('twd-sk-gallery--slideshow')) {
-			slideshow(section, track);
+			Array.prototype.forEach.call(tracks, function (t) {
+				slideshow(section, t);
+			});
 		}
+		filters(section);
 		// Every picture opens bigger: click, or Enter or Space when it has the keyboard focus.
 		Array.prototype.forEach.call(section.querySelectorAll('.twd-sk-gallery__item'), function (item) {
 			var img = item.querySelector('.twd-sk-gallery__img');

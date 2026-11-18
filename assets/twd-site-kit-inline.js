@@ -870,6 +870,12 @@
 		if (classes.indexOf('twd-sk-image-text--band') > -1) {
 			drawPhonePicture(sec, classes);
 		}
+		if (classes.indexOf('twd-sk-gallery') > -1) {
+			drawGalleryPictures(sec);
+		}
+		if (classes.indexOf('twd-sk-enquiry') > -1 && CUSTOM) {
+			drawFormSettings();
+		}
 		if (!ui.lookBody.firstChild) {
 			ui.lookBody.appendChild(el('p', { className: 'twd-sk-ed__help', text: 'This section has nothing to choose here.' }));
 		}
@@ -892,6 +898,138 @@
 				setPhonePicture(sec, 0);
 			}));
 		}
+	}
+
+	/* Form settings (0.22.0): administrators only. Where enquiries go, a copy, the thank-you wording, the honeypot, the speed check,
+	 * the limit per visitor and Cloudflare Turnstile. Saved through its own route (/site/enquiry). The secret key is typed here and
+	 * stored on this site only: the route never sends it back (the panel only learns that one is saved), and the field is a
+	 * password-type box that browsers are told not to fill in. */
+	function drawFormSettings() {
+		var holder = el('div', { className: 'twd-sk-ed__formsettings' });
+		ui.lookBody.appendChild(el('p', { className: 'twd-sk-ed__label', text: 'Form settings' }));
+		ui.lookBody.appendChild(holder);
+		holder.appendChild(el('p', { className: 'twd-sk-ed__help', text: 'Loading the form settings...' }));
+		ED.api('GET', '/site/enquiry').then(function (data) {
+			ED.clear(holder);
+			buildFormSettings(holder, data);
+		}, function (err) {
+			ED.clear(holder);
+			holder.appendChild(el('p', { className: 'twd-sk-ed__help', text: 'The form settings could not be loaded: ' + err.message }));
+		});
+	}
+
+	function buildFormSettings(holder, data) {
+		var f = {};
+		function field(key, label, help, input) {
+			var id = 'twd-sk-fs-' + key;
+			input.id = id;
+			if (input.className.indexOf('twd-sk-ed__input') < 0) {
+				input.className = (input.className ? input.className + ' ' : '') + 'twd-sk-ed__input';
+			}
+			f[key] = input;
+			var kids = [el('label', { className: 'twd-sk-ed__label', 'for': id, text: label })];
+			if (help) {
+				kids.push(el('p', { className: 'twd-sk-ed__help', text: help }));
+			}
+			kids.push(input);
+			holder.appendChild(el('div', { className: 'twd-sk-ed__field' }, kids));
+		}
+		function box(key, label, help, on) {
+			var id = 'twd-sk-fs-' + key;
+			var c = el('input', { id: id, type: 'checkbox' });
+			c.checked = !!on;
+			f[key] = c;
+			var kids = [c, el('label', { 'for': id, text: ' ' + label })];
+			holder.appendChild(el('div', { className: 'twd-sk-ed__field' }, kids));
+			if (help) {
+				holder.appendChild(el('p', { className: 'twd-sk-ed__help', text: help }));
+			}
+		}
+		holder.appendChild(el('p', { className: 'twd-sk-ed__help', text: 'Messages go to ' + (data.recipient || 'the WordPress admin address') + ' now. Nothing is stored on the site: each message is only emailed.' }));
+		field('to', 'Send messages to', 'Leave empty to use the email in the site details.', el('input', { type: 'email', value: data.to || '', autocomplete: 'off' }));
+		field('cc', 'Also send a copy to (optional)', '', el('input', { type: 'email', value: data.cc || '', autocomplete: 'off' }));
+		field('thanks', 'Thank-you message (optional)', 'Shown after a message is sent. Leave empty for the standard wording.', el('input', { type: 'text', value: data.thanks || '', maxlength: '300', autocomplete: 'off' }));
+		box('honeypot', 'Hidden trap field (honeypot)', 'A field people never see. A robot that fills it is told it worked, and nothing is sent. Recommended: on.', data.honeypot);
+		field('min_seconds', 'Speed check, in seconds', 'A form sent faster than this is refused as a robot. 0 to 30. Standard: 3.', el('input', { type: 'number', min: '0', max: '30', value: String(data.min_seconds) }));
+		field('per_visitor', 'Messages allowed per visitor, per hour', '1 to 30. Standard: 5.', el('input', { type: 'number', min: '1', max: '30', value: String(data.per_visitor) }));
+		var cap = el('select', {});
+		cap.appendChild(el('option', { value: 'none', text: 'None' }));
+		cap.appendChild(el('option', { value: 'turnstile', text: 'Cloudflare Turnstile' }));
+		cap.value = data.captcha === 'turnstile' ? 'turnstile' : 'none';
+		field('captcha', 'Robot check', 'Turnstile is free and invisible to most people, and sets no tracking cookies. Make a Turnstile site in your Cloudflare account, add this site\'s domain, then copy its site key and secret key here. A real person is never blocked if Cloudflare cannot be reached.', cap);
+		field('turnstile_site', 'Turnstile site key', '', el('input', { type: 'text', value: data.turnstile_site || '', autocomplete: 'off', spellcheck: 'false' }));
+		field('turnstile_secret', 'Turnstile secret key', data.secret_set ? 'A secret key is saved on this site. Leave this empty to keep it. The key is never shown again.' : 'Paste it here. It is saved on this site only and is never shown again.', el('input', { type: 'password', value: '', autocomplete: 'new-password', spellcheck: 'false' }));
+		box('clear_secret', 'Remove the saved secret key', '', false);
+		var note = el('p', { className: 'twd-sk-ed__help', role: 'status' });
+		var save = ED.button('Save form settings', 'primary', function () {
+			var body = {
+				to: f.to.value.trim(),
+				cc: f.cc.value.trim(),
+				thanks: f.thanks.value.trim(),
+				honeypot: f.honeypot.checked,
+				min_seconds: parseInt(f.min_seconds.value, 10),
+				per_visitor: parseInt(f.per_visitor.value, 10),
+				captcha: f.captcha.value,
+				turnstile_site: f.turnstile_site.value.trim(),
+				clear_secret: f.clear_secret.checked
+			};
+			var secret = f.turnstile_secret.value.trim();
+			if (secret) {
+				body.turnstile_secret = secret;
+			}
+			note.textContent = 'Saving...';
+			ED.api('POST', '/site/enquiry', body).then(function (res) {
+				f.turnstile_secret.value = '';
+				f.clear_secret.checked = false;
+				note.textContent = 'Saved. Messages go to ' + (res.recipient || 'the WordPress admin address') + '.' + (res.active ? ' The Turnstile check is on.' : '');
+			}, function (err) {
+				note.textContent = err.message;
+			});
+		});
+		holder.appendChild(save);
+		holder.appendChild(note);
+	}
+
+	/* Add pictures to a gallery (0.22.0): pick one or many from the media library (or upload there first); they join the end of the
+	 * gallery, or of the chosen category. Saved through the structure route like Add and Move, so it is one version with Undo. */
+	function drawGalleryPictures(sec) {
+		var groups = sec.querySelectorAll('.twd-sk-gallery__group');
+		ui.lookBody.appendChild(el('p', { className: 'twd-sk-ed__label', text: 'Pictures in this gallery' }));
+		ui.lookBody.appendChild(el('p', { className: 'twd-sk-ed__help', text: 'Add pictures from the media library: choose several at once, or upload new ones there first. Each joins the end of the gallery. Give each picture a description in the media library so it reads well for people who cannot see it.' }));
+		var pick = null;
+		if (groups.length > 1) {
+			pick = el('select', { className: 'twd-sk-ed__select', 'aria-label': 'Which category the pictures go in' });
+			Array.prototype.forEach.call(groups, function (g, i) {
+				var h = g.querySelector('.twd-sk-gallery__groupname');
+				pick.appendChild(el('option', { value: String(i), text: 'Add to: ' + (h && h.textContent.trim() ? h.textContent.trim() : 'Category ' + (i + 1)) }));
+			});
+			ui.lookBody.appendChild(pick);
+		}
+		if (libraryReady()) {
+			ui.lookBody.appendChild(ED.button('Add pictures', 'secondary', function () {
+				chooseGalleryPictures(sec, pick ? parseInt(pick.value, 10) : 0);
+			}));
+		} else {
+			ui.lookBody.appendChild(el('p', { className: 'twd-sk-ed__help', text: 'Pictures cannot be chosen here. Ask the site owner for permission to upload files.' }));
+		}
+	}
+
+	function chooseGalleryPictures(sec, group) {
+		if (notNow() || !libraryReady()) {
+			return;
+		}
+		var frame = window.wp.media({ title: 'Add pictures to the gallery', library: { type: 'image' }, multiple: 'add', button: { text: 'Add to the gallery' } });
+		frame.on('select', function () {
+			var ids = [];
+			frame.state().get('selection').each(function (m) {
+				ids.push(m.get('id'));
+			});
+			if (!ids.length) {
+				return;
+			}
+			structure({ op: 'gallery_add', index: parseInt(sec.getAttribute('data-twd-sk-sec'), 10), pictures: ids, group: group }, 'Adding the pictures...', ids.length === 1 ? 'Picture added.' : ids.length + ' pictures added.');
+		});
+		frame.open();
 	}
 
 	function choosePhonePicture(sec) {

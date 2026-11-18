@@ -801,6 +801,9 @@ class TWD_SK_Registry {
 	 * @param string $variant '' grid, 'masonry', 'strip' or 'slideshow'.
 	 */
 	private static function gallery( $variant ) {
+		if ( 'groups' === $variant ) {
+			return self::gallery_groups();
+		}
 		$root  = 'twd-sk-gallery' . ( '' !== $variant ? ' twd-sk-gallery--' . $variant : '' ) . ' twd-sk-tone-base';
 		$items = array();
 		for ( $i = 0; $i < 4; $i++ ) {
@@ -823,6 +826,34 @@ class TWD_SK_Registry {
 				'</section>',
 			)
 		) );
+	}
+
+	/**
+	 * A gallery in categories (0.22.0): two groups, each with its own heading and pictures. With the script a row of
+	 * buttons (All and each heading) filters them; without it every group simply shows, one after the other. The layout
+	 * class (masonry here) can be swapped for strip, slideshow or left off for a grid.
+	 */
+	private static function gallery_groups() {
+		$lines = array(
+			'<section class="twd-sk-gallery twd-sk-gallery--masonry twd-sk-gallery--groups twd-sk-tone-base">',
+			'<div class="twd-sk-inner">',
+			'<h2 class="twd-sk-title">Heading here</h2>',
+		);
+		for ( $g = 0; $g < 2; $g++ ) {
+			$lines[] = '<div class="twd-sk-gallery__group">';
+			$lines[] = '<h3 class="twd-sk-gallery__groupname">Category name here</h3>';
+			$lines[] = '<div class="twd-sk-gallery__track">';
+			for ( $i = 0; $i < 2; $i++ ) {
+				$lines[] = '<figure class="twd-sk-gallery__item">';
+				$lines[] = '<img class="twd-sk-gallery__img" src="/wp-content/uploads/your-image.jpg" alt="Describe the image">';
+				$lines[] = '</figure>';
+			}
+			$lines[] = '</div>';
+			$lines[] = '</div>';
+		}
+		$lines[] = '</div>';
+		$lines[] = '</section>';
+		return self::lines( $lines );
 	}
 
 	/** A strip of small logos: accreditations, memberships, partners (0.8.0). */
@@ -1258,7 +1289,7 @@ class TWD_SK_Registry {
 			'gallery'    => array(
 				'id'          => 'gallery',
 				'label'       => 'Gallery',
-				'description' => 'A picture gallery for artwork or photos: a grid, a masonry wall, a film strip or a slideshow. Visitors can open any picture bigger. Every picture needs alt text that says what it shows; a caption is optional.',
+				'description' => 'A picture gallery for artwork or photos: a grid, a masonry wall, a film strip or a slideshow, optionally in named categories with a filter row. Visitors can open any picture bigger. Every picture needs alt text that says what it shows; a caption is optional.',
 				'skeleton'    => self::gallery( '' ),
 				'variants'    => array(
 					'twd-sk-gallery--masonry'   => array(
@@ -1273,17 +1304,28 @@ class TWD_SK_Registry {
 						'label'    => 'Slideshow: one big picture at a time, arrows and dots',
 						'skeleton' => self::gallery( 'slideshow' ),
 					),
+					'twd-sk-gallery--groups'    => array(
+						'label'    => 'Categories: pictures in named groups with a filter row (masonry; swap the layout class for strip or slideshow)',
+						'skeleton' => self::gallery( 'groups' ),
+					),
 				),
 				'classes'     => array(
 					'twd-sk-gallery',
 					'twd-sk-gallery--masonry',
 					'twd-sk-gallery--strip',
 					'twd-sk-gallery--slideshow',
+					'twd-sk-gallery--groups',
+					'twd-sk-gallery__group',
+					'twd-sk-gallery__groupname',
 					'twd-sk-gallery__track',
 					'twd-sk-gallery__item',
 					'twd-sk-gallery__img',
 					'twd-sk-gallery__caption',
 					// Added by twd-site-kit-gallery.js (never stored): the slideshow controls and the open-bigger view.
+					'twd-sk-gallery--filtered',
+					'twd-sk-gallery__filters',
+					'twd-sk-gallery__filter',
+					'twd-sk-gallery__filter--on',
 					'twd-sk-gallery__controls',
 					'twd-sk-gallery__arrow',
 					'twd-sk-gallery__count',

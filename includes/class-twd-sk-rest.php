@@ -412,6 +412,20 @@ class TWD_SK_REST {
 				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
 			),
 		) );
+		// The enquiry form's settings (0.22.0): where enquiries go, the thank-you wording, the honeypot and speed check, and
+		// Cloudflare Turnstile. Administrators only. The secret key is accepted but never returned.
+		register_rest_route( self::ROUTE_NS, '/site/enquiry', array(
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'get_site_enquiry' ),
+				'permission_callback' => array( __CLASS__, 'can_read_site' ),
+			),
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'post_site_enquiry' ),
+				'permission_callback' => array( __CLASS__, 'can_manage_site' ),
+			),
+		) );
 		register_rest_route( self::ROUTE_NS, '/site/css/revert', array(
 			'methods'             => 'POST',
 			'callback'            => array( __CLASS__, 'post_site_css_revert' ),
@@ -1008,6 +1022,24 @@ class TWD_SK_REST {
 	}
 
 	/** The site's own stylesheet: size against its budget, versions, and the rules no page uses. Read only. */
+	public static function get_site_enquiry( $request ) {
+		return TWD_SK_Enquiry_Settings::for_panel() + array( 'recipient' => TWD_SK_Enquiry::recipient() );
+	}
+
+	public static function post_site_enquiry( $request ) {
+		$in = array();
+		foreach ( array( 'to', 'cc', 'thanks', 'honeypot', 'min_seconds', 'per_visitor', 'captcha', 'turnstile_site', 'turnstile_secret', 'clear_secret' ) as $k ) {
+			if ( null !== $request->get_param( $k ) ) {
+				$in[ $k ] = $request->get_param( $k );
+			}
+		}
+		$out = TWD_SK_Enquiry_Settings::save( $in );
+		if ( is_wp_error( $out ) ) {
+			return self::error( $out->get_error_code(), $out->get_error_message(), 400 );
+		}
+		return $out + array( 'recipient' => TWD_SK_Enquiry::recipient() );
+	}
+
 	public static function get_site_css( $request ) {
 		return self::site_css_report();
 	}
@@ -1729,20 +1761,22 @@ class TWD_SK_REST {
 			$out = TWD_SK_Structure::move( $id, array( 'index' => $request->get_param( 'index' ), 'dir' => $request->get_param( 'dir' ) ) );
 		} elseif ( 'phone_picture' === $op ) {
 			$out = TWD_SK_Structure::phone_picture( $id, array( 'index' => $request->get_param( 'index' ), 'picture' => $request->get_param( 'picture' ), 'remove' => $request->get_param( 'remove' ) ) );
+		} elseif ( 'gallery_add' === $op ) {
+			$out = TWD_SK_Structure::gallery_add( $id, array( 'index' => $request->get_param( 'index' ), 'pictures' => $request->get_param( 'pictures' ), 'group' => $request->get_param( 'group' ) ) );
 		} elseif ( 'to_band' === $op ) {
 			$out = TWD_SK_Structure::to_band( $id, array( 'index' => $request->get_param( 'index' ) ) );
 		} elseif ( 'add_text' === $op || 'duplicate' === $op ) {
 			$item = $request->get_param( 'item' );
 			$out  = TWD_SK_Structure::inside( $id, $op, array( 'piece' => $request->get_param( 'piece' ), 'item' => is_numeric( $item ) ? $item : null, 'level' => $request->get_param( 'level' ) ) );
 		} else {
-			return self::error( 'twd_sk_bad_input', 'Choose to add a section, move one, add a paragraph, copy an item, turn a picture-only custom section into a picture band, or add or remove a phone picture.', 400 );
+			return self::error( 'twd_sk_bad_input', 'Choose to add a section, move one, add a paragraph, copy an item, turn a picture-only custom section into a picture band, add or remove a phone picture, or add pictures to a gallery.', 400 );
 		}
 		if ( is_wp_error( $out ) ) {
 			return self::error( $out->get_error_code(), $out->get_error_message(), 'twd_sk_empty_page' === $out->get_error_code() || 'twd_sk_bad_input' === $out->get_error_code() ? 400 : 502 );
 		}
 		$saved = TWD_SK_Store::save( $id, $out['html'], array( 'base_version' => $base, 'note' => $out['note'] ) );
 		$done  = self::after_write( $id, $saved );
-		return is_wp_error( $done ) ? $done : $done + array( 'at' => (int) $out['at'], 'piece' => isset( $out['piece'] ) ? (int) $out['piece'] : -1 );
+		return is_wp_error( $done ) ? $done : $done + array( 'at' => (int) $out['at'], 'piece' => isset( $out['piece'] ) ? (int) $out['piece'] : -1, 'noalt' => isset( $out['noalt'] ) ? (int) $out['noalt'] : 0 );
 	}
 
 	/** The checklist of changes for a request. Nothing is changed. */
