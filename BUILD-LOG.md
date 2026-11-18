@@ -21,6 +21,15 @@
 - Test build needed before the pilot site: name it above 0.21.1 (for example `0.22.0-dev1`).
 - **Test zips on Windows (18 Nov 2026):** PowerShell's `Compress-Archive` and `tar -a` make zips that WordPress refuses as "Incompatible Archive" (a first dev build failed on two sites; the release zip and a rebuilt dev zip uploaded fine). Use `python bin/build-test-zip.py 0.22.0-dev1 <folder outside the repo>`: it writes the release zip's plain shape, sets the version in both places and never touches `dist/`.
 
+## 18 Nov 2026: gallery branch merged with the released 0.22.0 (local merge, NOT pushed, NOT released)
+
+- `feature/gallery-component` (Gallery component, gallery categories and Add pictures, menu current-page fix, enquiry form settings with Turnstile) was started before 0.22.0, so it did not hold the sign-in page, Welcome screen or Guides and videos. `origin/main` (0.22.0) is now merged into it: no conflicts. The Turnstile and gallery work is still on this branch only; public 0.22.0 does not have it.
+- **Tested:** full suite on an LF copy of the merged commit, 1268 passed, 0 failed; `php -l` clean. (A plain `git archive` copy still has CRLF and shows 16 line-ending failures on any version, including 0.22.0: convert to LF first.)
+- **Version:** still 0.22.0 in the three places. Releasing it needs a higher version, the changelog, the zip and update JSON, and the owner's yes.
+- **Stylesheet:** 191,825 bytes; the ceiling in `tests/test-css.php` was raised to 195,000 for the gallery ("Clive to confirm").
+- **Warning for the owner's sites:** the Turnstile site runs a hand-installed test build `0.22.0-gallery181804`, which PHP counts as older than 0.22.0, so its Plugins screen offers public 0.22.0 as an update and applying it would remove the gallery and Turnstile. Do not update Site Kit there until this is released as a higher version.
+- Not seen: the merged code on a real site.
+
 ## 16 Nov 2026: Legal template docs added (no code change, no release needed)
 
 - Added `docs/legal/privacy-cookie-spec.md` - the full rules for DUAA-compliant privacy and cookie policies: mandatory UK GDPR sections, lawful bases (Art 6 and Art 9(2)(h) with DPA 2018 Sch 1 Pt 1 para 2), DUAA 2025 complaints procedure (30-day acknowledgement), ICO wording convention, CSS prefix convention, retention periods, cookie table rows, governing law variants, and variables list.
