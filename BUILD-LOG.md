@@ -1,3 +1,8 @@
+## 18 Nov 2026 (release): v0.22.0 RELEASED on `main` (commit f8a3951), at the owner's yes
+
+- Sign-in page, Welcome screen and Guides and videos, as below. Suite 1251 passed on an LF copy; release check OK; the zip was built with Python (no `zip` tool on this machine), one `twd-site-kit` folder, 151 files. **Update one site first.**
+- **Waiting on the owner:** make the category `client-help` on the agency site and publish a first guide (tag `video` for a video), or the section stays empty; tick Send editors here after sign-in on each site that wants it; the sign-in page switch is off until an administrator turns it on.
+
 ## 18 Nov 2026 (later): Welcome screen styled with the logo; Guides and videos from one public list (built on the same branch, NOT released; test build `0.22.0-dev3`)
 
 - The Welcome screen now shows the logo (Site details) and name in a header panel, and wears the site's style: the active tokens and the two fonts it uses are printed with the screen's stylesheet (`wp_add_inline_style`), with plain fallbacks. Josh (an Editor) is sent here after sign-in only when the Welcome page's "Send editors here" tick is on (off by default).
