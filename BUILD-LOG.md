@@ -21,6 +21,12 @@
 - Test build needed before the pilot site: name it above 0.21.1 (for example `0.22.0-dev1`).
 - **Test zips on Windows (18 Nov 2026):** PowerShell's `Compress-Archive` and `tar -a` make zips that WordPress refuses as "Incompatible Archive" (a first dev build failed on two sites; the release zip and a rebuilt dev zip uploaded fine). Use `python bin/build-test-zip.py 0.22.0-dev1 <folder outside the repo>`: it writes the release zip's plain shape, sets the version in both places and never touches `dist/`.
 
+## 18 Nov 2026: RELEASE 0.23.0 (at the owner's yes; the gallery branch, merged with 0.22.0, pushed to main)
+
+- 0.22.0 plus the Gallery component, the enquiry form settings with optional Turnstile and the menu current-page fix. Tried first as test build `0.22.1-dev1` on the live site that uses Turnstile: the owner reported it worked. Suite 1268 passed on an LF copy; stylesheet 191,825 of 195,000 (ceiling raised to 195,000 for the gallery).
+- **To check on other sites:** nothing changes unless a site adds a gallery or opens the enquiry Form settings; the menu fix changes how a `/#section` link and the plain header's current page look. The Plugins update row and one-click update; update one site first.
+- **Rolling back:** release a higher version carrying the 0.22.0 code, or install the 0.22.0 zip by hand.
+
 ## 18 Nov 2026: gallery branch merged with the released 0.22.0 (local merge, NOT pushed, NOT released)
 
 - `feature/gallery-component` (Gallery component, gallery categories and Add pictures, menu current-page fix, enquiry form settings with Turnstile) was started before 0.22.0, so it did not hold the sign-in page, Welcome screen or Guides and videos. `origin/main` (0.22.0) is now merged into it: no conflicts. The Turnstile and gallery work is still on this branch only; public 0.22.0 does not have it.

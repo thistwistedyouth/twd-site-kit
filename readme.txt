@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.22.0
+Stable tag: 0.23.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,11 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.23.0 =
+* Gallery section: the same pictures as a grid, a masonry wall, a film strip or a slideshow, with arrows, a count, keyboard keys and an open-bigger view. A small script loads only on a page that has a gallery. A gallery can be split into categories with a filter row. Add pictures from the Look panel in the Visual editor. Nothing changes on a site that does not use one.
+* Enquiry form settings (administrators, in the Visual editor): where enquiries go, an optional copy, the thank-you wording, the honeypot, the speed check, the limit per visitor and an optional Cloudflare Turnstile check. Defaults are exactly as before, and Turnstile is off until a site key and secret are typed in; the secret is never shown again and never leaves the site's own settings.
+* Menus: a link to part of a page (for example a link ending in #books) is no longer marked as the page you are on, and the plain header marks the current page with a small dot.
 
 = 0.22.0 =
 * Branded sign-in page: the WordPress sign-in screen can wear the site's logo, name and style, with a welcome line and a way back to the site. Off until switched on (Dashboard > Welcome, administrators). It restyles only; sign-in itself is untouched.
