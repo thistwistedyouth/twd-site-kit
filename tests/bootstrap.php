@@ -326,6 +326,10 @@ function add_options_page( $page_title, $menu_title, $cap, $slug, $cb ) {
 	$GLOBALS['twd_stub']['options_pages'][] = array( 'title' => $page_title, 'cap' => $cap, 'slug' => $slug, 'cb' => $cb );
 	return 'settings_page_' . $slug;
 }
+function add_submenu_page( $parent, $page_title, $menu_title, $cap, $slug, $cb ) {
+	$GLOBALS['twd_stub']['submenu_pages'][] = array( 'parent' => $parent, 'title' => $page_title, 'cap' => $cap, 'slug' => $slug, 'cb' => $cb );
+	return 'dashboard_page_' . $slug;
+}
 function admin_url( $path = '' ) {
 	return 'https://example.test/wp-admin/' . $path;
 }
@@ -520,6 +524,10 @@ function get_pages( $args = array() ) {
 	}
 	return array_slice( $out, 0, isset( $args['number'] ) ? $args['number'] : 100 );
 }
+function wp_get_current_user() {
+	return isset( $GLOBALS['twd_stub']['user'] ) ? (object) $GLOBALS['twd_stub']['user'] : (object) array( 'ID' => 0, 'display_name' => '' );
+}
+
 function wp_strip_all_tags( $text ) {
 	return trim( strip_tags( (string) $text ) );
 }
@@ -619,6 +627,20 @@ function elementor_location_exits( $location, $check_match = false ) {
 	return $v;
 }
 
+function wp_nonce_field( $action = -1, $name = '_wpnonce', $referer = true, $echo = true ) {
+	$html = '<input type="hidden" name="' . $name . '" value="NONCE_' . $action . '">';
+	if ( $echo ) {
+		echo $html;
+	}
+	return $html;
+}
+function esc_textarea( $text ) {
+	return htmlspecialchars( (string) $text, ENT_QUOTES );
+}
+function user_can( $user, $cap ) {
+	$caps = isset( $user->caps ) ? $user->caps : array();
+	return in_array( $cap, $caps, true );
+}
 function check_admin_referer( $action ) {
 	return $GLOBALS['twd_stub']['referer_ok'];
 }
@@ -698,6 +720,9 @@ require_once ABSPATH . 'includes/class-twd-sk-editor.php';
 require_once ABSPATH . 'includes/class-twd-sk-snags.php';
 require_once ABSPATH . 'includes/class-twd-sk-snagbook.php';
 require_once ABSPATH . 'includes/class-twd-sk-guard.php';
+require_once ABSPATH . 'includes/class-twd-sk-login.php';
+require_once ABSPATH . 'includes/class-twd-sk-help.php';
+require_once ABSPATH . 'includes/class-twd-sk-welcome.php';
 require_once ABSPATH . 'includes/class-twd-sk-style.php';
 require_once ABSPATH . 'includes/class-twd-sk-modules.php';
 require_once ABSPATH . 'includes/class-twd-sk-shop-gate.php';

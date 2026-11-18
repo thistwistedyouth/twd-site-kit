@@ -177,6 +177,8 @@ class TWD_SK_Mode {
 				'facts_help'         => 'One master document about the person and their practice: who they are, who they help, what they offer, their approach, qualifications and registrations in exactly the wording they supplied, fees, where and when, questions people ask, and words they like or never use. The AI uses only this, and the site details above, for anything new it writes. Only administrators can see it. It is never shown on the site. Write about the practice only, never about the people they work with.',
 				'show_person_job'    => true,
 				// Placeholders in a fresh profile.
+				'login_welcome'      => 'Welcome back. Sign in to look after your website.',
+				'login_back'         => 'Back to the website',
 				'ph_site_name'       => '[PLACEHOLDER: practice name]',
 				'ph_address'         => '[PLACEHOLDER: address line, or delete for an online practice]',
 				'ph_footer_text'     => '[PLACEHOLDER: one or two sentences about your practice]',
@@ -267,6 +269,8 @@ class TWD_SK_Mode {
 				'address_help'       => 'Up to three lines. Leave empty if the business has no public address.',
 				'facts_help'         => 'One master document about the business: who is behind it, what it offers and what is included, who it is for, the area covered and opening times, prices and booking, how it works, accreditations in exactly the wording supplied, questions customers ask, and words they like or never use. The AI uses only this, and the site details above, for anything new it writes. Only administrators can see it. It is never shown on the site. Nothing personal about customers.',
 				'show_person_job'    => false,
+				'login_welcome'      => 'Welcome back. Sign in to look after your website.',
+				'login_back'         => 'Back to the website',
 				'ph_site_name'       => '[PLACEHOLDER: business name]',
 				'ph_address'         => '[PLACEHOLDER: address line, or delete if there is no public address]',
 				'ph_footer_text'     => '[PLACEHOLDER: one or two sentences about your business]',

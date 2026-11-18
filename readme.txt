@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.21.0
+Stable tag: 0.22.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,12 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.22.0 =
+* Branded sign-in page: the WordPress sign-in screen can wear the site's logo, name and style, with a welcome line and a way back to the site. Off until switched on (Dashboard > Welcome, administrators). It restyles only; sign-in itself is untouched.
+* Welcome screen (Dashboard > Welcome, for anyone who can edit pages): "Welcome" and the person's first name, big buttons to edit the site, see pages and visit the site, and "How do I" cards that open short step by step pop-ups. Administrators can add a welcome note and a contact line.
+* Send editors to the Welcome screen after they sign in: a tick for administrators, off by default. Administrators always go to the Dashboard as usual.
+* Guides and videos: the Welcome screen lists guides written once on the agency's own site (the posts in one category, a video tag marking a video), so every site shows them with no update. Editors only, one fixed address, nothing about the site is sent, and nothing shows until the agency publishes a guide.
 
 = 0.21.0 =
 * Question groups: the tabs now work on phones. One group shows at a time, as on a computer, instead of every group stacked with tabs that seemed to do nothing. This is the one change that shows without turning anything on.
