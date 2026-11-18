@@ -21,5 +21,7 @@ class TWD_SK_Modules {
 		TWD_SK_Snags::init();
 		TWD_SK_Guard::init();
 		TWD_SK_Style::init();
+		TWD_SK_Login::init();
+		TWD_SK_Welcome::init();
 	}
 }

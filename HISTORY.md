@@ -1,3 +1,17 @@
+## 18 Nov 2026 (later): where the tutorial videos live
+
+- **Adilo was ruled out:** it ended its lifetime plans and reviewers report lost access and poor support. Videos go on the agency's own hosting, with master copies kept elsewhere.
+- **Why a public list file, not articles on each site:** the tutorials are the same for every client, so one list on `main` is edited once and every site picks it up within 12 hours with no release. It is fetched like the updater's file (one fixed address, no redirects, cached) but only by a signed-in editor's Welcome screen, and nothing about the site is sent. This bends the "no outside requests" rule, which exists for visitors, and was approved by the owner.
+- **Why links, not embedded players:** the Welcome screen loads nothing from outside; a card opens the article or video page on the agency's own domain in a new tab. A link off that domain is dropped by the checks.
+
+## 18 Nov 2026: sign-in page and Welcome screen
+
+- **Why a restyle, not a login of our own:** the sign-in form, nonce, password reset and any two-step plugin stay WordPress's, so there is nothing new to attack and nothing a client could be locked out by. The class holds no authentication code and a test keeps it that way.
+- **Why a wp-admin page for the Welcome screen:** clients mostly edit on the live page, but a calm first screen with large buttons and short guides is cheap there, loads nothing for visitors and needs no editor changes. A front-end pop-up version would be heavier and was left for later.
+- **Why the how-tos are data and the pop-ups are printed by PHP:** one entry per guide, so adding one is data, and the script only shows and hides (the editor scripts ban building HTML in the browser).
+- **Why the settings sit on the Welcome page for now:** it avoids growing the Site tab script for four small fields. They could move to the Site tab later.
+- **Why the redirect skips administrators and requested addresses:** a builder should land where they always do, and a link someone followed to a particular page must still work. Off by default (the established behaviour).
+
 # History and decisions
 
 Why things are the way they are. Newest first. Rules live in CLAUDE.md.
