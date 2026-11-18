@@ -524,6 +524,10 @@ function get_pages( $args = array() ) {
 	}
 	return array_slice( $out, 0, isset( $args['number'] ) ? $args['number'] : 100 );
 }
+function wp_get_current_user() {
+	return isset( $GLOBALS['twd_stub']['user'] ) ? (object) $GLOBALS['twd_stub']['user'] : (object) array( 'ID' => 0, 'display_name' => '' );
+}
+
 function wp_strip_all_tags( $text ) {
 	return trim( strip_tags( (string) $text ) );
 }

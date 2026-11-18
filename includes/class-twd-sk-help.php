@@ -1,13 +1,13 @@
 <?php
 /**
- * TWD_SK_Help: the tutorial list on the Welcome screen (0.22.0).
+ * TWD_SK_Help: the guides and videos on the Welcome screen (0.22.0).
  *
- * One small public JSON file in this plugin's repo (help/twd-site-help.json) lists the guides and videos, which
- * live on the agency's own site. A signed-in editor's Welcome screen fetches it, the way the updater fetches its
- * file: one fixed https address, no redirects, a short wait, a size limit, cached for 12 hours, and nothing about
- * the site or the person is sent. Every entry is checked; a link must be https on the agency's own domain. Any
- * doubt means the section is simply not shown. Nothing is ever fetched for a visitor, in safe mode, or outside
- * wp-admin's Welcome screen. Changing the list needs no plugin release.
+ * They are ordinary posts on the agency's own site, in one category (client-help), written there with the normal
+ * WordPress editor; a post tagged video is shown as a video. A signed-in editor's Welcome screen reads that category
+ * from the agency site's public WordPress feed: two fixed https addresses on one fixed host, no redirects, a short
+ * wait, a size limit, cached for 12 hours, and nothing about the site or the person is sent. Every entry is checked;
+ * a link must be https on the agency's own domain. Any doubt means the section is simply not shown. Nothing is ever
+ * fetched for a visitor, in safe mode, or outside wp-admin's Welcome screen. Adding a guide needs no plugin release.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -16,14 +16,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TWD_SK_Help {
 
-	const FEED_URL  = 'https://raw.githubusercontent.com/thistwistedyouth/twd-site-kit/main/help/twd-site-help.json';
-	const SCHEMA    = 'twd-site-help/1';
 	const HOST      = 'therapywebdesigns.co.uk';
+	const CATEGORY  = 'client-help';
+	const VIDEO_TAG = 'video';
 	const TRANSIENT = 'twd_sk_help_feed';
 	const TTL       = 43200; // 12 hours
 	const FAIL_TTL  = 3600;  // 1 hour: a failed fetch is not retried on every page view
-	const MAX_BYTES = 50000;
+	const MAX_BYTES = 60000;
 	const MAX_ITEMS = 12;
+
+	/** The two fixed addresses (the category's id, then its posts). */
+	public static function categories_url() {
+		return 'https://' . self::HOST . '/wp-json/wp/v2/categories?slug=' . self::CATEGORY . '&_fields=id';
+	}
+
+	public static function posts_url( $id ) {
+		return 'https://' . self::HOST . '/wp-json/wp/v2/posts?categories=' . (int) $id . '&per_page=' . self::MAX_ITEMS . '&_fields=title,excerpt,link,class_list';
+	}
 
 	/** The checked entries: each title, summary, url, kind (article or video). Empty on any doubt. */
 	public static function items() {
@@ -39,25 +48,34 @@ class TWD_SK_Help {
 		return $items;
 	}
 
-	private static function fetch() {
-		$response = wp_safe_remote_get( self::FEED_URL, array( 'timeout' => 5, 'redirection' => 0, 'limit_response_size' => self::MAX_BYTES ) );
+	private static function get( $url ) {
+		$response = wp_safe_remote_get( $url, array( 'timeout' => 5, 'redirection' => 0, 'limit_response_size' => self::MAX_BYTES ) );
 		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
-			return array();
+			return '';
 		}
-		return self::parse( (string) wp_remote_retrieve_body( $response ) );
+		return (string) wp_remote_retrieve_body( $response );
 	}
 
-	/** Read the file's text. Pure, so a test can feed it anything. */
+	private static function fetch() {
+		$cat = json_decode( self::get( self::categories_url() ), true );
+		$id  = ( is_array( $cat ) && isset( $cat[0]['id'] ) ) ? (int) $cat[0]['id'] : 0;
+		if ( $id < 1 ) {
+			return array();
+		}
+		return self::parse( self::get( self::posts_url( $id ) ) );
+	}
+
+	/** Read the posts list. Pure, so a test can feed it anything. */
 	public static function parse( $body ) {
 		if ( '' === $body || strlen( $body ) > self::MAX_BYTES ) {
 			return array();
 		}
 		$data = json_decode( $body, true );
-		if ( ! is_array( $data ) || ! isset( $data['schema'] ) || self::SCHEMA !== $data['schema'] || empty( $data['items'] ) || ! is_array( $data['items'] ) ) {
+		if ( ! is_array( $data ) ) {
 			return array();
 		}
 		$out = array();
-		foreach ( $data['items'] as $row ) {
+		foreach ( $data as $row ) {
 			$item = self::clean_item( $row );
 			if ( $item ) {
 				$out[] = $item;
@@ -73,22 +91,22 @@ class TWD_SK_Help {
 		if ( ! is_array( $row ) ) {
 			return null;
 		}
-		$title   = self::text( isset( $row['title'] ) ? $row['title'] : '', 80 );
-		$summary = self::text( isset( $row['summary'] ) ? $row['summary'] : '', 200 );
-		$url     = self::safe_url( isset( $row['url'] ) ? $row['url'] : '' );
-		$kind    = ( isset( $row['kind'] ) && 'video' === $row['kind'] ) ? 'video' : 'article';
+		$title   = self::text( isset( $row['title']['rendered'] ) ? $row['title']['rendered'] : '', 80 );
+		$summary = self::text( isset( $row['excerpt']['rendered'] ) ? $row['excerpt']['rendered'] : '', 200 );
+		$url     = self::safe_url( isset( $row['link'] ) ? $row['link'] : '' );
+		$classes = ( isset( $row['class_list'] ) && is_array( $row['class_list'] ) ) ? $row['class_list'] : array();
+		$kind    = in_array( 'tag-' . self::VIDEO_TAG, $classes, true ) ? 'video' : 'article';
 		if ( '' === $title || '' === $url ) {
 			return null;
 		}
 		return array( 'title' => $title, 'summary' => $summary, 'url' => $url, 'kind' => $kind );
 	}
-
 	/** Plain text: no tags, no long dashes, cut to a length. */
 	public static function text( $text, $max ) {
 		if ( ! is_string( $text ) ) {
 			return '';
 		}
-		$text = trim( preg_replace( '/\s+/', ' ', strip_tags( $text ) ) );
+		$text = trim( preg_replace( '/\s+/', ' ', html_entity_decode( strip_tags( $text ), ENT_QUOTES, 'UTF-8' ) ) );
 		$text = preg_replace( '/\s*[\x{2013}\x{2014}]\s*/u', ', ', $text );
 		return function_exists( 'mb_substr' ) ? mb_substr( $text, 0, $max ) : substr( $text, 0, $max );
 	}

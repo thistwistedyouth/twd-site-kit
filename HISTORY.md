@@ -849,3 +849,7 @@ The sanitiser has its own `strip_dashes()` and calls nothing from the articles p
 
 ### Out of slice 1
 Pop-ups, AI prompt, import endpoint, self-hosted updater, deploy workflow, component CSS (added in slice 2a). `dist/` is reserved for the updater and the install zip. The repo must stay public for the updater.
+
+## 18 Nov 2026: Guides and videos come from tagged posts
+
+The first plan was a JSON file in this repo. Changed at the owner's yes to one category (`client-help`) of ordinary posts on the agency site, read through WordPress's public feed, so a guide is written in the normal editor, with its video and pictures, and reaches every site with no push. The Articles plugin keeps its articles as ordinary posts with categories, so no change was needed there. Kept: one fixed host, https only, no redirects, 12 hour cache, editors only, nothing sent about the site.

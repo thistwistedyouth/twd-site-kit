@@ -183,6 +183,20 @@ class TWD_SK_Welcome {
 		echo '<p><button type="submit" class="button button-primary">' . esc_html( 'Save' ) . '</button></p></form>';
 	}
 
+	/** The signed-in person's first name (their profile's first name, else the first word of their display name). */
+	public static function first_name() {
+		$u = function_exists( 'wp_get_current_user' ) ? wp_get_current_user() : null;
+		if ( ! $u || empty( $u->ID ) ) {
+			return '';
+		}
+		$n = trim( (string) get_user_meta( $u->ID, 'first_name', true ) );
+		if ( '' === $n ) {
+			$parts = preg_split( '/\s+/', trim( (string) $u->display_name ) );
+			$n     = isset( $parts[0] ) ? $parts[0] : '';
+		}
+		return wp_strip_all_tags( $n );
+	}
+
 	public static function render() {
 		if ( ! current_user_can( 'edit_pages' ) ) {
 			return;
@@ -194,8 +208,9 @@ class TWD_SK_Welcome {
 		if ( '' !== $logo ) {
 			echo '<img class="twd-sk-welcome__logo" src="' . esc_url( $logo ) . '" alt="' . esc_attr( $name ) . '">';
 		}
-		echo '<h1>' . esc_html( 'Welcome' . ( '' !== $name ? ', ' . $name : '' ) ) . '</h1>';
-		echo '<p class="twd-sk-welcome__lead">' . esc_html( 'Everything you need to look after your website is here. Pick a button to start, or open a short guide.' ) . '</p></header>';
+		$first = self::first_name();
+		echo '<h1>' . esc_html( 'Welcome' . ( '' !== $first ? ' ' . $first : '' ) ) . '</h1>';
+		echo '<p class="twd-sk-welcome__lead">' . esc_html( 'Pick a button to start, or open a short guide.' ) . '</p></header>';
 
 		if ( '' !== self::note() ) {
 			echo '<p class="twd-sk-welcome__note">' . esc_html( self::note() ) . '</p>';

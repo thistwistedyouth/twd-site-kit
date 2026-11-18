@@ -147,7 +147,13 @@ twd_sk_test( 'welcome: the logo and the site name head the page, and the style t
 	TWD_SK_Welcome::render();
 	$out = ob_get_clean();
 	twd_sk_has( 'class="twd-sk-welcome__logo" src="https://example.test/wp-content/uploads/logo.png" alt="A Test Practice"', $out );
-	twd_sk_has( 'Welcome, A Test Practice', $out );
+	twd_sk_has( '<h1>Welcome</h1>', $out, 'no signed-in name, just Welcome' );
+	twd_sk_has( 'Pick a button to start, or open a short guide.', $out );
+	$GLOBALS['twd_stub']['user'] = array( 'ID' => 5, 'display_name' => 'Sam Example' );
+	ob_start();
+	TWD_SK_Welcome::render();
+	twd_sk_has( '<h1>Welcome Sam</h1>', ob_get_clean(), 'the first name of the person signed in' );
+	unset( $GLOBALS['twd_stub']['user'] );
 	TWD_SK_Profile::save( array( 'site_name' => 'A Test Practice', 'logo_id' => 0 ) );
 	ob_start();
 	TWD_SK_Welcome::render();

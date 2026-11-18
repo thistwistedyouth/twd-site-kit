@@ -1,5 +1,0 @@
-{
-	"schema": "twd-site-help/1",
-	"note": "Guides and videos shown on every client site's Welcome screen. Add an entry, push to main, and sites pick it up within 12 hours. Links must be https on the agency's own domain.",
-	"items": []
-}
