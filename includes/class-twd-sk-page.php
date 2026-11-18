@@ -214,6 +214,10 @@ class TWD_SK_Page {
 		if ( false !== strpos( (string) $html, 'twd-sk-quote--slider' ) ) {
 			wp_enqueue_script( 'twd-site-kit-slider', TWD_SK_URL . 'assets/twd-site-kit-slider.js', array(), defined( 'TWD_SK_VERSION' ) ? TWD_SK_VERSION : false, true );
 		}
+		// The gallery (0.22.0): pictures show and scroll without the script; the script adds arrows, dots, keys and the open-bigger view.
+		if ( false !== strpos( (string) $html, 'twd-sk-gallery' ) ) {
+			wp_enqueue_script( 'twd-site-kit-gallery', TWD_SK_URL . 'assets/twd-site-kit-gallery.js', array(), defined( 'TWD_SK_VERSION' ) ? TWD_SK_VERSION : false, true );
+		}
 		// Question groups (0.15.0): without the script a tab is a link to its group (the page scrolls there); the script
 		// opens the group where it is, marks the tab, and sets the address without the jump.
 		if ( false !== strpos( (string) $html, 'twd-sk-faq--groups' ) ) {

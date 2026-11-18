@@ -794,6 +794,37 @@ class TWD_SK_Registry {
 		) );
 	}
 
+	/**
+	 * A picture gallery (0.22.0): the same pictures in a grid, a masonry wall, a film strip or a slideshow.
+	 * Every layout can open a picture bigger (twd-site-kit-gallery.js); without the script they are plain pictures.
+	 *
+	 * @param string $variant '' grid, 'masonry', 'strip' or 'slideshow'.
+	 */
+	private static function gallery( $variant ) {
+		$root  = 'twd-sk-gallery' . ( '' !== $variant ? ' twd-sk-gallery--' . $variant : '' ) . ' twd-sk-tone-base';
+		$items = array();
+		for ( $i = 0; $i < 4; $i++ ) {
+			$items[] = '<figure class="twd-sk-gallery__item">';
+			$items[] = '<img class="twd-sk-gallery__img" src="/wp-content/uploads/your-image.jpg" alt="Describe the image">';
+			$items[] = '<figcaption class="twd-sk-gallery__caption">Title or caption here</figcaption>';
+			$items[] = '</figure>';
+		}
+		return self::lines( array_merge(
+			array(
+				'<section class="' . $root . '">',
+				'<div class="twd-sk-inner">',
+				'<h2 class="twd-sk-title">Heading here</h2>',
+				'<div class="twd-sk-gallery__track">',
+			),
+			$items,
+			array(
+				'</div>',
+				'</div>',
+				'</section>',
+			)
+		) );
+	}
+
 	/** A strip of small logos: accreditations, memberships, partners (0.8.0). */
 	private static function logos( $variant = '' ) {
 		$items = array();
@@ -1220,6 +1251,49 @@ class TWD_SK_Registry {
 					'twd-sk-pictures__item',
 					'twd-sk-pictures__img',
 					'twd-sk-pictures__caption',
+				),
+				'shortcodes'  => array(),
+			),
+
+			'gallery'    => array(
+				'id'          => 'gallery',
+				'label'       => 'Gallery',
+				'description' => 'A picture gallery for artwork or photos: a grid, a masonry wall, a film strip or a slideshow. Visitors can open any picture bigger. Every picture needs alt text that says what it shows; a caption is optional.',
+				'skeleton'    => self::gallery( '' ),
+				'variants'    => array(
+					'twd-sk-gallery--masonry'   => array(
+						'label'    => 'Masonry: pictures keep their own shape, like a wall of art',
+						'skeleton' => self::gallery( 'masonry' ),
+					),
+					'twd-sk-gallery--strip'     => array(
+						'label'    => 'Film strip: one row, swipe or scroll sideways',
+						'skeleton' => self::gallery( 'strip' ),
+					),
+					'twd-sk-gallery--slideshow' => array(
+						'label'    => 'Slideshow: one big picture at a time, arrows and dots',
+						'skeleton' => self::gallery( 'slideshow' ),
+					),
+				),
+				'classes'     => array(
+					'twd-sk-gallery',
+					'twd-sk-gallery--masonry',
+					'twd-sk-gallery--strip',
+					'twd-sk-gallery--slideshow',
+					'twd-sk-gallery__track',
+					'twd-sk-gallery__item',
+					'twd-sk-gallery__img',
+					'twd-sk-gallery__caption',
+					// Added by twd-site-kit-gallery.js (never stored): the slideshow controls and the open-bigger view.
+					'twd-sk-gallery__controls',
+					'twd-sk-gallery__arrow',
+					'twd-sk-gallery__count',
+					'twd-sk-gallery__box',
+					'twd-sk-gallery__box-img',
+					'twd-sk-gallery__box-caption',
+					'twd-sk-gallery__box-btn',
+					'twd-sk-gallery__box-close',
+					'twd-sk-gallery__box-prev',
+					'twd-sk-gallery__box-next',
 				),
 				'shortcodes'  => array(),
 			),

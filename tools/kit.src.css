@@ -600,6 +600,59 @@
 }
 .twd-sk-pictures__caption { margin-top: 10px; font-size: $size-small; color: $color-muted; }
 
+/* ---- gallery (0.22.0): grid, masonry, film strip, slideshow. twd-site-kit-gallery.js adds the arrows, dots,
+   keys and the open-bigger view; without it every layout is still a set of pictures you can scroll or swipe. ---- */
+.twd-sk-gallery__track { display: grid; grid-template-columns: repeat(3, 1fr); gap: $gap-sm; margin-top: 32px; }
+.twd-sk-gallery__item { margin: 0; min-width: 0; }
+.twd-sk-gallery__img {
+  display: block; width: 100%; aspect-ratio: 4 / 3; height: auto; object-fit: cover; object-position: $image-position;
+  border-radius: $radius-image; box-shadow: $shadow-image; filter: $image-filter;
+}
+.twd-sk-gallery__caption { margin-top: 10px; font-size: $size-small; color: $color-muted; }
+.twd-sk-gallery__img[data-twd-sk-zoom] { cursor: zoom-in; }
+.twd-sk-gallery__img:focus-visible { outline: 3px solid $color-primary; outline-offset: 3px; }
+.twd-sk-gallery--masonry .twd-sk-gallery__track { display: block; column-count: 3; column-gap: $gap-sm; }
+.twd-sk-gallery--masonry .twd-sk-gallery__item { break-inside: avoid; margin-bottom: $gap-sm; }
+.twd-sk-gallery--masonry .twd-sk-gallery__img { aspect-ratio: auto; object-fit: contain; }
+.twd-sk-gallery--strip .twd-sk-gallery__track {
+  display: flex; gap: $gap-sm; overflow-x: auto; scroll-snap-type: x proximity; scroll-behavior: smooth;
+  scrollbar-width: thin; padding-bottom: 12px;
+}
+.twd-sk-gallery--strip .twd-sk-gallery__item { flex: 0 0 auto; scroll-snap-align: start; max-width: 85%; }
+.twd-sk-gallery--strip .twd-sk-gallery__img { width: auto; max-width: 100%; height: 320px; aspect-ratio: auto; object-fit: cover; }
+.twd-sk-gallery--slideshow .twd-sk-gallery__track {
+  display: flex; gap: $gap-sm; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth;
+  scrollbar-width: thin; padding-bottom: 8px;
+}
+.twd-sk-gallery--slideshow .twd-sk-gallery__item { flex: 0 0 100%; scroll-snap-align: center; text-align: center; }
+.twd-sk-gallery--slideshow .twd-sk-gallery__img { width: auto; max-width: 100%; max-height: 70vh; margin: 0 auto; aspect-ratio: auto; object-fit: contain; }
+.twd-sk-gallery__controls { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 16px; }
+.twd-sk-gallery__arrow {
+  width: 44px; height: 44px; padding: 0; background-color: $color-surface; border: 1px solid $color-border;
+  border-radius: $radius-pill; font-size: 24px; line-height: 1; color: $color-title; cursor: pointer;
+}
+.twd-sk-gallery__arrow:hover, .twd-sk-gallery__arrow:focus-visible { border-color: $color-primary; color: $color-primary; }
+.twd-sk-gallery__count { font-size: $size-small; color: $color-muted; min-width: 64px; text-align: center; }
+/* The open-bigger view: built by the script, inside the page wrapper so the kit colours apply. */
+.twd-sk-gallery__box[hidden] { display: none; }
+.twd-sk-gallery__box {
+  position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 56px 16px 24px; background-color: $color-modal-overlay; color: $color-on-image; box-sizing: border-box;
+}
+.twd-sk-gallery__box::before, .twd-sk-gallery__box::after { content: ""; position: absolute; inset: 0; background-color: $color-modal-overlay; pointer-events: none; }
+.twd-sk-gallery__box-img, .twd-sk-gallery__box-caption { position: relative; z-index: 1; }
+.twd-sk-gallery__box-btn { z-index: 2; }
+.twd-sk-gallery__box-img { display: block; max-width: 100%; max-height: calc(100vh - 150px); width: auto; height: auto; object-fit: contain; }
+.twd-sk-gallery__box-caption { margin: 12px 0 0; max-width: 720px; text-align: center; font-size: $size-small; color: $color-on-image; }
+.twd-sk-gallery__box-btn {
+  position: absolute; width: 48px; height: 48px; padding: 0; border: 1px solid $color-on-image; border-radius: $radius-pill;
+  background-color: $color-modal-overlay; color: $color-on-image; font-size: 26px; line-height: 1; cursor: pointer;
+}
+.twd-sk-gallery__box-btn:hover, .twd-sk-gallery__box-btn:focus-visible { border-color: $color-accent; color: $color-accent; }
+.twd-sk-gallery__box-close { top: 8px; right: 8px; }
+.twd-sk-gallery__box-prev { left: 8px; top: 50%; }
+.twd-sk-gallery__box-next { right: 8px; top: 50%; }
+
 /* ---- logos strip (0.8.0) ---- */
 .twd-sk-logos { padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
 .twd-sk-logos .twd-sk-eyebrow { text-align: center; }
@@ -733,7 +786,7 @@
   .twd-sk-header--shrink .twd-sk-header__inner, .twd-sk-header--shrink .twd-sk-header__logo-img, .twd-sk-header--shrink .twd-sk-header__logo-mark { transition: none; }
   .twd-sk-services--glow .twd-sk-services__item { animation: none; }
   .twd-sk-hero--parallax .twd-sk-hero__bg { transform: none; }
-  .twd-sk-quote__track { scroll-behavior: auto; }
+  .twd-sk-quote__track, .twd-sk-gallery__track { scroll-behavior: auto; }
 }
 
 /* ---- responsive ---- */
@@ -1017,8 +1070,11 @@
   & > :not(section):not(.twd-sk-inner):not(.twd-sk-gallery-label):not(.twd-sk-header):not(.twd-sk-footer) { padding-left: $gutter-sm; padding-right: $gutter-sm; }
   .twd-sk-hero--split, .twd-sk-hero--compact, .twd-sk-text, .twd-sk-image-text, .twd-sk-quote,
   .twd-sk-faq, .twd-sk-services, .twd-sk-steps, .twd-sk-contact, .twd-sk-notice,
-  .twd-sk-resources, .twd-sk-pictures, .twd-sk-pricing, .twd-sk-hours, .twd-sk-areas, .twd-sk-social-links, .twd-sk-enquiry, .twd-sk-embed { padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
+  .twd-sk-resources, .twd-sk-pictures, .twd-sk-gallery, .twd-sk-pricing, .twd-sk-hours, .twd-sk-areas, .twd-sk-social-links, .twd-sk-enquiry, .twd-sk-embed { padding-top: $section-y-sm; padding-bottom: $section-y-sm; }
   .twd-sk-pictures__grid, .twd-sk-pricing__grid { grid-template-columns: 1fr 1fr; }
+  .twd-sk-gallery__track { grid-template-columns: 1fr 1fr; }
+  .twd-sk-gallery--masonry .twd-sk-gallery__track { column-count: 2; }
+  .twd-sk-gallery--strip .twd-sk-gallery__img { height: 240px; }
   .twd-sk-logos__img { max-width: 120px; height: 48px; }
   .twd-sk-logos--grid .twd-sk-logos__list { grid-template-columns: 1fr 1fr; }
   .twd-sk-faq--two .twd-sk-faq__list { grid-template-columns: 1fr; }

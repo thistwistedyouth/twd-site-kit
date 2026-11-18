@@ -1042,8 +1042,10 @@ class TWD_SK_Inline {
 			'twd-sk-hero__media'       => 'twd-sk-hero__img',
 			'twd-sk-contact__media'    => 'twd-sk-contact__img',
 			'twd-sk-pictures__item'    => 'twd-sk-pictures__img',
+			'twd-sk-gallery__item'     => 'twd-sk-gallery__img',
 			'twd-sk-logos__item'       => 'twd-sk-logos__img',
 			'twd-sk-pictures'          => 'twd-sk-pictures__img',
+			'twd-sk-gallery'           => 'twd-sk-gallery__img',
 			'twd-sk-image-text'        => 'twd-sk-image-text__img',
 			'twd-sk-logos'             => 'twd-sk-logos__img',
 		);
