@@ -4,7 +4,7 @@ Tags: pages, design, styles, therapist
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.23.0
+Stable tag: 0.23.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ It is a sibling to the Articles and Resource Production Plugin, and is updated f
 2. Choose the zip and click Install Now, then Activate Plugin.
 
 == Changelog ==
+
+= 0.23.1 =
+* Menu headings with no link: in the Site tab's Menu box, a line with nothing after the bar (for example Psychotherapy |) is a heading that only opens the sub-menu links under it. The header shows it as a plain label (the dropdown opens on hover and on keyboard focus), and the footer links it to its first sub-menu link so that page stays reachable. A heading with no sub-menu links is refused. A menu without one prints exactly as before.
 
 = 0.23.0 =
 * Gallery section: the same pictures as a grid, a masonry wall, a film strip or a slideshow, with arrows, a count, keyboard keys and an open-bigger view. A small script loads only on a page that has a gallery. A gallery can be split into categories with a filter row. Add pictures from the Look panel in the Visual editor. Nothing changes on a site that does not use one.
