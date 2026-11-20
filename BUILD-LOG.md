@@ -1,3 +1,11 @@
+## 20 Nov 2026: a menu heading with no link (at the owner's request, built on `main`, NOT released; test build `0.23.1-dev1` on the pilot staging site)
+
+- **What:** a top-level menu item can have no link at all, when it has sub-menu links under it. In the Site tab's Menu box write `Label |` with nothing after the bar, then the sub-menu lines (`- Name | /link`). The header prints the label as a focusable `span.twd-sk-header__link--heading` (the dropdown opens on hover and on keyboard focus; a phone shows the sub-menu links under it as before); every footer layout that prints menu links links the heading to its first sub-menu link, so the footer still reaches that page. A menu with no heading prints the same bytes as before. A heading with no sub-menu links is refused with a plain sentence.
+- **Why:** the owner's client wanted Psychotherapy as a drop-down with a Psychotherapy Sessions link above Psychedelics and no link on the heading. Setting the top item to `#` worked in the header but left the footer's link going nowhere.
+- **Where:** `TWD_SK_Profile::validate_menu()`, `TWD_SK_Chrome` (`footer_link_item()`, the header loop, `classes()`), one rule in `tools/kit.src.css`, `parseLinks()` and the Menu help text in `assets/twd-site-kit-editor-site.js`. 6 new tests in `tests/test-menu-heading.php`; suite 1274 passed on an LF copy.
+- **Seen:** on the pilot staging site at desktop (hover and keyboard focus) and phone width. Not yet on the live site (that needs the owner's yes: the live site runs 0.23.0 and has the same menu with the heading still linked to its page).
+- **Next:** release as 0.23.1 at the owner's yes, then on the live site save the menu with the heading's link emptied.
+
 ## 18 Nov 2026 (release): v0.22.0 RELEASED on `main` (commit f8a3951), at the owner's yes
 
 - Sign-in page, Welcome screen and Guides and videos, as below. Suite 1251 passed on an LF copy; release check OK; the zip was built with Python (no `zip` tool on this machine), one `twd-site-kit` folder, 151 files. **Update one site first.**

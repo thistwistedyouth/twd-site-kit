@@ -892,6 +892,8 @@
   display: inline-block; padding: 10px 2px; color: $color-title; font-size: $size-body; line-height: 1.3; text-decoration: none;
 }
 .twd-sk-header__link:hover, .twd-sk-header__link:focus-visible, .twd-sk-header__sublink:hover, .twd-sk-header__sublink:focus-visible { color: $color-accent-text; text-decoration: underline; }
+/* 0.23.1: a menu heading with no link (it only opens its sub-menu links). */
+.twd-sk-header__link--heading { cursor: default; }
 .twd-sk-header__sublink[aria-current="page"] { color: $color-accent-text; text-decoration: underline; }
 /* 0.22.0: the plain header marks the page you are on with a small dot under it (no underline, no colour change), like the wordmark header does by default. */
 .twd-sk-header:not(.twd-sk-header--wordmark) .twd-sk-header__link:hover, .twd-sk-header:not(.twd-sk-header--wordmark) .twd-sk-header__link:focus-visible { text-decoration: none; }

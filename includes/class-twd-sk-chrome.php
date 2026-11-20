@@ -181,7 +181,7 @@ class TWD_SK_Chrome {
 			// 0.14.0: the header laid transparent over a page's opening full-width picture.
 			'twd-sk-header--over', 'twd-sk-chrome--over',
 			'twd-sk-header__panel', 'twd-sk-header__nav', 'twd-sk-header__menu', 'twd-sk-header__item', 'twd-sk-header__item--parent',
-			'twd-sk-header__link', 'twd-sk-header__sub', 'twd-sk-header__sublink', 'twd-sk-header__cta',
+			'twd-sk-header__link', 'twd-sk-header__link--heading', 'twd-sk-header__sub', 'twd-sk-header__sublink', 'twd-sk-header__cta',
 			'twd-sk-footer', 'twd-sk-footer--cols-1', 'twd-sk-footer--cols-2', 'twd-sk-footer--cols-3',
 			'twd-sk-footer__main', 'twd-sk-footer__col', 'twd-sk-footer__logo-img', 'twd-sk-footer__name', 'twd-sk-footer__text',
 			'twd-sk-footer__heading', 'twd-sk-footer__links', 'twd-sk-footer__link', 'twd-sk-footer__contact',
@@ -464,6 +464,21 @@ class TWD_SK_Chrome {
 	}
 
 	/** True when a menu link points at the page being viewed. */
+	/**
+	 * One footer link for a menu item (0.23.1). A heading with no link goes to its first sub-menu link, so the footer still reaches that page;
+	 * an item with neither prints nothing. Every other item prints exactly what it always did.
+	 */
+	private static function footer_link_item( $item ) {
+		$url = isset( $item['url'] ) ? (string) $item['url'] : '';
+		if ( '' === $url && ! empty( $item['children'][0]['url'] ) ) {
+			$url = (string) $item['children'][0]['url'];
+		}
+		if ( '' === $url ) {
+			return '';
+		}
+		return '<li><a class="twd-sk-footer__link" href="' . self::url( $url ) . '">' . self::esc( $item['label'] ) . '</a></li>';
+	}
+
 	private static function is_current( $url ) {
 		$request = isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? (string) parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH ) : '';
 		$path    = (string) parse_url( (string) $url, PHP_URL_PATH );
@@ -648,8 +663,13 @@ class TWD_SK_Chrome {
 		$out .= '<div class="twd-sk-header__panel"><nav id="' . self::NAV_ID . '" class="twd-sk-header__nav" aria-label="Main"><ul class="twd-sk-header__menu">';
 		foreach ( $profile['menu'] as $item ) {
 			$parent = ! empty( $item['children'] );
-			$cur    = self::is_current( $item['url'] ) ? ' aria-current="page"' : '';
-			$out   .= '<li class="twd-sk-header__item' . ( $parent ? ' twd-sk-header__item--parent' : '' ) . '"><a class="twd-sk-header__link" href="' . self::url( $item['url'] ) . '"' . $cur . '>' . self::esc( $item['label'] ) . '</a>';
+			if ( $parent && '' === (string) $item['url'] ) {
+				// 0.23.1: a heading with no link. A focusable label, so the sub-menu opens on hover and on keyboard focus, and a phone shows it open.
+				$out .= '<li class="twd-sk-header__item twd-sk-header__item--parent"><span class="twd-sk-header__link twd-sk-header__link--heading" tabindex="0">' . self::esc( $item['label'] ) . '</span>';
+			} else {
+				$cur  = self::is_current( $item['url'] ) ? ' aria-current="page"' : '';
+				$out .= '<li class="twd-sk-header__item' . ( $parent ? ' twd-sk-header__item--parent' : '' ) . '"><a class="twd-sk-header__link" href="' . self::url( $item['url'] ) . '"' . $cur . '>' . self::esc( $item['label'] ) . '</a>';
+			}
 			if ( $parent ) {
 				$out .= '<ul class="twd-sk-header__sub">';
 				foreach ( $item['children'] as $child ) {
@@ -863,7 +883,7 @@ class TWD_SK_Chrome {
 			if ( $profile['menu'] ) {
 				$links = '<p class="twd-sk-footer__heading">Explore</p><nav aria-label="Footer"><ul class="twd-sk-footer__links">';
 				foreach ( $profile['menu'] as $item ) {
-					$links .= '<li><a class="twd-sk-footer__link" href="' . self::url( $item['url'] ) . '">' . self::esc( $item['label'] ) . '</a></li>';
+					$links .= self::footer_link_item( $item );
 				}
 				$links .= '</ul></nav>';
 			}
@@ -949,7 +969,7 @@ class TWD_SK_Chrome {
 		if ( $profile['menu'] ) {
 			$links = '<nav aria-label="Footer"><ul class="twd-sk-footer__links twd-sk-footer__links--two">';
 			foreach ( $profile['menu'] as $item ) {
-				$links .= '<li><a class="twd-sk-footer__link" href="' . self::url( $item['url'] ) . '">' . self::esc( $item['label'] ) . '</a></li>';
+				$links .= self::footer_link_item( $item );
 			}
 			$links .= '</ul></nav>';
 		}
@@ -988,7 +1008,7 @@ class TWD_SK_Chrome {
 		if ( $profile['menu'] ) {
 			$out .= '<nav aria-label="Footer"><ul class="twd-sk-footer__links twd-sk-footer__links--row">';
 			foreach ( $profile['menu'] as $item ) {
-				$out .= '<li><a class="twd-sk-footer__link" href="' . self::url( $item['url'] ) . '">' . self::esc( $item['label'] ) . '</a></li>';
+				$out .= self::footer_link_item( $item );
 			}
 			$out .= '</ul></nav>';
 		}

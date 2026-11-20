@@ -386,7 +386,9 @@ class TWD_SK_Profile {
 			if ( '' === $label && '' === trim( $item['url'] ) && empty( $item['children'] ) ) {
 				continue;
 			}
-			if ( '' === $label || '' === $url || false === $url ) {
+			// 0.23.1: an item with no link at all is a heading that only opens its sub-menu links, so it needs a label and at least one sub-menu link.
+			$heading = '' === $url && '' !== $label;
+			if ( '' === $label || false === $url || ( '' === $url && ! $heading ) ) {
 				return 'The menu item "' . $label . '" is missing a label or has a link that is not allowed.';
 			}
 			$children = array();
@@ -396,6 +398,9 @@ class TWD_SK_Profile {
 					return $kids;
 				}
 				$children = $kids[0];
+			}
+			if ( $heading && ! $children ) {
+				return 'The menu item "' . $label . '" has no link and no sub-menu links. Give it a link, or put sub-menu links under it.';
 			}
 			$out[] = array( 'label' => $label, 'url' => $url, 'children' => $children );
 		}

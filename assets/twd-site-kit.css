@@ -2679,6 +2679,9 @@
   color: var(--twd-site-color-accent-text) !important;
   text-decoration: underline !important;
 }
+.twd-sk-page .twd-sk-header__link--heading.twd-sk-header__link--heading {
+  cursor: default;
+}
 .twd-sk-page .twd-sk-header__sublink.twd-sk-header__sublink[aria-current="page"] {
   color: var(--twd-site-color-accent-text) !important;
   text-decoration: underline !important;

@@ -657,7 +657,9 @@
 				line = line.substr(1).trim();
 			}
 			var bar = line.indexOf('|');
-			if (bar < 1 || !line.substr(bar + 1).trim()) {
+			// In the menu a top-level line with nothing after the bar is a heading with no link; it must have sub-menu lines under it (the server checks).
+			var headingOk = withChildren && !child;
+			if (bar < 1 || (!line.substr(bar + 1).trim() && !headingOk)) {
 				error = 'Each line needs a label, a bar and a link, like: About | /about';
 				return;
 			}
@@ -905,7 +907,7 @@
 			field(W('registration_label', 'Registration lines'), pui.registration, W('registration_help', 'Only exactly what the therapist has supplied. One line each, up to four.')),
 			field('Registration link', pui.regUrl, 'Optional. A full https address, such as the page for this person on the register. The registration lines and the badge below link to it.'),
 			field('Registration badge picture number', regLogoRow, 'Optional. The logo of the registering body, from the media library, shown under the button in the compact footer (only if its rules allow it). Use the registrant logo the body supplies, where there is one.'),
-			field('Menu', pui.menu, 'One link per line: Label | /link. A line starting with a dash is a sub-menu link under the line above. Up to 8 menu items, and up to 10 sub-menu links under each.'),
+			field('Menu', pui.menu, 'One link per line: Label | /link. A line starting with a dash is a sub-menu link under the line above. A line with nothing after the bar (Label |) is a heading with no link: it only opens the sub-menu links under it. Up to 8 menu items, and up to 10 sub-menu links under each.'),
 			field('Legal links', pui.legal, 'One per line: Label | /link. Shown in the footer.'),
 			field('Professional profile links', pui.sameAs, 'Full https addresses, one per line, up to four. Optional.'),
 			el('div', { className: 'twd-sk-ed__actions' }, [pui.saveBtn, pui.reloadBtn]),

@@ -1,3 +1,9 @@
+## 20 Nov 2026: a menu heading with no link
+
+- **Why a heading, not a `#` link:** the footer prints the same top-level items, so a `#` link left a dead link there. A heading that links to its first sub-menu link in the footer keeps every page reachable.
+- **Why a focusable span, not a button or a link:** the sub-menu already opens on `:hover` and `:focus-within`; a span with `tabindex="0"` joins that with no script and no new styling beyond a default cursor. With no heading in the menu nothing changes.
+- **Why the server decides:** the Site tab box only lets a top-level line have an empty link; `TWD_SK_Profile` refuses a heading with no sub-menu links, so a menu can never hold an item that goes nowhere.
+
 ## 18 Nov 2026 (later): where the tutorial videos live
 
 - **Adilo was ruled out:** it ended its lifetime plans and reviewers report lost access and poor support. Videos go on the agency's own hosting, with master copies kept elsewhere.
